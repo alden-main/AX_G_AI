@@ -10,13 +10,14 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 import json
 import re
-from typing import Iterable
+from typing import Iterable, Mapping
 
 from ax_g_ai.domain.patient_context import PatientContext
 from ax_g_ai.services.knowledge import KnowledgeDocument
 
 
 _SAFE_TOKEN = re.compile(r"^[A-Za-z0-9._:/%+\-]{1,64}$")
+_SAFE_MEDICATION_TEXT = re.compile(r"^[\w .()/%+\-]{1,96}$", re.UNICODE)
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,22 @@ class SummaryObservation:
 
 
 @dataclass(frozen=True)
+class SummaryPrescription:
+    """Provider에 전달 가능한, 병원 EMR 제공 투약 목록의 구조화 항목이다.
+
+    ``status``가 ``not_provided``이면 현재 활성 처방·실제 투약 이행으로 해석하면 안 된다.
+    자유기술 지시사항과 환자·처방 원천 식별자는 이 DTO에 포함하지 않는다.
+    """
+
+    medication_code: str | None
+    medication_name: str | None
+    dosage: int | float | str | None
+    frequency: int | float | str | None
+    duration_days: int | float | None
+    status: str
+
+
+@dataclass(frozen=True)
 class PatientContextSummary:
     """한 요청 안에서만 쓰는 Provider 전달용 최소 환자 문맥이다."""
 
@@ -39,6 +56,7 @@ class PatientContextSummary:
     query_to: str
     timezone: str
     observations: tuple[SummaryObservation, ...]
+    prescriptions: tuple[SummaryPrescription, ...]
     missing_data_groups: tuple[str, ...]
     delayed_data_groups: tuple[str, ...]
     unmapped_data_groups: tuple[str, ...]
@@ -53,6 +71,7 @@ class PatientContextSummary:
                     "timezone": self.timezone,
                 },
                 "observations": [asdict(item) for item in self.observations],
+                "prescriptions": [asdict(item) for item in self.prescriptions],
                 "data_quality": {
                     "missing": list(self.missing_data_groups),
                     "delayed": list(self.delayed_data_groups),
@@ -103,6 +122,13 @@ class PatientContextSummaryBuilder:
             query_to=context.query_range.to_at.isoformat(),
             timezone=context.query_range.timezone,
             observations=tuple(observations),
+            prescriptions=tuple(
+                prescription
+                for prescription in (
+                    self._prescription(record) for record in context.prescriptions
+                )
+                if prescription is not None
+            ),
             missing_data_groups=self._safe_groups(context.data_quality.missing),
             delayed_data_groups=self._safe_groups(context.data_quality.delayed),
             unmapped_data_groups=self._safe_groups(context.data_quality.unmapped),
@@ -111,6 +137,42 @@ class PatientContextSummaryBuilder:
     @staticmethod
     def _safe_token(value: str) -> bool:
         return bool(_SAFE_TOKEN.fullmatch(value))
+
+    @staticmethod
+    def _safe_medication_text(value: object) -> str | None:
+        return value if isinstance(value, str) and _SAFE_MEDICATION_TEXT.fullmatch(value) else None
+
+    @classmethod
+    def _prescription(cls, record: object) -> SummaryPrescription | None:
+        if not isinstance(record, Mapping):
+            return None
+        medication_code = cls._safe_medication_text(record.get("medication_code"))
+        medication_name = cls._safe_medication_text(record.get("medication_name"))
+        if medication_code is None and medication_name is None:
+            return None
+        status = record.get("status")
+        if not isinstance(status, str) or not cls._safe_token(status):
+            status = "not_provided"
+        return SummaryPrescription(
+            medication_code=medication_code,
+            medication_name=medication_name,
+            dosage=cls._scalar(record.get("dosage")),
+            frequency=cls._scalar(record.get("frequency")),
+            duration_days=cls._number(record.get("duration_days")),
+            status=status,
+        )
+
+    @staticmethod
+    def _scalar(value: object) -> int | float | str | None:
+        if isinstance(value, bool):
+            return None
+        if isinstance(value, (int, float)):
+            return value
+        return PatientContextSummaryBuilder._safe_medication_text(value)
+
+    @staticmethod
+    def _number(value: object) -> int | float | None:
+        return value if isinstance(value, (int, float)) and not isinstance(value, bool) else None
 
     @classmethod
     def _safe_groups(cls, groups: Iterable[str]) -> tuple[str, ...]:
@@ -134,6 +196,7 @@ def compose_provider_question(
     return "\n".join((
         "[역할] 의료진의 판단을 보조하는 임상 정보 요약 도우미입니다.",
         "[안전 규칙] 제공된 데이터만 사실로 사용하고, 누락·미매핑·미확정 데이터는 추정하지 마세요. "
+        "투약 목록의 status가 not_provided이면 활성 처방이나 실제 투약 여부로 해석하지 마세요. "
         "진단을 확정하거나 처방 변경·용량 결정·처방전 발행을 지시하지 마세요.",
         "[의료진 질문]",
         clinician_question,

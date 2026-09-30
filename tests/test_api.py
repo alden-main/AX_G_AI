@@ -1,135 +1,115 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import datetime
 import unittest
 
 from fastapi.testclient import TestClient
 
-from ax_g_ai.api import (
-    BridgeAuthenticationError,
-    ResolvedBridgeChatContext,
-    ResolvedChatContext,
-    SnapshotInfo,
-    create_app,
-)
-from ax_g_ai.services.clinical_chat import (
-    ClinicalChatProviderUnavailableError,
-    ClinicalChatResponse,
-    KnowledgeEvidence,
-)
+from ax_g_ai.api import PatientContextNotReadyError, PatientContextUnavailableError, PatientMismatchError, create_app
+from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
 
 
-class FixedContextProvider:
-    def resolve(self, request: object, request_id: str) -> ResolvedChatContext:
-        return ResolvedChatContext(verified_context=None, patient_context=None)  # type: ignore[arg-type]
-
-
-class FixedBridgeContextProvider:
-    def resolve_internal(self, request: object, body: object, request_id: str) -> ResolvedBridgeChatContext:
-        return ResolvedBridgeChatContext(
-            chat_context=ResolvedChatContext(verified_context=None, patient_context=None),  # type: ignore[arg-type]
-            context_id="ctx-1",
-            context_info=SnapshotInfo(
-                datetime.fromisoformat("2026-09-18T10:30:00+09:00"), "partial", ("lab_results",)
-            ),
-        )
-
-
-class DeniedBridgeContextProvider:
-    def resolve_internal(self, request: object, body: object, request_id: str) -> ResolvedBridgeChatContext:
-        raise BridgeAuthenticationError()
-
-
-class SuccessfulService:
+class Store:
     def __init__(self) -> None:
-        self.request = None
+        self.prepared: dict[str, tuple[dict[str, object], datetime]] = {}
 
-    def answer(self, verified_context: object, patient_context: object, request: object, *, on_date: date) -> ClinicalChatResponse:
-        self.request = request
-        return ClinicalChatResponse(
-            answer="혈당 관리 원칙입니다.",
-            evidence=(KnowledgeEvidence("guide-2026-01", "지침명", "2026.1", date(2026, 1, 1), "3장 2절"),),
-            limitations=("의료진 판단을 보조합니다.",),
-        )
+    def prepare(self, patient_id: str, emr_payload: dict[str, object]) -> tuple[PreparedPatientSummary, datetime]:
+        if patient_id == "unavailable":
+            raise PatientContextUnavailableError("raw EMR payload has no patient object")
+        if patient_id == "mismatch":
+            raise PatientMismatchError()
+        updated_at = datetime.fromisoformat("2026-09-22T10:30:00+09:00")
+        self.prepared[patient_id] = ({"patient": {"patient_id": patient_id}, "observations": []}, updated_at)
+        return PreparedPatientSummary(
+            message="EMR 데이터가 로드되었습니다.",
+            sections=(),
+            guidance="현재 기록을 함께 확인하세요.",
+        ), updated_at
+
+    def get(self, patient_id: str) -> tuple[dict[str, object], datetime]:
+        if patient_id not in self.prepared:
+            raise PatientContextNotReadyError()
+        return self.prepared[patient_id]
 
 
-class FailingProviderService:
-    def answer(self, *args: object, **kwargs: object) -> ClinicalChatResponse:
-        raise ClinicalChatProviderUnavailableError("provider failed")
+class Service:
+    def __init__(self) -> None:
+        self.called = False
+        self.question = ""
+
+    def answer_prepared_snapshot(self, *, patient_id: str, question: str, snapshot: object) -> str:
+        self.called = True
+        self.question = question
+        return "최근 혈당 추이를 확인하세요."
+
+
+def emr_payload(patient_id: str = "pid-4356") -> dict[str, object]:
+    return {"patient": {"patientId": patient_id}, "bloodPressureList": []}
 
 
 class ClinicalChatApiTest(unittest.TestCase):
-    def test_preserves_the_documented_request_and_response_envelope(self) -> None:
-        service = SuccessfulService()
-        client = TestClient(create_app(service, FixedContextProvider()))
+    def setUp(self) -> None:
+        self.service = Service()
+        self.client = TestClient(create_app(self.service, Store()))  # type: ignore[arg-type]
+        self.headers: dict[str, str] = {}
 
-        response = client.post("/api/clinical-chat", json={
-            "question": "당뇨 환자 혈당 관리 원칙을 알려주세요.",
-            "language": "ko",
-            "knowledge_ids": ["guide-2026-01"],
-            "request_id": "trace-1",
-            "history": [{"inputs": "이전 질문", "outputs": "이전 답변"}],
-        })
-
+    def test_prepare_then_chat_uses_only_the_new_contract(self) -> None:
+        prepared = self.client.post("/internal/v1/patient-context", headers=self.headers, json={"patient_id": "pid-4356", "emr_payload": emr_payload()})
+        self.assertEqual(prepared.status_code, 200)
+        self.assertEqual(prepared.json(), {"patient_id": "pid-4356", "status": "ready", "patient_summary": {"message": "EMR 데이터가 로드되었습니다.", "sections": [], "guidance": "현재 기록을 함께 확인하세요."}, "emr_updated_at": "2026-09-22T10:30:00+09:00"})
+        response = self.client.post("/internal/v1/clinical-chat", headers=self.headers, json={"patient_id": "pid-4356", "question": "최근 혈당은 어떤가요?"})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {
-            "answer": "혈당 관리 원칙입니다.",
-            "evidence": [{
-                "document_id": "guide-2026-01", "title": "지침명", "version": "2026.1",
-                "published_on": "2026-01-01", "citation_location": "3장 2절",
-            }],
-            "limitations": ["의료진 판단을 보조합니다."],
-        })
-        self.assertEqual(service.request.question, "당뇨 환자 혈당 관리 원칙을 알려주세요.")
-        self.assertEqual(service.request.history[0].inputs, "이전 질문")
+        self.assertEqual(response.json(), {"answer": "최근 혈당 추이를 확인하세요.", "source": "EMR 데이터베이스", "emr_updated_at": "2026-09-22T10:30:00+09:00"})
+        self.assertEqual(self.service.question, "최근 혈당은 어떤가요?")
 
-    def test_provider_failure_is_a_safe_gateway_error(self) -> None:
-        client = TestClient(create_app(FailingProviderService(), FixedContextProvider()))  # type: ignore[arg-type]
+    def test_chat_before_prepare_returns_not_ready_without_provider_call(self) -> None:
+        response = self.client.post("/internal/v1/clinical-chat", headers=self.headers, json={"patient_id": "pid-4356", "question": "질문"})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["code"], "PATIENT_CONTEXT_NOT_READY")
+        self.assertFalse(self.service.called)
 
-        response = client.post("/api/clinical-chat", json={
-            "question": "질문", "language": "ko", "knowledge_ids": ["guide-1"], "request_id": "trace-1",
-        })
+    def test_unauthenticated_internal_network_request_and_invalid_request(self) -> None:
+        response = self.client.post("/internal/v1/patient-context", json={"patient_id": "pid-4356", "emr_payload": emr_payload()})
+        self.assertEqual(response.status_code, 200)
+        with self.assertLogs("uvicorn.error", level="WARNING") as logs:
+            invalid = self.client.post(
+                "/internal/v1/clinical-chat",
+                headers={"X-Request-ID": "diagnostic-request-1"},
+                json={"patient_id": "pid-4356", "question": " "},
+            )
+        self.assertEqual(invalid.status_code, 400)
+        self.assertEqual(invalid.json()["code"], "INVALID_REQUEST")
+        self.assertEqual(invalid.headers["X-Request-ID"], "diagnostic-request-1")
+        self.assertTrue(any("body.question:value_error" in line for line in logs.output))
+        self.assertTrue(any("request_id=diagnostic-request-1 status=400" in line for line in logs.output))
+        extra = self.client.post("/internal/v1/clinical-chat", headers=self.headers, json={"patient_id": "pid-4356", "question": "질문", "language": "ko"})
+        self.assertEqual(extra.status_code, 400)
+
+    def test_prepare_requires_raw_payload_rejects_legacy_snapshot_and_patient_mismatch(self) -> None:
+        missing = self.client.post("/internal/v1/patient-context", headers=self.headers, json={"patient_id": "pid-4356"})
+        self.assertEqual(missing.status_code, 400)
+        legacy = self.client.post("/internal/v1/patient-context", headers=self.headers, json={"patient_id": "pid-4356", "emr_snapshot": {}})
+        self.assertEqual(legacy.status_code, 400)
+        mismatch = self.client.post("/internal/v1/patient-context", headers=self.headers, json={"patient_id": "mismatch", "emr_payload": emr_payload("other")})
+        self.assertEqual(mismatch.status_code, 403)
+        self.assertEqual(mismatch.json()["code"], "PATIENT_MISMATCH")
+
+    def test_emr_schema_failure_logs_the_missing_field_without_logging_payload(self) -> None:
+        with self.assertLogs("uvicorn.error", level="WARNING") as logs:
+            response = self.client.post(
+                "/internal/v1/patient-context",
+                headers={"X-Request-ID": "emr-schema-request-1"},
+                json={"patient_id": "unavailable", "emr_payload": {}},
+            )
 
         self.assertEqual(response.status_code, 502)
-        self.assertEqual(response.json()["detail"], "The AI provider is temporarily unavailable.")
-
-    def test_default_app_does_not_accept_chat_without_runtime_wiring(self) -> None:
-        client = TestClient(create_app())
-
-        response = client.post("/api/clinical-chat", json={
-            "question": "질문", "language": "ko", "knowledge_ids": ["guide-1"], "request_id": "trace-1",
-        })
-
-        self.assertEqual(response.status_code, 503)
-
-    def test_internal_bridge_api_returns_context_bound_snapshot_metadata(self) -> None:
-        client = TestClient(create_app(SuccessfulService(), FixedContextProvider(), FixedBridgeContextProvider()))
-
-        response = client.post("/internal/v1/clinical-chat", headers={"X-Request-ID": "trace-1"}, json={
-            "context_id": "ctx-1", "patient_id": "patient-1", "encounter_id": "encounter-1",
-            "question": "질문", "language": "ko", "knowledge_ids": ["guide-1"],
-        })
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["request_id"], "trace-1")
-        self.assertEqual(response.json()["context_id"], "ctx-1")
-        self.assertEqual(response.json()["context_info"], {
-            "snapshot_at": "2026-09-18T10:30:00+09:00",
-            "assembly_status": "partial", "missing_data": ["lab_results"],
-        })
-
-    def test_internal_bridge_api_never_treats_an_unauthenticated_request_as_a_context(self) -> None:
-        client = TestClient(create_app(SuccessfulService(), FixedContextProvider(), DeniedBridgeContextProvider()))
-
-        response = client.post("/internal/v1/clinical-chat", headers={"X-Request-ID": "trace-1"}, json={
-            "context_id": "ctx-1", "patient_id": "patient-1", "encounter_id": "encounter-1",
-            "question": "질문", "language": "ko", "knowledge_ids": ["guide-1"],
-        })
-
-        self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.json(), {
-            "code": "UNAUTHENTICATED", "message": "Bridge authentication failed.", "request_id": "trace-1",
-        })
+        self.assertTrue(
+            any(
+                "request_id=emr-schema-request-1" in line
+                and "failure=emr_payload.patient:missing_or_not_object" in line
+                for line in logs.output
+            )
+        )
 
 
 if __name__ == "__main__":

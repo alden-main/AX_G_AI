@@ -160,7 +160,12 @@ class AiTankClient:
     @staticmethod
     def _parse_response(response: HttpResponse) -> ProviderAnswer:
         if not 200 <= response.status_code < 300:
-            raise AiTankProviderError("AI-Tank returned a non-success status")
+            # The status is diagnostic metadata, unlike the provider response
+            # body which may contain sensitive data and is intentionally never
+            # logged or returned to callers.
+            raise AiTankProviderError(
+                f"AI-Tank returned a non-success status (status={response.status_code})"
+            )
         try:
             decoded_body = response.body.decode("utf-8")
         except UnicodeDecodeError as error:

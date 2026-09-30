@@ -1,9 +1,17 @@
 services:
   ax-g-ai:
     build: .
-    ports:
-      - "${AX_G_PORT:-8100}:8100"
+    expose:
+      - "8100"
     env_file:
       - .env
-    environment:
-      AX_G_CHAT_TEST_MODE: ${AX_G_CHAT_TEST_MODE:-false}
+    networks:
+      - bridge-ai
+      - ai-provider-egress
+
+networks:
+  # Bridge와 AI service만 연결하는 내부 네트워크입니다.
+  bridge-ai:
+    internal: true
+  # AI Provider 호출용 네트워크입니다. Bridge는 이 네트워크에 연결하지 않습니다.
+  ai-provider-egress: {}

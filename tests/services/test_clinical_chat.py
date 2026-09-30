@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 import unittest
 
-from ax_g_ai.adapters.ai_tank import AiTankProviderError, ProviderAnswer
+from ax_g_ai.adapters.openai import OpenAIProviderError, ProviderAnswer
 from ax_g_ai.domain.patient_context import Actor, CodeMapping, Encounter, PatientContextBuilder
 from ax_g_ai.services.access_policy import AccessRequest, ContextGuard
 from ax_g_ai.services.audit import AuditEventType, InMemoryAuditSink
@@ -11,6 +11,7 @@ from ax_g_ai.services.clinical_chat import (
     ClinicalChatRequest,
     ClinicalChatService,
     ClinicalChatUnavailableError,
+    compose_prepared_snapshot_question,
 )
 from ax_g_ai.services.evaluation import ChatVersion, EvaluationGate, EvaluationRecord
 from ax_g_ai.services.knowledge import ApprovedKnowledgeStore, KnowledgeDocument
@@ -27,16 +28,16 @@ class SessionState:
         pass
 
 
-class FailingAiTank:
-    def consult(self, request: object) -> ProviderAnswer:
-        raise AiTankProviderError("provider failed")
+class FailingOpenAI:
+    def respond(self, request: object) -> ProviderAnswer:
+        raise OpenAIProviderError("provider failed")
 
 
-class RecordingAiTank:
+class RecordingOpenAI:
     def __init__(self) -> None:
         self.request = None
 
-    def consult(self, request: object) -> ProviderAnswer:
+    def respond(self, request: object) -> ProviderAnswer:
         self.request = request
         return ProviderAnswer("요약 답변")
 
@@ -56,11 +57,11 @@ class ClinicalChatSafetyTest(unittest.TestCase):
         knowledge = ApprovedKnowledgeStore([
             KnowledgeDocument("guide-1", "당뇨 지침", "2026.1", date(2026, 1, 1), "3장", True, date(2026, 1, 1), None)
         ])
-        version = ChatVersion("ai-tank", "test-model", "prompt-1", "knowledge-1")
+        version = ChatVersion("openai", "test-model", "prompt-1", "knowledge-1")
         gate = EvaluationGate([
             EvaluationRecord(version, "eval-1", date(2026, 9, 1), "reviewer-1", True, "approval-1")
         ])
-        service = ClinicalChatService(guard, knowledge, FailingAiTank(), audit, gate, version)
+        service = ClinicalChatService(guard, knowledge, FailingOpenAI(), audit, gate, version)  # type: ignore[arg-type]
 
         with self.assertRaises(ClinicalChatUnavailableError):
             service.answer(
@@ -85,12 +86,12 @@ class ClinicalChatSafetyTest(unittest.TestCase):
         knowledge = ApprovedKnowledgeStore([
             KnowledgeDocument("guide-1", "당뇨 지침", "2026.1", date(2026, 1, 1), "3장", True, date(2026, 1, 1), None)
         ])
-        version = ChatVersion("ai-tank", "test-model", "prompt-1", "knowledge-1")
+        version = ChatVersion("openai", "test-model", "prompt-1", "knowledge-1")
         gate = EvaluationGate([
             EvaluationRecord(version, "eval-1", date(2026, 9, 1), "reviewer-1", True, "approval-1")
         ])
-        ai_tank = RecordingAiTank()
-        service = ClinicalChatService(guard, knowledge, ai_tank, audit, gate, version)  # type: ignore[arg-type]
+        openai = RecordingOpenAI()
+        service = ClinicalChatService(guard, knowledge, openai, audit, gate, version)  # type: ignore[arg-type]
 
         response = service.answer(
             verified, context,
@@ -99,10 +100,26 @@ class ClinicalChatSafetyTest(unittest.TestCase):
         )
 
         self.assertEqual(response.answer, "요약 답변")
-        self.assertIn("최근 혈당을 요약해 주세요.", ai_tank.request.question)
-        self.assertIn('"code":"2345-7"', ai_tank.request.question)
-        self.assertNotIn("patient-1", ai_tank.request.question)
-        self.assertNotIn("observation-1", ai_tank.request.question)
+        self.assertIn("최근 혈당을 요약해 주세요.", openai.request.input)
+        self.assertIn('"code":"2345-7"', openai.request.input)
+        self.assertNotIn("patient-1", openai.request.input)
+        self.assertNotIn("observation-1", openai.request.input)
+
+    def test_prepared_snapshot_prompt_is_korean_and_excludes_patient_identifiers(self) -> None:
+        prompt = compose_prepared_snapshot_question(
+            "최근 혈당을 확인해 주세요.",
+            {
+                "patient": {"patient_id": "patient-1", "name": "홍길동"},
+                "blood_sugar": [{"measured_at": "2026-09-22T10:30:00+09:00", "value": 120, "unit": "mg/dL"}],
+                "lab_results": [], "prescriptions": [],
+            },
+        )
+
+        self.assertIn("반드시 한국어로 답변", prompt)
+        self.assertIn('"blood_sugar"', prompt)
+        self.assertNotIn("patient-1", prompt)
+        self.assertNotIn("홍길동", prompt)
+        self.assertNotIn("obs-1", prompt)
 
 
 if __name__ == "__main__":

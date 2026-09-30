@@ -1,319 +1,230 @@
-"""의료진 챗봇의 HTTP 진입점.
-
-브라우저 요청 본문에는 의료진 질문과 승인 지식 ID만 들어간다. 인증된 의료진과
-현재 환자·에피소드 문맥은 메인 서버/인증 계층이 제공하는 ``ChatContextProvider``가
-결정하며, 이 모듈은 그 값을 요청 본문으로 대체하지 않는다.
-"""
+"""간소화된 Bridge 전용 환자 EMR 준비·임상 채팅 API."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import date, datetime
-from typing import Literal, Protocol
+from datetime import datetime
+import logging
+from time import perf_counter
+from typing import Mapping, Protocol
+from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ax_g_ai.adapters.ai_tank import ChatHistoryItem
-from ax_g_ai.domain.patient_context import PatientContext
-from ax_g_ai.services.access_policy import AccessDeniedError, VerifiedContext
-from ax_g_ai.services.clinical_chat import (
-    ClinicalChatProviderUnavailableError,
-    ClinicalChatRequest,
-    ClinicalChatService,
-    ClinicalChatUnavailableError,
-)
-from ax_g_ai.services.evaluation import EvaluationNotApprovedError
+from ax_g_ai.services.clinical_chat import ClinicalChatProviderUnavailableError, ClinicalChatService
+from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
 
 
-class ChatContextUnavailableError(RuntimeError):
-    """인증·환자 문맥 공급자가 아직 연결되지 않았을 때 발생한다."""
+# Use Uvicorn's error logger so application warnings are emitted by the
+# container's standard logging configuration as well as Uvicorn's own logs.
+logger = logging.getLogger("uvicorn.error")
 
 
-class BridgeAuthenticationError(PermissionError):
-    """Bridge 서버 간 인증을 확인할 수 없을 때 발생한다."""
+class PatientContextNotReadyError(LookupError):
+    """채팅 전에 환자 Snapshot이 준비되지 않았을 때 발생한다."""
 
 
-class BridgeContextMismatchError(PermissionError):
-    """요청과 Snapshot의 환자·에피소드 문맥이 다를 때 발생한다."""
+class PatientContextUnavailableError(RuntimeError):
+    """EMR Snapshot 조회 또는 검증이 실패했을 때 발생한다."""
 
 
-class BridgeSnapshotUnavailableError(RuntimeError):
-    """현재 환자 Snapshot을 안전하게 읽을 수 없을 때 발생한다."""
+class PatientMismatchError(PermissionError):
+    """요청 환자와 전달된 Snapshot의 환자가 다를 때 발생한다."""
 
 
-@dataclass(frozen=True)
-class ResolvedChatContext:
-    """인증 계층이 제공하고 검증한 현재 세션의 환자 문맥."""
-
-    verified_context: VerifiedContext
-    patient_context: PatientContext
-
-
-@dataclass(frozen=True)
-class SnapshotInfo:
-    """Bridge가 조립한 Snapshot의 화면 표시용 최소 메타데이터다."""
-
-    snapshot_at: datetime
-    assembly_status: Literal["complete", "partial"]
-    missing_data: tuple[str, ...]
+class PatientContextStore(Protocol):
+    def prepare(
+        self, patient_id: str, emr_payload: Mapping[str, object]
+    ) -> tuple[PreparedPatientSummary, datetime]: ...
+    def get(self, patient_id: str) -> tuple[Mapping[str, object], datetime]: ...
 
 
-@dataclass(frozen=True)
-class ResolvedBridgeChatContext:
-    """내부 Bridge 요청의 검증 문맥과 대조된 Snapshot 메타데이터다."""
+class UnconfiguredPatientContextStore:
+    def prepare(
+        self, patient_id: str, emr_payload: Mapping[str, object]
+    ) -> tuple[PreparedPatientSummary, datetime]:
+        raise PatientContextUnavailableError()
 
-    chat_context: ResolvedChatContext
-    context_id: str
-    context_info: SnapshotInfo
-
-
-class ChatContextProvider(Protocol):
-    """메인 서버의 인증 세션과 EMR 문맥을 API에 제공하는 경계다."""
-
-    def resolve(self, request: Request, request_id: str) -> ResolvedChatContext: ...
+    def get(self, patient_id: str) -> tuple[Mapping[str, object], datetime]:
+        raise PatientContextNotReadyError()
 
 
-class BridgeChatContextProvider(Protocol):
-    """서버 간 인증 및 Snapshot 대조를 마친 내부 API 문맥 공급자 경계다.
-
-    구현체는 Bridge 서비스 인증을 먼저 확인하고, 요청 ``context_id``와 환자·에피소드가
-    Snapshot 응답과 모두 일치하는지 확인해야 한다. 이 API 모듈은 헤더나 body만으로
-    그 검증을 대신하지 않는다.
-    """
-
-    def resolve_internal(
-        self, request: Request, body: "InternalClinicalChatRequestBody", request_id: str
-    ) -> ResolvedBridgeChatContext: ...
-
-
-class UnconfiguredChatContextProvider:
-    """운영 인증 연동 전에는 어떤 챗봇 요청도 처리하지 않는 기본 구현체."""
-
-    def resolve(self, request: Request, request_id: str) -> ResolvedChatContext:
-        raise ChatContextUnavailableError("chat context provider is not configured")
-
-
-class UnconfiguredBridgeChatContextProvider:
-    """Bridge 인증·Snapshot 연결 전에는 내부 API를 fail-closed로 유지한다."""
-
-    def resolve_internal(
-        self, request: Request, body: "InternalClinicalChatRequestBody", request_id: str
-    ) -> ResolvedBridgeChatContext:
-        raise ChatContextUnavailableError("bridge chat context provider is not configured")
-
-
-class HistoryItemBody(BaseModel):
-    inputs: str = Field(min_length=1)
-    outputs: str = Field(min_length=1)
-
-
-class ClinicalChatRequestBody(BaseModel):
-    """프론트엔드 계약의 HTTP 요청 body. 환자 식별자·EMR 원천값은 포함하지 않는다."""
-
-    question: str = Field(min_length=1)
-    language: str = Field(min_length=1)
-    knowledge_ids: list[str] = Field(min_length=1)
-    request_id: str = Field(min_length=1)
-    history: list[HistoryItemBody] = Field(default_factory=list)
-
-
-class InternalClinicalChatRequestBody(BaseModel):
-    """Bridge 전용 요청. 브라우저 공개 API에서 사용하지 않는다."""
-
-    context_id: str = Field(min_length=1)
+class PatientIdBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     patient_id: str = Field(min_length=1)
-    encounter_id: str = Field(min_length=1)
+
+    @field_validator("patient_id")
+    @classmethod
+    def non_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be blank")
+        return value
+
+
+class ClinicalChatRequestBody(PatientIdBody):
     question: str = Field(min_length=1)
-    language: str = Field(min_length=1)
-    knowledge_ids: list[str] = Field(min_length=1)
-    history: list[HistoryItemBody] = Field(default_factory=list)
+
+    @field_validator("question")
+    @classmethod
+    def non_blank_question(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be blank")
+        return value
 
 
-class EvidenceBody(BaseModel):
-    document_id: str
-    title: str
-    version: str
-    published_on: date
-    citation_location: str
+class PatientContextRequestBody(PatientIdBody):
+    emr_payload: dict[str, object]
+
+
+class PatientSummarySectionBody(BaseModel):
+    label: str
+    content: str
+
+
+class PatientSummaryBody(BaseModel):
+    message: str
+    sections: list[PatientSummarySectionBody]
+    guidance: str
+
+
+class PatientContextReadyBody(BaseModel):
+    patient_id: str
+    status: str = "ready"
+    patient_summary: PatientSummaryBody
+    emr_updated_at: datetime
 
 
 class ClinicalChatResponseBody(BaseModel):
     answer: str
-    evidence: list[EvidenceBody]
-    limitations: list[str]
+    source: str = "EMR 데이터베이스"
+    emr_updated_at: datetime
 
 
-class ContextInfoBody(BaseModel):
-    snapshot_at: datetime
-    assembly_status: Literal["complete", "partial"]
-    missing_data: list[str]
-
-
-class InternalClinicalChatResponseBody(ClinicalChatResponseBody):
-    request_id: str
-    context_id: str
-    context_info: ContextInfoBody
-
-
-class InternalErrorBody(BaseModel):
+class ErrorBody(BaseModel):
     code: str
     message: str
-    request_id: str
 
 
-def create_app(
-    service: ClinicalChatService | None = None,
-    context_provider: ChatContextProvider | None = None,
-    bridge_context_provider: BridgeChatContextProvider | None = None,
-) -> FastAPI:
-    """동작 가능한 ASGI 앱을 만든다.
+def create_app(service: ClinicalChatService | None = None, patient_context_store: PatientContextStore | None = None) -> FastAPI:
+    """새 내부 계약만 노출하는 ASGI 앱을 조립한다."""
+    app = FastAPI(title="AX-G AI Clinical Chat API", version="1")
+    store = patient_context_store or UnconfiguredPatientContextStore()
 
-    ``service``와 ``context_provider``는 애플리케이션 조립 계층에서 주입한다.
-    기본 앱은 상태 점검에는 사용할 수 있지만, 인증 연동이 없으므로 챗봇 요청을
-    503으로 거부한다. 이 기본값은 임의 헤더나 브라우저 body로 권한을 우회하지 않기
-    위한 안전 장치다.
-    """
-    app = FastAPI(title="AX-G AI Clinical Chat API", version="0.1.0")
-    provider = context_provider or UnconfiguredChatContextProvider()
-    bridge_provider = bridge_context_provider or UnconfiguredBridgeChatContextProvider()
+    @app.middleware("http")
+    async def request_logging(request: Request, call_next):
+        """Attach a safe correlation ID and log only failed HTTP requests.
+
+        Request bodies can contain EMR data, questions, and credentials, so
+        they must never be sent to container logs.  The request ID instead
+        lets Bridge and Docker logs be correlated without retaining that data.
+        """
+        request_id = request.headers.get("X-Request-ID", "").strip() or str(uuid4())
+        request.state.request_id = request_id
+        started_at = perf_counter()
+        try:
+            response = await call_next(request)
+        except Exception:
+            logger.exception(
+                "api_unhandled_exception request_id=%s method=%s path=%s",
+                request_id,
+                request.method,
+                request.url.path,
+            )
+            response = JSONResponse(
+                status_code=500,
+                content=ErrorBody(code="INTERNAL_ERROR", message="서버 내부 오류가 발생했습니다.").model_dump(),
+            )
+
+        response.headers["X-Request-ID"] = request_id
+        if response.status_code >= 400:
+            logger.warning(
+                "api_request_failed request_id=%s status=%s method=%s path=%s duration_ms=%d",
+                request_id,
+                response.status_code,
+                request.method,
+                request.url.path,
+                (perf_counter() - started_at) * 1000,
+            )
+        return response
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+        if request.url.path.startswith("/internal/v1/"):
+            # Do not log Pydantic's ``input`` field: it can contain an entire
+            # EMR payload.  Field locations and validation categories are
+            # enough to identify a malformed integration request.
+            failures = ",".join(
+                f"{'.'.join(str(item) for item in error['loc'])}:{error['type']}"
+                for error in exc.errors()
+            )
+            logger.warning(
+                "api_validation_failed request_id=%s method=%s path=%s failures=%s",
+                getattr(request.state, "request_id", "unavailable"),
+                request.method,
+                request.url.path,
+                failures,
+            )
+            return _error(400, "INVALID_REQUEST", "요청 형식이 올바르지 않습니다.")
+        return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
     @app.get("/health", tags=["operations"])
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
-    @app.post(
-        "/api/clinical-chat",
-        response_model=ClinicalChatResponseBody,
-        tags=["clinical-chat"],
-    )
-    def clinical_chat(body: ClinicalChatRequestBody, request: Request) -> ClinicalChatResponseBody:
-        if service is None:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Clinical chat service is not configured.",
-            )
+    @app.post("/internal/v1/patient-context", response_model=PatientContextReadyBody, responses={400: {"model": ErrorBody}, 403: {"model": ErrorBody}, 502: {"model": ErrorBody}}, tags=["internal"])
+    def prepare_patient_context(body: PatientContextRequestBody, request: Request) -> PatientContextReadyBody | JSONResponse:
         try:
-            context = provider.resolve(request, body.request_id)
-            response = service.answer(
-                context.verified_context,
-                context.patient_context,
-                ClinicalChatRequest(
-                    question=body.question,
-                    language=body.language,
-                    knowledge_ids=tuple(body.knowledge_ids),
-                    request_id=body.request_id,
-                    history=tuple(
-                        ChatHistoryItem(inputs=item.inputs, outputs=item.outputs)
-                        for item in body.history
-                    ),
-                ),
-                on_date=date.today(),
+            summary, updated_at = store.prepare(body.patient_id, body.emr_payload)
+        except PatientMismatchError:
+            logger.warning("api_patient_context_failed request_id=%s code=PATIENT_MISMATCH", request.state.request_id)
+            return _error(403, "PATIENT_MISMATCH", "환자 정보가 일치하지 않습니다.")
+        except PatientContextUnavailableError as error:
+            logger.warning(
+                "api_patient_context_failed request_id=%s code=EMR_UNAVAILABLE failure=%s",
+                request.state.request_id,
+                _safe_context_failure(error),
             )
-        except AccessDeniedError:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="The current patient context is not authorized.",
-            ) from None
+            return _error(502, "EMR_UNAVAILABLE", "환자 EMR 정보를 준비할 수 없습니다.")
         except ClinicalChatProviderUnavailableError:
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="The AI provider is temporarily unavailable.",
-            ) from None
-        except (EvaluationNotApprovedError, ClinicalChatUnavailableError):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Clinical chat is unavailable without approved evidence and evaluation.",
-            ) from None
-        except ChatContextUnavailableError:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="The authenticated patient context is not configured.",
-            ) from None
+            logger.warning("api_patient_context_failed request_id=%s code=AI_PROVIDER_UNAVAILABLE", request.state.request_id)
+            return _error(502, "AI_PROVIDER_UNAVAILABLE", "AI 답변을 준비할 수 없습니다.")
+        return PatientContextReadyBody(patient_id=body.patient_id, patient_summary=summary.as_dict(), emr_updated_at=updated_at)
 
-        return ClinicalChatResponseBody(
-            answer=response.answer,
-            evidence=[
-                EvidenceBody(
-                    document_id=evidence.document_id,
-                    title=evidence.title,
-                    version=evidence.version,
-                    published_on=evidence.published_on,
-                    citation_location=evidence.citation_location,
-                )
-                for evidence in response.evidence
-            ],
-            limitations=list(response.limitations),
-        )
-
-    @app.post(
-        "/internal/v1/clinical-chat",
-        response_model=InternalClinicalChatResponseBody,
-        responses={
-            401: {"model": InternalErrorBody}, 403: {"model": InternalErrorBody},
-            409: {"model": InternalErrorBody}, 502: {"model": InternalErrorBody},
-            503: {"model": InternalErrorBody},
-        },
-        tags=["internal"],
-    )
-    def internal_clinical_chat(
-        body: InternalClinicalChatRequestBody, request: Request
-    ) -> InternalClinicalChatResponseBody | JSONResponse:
-        """Bridge 서버만 호출하는 문맥 대조형 챗봇 경로다."""
-        request_id = request.headers.get("X-Request-ID", "").strip()
-        if not request_id:
-            return _internal_error(400, "INVALID_CONTEXT", "Request context is invalid.", "")
-        if service is None:
-            return _internal_error(503, "CLINICAL_CHAT_UNAVAILABLE", "Clinical chat is unavailable.", request_id)
+    @app.post("/internal/v1/clinical-chat", response_model=ClinicalChatResponseBody, responses={400: {"model": ErrorBody}, 404: {"model": ErrorBody}, 502: {"model": ErrorBody}}, tags=["internal"])
+    def clinical_chat(body: ClinicalChatRequestBody, request: Request) -> ClinicalChatResponseBody | JSONResponse:
         try:
-            resolved = bridge_provider.resolve_internal(request, body, request_id)
-            response = service.answer(
-                resolved.chat_context.verified_context,
-                resolved.chat_context.patient_context,
-                ClinicalChatRequest(
-                    question=body.question, language=body.language,
-                    knowledge_ids=tuple(body.knowledge_ids), request_id=request_id,
-                    history=tuple(ChatHistoryItem(inputs=item.inputs, outputs=item.outputs) for item in body.history),
-                ),
-                on_date=date.today(),
-            )
-        except BridgeAuthenticationError:
-            return _internal_error(401, "UNAUTHENTICATED", "Bridge authentication failed.", request_id)
-        except (BridgeContextMismatchError, AccessDeniedError):
-            return _internal_error(403, "CONTEXT_MISMATCH", "The current patient context is not authorized.", request_id)
-        except BridgeSnapshotUnavailableError:
-            return _internal_error(502, "EMR_UNAVAILABLE", "Patient context is temporarily unavailable.", request_id)
+            snapshot, updated_at = store.get(body.patient_id)
+            if service is None:
+                raise ClinicalChatProviderUnavailableError()
+            answer = service.answer_prepared_snapshot(patient_id=body.patient_id, question=body.question, snapshot=snapshot)
+        except PatientContextNotReadyError:
+            logger.warning("api_clinical_chat_failed request_id=%s code=PATIENT_CONTEXT_NOT_READY", request.state.request_id)
+            return _error(404, "PATIENT_CONTEXT_NOT_READY", "환자 EMR 준비가 필요합니다.")
         except ClinicalChatProviderUnavailableError:
-            return _internal_error(502, "AI_PROVIDER_UNAVAILABLE", "The AI provider is temporarily unavailable.", request_id)
-        except (EvaluationNotApprovedError, ClinicalChatUnavailableError, ChatContextUnavailableError):
-            return _internal_error(409, "CLINICAL_CHAT_UNAVAILABLE", "Clinical chat is unavailable.", request_id)
-
-        return InternalClinicalChatResponseBody(
-            request_id=request_id,
-            context_id=resolved.context_id,
-            answer=response.answer,
-            evidence=[EvidenceBody(**evidence.__dict__) for evidence in response.evidence],
-            limitations=list(response.limitations),
-            context_info=ContextInfoBody(
-                snapshot_at=resolved.context_info.snapshot_at,
-                assembly_status=resolved.context_info.assembly_status,
-                missing_data=list(resolved.context_info.missing_data),
-            ),
-        )
+            logger.warning("api_clinical_chat_failed request_id=%s code=AI_PROVIDER_UNAVAILABLE", request.state.request_id)
+            return _error(502, "AI_PROVIDER_UNAVAILABLE", "AI 답변을 준비할 수 없습니다.")
+        return ClinicalChatResponseBody(answer=answer, emr_updated_at=updated_at)
 
     return app
 
 
-def _internal_error(status_code: int, code: str, message: str, request_id: str) -> JSONResponse:
-    """Bridge 계약의 원문 PHI 없는 오류 envelope를 만든다."""
-    return JSONResponse(
-        status_code=status_code,
-        content=InternalErrorBody(code=code, message=message, request_id=request_id).model_dump(mode="json"),
-    )
+def _error(status_code: int, code: str, message: str) -> JSONResponse:
+    return JSONResponse(status_code=status_code, content=ErrorBody(code=code, message=message).model_dump())
 
 
-# ``runtime``은 순환 import를 피하기 위해 모든 API 선언 뒤에 불러온다.
+def _safe_context_failure(error: PatientContextUnavailableError) -> str:
+    """Return only mapper-produced schema diagnostics, never request content."""
+    safe_failures = {
+        "raw EMR payload has no patient object": "emr_payload.patient:missing_or_not_object",
+        "raw EMR payload requires patient.patientId": "emr_payload.patient.patientId:missing_or_blank",
+    }
+    return safe_failures.get(str(error), "emr_payload:invalid")
+
+
 from ax_g_ai.runtime import create_runtime_app
 
 app = create_runtime_app()

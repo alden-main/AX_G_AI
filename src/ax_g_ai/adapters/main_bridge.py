@@ -1,76 +1,124 @@
-"""메인 서버 브릿지의 생체정보 응답을 내부 EMR 계약으로 변환한다."""
+"""Bridge가 전달한 원문 EMR의 PoC 전용 최소 문맥 변환기."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any, Mapping
+from zoneinfo import ZoneInfo
 
 from ax_g_ai.adapters.emr import EmrAdapterError
 
 
-class MainBridgePayloadMapper:
-    """광주AX API 명세 v0.1의 camelCase 생체정보 응답을 정규 입력으로 바꾼다.
+@dataclass(frozen=True)
+class PreparedRawEmrContext:
+    """원문에서 허용 목록만 추린, Provider 전송 전의 메모리 문맥이다."""
 
-    혈압·혈당·SpO2·HbA1c는 원천 ID·단위·결과 상태가 명세에 없으므로, 값을 추정하지
-    않고 ``PatientContextBuilder``가 임상 사용 불가로 표시할 필드를 빈 상태로 남긴다.
-    ``encounterId``는 명세에 없지만 D-03의 필수 계약이므로 없으면 명시적으로 실패한다.
-    """
+    data: Mapping[str, object]
+    updated_at: datetime
 
-    def __init__(self, organization_id: str) -> None:
-        self._organization_id = organization_id
 
-    def to_patient_context_payload(self, payload: Mapping[str, Any]) -> Mapping[str, Any]:
-        """브릿지 JSON 객체를 D-02 입력 객체로 변환한다.
+class RawEmrPayloadMapper:
+    """샘플 원문의 알려진 목록만 PoC 문맥으로 변환한다."""
 
-        Raises:
-            EmrAdapterError: 환자·의료진·에피소드 식별자가 없거나 형식이 다를 때
-                발생한다. 이 경우 챗봇은 해당 환자 데이터를 사용하면 안 된다.
-        """
+    _SEOUL = ZoneInfo("Asia/Seoul")
+
+    def map(self, patient_id: str, payload: Mapping[str, Any], *, prepared_at: datetime | None = None) -> PreparedRawEmrContext:
         patient = payload.get("patient")
         if not isinstance(patient, Mapping):
-            raise EmrAdapterError("bridge response has no patient object")
-        patient_id = self._string(patient, "patientId")
-        encounter_id = self._string(patient, "encounterId")
-        admission = self._string(patient, "admissionDate")
-        discharge = self._string(patient, "dischargeDate")
-        observations = []
-        observations.extend(self._blood_pressure(payload.get("bloodPressureList", [])))
-        observations.extend(self._single_value(payload.get("bloodSugarList", []), "glucoseValue", "GLUCOSE"))
-        observations.extend(self._single_value(payload.get("oxygenSaturationList", []), "spo2Value", "SPO2"))
-        observations.extend(self._single_value(payload.get("glycatedHemoglobinList", []), "hba1cValue", "HBA1C", "testDate"))
-        return {
-            "actor": {"user_id": self._string(patient, "doctorId"), "organization_id": self._organization_id, "role": "physician", "purpose": "treatment"},
-            "patient": {"patient_id": patient_id},
-            "encounter": {"encounter_id": encounter_id, "type": "unknown", "status": "unknown"},
-            "range": {"from": f"{admission}T00:00:00+09:00", "to": f"{discharge}T23:59:59+09:00", "timezone": "Asia/Seoul"},
-            "observations": observations,
-            "diagnoses": [], "prescriptions": list(payload.get("medicineDtailList", [])), "lab_results": [],
-            "missing_data": [], "delayed_data": [],
-        }
+            raise EmrAdapterError("raw EMR payload has no patient object")
+        raw_patient_id = patient.get("patientId")
+        if not isinstance(raw_patient_id, str) or not raw_patient_id.strip():
+            raise EmrAdapterError("raw EMR payload requires patient.patientId")
+        if raw_patient_id != patient_id:
+            raise EmrAdapterError("raw EMR patient does not match the request")
 
-    @staticmethod
-    def _string(data: Mapping[str, Any], key: str) -> str:
-        value = data.get(key)
-        if not isinstance(value, str) or not value.strip():
-            raise EmrAdapterError(f"bridge response requires patient.{key}")
-        return value
+        timestamps: list[datetime] = []
+        blood_pressure = self._blood_pressure(payload.get("bloodPressureList"), timestamps)
+        blood_sugar = self._single_value(payload.get("bloodSugarList"), "glucoseValue", "mg/dL", timestamps, extra=("timingType", "timing_type"))
+        oxygen_saturation = self._single_value(payload.get("oxygenSaturationList"), "spo2Value", "%", timestamps)
+        lab_results = self._labs(payload.get("labResultList"), timestamps)
+        prescriptions = self._prescriptions(payload.get("medicineDtailList"))
+        fallback = prepared_at or datetime.now(timezone.utc)
+        if fallback.tzinfo is None:
+            fallback = fallback.replace(tzinfo=timezone.utc)
+        return PreparedRawEmrContext(
+            data={"blood_pressure": blood_pressure, "blood_sugar": blood_sugar, "oxygen_saturation": oxygen_saturation, "lab_results": lab_results, "prescriptions": prescriptions},
+            updated_at=max(timestamps, default=fallback),
+        )
 
-    @staticmethod
-    def _single_value(items: Any, value_key: str, code: str, time_key: str = "measuredAt") -> list[dict[str, Any]]:
-        if not isinstance(items, list):
-            raise EmrAdapterError("bridge observation list must be an array")
-        return [{"source_record_id": None, "code_system": "main-bridge-v0.1", "code": code, "value": item.get(value_key), "unit": None, "observed_at": MainBridgePayloadMapper._seoul_time(item.get(time_key)), "source": None, "status": None} for item in items if isinstance(item, Mapping)]
+    def _blood_pressure(self, items: object, timestamps: list[datetime]) -> list[dict[str, object]]:
+        result: list[dict[str, object]] = []
+        for item in self._items(items):
+            measured_at = self._timestamp(item.get("measuredAt"))
+            sbp, dbp = item.get("sbp"), item.get("dbp")
+            if measured_at is None or sbp is None or dbp is None:
+                continue
+            timestamps.append(measured_at)
+            result.append({"measured_at": measured_at.isoformat(), "sbp": sbp, "dbp": dbp, "unit": "mmHg"})
+        return result
 
-    @staticmethod
-    def _blood_pressure(items: Any) -> list[dict[str, Any]]:
-        if not isinstance(items, list):
-            raise EmrAdapterError("bridge bloodPressureList must be an array")
-        result = []
-        for item in items:
-            if isinstance(item, Mapping):
-                for key, code in (("sbp", "SYSTOLIC_BP"), ("dbp", "DIASTOLIC_BP")):
-                    result.append({"source_record_id": None, "code_system": "main-bridge-v0.1", "code": code, "value": item.get(key), "unit": None, "observed_at": MainBridgePayloadMapper._seoul_time(item.get("measuredAt")), "source": None, "status": None})
+    def _single_value(self, items: object, value_key: str, unit: str, timestamps: list[datetime], *, extra: tuple[str, str] | None = None) -> list[dict[str, object]]:
+        result: list[dict[str, object]] = []
+        for item in self._items(items):
+            measured_at = self._timestamp(item.get("measuredAt"))
+            value = item.get(value_key)
+            if measured_at is None or value is None:
+                continue
+            timestamps.append(measured_at)
+            row: dict[str, object] = {"measured_at": measured_at.isoformat(), "value": value, "unit": unit}
+            if extra is not None and item.get(extra[0]) is not None:
+                row[extra[1]] = item[extra[0]]
+            result.append(row)
+        return result
+
+    def _labs(self, items: object, timestamps: list[datetime]) -> list[dict[str, object]]:
+        result: list[dict[str, object]] = []
+        for item in self._items(items):
+            tested_at = self._timestamp(item.get("testDate"))
+            value = item.get("value")
+            if tested_at is None or value is None or not self._is_short_value(value):
+                continue
+            timestamps.append(tested_at)
+            row: dict[str, object] = {"test_date": tested_at.isoformat(), "value": value}
+            self._copy_non_blank(item, row, "examCode", "exam_code")
+            self._copy_non_blank(item, row, "itemName", "item_name")
+            result.append(row)
         return result
 
     @staticmethod
-    def _seoul_time(value: Any) -> Any:
-        return f"{value.replace(' ', 'T')}+09:00" if isinstance(value, str) and "T" not in value else value
+    def _prescriptions(items: object) -> list[dict[str, object]]:
+        allowed = (("medCode", "med_code"), ("medName", "med_name"), ("category", "category"), ("dosage", "dosage"), ("unit", "unit"), ("frequency", "frequency"), ("interval", "interval"), ("durationDays", "duration_days"))
+        result: list[dict[str, object]] = []
+        for item in RawEmrPayloadMapper._items(items):
+            row = {target: item[source] for source, target in allowed if item.get(source) is not None}
+            if row:
+                result.append(row)
+        return result
+
+    @staticmethod
+    def _items(value: object) -> list[Mapping[str, Any]]:
+        return [item for item in value if isinstance(item, Mapping)] if isinstance(value, list) else []
+
+    def _timestamp(self, value: object) -> datetime | None:
+        if not isinstance(value, str) or not value.strip():
+            return None
+        try:
+            parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00").replace(" ", "T"))
+        except ValueError:
+            return None
+        return parsed.replace(tzinfo=self._SEOUL) if parsed.tzinfo is None else parsed
+
+    @staticmethod
+    def _is_short_value(value: object) -> bool:
+        return (isinstance(value, (int, float)) and not isinstance(value, bool)) or (isinstance(value, str) and bool(value.strip()) and len(value) <= 200)
+
+    @staticmethod
+    def _copy_non_blank(source: Mapping[str, Any], target: dict[str, object], key: str, target_key: str) -> None:
+        value = source.get(key)
+        if isinstance(value, str) and value.strip():
+            target[target_key] = value
+
+
+# Kept as an import-compatible name while the Bridge migrates to the raw PoC contract.
+MainBridgePayloadMapper = RawEmrPayloadMapper

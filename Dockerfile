@@ -27,5 +27,5 @@ RUN uv sync --locked --no-dev --no-install-project
 COPY src ./src
 RUN uv sync --locked --no-dev
 
-# The ASGI server exposes /health, /docs, and /api/clinical-chat.
+# The ASGI server exposes /health, /docs, and the Bridge internal API routes.
 ENTRYPOINT ["uvicorn", "ax_g_ai.api:app", "--host", "0.0.0.0", "--port", "8100"]
