@@ -9,10 +9,26 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
+from pathlib import Path
 
 
 class ConfigurationError(ValueError):
     """필수 환경 설정이 없거나 허용되지 않은 값일 때 발생한다."""
+
+
+def reference_data_database_path() -> Path | None:
+    """Return the optional approved reference-data SQLite path.
+
+    A missing setting leaves reference enrichment disabled; a configured but
+    missing file fails closed during application assembly.
+    """
+    configured = os.getenv("AX_G_REFERENCE_DATA_DB_PATH", "").strip()
+    if not configured:
+        return None
+    path = Path(configured)
+    if not path.is_file():
+        raise ConfigurationError("AX_G_REFERENCE_DATA_DB_PATH must reference an existing SQLite file")
+    return path
 
 
 @dataclass(frozen=True)

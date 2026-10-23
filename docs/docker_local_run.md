@@ -27,6 +27,27 @@ AX_G_PORT=8100
 인증·인가를 통과한 요청은 Bridge와 AX-G AI가 공유하는 전용 Docker 내부 네트워크로만
 전달한다. AX-G AI는 별도의 Bearer token을 요구하지 않는다.
 
+## 참조 SQLite 데이터
+
+이미지에는 `data/reference_data.sqlite`가 포함된다. 이 파일은 의약품·상병 코드의 표시명,
+효능·효과, 주의사항을 보강하는 읽기 전용 참조 데이터이며, 컨테이너는 기본적으로
+`AX_G_REFERENCE_DATA_DB_PATH=/app/data/reference_data.sqlite`를 사용한다.
+
+이미지를 빌드하기 전, 원본 Pickle이 변경됐을 때만 아래 명령으로 DB를 다시 생성한다.
+
+```bash
+mkdir -p data
+uv run ax-g-ai-reference-db \
+  --medicine medicine_dict.pkl \
+  --disease disease_dict.pkl \
+  --output data/reference_data.sqlite \
+  --replace
+```
+
+참조 DB에는 약품 설명 원문이 포함되어 있어 이미지 크기가 증가한다. 원본 데이터의
+출처·최신성·이용 권한을 확인한 버전만 빌드에 포함한다. 운영에서 별도 최신 DB를 쓸 경우에만
+읽기 전용 volume으로 `/app/data`를 마운트하고 같은 환경 변수를 그 경로로 변경한다.
+
 ## Docker Compose 실행
 
 프로젝트 루트에서 빌드와 기동을 실행한다.
@@ -61,6 +82,130 @@ HTTP 오류는 `ai_provider_failed ... status=400`으로 확인한다.
 docker build -t ax-g-ai:local .
 docker run --rm --name ax-g-ai-local --env-file .env -p 8100:8100 ax-g-ai:local
 ```
+
+## Linux 서버용 이미지 빌드 및 전달
+
+다른 서버에서 소스 코드 없이 AX-G AI를 실행하려면 Dockerfile이 아니라 **빌드된 Docker
+image**를 전달한다. 대상 Linux 서버의 CPU 아키텍처에 맞추어 빌드해야 한다. 일반적인
+x86_64 Linux 서버는 `linux/amd64`를 사용한다. ARM 서버(예: AWS Graviton)는
+`linux/arm64`를 사용한다.
+
+### 1. 배포용 이미지 빌드
+
+개발 PC가 macOS Apple Silicon이거나 대상 서버와 CPU가 다를 때에도 아래처럼 플랫폼을
+명시해 빌드한다. `--load`는 빌드 결과를 현재 Docker 엔진에 적재하므로, 다음 단계의
+`docker save`에서 사용할 수 있다.
+
+```bash
+# x86_64 Linux 서버용
+docker buildx build --platform linux/amd64 --load -t ax-g-ai:1.0.0 .
+```
+
+대상 서버가 ARM64 Linux인 경우에는 플랫폼과 파일명만 다음처럼 바꾼다.
+
+```bash
+docker buildx build --platform linux/arm64 --load -t ax-g-ai:1.0.0 .
+```
+
+빌드 이미지의 플랫폼을 확인한다.
+
+```bash
+docker image inspect ax-g-ai:1.0.0 --format '{{.Os}}/{{.Architecture}}'
+```
+
+### 2. 이미지 파일 생성 및 서버로 전달
+
+빌드한 이미지를 tar 파일로 내보낸다. 아래 예시는 `linux/amd64` 이미지 기준이다.
+
+```bash
+docker save --output ax-g-ai_1.0.0_linux_amd64.tar ax-g-ai:1.0.0
+shasum -a 256 ax-g-ai_1.0.0_linux_amd64.tar
+```
+
+tar 파일과 출력된 SHA-256 값을 전달한다. 예를 들어 SSH로 전송할 수 있다.
+
+```bash
+scp ax-g-ai_1.0.0_linux_amd64.tar deploy@SERVER_HOST:/opt/ax-g/deploy/
+```
+
+이미지 tar 파일에는 애플리케이션과 런타임 의존성만 들어 있다. `OPENAI_API_KEY` 같은
+운영 비밀값과 `.env` 파일은 포함되지 않으므로, 서버에서 별도로 생성·관리한다.
+
+### 3. 대상 Linux 서버에서 이미지 적재
+
+대상 서버에서 전달받은 파일의 무결성을 확인한 뒤 Docker에 적재한다.
+
+```bash
+cd /opt/ax-g/deploy
+sha256sum ax-g-ai_1.0.0_linux_amd64.tar
+docker load --input ax-g-ai_1.0.0_linux_amd64.tar
+docker image inspect ax-g-ai:1.0.0 --format '{{.Os}}/{{.Architecture}}'
+```
+
+`sha256sum`의 결과가 전달받은 값과 같아야 한다. 마지막 명령의 결과가 서버 아키텍처와
+맞지 않으면 컨테이너가 기동하지 않거나 에뮬레이션으로 매우 느리게 실행될 수 있다.
+
+### 4. Compose에서 AX-G AI 이미지 참조
+
+배포 서버의 Compose 파일에서는 `ax-g-ai` 서비스의 `build: .`을 제거하고, 적재한
+이미지 태그를 지정한다. Bridge 서비스는 AI 서비스와 같은 `bridge-ai` 네트워크에
+연결하고 `http://ax-g-ai:8100`으로 호출한다.
+
+```yaml
+services:
+  ax-g-ai:
+    image: ax-g-ai:1.0.0
+    env_file:
+      - .env
+    expose:
+      - "8100"
+    networks:
+      - bridge-ai
+      - ai-provider-egress
+
+  bridge:
+    image: your-registry/bridge:1.0.0
+    depends_on:
+      - ax-g-ai
+    networks:
+      - bridge-ai
+
+  frontend:
+    image: your-registry/frontend:1.0.0
+    # frontend의 공개 포트와 네트워크는 해당 프로젝트 설정을 따른다.
+
+networks:
+  bridge-ai:
+    internal: true
+  ai-provider-egress: {}
+```
+
+배포 디렉터리에 위 Compose 파일(프론트엔드·Bridge의 실제 설정을 반영한 파일)과 AX-G
+AI용 `.env`를 둔 다음 기동한다.
+
+```bash
+docker compose up -d
+docker compose ps
+docker compose logs -f ax-g-ai
+```
+
+`.env` 파일은 서버에서만 생성하고 권한을 제한한다.
+
+```bash
+cp .env.example .env
+chmod 600 .env
+```
+
+이미지를 새 버전으로 교체할 때는 새 태그(예: `ax-g-ai:1.0.1`)로 빌드·전달·`docker
+load`한 뒤 Compose의 `image:` 태그를 변경하고 다시 기동한다.
+
+```bash
+docker compose up -d
+```
+
+Docker Registry(Docker Hub, GHCR 또는 사설 Registry)를 운영할 수 있다면 tar 파일 전달
+대신 이미지에 태그를 붙여 `docker push`하고, 서버에서 `docker compose pull && docker
+compose up -d`로 배포하는 방식이 버전 관리와 반복 배포에 더 적합하다.
 
 ## 기동 및 계약 확인
 

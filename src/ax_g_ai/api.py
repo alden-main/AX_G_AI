@@ -5,12 +5,14 @@ from __future__ import annotations
 from datetime import datetime
 import logging
 from time import perf_counter
+import json
+from collections.abc import Iterator
 from typing import Mapping, Protocol
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ax_g_ai.services.clinical_chat import ClinicalChatProviderUnavailableError, ClinicalChatService
@@ -41,6 +43,12 @@ class PatientContextStore(Protocol):
     def get(self, patient_id: str) -> tuple[Mapping[str, object], datetime]: ...
 
 
+class ClinicalChatStreamProvider(Protocol):
+    def stream_prepared_snapshot(
+        self, *, patient_id: str, question: str, snapshot: Mapping[str, object]
+    ) -> Iterator[str]: ...
+
+
 class UnconfiguredPatientContextStore:
     def prepare(
         self, patient_id: str, emr_payload: Mapping[str, object]
@@ -66,10 +74,21 @@ class PatientIdBody(BaseModel):
 
 class ClinicalChatRequestBody(PatientIdBody):
     question: str = Field(min_length=1)
+    reference_record: str | None = Field(default=None, min_length=1, max_length=12000)
 
     @field_validator("question")
     @classmethod
     def non_blank_question(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be blank")
+        return value
+
+    @field_validator("reference_record")
+    @classmethod
+    def non_blank_reference_record(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
         value = value.strip()
         if not value:
             raise ValueError("must not be blank")
@@ -109,7 +128,10 @@ class ErrorBody(BaseModel):
     message: str
 
 
-def create_app(service: ClinicalChatService | None = None, patient_context_store: PatientContextStore | None = None) -> FastAPI:
+def create_app(
+    service: ClinicalChatService | None = None,
+    patient_context_store: PatientContextStore | None = None,
+) -> FastAPI:
     """새 내부 계약만 노출하는 ASGI 앱을 조립한다."""
     app = FastAPI(title="AX-G AI Clinical Chat API", version="1")
     store = patient_context_store or UnconfiguredPatientContextStore()
@@ -200,7 +222,12 @@ def create_app(service: ClinicalChatService | None = None, patient_context_store
             snapshot, updated_at = store.get(body.patient_id)
             if service is None:
                 raise ClinicalChatProviderUnavailableError()
-            answer = service.answer_prepared_snapshot(patient_id=body.patient_id, question=body.question, snapshot=snapshot)
+            answer = service.answer_prepared_snapshot(
+                patient_id=body.patient_id,
+                question=body.question,
+                reference_record=body.reference_record,
+                snapshot=snapshot,
+            )
         except PatientContextNotReadyError:
             logger.warning("api_clinical_chat_failed request_id=%s code=PATIENT_CONTEXT_NOT_READY", request.state.request_id)
             return _error(404, "PATIENT_CONTEXT_NOT_READY", "환자 EMR 준비가 필요합니다.")
@@ -209,11 +236,67 @@ def create_app(service: ClinicalChatService | None = None, patient_context_store
             return _error(502, "AI_PROVIDER_UNAVAILABLE", "AI 답변을 준비할 수 없습니다.")
         return ClinicalChatResponseBody(answer=answer, emr_updated_at=updated_at)
 
+    @app.post(
+        "/internal/v1/clinical-chat/stream",
+        response_model=None,
+        responses={400: {"model": ErrorBody}, 404: {"model": ErrorBody}, 502: {"model": ErrorBody}},
+        tags=["internal"],
+    )
+    def clinical_chat_stream(body: ClinicalChatRequestBody, request: Request) -> StreamingResponse | JSONResponse:
+        """Return the same clinical answer as SSE without exposing provider events."""
+        try:
+            snapshot, updated_at = store.get(body.patient_id)
+            if service is None or not hasattr(service, "stream_prepared_snapshot"):
+                raise ClinicalChatProviderUnavailableError()
+            deltas = service.stream_prepared_snapshot(
+                patient_id=body.patient_id,
+                question=body.question,
+                reference_record=body.reference_record,
+                snapshot=snapshot,
+            )
+            # Prime the provider before committing HTTP 200.  A connection or
+            # first-token failure can therefore still use the normal JSON 502.
+            first_delta = next(deltas)
+        except PatientContextNotReadyError:
+            logger.warning("api_clinical_chat_stream_failed request_id=%s code=PATIENT_CONTEXT_NOT_READY", request.state.request_id)
+            return _error(404, "PATIENT_CONTEXT_NOT_READY", "환자 EMR 준비가 필요합니다.")
+        except (ClinicalChatProviderUnavailableError, StopIteration):
+            logger.warning("api_clinical_chat_stream_failed request_id=%s code=AI_PROVIDER_UNAVAILABLE", request.state.request_id)
+            return _error(502, "AI_PROVIDER_UNAVAILABLE", "AI 답변을 준비할 수 없습니다.")
+
+        def events() -> Iterator[str]:
+            yield _sse("meta", {"source": "EMR 데이터베이스", "emr_updated_at": updated_at.isoformat()})
+            yield _sse("delta", {"text": first_delta})
+            try:
+                for delta in deltas:
+                    yield _sse("delta", {"text": delta})
+            except ClinicalChatProviderUnavailableError:
+                # HTTP status is already 200 after the first event.  Do not
+                # disclose provider details, prompts, or EMR in an SSE error.
+                yield _sse("error", {"code": "AI_PROVIDER_UNAVAILABLE", "message": "AI 답변을 준비하는 중 연결이 종료되었습니다."})
+            else:
+                yield _sse("done", {})
+            finally:
+                close = getattr(deltas, "close", None)
+                if callable(close):
+                    close()
+
+        return StreamingResponse(
+            events(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
     return app
 
 
 def _error(status_code: int, code: str, message: str) -> JSONResponse:
     return JSONResponse(status_code=status_code, content=ErrorBody(code=code, message=message).model_dump())
+
+
+def _sse(event: str, data: Mapping[str, object]) -> str:
+    """Serialize a single trusted SSE event without leaking provider payloads."""
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False, separators=(',', ':'))}\n\n"
 
 
 def _safe_context_failure(error: PatientContextUnavailableError) -> str:

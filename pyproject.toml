@@ -17,6 +17,7 @@ dev = [
 
 [project.scripts]
 ax-g-ai = "ax_g_ai:main"
+ax-g-ai-reference-db = "ax_g_ai.reference_data:main"
 
 [build-system]
 requires = ["uv_build>=0.12.13,<0.13.0"]

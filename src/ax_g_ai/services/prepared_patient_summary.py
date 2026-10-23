@@ -85,14 +85,17 @@ PATIENT_SUMMARY_OUTPUT_SCHEMA: dict[str, object] = {
                 "additionalProperties": False,
                 "properties": {
                     "label": {"type": "string", "description": "예: 최근 혈압, 최근 검사, 복용 약물"},
-                    "content": {"type": "string", "description": "해당 항목의 간결한 한국어 내용"},
+                    "content": {
+                        "type": "string",
+                        "description": "해당 항목의 사실을 자연스럽게 연결한 읽기 쉬운 완결 한국어 문장. 단순 나열이나 데이터 부재 안내는 넣지 않는다.",
+                    },
                 },
                 "required": ["label", "content"],
             },
         },
         "guidance": {
             "type": "string",
-            "description": "의료진 판단 보조 및 후속 확인을 안내하는 한두 문장",
+            "description": "현재 EMR 요약에 대한 간결한 후속 확인 또는 사용 안내 한두 문장. AI 생성·의료진 검토 필요 등의 일반 경고 문구는 넣지 않는다.",
         },
     },
     "required": ["message", "sections", "guidance"],

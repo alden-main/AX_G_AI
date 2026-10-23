@@ -16,7 +16,8 @@ from ax_g_ai.api import (
     PatientContextUnavailableError,
     create_app,
 )
-from ax_g_ai.config import ConfigurationError, OpenAISettings
+from ax_g_ai.config import ConfigurationError, OpenAISettings, reference_data_database_path
+from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
 from ax_g_ai.services.audit import InMemoryAuditSink
 from ax_g_ai.services.clinical_chat import (
     ClinicalChatProviderUnavailableError,
@@ -76,20 +77,22 @@ class _NoopSessionState:
         return None
 
 
-def _chat_service(settings: OpenAISettings) -> ClinicalChatService:
+def _services(settings: OpenAISettings) -> ClinicalChatService:
     """신규 경로는 provider 호출만 사용하지만 기존 서비스 경계를 재사용한다."""
     today = date.today()
     version = ChatVersion("openai", settings.model, "bridge-v1", "not-used")
     audit = InMemoryAuditSink()
     guard = ContextGuard(_AllowAllAuthorizer(), _NoopSessionState(), audit)
-    return ClinicalChatService(
+    openai = OpenAIResponsesClient(UrllibHttpTransport(), settings.api_key, settings.model, settings.timeout_seconds)
+    clinical = ClinicalChatService(
         guard,
         ApprovedKnowledgeStore((KnowledgeDocument("placeholder", "placeholder", "v1", today, "", True, today, None),)),
-        OpenAIResponsesClient(UrllibHttpTransport(), settings.api_key, settings.model, settings.timeout_seconds),
+        openai,
         audit,
         EvaluationGate((EvaluationRecord(version, "runtime", today, "runtime", True, "runtime"),)),
         version,
     )
+    return clinical
 
 
 def create_runtime_app():
@@ -98,5 +101,11 @@ def create_runtime_app():
         ai_settings = OpenAISettings.from_environment()
     except ConfigurationError:
         return create_app()
-    service = _chat_service(ai_settings)
-    return create_app(service, PatientContextStore(service))
+    service = _services(ai_settings)
+    try:
+        database_path = reference_data_database_path()
+    except ConfigurationError:
+        return create_app()
+    lookup = None if database_path is None else SqliteReferenceLookup(database_path)
+    mapper = RawEmrPayloadMapper(lookup)
+    return create_app(service, PatientContextStore(service, mapper))

@@ -5,6 +5,7 @@ import unittest
 
 from ax_g_ai.adapters.openai import (
     HttpResponse,
+    HttpStreamResponse,
     OpenAIProviderError,
     OpenAIRequest,
     OpenAIResponsesClient,
@@ -19,6 +20,16 @@ class RecordingTransport:
     def post(self, url: str, headers: dict[str, str], body: bytes, timeout_seconds: float) -> HttpResponse:
         self.calls.append((url, headers, body, timeout_seconds))
         return self.response
+
+
+class StreamingTransport(RecordingTransport):
+    def __init__(self, response: HttpStreamResponse) -> None:
+        self.stream_response = response
+        self.calls: list[tuple[str, dict[str, str], bytes, float]] = []
+
+    def post_stream(self, url: str, headers: dict[str, str], body: bytes, timeout_seconds: float) -> HttpStreamResponse:
+        self.calls.append((url, headers, body, timeout_seconds))
+        return self.stream_response
 
 
 class OpenAIResponsesClientTest(unittest.TestCase):
@@ -77,6 +88,22 @@ class OpenAIResponsesClientTest(unittest.TestCase):
         )
         with self.assertRaises(OpenAIProviderError):
             client.respond(OpenAIRequest("instructions", "input"))
+
+    def test_streams_only_output_text_deltas(self) -> None:
+        transport = StreamingTransport(HttpStreamResponse(
+            200,
+            "text/event-stream; charset=utf-8",
+            iter((
+                b"event: response.created\n", b'data: {"type":"response.created"}\n', b"\n",
+                b'data: {"type":"response.output_text.delta","delta":"\xec\xa0\x95\xec\x83\x81 "}\n', b"\n",
+                b'data: {"type":"response.output_text.delta","delta":"\xec\x9d\x91\xeb\x8b\xb5"}\n', b"\n",
+                b'data: {"type":"response.completed"}\n', b"\n",
+            )),
+        ))
+        client = OpenAIResponsesClient(transport, "secret", "gpt-5-mini", 5)
+
+        self.assertEqual(list(client.stream(OpenAIRequest("instructions", "input"))), ["정상 ", "응답"])
+        self.assertTrue(json.loads(transport.calls[0][2])["stream"])
 
 
 if __name__ == "__main__":

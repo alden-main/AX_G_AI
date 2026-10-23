@@ -9,6 +9,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
+    AX_G_REFERENCE_DATA_DB_PATH=/app/data/reference_data.sqlite \
     PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
@@ -25,6 +26,8 @@ COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --locked --no-dev --no-install-project
 
 COPY src ./src
+COPY data ./data
+RUN test -s data/reference_data.sqlite
 RUN uv sync --locked --no-dev
 
 # The ASGI server exposes /health, /docs, and the Bridge internal API routes.

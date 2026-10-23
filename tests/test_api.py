@@ -36,11 +36,24 @@ class Service:
     def __init__(self) -> None:
         self.called = False
         self.question = ""
+        self.reference_record: str | None = None
 
-    def answer_prepared_snapshot(self, *, patient_id: str, question: str, snapshot: object) -> str:
+    def answer_prepared_snapshot(
+        self, *, patient_id: str, question: str, snapshot: object, reference_record: str | None = None
+    ) -> str:
         self.called = True
         self.question = question
+        self.reference_record = reference_record
         return "최근 혈당 추이를 확인하세요."
+
+    def stream_prepared_snapshot(
+        self, *, patient_id: str, question: str, snapshot: object, reference_record: str | None = None
+    ):
+        self.called = True
+        self.question = question
+        self.reference_record = reference_record
+        yield "최근 혈당 "
+        yield "추이를 확인하세요."
 
 
 def emr_payload(patient_id: str = "pid-4356") -> dict[str, object]:
@@ -67,6 +80,26 @@ class ClinicalChatApiTest(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["code"], "PATIENT_CONTEXT_NOT_READY")
         self.assertFalse(self.service.called)
+
+    def test_stream_chat_emits_normalized_sse_events(self) -> None:
+        self.client.post("/internal/v1/patient-context", json={"patient_id": "pid-4356", "emr_payload": emr_payload()})
+
+        response = self.client.post("/internal/v1/clinical-chat/stream", json={"patient_id": "pid-4356", "question": "복약지도 가이드를 생성해줘"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.headers["content-type"].startswith("text/event-stream"))
+        self.assertEqual(response.headers["x-accel-buffering"], "no")
+        self.assertEqual(response.text, (
+            'event: meta\ndata: {"source":"EMR 데이터베이스","emr_updated_at":"2026-09-22T10:30:00+09:00"}\n\n'
+            'event: delta\ndata: {"text":"최근 혈당 "}\n\n'
+            'event: delta\ndata: {"text":"추이를 확인하세요."}\n\n'
+            'event: done\ndata: {}\n\n'
+        ))
+
+    def test_stream_chat_before_prepare_returns_json_not_ready(self) -> None:
+        response = self.client.post("/internal/v1/clinical-chat/stream", json={"patient_id": "pid-4356", "question": "질문"})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["code"], "PATIENT_CONTEXT_NOT_READY")
 
     def test_unauthenticated_internal_network_request_and_invalid_request(self) -> None:
         response = self.client.post("/internal/v1/patient-context", json={"patient_id": "pid-4356", "emr_payload": emr_payload()})
@@ -110,6 +143,31 @@ class ClinicalChatApiTest(unittest.TestCase):
                 for line in logs.output
             )
         )
+
+    def test_soap_summary_uses_the_existing_clinical_chat_endpoint(self) -> None:
+        self.client.post("/internal/v1/patient-context", json={"patient_id": "pid-4356", "emr_payload": emr_payload()})
+        response = self.client.post("/internal/v1/clinical-chat", json={
+            "patient_id": "pid-4356",
+            "question": "현재 EMR을 SOAP로 요약해줘",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["answer"], "최근 혈당 추이를 확인하세요.")
+        self.assertEqual(self.service.question, "현재 EMR을 SOAP로 요약해줘")
+
+    def test_chat_passes_a_request_only_reference_record_without_storing_it(self) -> None:
+        self.client.post("/internal/v1/patient-context", json={"patient_id": "pid-4356", "emr_payload": emr_payload()})
+        response = self.client.post("/internal/v1/clinical-chat", json={
+            "patient_id": "pid-4356",
+            "question": "이전 SOAP를 참고해 SOAP 초안을 작성해줘",
+            "reference_record": "S: 야간 기침 지속\nO: 체온 37.2℃\nA: 경과 관찰\nP: 활력징후 재확인",
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.service.reference_record, "S: 야간 기침 지속\nO: 체온 37.2℃\nA: 경과 관찰\nP: 활력징후 재확인")
+
+    def test_the_separate_soap_draft_endpoint_is_not_exposed(self) -> None:
+        response = self.client.post("/internal/v1/soap-drafts", json={})
+        self.assertEqual(response.status_code, 404)
 
 
 if __name__ == "__main__":

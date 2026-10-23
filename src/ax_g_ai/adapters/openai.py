@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+from collections.abc import Iterator
 from typing import Mapping, Protocol
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
@@ -25,6 +26,7 @@ class OpenAIRequest:
     instructions: str
     input: str
     output_schema: Mapping[str, object] | None = None
+    output_schema_name: str = "patient_context_summary"
 
 
 @dataclass(frozen=True)
@@ -41,8 +43,21 @@ class HttpResponse:
     body: bytes
 
 
+@dataclass(frozen=True)
+class HttpStreamResponse:
+    """An HTTP response whose body is read incrementally."""
+
+    status_code: int
+    content_type: str | None
+    lines: Iterator[bytes]
+
+
 class HttpTransport(Protocol):
     def post(self, url: str, headers: dict[str, str], body: bytes, timeout_seconds: float) -> HttpResponse: ...
+
+    def post_stream(
+        self, url: str, headers: dict[str, str], body: bytes, timeout_seconds: float
+    ) -> HttpStreamResponse: ...
 
 
 class UrllibHttpTransport:
@@ -55,6 +70,22 @@ class UrllibHttpTransport:
                 return HttpResponse(response.status, response.headers.get("Content-Type"), response.read())
         except HTTPError as error:
             return HttpResponse(error.code, error.headers.get("Content-Type"), error.read())
+
+    def post_stream(
+        self, url: str, headers: dict[str, str], body: bytes, timeout_seconds: float
+    ) -> HttpStreamResponse:
+        request = Request(url, data=body, headers=headers, method="POST")
+        try:
+            response = urlopen(request, timeout=timeout_seconds)
+        except HTTPError as error:
+            response = error
+
+        def read_lines() -> Iterator[bytes]:
+            with response:
+                while line := response.readline():
+                    yield line
+
+        return HttpStreamResponse(response.status, response.headers.get("Content-Type"), read_lines())
 
 
 class OpenAIResponsesClient:
@@ -95,7 +126,7 @@ class OpenAIResponsesClient:
             payload["text"] = {
                 "format": {
                     "type": "json_schema",
-                    "name": "patient_context_summary",
+                    "name": request.output_schema_name,
                     "strict": True,
                     "schema": request.output_schema,
                 }
@@ -115,6 +146,50 @@ class OpenAIResponsesClient:
         except Exception as error:
             raise OpenAIProviderError("OpenAI transport failed") from error
         return self._parse_response(response)
+
+    def stream(self, request: OpenAIRequest) -> Iterator[str]:
+        """Yield text deltas from an OpenAI Responses API SSE response.
+
+        Only ``response.output_text.delta`` is exposed to callers.  Provider
+        event names and response IDs intentionally remain an adapter concern.
+        """
+        body = self._request_body(request, stream=True)
+        try:
+            response = self._transport.post_stream(
+                self._endpoint,
+                {"Content-Type": "application/json", "Authorization": f"Bearer {self._api_key}"},
+                body,
+                self._timeout_seconds,
+            )
+        except Exception as error:
+            raise OpenAIProviderError("OpenAI transport failed") from error
+        if not 200 <= response.status_code < 300:
+            raise OpenAIProviderError(f"OpenAI returned a non-success status (status={response.status_code})")
+        if not response.content_type or not response.content_type.lower().startswith("text/event-stream"):
+            raise OpenAIProviderError("OpenAI returned an unexpected streaming content type")
+        return self._parse_stream(response.lines)
+
+    def _request_body(self, request: OpenAIRequest, *, stream: bool = False) -> bytes:
+        if not request.instructions.strip() or not request.input.strip():
+            raise OpenAIProviderError("OpenAI request requires instructions and input")
+        payload: dict[str, object] = {
+            "model": self._model,
+            "instructions": request.instructions,
+            "input": request.input,
+            "store": False,
+        }
+        if stream:
+            payload["stream"] = True
+        if request.output_schema is not None:
+            payload["text"] = {
+                "format": {
+                    "type": "json_schema",
+                    "name": request.output_schema_name,
+                    "strict": True,
+                    "schema": request.output_schema,
+                }
+            }
+        return json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
     @staticmethod
     def _parse_response(response: HttpResponse) -> ProviderAnswer:
@@ -142,3 +217,62 @@ class OpenAIResponsesClient:
         if not answer:
             raise OpenAIProviderError("OpenAI returned an empty or invalid answer")
         return ProviderAnswer(answer)
+
+    @staticmethod
+    def _parse_stream(lines: Iterator[bytes]) -> Iterator[str]:
+        """Parse OpenAI SSE frames and yield only safe output-text deltas."""
+        data_lines: list[str] = []
+        completed = False
+        yielded_text = False
+
+        def event_data() -> dict[str, object] | None:
+            if not data_lines:
+                return None
+            raw = "\n".join(data_lines)
+            data_lines.clear()
+            if raw == "[DONE]":
+                return {"type": "response.completed"}
+            try:
+                value = json.loads(raw)
+            except json.JSONDecodeError as error:
+                raise OpenAIProviderError("OpenAI returned invalid streaming JSON") from error
+            if not isinstance(value, dict):
+                raise OpenAIProviderError("OpenAI returned an invalid streaming event")
+            return value
+
+        try:
+            for raw_line in lines:
+                try:
+                    line = raw_line.decode("utf-8").rstrip("\r\n")
+                except UnicodeDecodeError as error:
+                    raise OpenAIProviderError("OpenAI returned invalid streaming bytes") from error
+                if not line:
+                    payload = event_data()
+                    if payload is None:
+                        continue
+                    event_type = payload.get("type")
+                    if event_type == "response.output_text.delta":
+                        delta = payload.get("delta")
+                        if not isinstance(delta, str):
+                            raise OpenAIProviderError("OpenAI returned an invalid text delta")
+                        if delta:
+                            yielded_text = True
+                            yield delta
+                    elif event_type == "response.completed":
+                        completed = True
+                        break
+                    elif event_type in {"error", "response.failed", "response.incomplete"}:
+                        raise OpenAIProviderError("OpenAI streaming response failed")
+                elif line.startswith("data:"):
+                    data_lines.append(line[5:].lstrip())
+            # A provider is allowed to omit the final blank line before close.
+            if not completed and data_lines:
+                payload = event_data()
+                if payload and payload.get("type") == "response.completed":
+                    completed = True
+        except OpenAIProviderError:
+            raise
+        except Exception as error:
+            raise OpenAIProviderError("OpenAI streaming transport failed") from error
+        if not completed or not yielded_text:
+            raise OpenAIProviderError("OpenAI returned an incomplete or empty streaming answer")
