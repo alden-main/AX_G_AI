@@ -6,6 +6,8 @@ from unittest import TestCase
 
 from ax_g_ai.adapters.openai import HttpResponse, OpenAIResponsesClient
 from ax_g_ai.services.soap_draft import PreviousSoap, SoapDraftRequest, SoapDraftService, compose_soap_draft_input
+from ax_g_ai.prompts.clinical import CLINICAL_REFERENCE_RULES
+from ax_g_ai.prompts.soap_draft import SOAP_DRAFT_INSTRUCTIONS
 
 
 class Transport:
@@ -25,6 +27,12 @@ class Transport:
 
 
 class SoapDraftServiceTest(TestCase):
+    def test_uses_the_shared_clinical_reference_rules_without_generic_disclaimers(self) -> None:
+        self.assertIn(CLINICAL_REFERENCE_RULES, SOAP_DRAFT_INSTRUCTIONS)
+        self.assertIn("근거가 있는 내용만 작성", SOAP_DRAFT_INSTRUCTIONS)
+        self.assertNotIn("제공된 자료에서 확인되지 않음", SOAP_DRAFT_INSTRUCTIONS)
+        self.assertNotIn("최종 서명", SOAP_DRAFT_INSTRUCTIONS)
+
     def test_generates_structured_draft_with_only_allowed_snapshot_fields(self) -> None:
         transport = Transport()
         service = SoapDraftService(OpenAIResponsesClient(transport, "secret", "model", 5))
