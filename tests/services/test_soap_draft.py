@@ -6,8 +6,7 @@ from unittest import TestCase
 
 from ax_g_ai.adapters.openai import HttpResponse, OpenAIResponsesClient
 from ax_g_ai.services.soap_draft import PreviousSoap, SoapDraftRequest, SoapDraftService, compose_soap_draft_input
-from ax_g_ai.prompts.clinical import CLINICAL_REFERENCE_RULES
-from ax_g_ai.prompts.soap_draft import SOAP_DRAFT_INSTRUCTIONS
+from ax_g_ai.prompts.clinical import CLINICAL_REFERENCE_RULES, SOAP_DRAFT_INSTRUCTIONS
 
 
 class Transport:

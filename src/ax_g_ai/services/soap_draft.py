@@ -15,7 +15,7 @@ from typing import Any, Literal, Mapping
 
 from ax_g_ai.adapters.openai import OpenAIProviderError, OpenAIRequest, OpenAIResponsesClient
 from ax_g_ai.services.clinical_calculations import CalculationResult
-from ax_g_ai.prompts.soap_draft import SOAP_DRAFT_INSTRUCTIONS
+from ax_g_ai.prompts.clinical import SOAP_DRAFT_INSTRUCTIONS
 
 
 logger = logging.getLogger("uvicorn.error")
