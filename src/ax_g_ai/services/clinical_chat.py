@@ -13,6 +13,7 @@ from ax_g_ai.domain.patient_context import PatientContext
 from ax_g_ai.services.access_policy import AccessDeniedError, ContextGuard, VerifiedContext
 from ax_g_ai.services.audit import AuditEventType, AuditSink, audit_event
 from ax_g_ai.services.evaluation import ChatVersion, EvaluationGate
+from ax_g_ai.services.deidentified_snapshot import deidentified_snapshot
 from ax_g_ai.services.knowledge import ApprovedKnowledgeStore, KnowledgeDocument
 from ax_g_ai.services.patient_context_summary import (
     PatientContextSummaryBuilder,
@@ -268,47 +269,4 @@ def compose_prepared_snapshot_question(
     question: str, snapshot: Mapping[str, Any], reference_record: str | None = None
 ) -> str:
     """비식별 경계 후 별도 템플릿으로 준비 문맥 프롬프트를 조립한다."""
-    return _compose_prepared_snapshot_question(question, _deidentified_snapshot(snapshot), reference_record)
-
-
-_IDENTIFIER_KEYS = frozenset({
-    "patient", "patientid", "name", "firstname", "lastname", "fullname", "birthdate",
-    "dateofbirth", "phone", "mobile", "email", "address", "zipcode", "ssn", "rrn",
-    "nationalid", "medicalrecordnumber", "mrn", "encounterid", "visitid", "recordid",
-    "documentid", "providerid", "doctorid", "userid",
-})
-
-
-def _deidentified_snapshot(snapshot: Mapping[str, Any]) -> dict[str, object]:
-    """Keep every supported clinical field while applying a final identifier filter."""
-    return {
-        key: value
-        for key, raw_value in snapshot.items()
-        if not _is_identifier_key(key)
-        and (value := _deidentify_value(raw_value)) is not None
-    }
-
-
-def _deidentify_value(value: object) -> object | None:
-    if value is None:
-        return None
-    if isinstance(value, (str, int, float, bool)):
-        return value
-    if isinstance(value, Mapping):
-        result = {
-            key: safe_value
-            for key, raw_value in value.items()
-            if isinstance(key, str)
-            and not _is_identifier_key(key)
-            and (safe_value := _deidentify_value(raw_value)) is not None
-        }
-        return result or None
-    if isinstance(value, list):
-        result = [safe_value for item in value if (safe_value := _deidentify_value(item)) is not None]
-        return result or None
-    return None
-
-
-def _is_identifier_key(key: str) -> bool:
-    normalized = "".join(character for character in key.casefold() if character.isalnum())
-    return normalized in _IDENTIFIER_KEYS or normalized.endswith("identifier")
+    return _compose_prepared_snapshot_question(question, deidentified_snapshot(snapshot), reference_record)

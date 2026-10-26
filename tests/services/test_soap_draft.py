@@ -32,17 +32,22 @@ class SoapDraftServiceTest(TestCase):
         self.assertNotIn("제공된 자료에서 확인되지 않음", SOAP_DRAFT_INSTRUCTIONS)
         self.assertNotIn("최종 서명", SOAP_DRAFT_INSTRUCTIONS)
 
-    def test_generates_structured_draft_with_only_allowed_snapshot_fields(self) -> None:
+    def test_generates_structured_draft_with_all_deidentified_snapshot_fields(self) -> None:
         transport = Transport()
         service = SoapDraftService(OpenAIResponsesClient(transport, "secret", "model", 5))
         draft = service.draft(
             request=SoapDraftRequest("patient-1", "admission_initial", date(2026, 9, 23), admission_record="입원 기록"),
-            snapshot={"blood_sugar": [{"value": 120, "measured_at": "2026-09-23", "patient_name": "제외"}], "patient": {"name": "제외"}},
+            snapshot={
+                "blood_sugar": [{"value": 120, "measured_at": "2026-09-23", "patient_name": "제외"}],
+                "additional_clinical_data": {"allergies": [{"substance": "페니실린", "reaction": "발진"}]},
+                "patient": {"name": "제외"},
+            },
         )
         self.assertEqual(draft.assessment, "A")
         assert transport.request is not None
         self.assertEqual(transport.request["text"]["format"]["name"], "soap_inpatient_draft")  # type: ignore[index]
         self.assertNotIn("제외", str(transport.request))
+        self.assertIn("페니실린", str(transport.request))
 
     def test_next_day_input_contains_structured_previous_soap(self) -> None:
         rendered = compose_soap_draft_input(
