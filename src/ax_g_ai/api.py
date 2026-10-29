@@ -6,7 +6,7 @@ from datetime import datetime
 import logging
 from time import perf_counter
 import json
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from typing import Mapping, Protocol
 from uuid import uuid4
 
@@ -41,6 +41,12 @@ class PatientContextStore(Protocol):
         self, patient_id: str, emr_payload: Mapping[str, object]
     ) -> tuple[PreparedPatientSummary, datetime]: ...
     def get(self, patient_id: str) -> tuple[Mapping[str, object], datetime]: ...
+    def summarize_once(self, patient_id: str, emr_payload: Mapping[str, object]) -> tuple[str, datetime]: ...
+    def prepare_without_summary(
+        self, patient_id: str, emr_payload: Mapping[str, object]
+    ) -> tuple[Mapping[str, object], datetime]: ...
+    def discard(self, patient_id: str) -> None: ...
+    def map_once(self, patient_id: str, emr_payload: Mapping[str, object]) -> tuple[Mapping[str, object], datetime]: ...
 
 
 class ClinicalChatStreamProvider(Protocol):
@@ -57,6 +63,20 @@ class UnconfiguredPatientContextStore:
 
     def get(self, patient_id: str) -> tuple[Mapping[str, object], datetime]:
         raise PatientContextNotReadyError()
+
+    def summarize_once(self, patient_id: str, emr_payload: Mapping[str, object]) -> tuple[str, datetime]:
+        raise PatientContextUnavailableError()
+
+    def prepare_without_summary(
+        self, patient_id: str, emr_payload: Mapping[str, object]
+    ) -> tuple[Mapping[str, object], datetime]:
+        raise PatientContextUnavailableError()
+
+    def discard(self, patient_id: str) -> None:
+        return None
+
+    def map_once(self, patient_id: str, emr_payload: Mapping[str, object]) -> tuple[Mapping[str, object], datetime]:
+        raise PatientContextUnavailableError()
 
 
 class PatientIdBody(BaseModel):
@@ -216,6 +236,22 @@ def create_app(
             return _error(502, "AI_PROVIDER_UNAVAILABLE", "AI 답변을 준비할 수 없습니다.")
         return PatientContextReadyBody(patient_id=body.patient_id, patient_summary=summary.as_dict(), emr_updated_at=updated_at)
 
+    @app.post("/internal/v1/emr-summary", response_model=ClinicalChatResponseBody, responses={400: {"model": ErrorBody}, 403: {"model": ErrorBody}, 502: {"model": ErrorBody}}, tags=["internal"])
+    def emr_summary(body: PatientContextRequestBody, request: Request) -> ClinicalChatResponseBody | JSONResponse:
+        """Bridge가 전달한 EMR을 저장 없이 한 번 요약한다."""
+        try:
+            answer, updated_at = store.summarize_once(body.patient_id, body.emr_payload)
+        except PatientMismatchError:
+            logger.warning("api_emr_summary_failed request_id=%s code=PATIENT_MISMATCH", request.state.request_id)
+            return _error(403, "PATIENT_MISMATCH", "환자 정보가 일치하지 않습니다.")
+        except PatientContextUnavailableError as error:
+            logger.warning("api_emr_summary_failed request_id=%s code=EMR_UNAVAILABLE failure=%s", request.state.request_id, _safe_context_failure(error))
+            return _error(502, "EMR_UNAVAILABLE", "환자 EMR 정보를 준비할 수 없습니다.")
+        except ClinicalChatProviderUnavailableError:
+            logger.warning("api_emr_summary_failed request_id=%s code=AI_PROVIDER_UNAVAILABLE", request.state.request_id)
+            return _error(502, "AI_PROVIDER_UNAVAILABLE", "AI 답변을 준비할 수 없습니다.")
+        return ClinicalChatResponseBody(answer=answer, emr_updated_at=updated_at)
+
     @app.post("/internal/v1/clinical-chat", response_model=ClinicalChatResponseBody, responses={400: {"model": ErrorBody}, 404: {"model": ErrorBody}, 502: {"model": ErrorBody}}, tags=["internal"])
     def clinical_chat(body: ClinicalChatRequestBody, request: Request) -> ClinicalChatResponseBody | JSONResponse:
         try:
@@ -236,58 +272,135 @@ def create_app(
             return _error(502, "AI_PROVIDER_UNAVAILABLE", "AI 답변을 준비할 수 없습니다.")
         return ClinicalChatResponseBody(answer=answer, emr_updated_at=updated_at)
 
-    @app.post(
-        "/internal/v1/clinical-chat/stream",
-        response_model=None,
-        responses={400: {"model": ErrorBody}, 404: {"model": ErrorBody}, 502: {"model": ErrorBody}},
-        tags=["internal"],
-    )
+    _stream_responses = {400: {"model": ErrorBody}, 403: {"model": ErrorBody}, 404: {"model": ErrorBody}, 502: {"model": ErrorBody}}
+
+    @app.post("/internal/v1/clinical-chat/stream", response_model=None, responses=_stream_responses, tags=["internal"])
     def clinical_chat_stream(body: ClinicalChatRequestBody, request: Request) -> StreamingResponse | JSONResponse:
         """Return the same clinical answer as SSE without exposing provider events."""
         try:
             snapshot, updated_at = store.get(body.patient_id)
+        except PatientContextNotReadyError:
+            logger.warning("api_clinical_chat_stream_failed request_id=%s code=PATIENT_CONTEXT_NOT_READY", request.state.request_id)
+            return _error(404, "PATIENT_CONTEXT_NOT_READY", "환자 EMR 준비가 필요합니다.")
+
+        def start() -> Iterator[str]:
             if service is None or not hasattr(service, "stream_prepared_snapshot"):
                 raise ClinicalChatProviderUnavailableError()
-            deltas = service.stream_prepared_snapshot(
+            return service.stream_prepared_snapshot(
                 patient_id=body.patient_id,
                 question=body.question,
                 reference_record=body.reference_record,
                 snapshot=snapshot,
             )
-            # Prime the provider before committing HTTP 200.  A connection or
-            # first-token failure can therefore still use the normal JSON 502.
-            first_delta = next(deltas)
-        except PatientContextNotReadyError:
-            logger.warning("api_clinical_chat_stream_failed request_id=%s code=PATIENT_CONTEXT_NOT_READY", request.state.request_id)
-            return _error(404, "PATIENT_CONTEXT_NOT_READY", "환자 EMR 준비가 필요합니다.")
-        except (ClinicalChatProviderUnavailableError, StopIteration):
-            logger.warning("api_clinical_chat_stream_failed request_id=%s code=AI_PROVIDER_UNAVAILABLE", request.state.request_id)
-            return _error(502, "AI_PROVIDER_UNAVAILABLE", "AI 답변을 준비할 수 없습니다.")
 
-        def events() -> Iterator[str]:
-            yield _sse("meta", {"source": "EMR 데이터베이스", "emr_updated_at": updated_at.isoformat()})
-            yield _sse("delta", {"text": first_delta})
-            try:
-                for delta in deltas:
-                    yield _sse("delta", {"text": delta})
-            except ClinicalChatProviderUnavailableError:
-                # HTTP status is already 200 after the first event.  Do not
-                # disclose provider details, prompts, or EMR in an SSE error.
-                yield _sse("error", {"code": "AI_PROVIDER_UNAVAILABLE", "message": "AI 답변을 준비하는 중 연결이 종료되었습니다."})
-            else:
-                yield _sse("done", {})
-            finally:
-                close = getattr(deltas, "close", None)
-                if callable(close):
-                    close()
+        return _stream(
+            request, "api_clinical_chat_stream_failed", start,
+            {"source": "EMR 데이터베이스", "emr_updated_at": updated_at.isoformat()},
+        )
 
-        return StreamingResponse(
-            events(),
-            media_type="text/event-stream",
-            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    @app.post("/internal/v1/patient-context/stream", response_model=None, responses=_stream_responses, tags=["internal"])
+    def prepare_patient_context_stream(body: PatientContextRequestBody, request: Request) -> StreamingResponse | JSONResponse:
+        """Prepare the EMR context at once and stream the initial summary as SSE.
+
+        Chat can use the context as soon as ``meta`` is sent.  A summary that
+        fails before ``done`` discards the context, as the JSON endpoint does.
+        """
+        try:
+            snapshot, updated_at = store.prepare_without_summary(body.patient_id, body.emr_payload)
+        except (PatientMismatchError, PatientContextUnavailableError) as error:
+            return _context_error(request, "api_patient_context_stream_failed", error)
+
+        def start() -> Iterator[str]:
+            if service is None or not hasattr(service, "stream_summary_once"):
+                raise ClinicalChatProviderUnavailableError()
+            return service.stream_summary_once(snapshot=snapshot)
+
+        return _stream(
+            request, "api_patient_context_stream_failed", start,
+            {"patient_id": body.patient_id, "status": "ready", "source": "EMR 데이터베이스", "emr_updated_at": updated_at.isoformat()},
+            on_failure=lambda: store.discard(body.patient_id),
+        )
+
+    @app.post("/internal/v1/emr-summary/stream", response_model=None, responses=_stream_responses, tags=["internal"])
+    def emr_summary_stream(body: PatientContextRequestBody, request: Request) -> StreamingResponse | JSONResponse:
+        """Stream a one-shot EMR summary without storing the chat context."""
+        try:
+            snapshot, updated_at = store.map_once(body.patient_id, body.emr_payload)
+        except (PatientMismatchError, PatientContextUnavailableError) as error:
+            return _context_error(request, "api_emr_summary_stream_failed", error)
+
+        def start() -> Iterator[str]:
+            if service is None or not hasattr(service, "stream_summary_once"):
+                raise ClinicalChatProviderUnavailableError()
+            return service.stream_summary_once(snapshot=snapshot)
+
+        return _stream(
+            request, "api_emr_summary_stream_failed", start,
+            {"source": "EMR 데이터베이스", "emr_updated_at": updated_at.isoformat()},
         )
 
     return app
+
+
+def _stream(
+    request: Request,
+    log_event: str,
+    start: Callable[[], Iterator[str]],
+    meta: Mapping[str, object],
+    *,
+    on_failure: Callable[[], None] | None = None,
+) -> StreamingResponse | JSONResponse:
+    """Serve provider deltas as SSE ``meta``/``delta``/``done`` events.
+
+    The provider is primed before committing HTTP 200, so a connection or
+    first-token failure still returns the normal JSON 502.
+    """
+    try:
+        deltas = start()
+        first_delta = next(deltas)
+    except (ClinicalChatProviderUnavailableError, StopIteration):
+        if on_failure is not None:
+            on_failure()
+        logger.warning("%s request_id=%s code=AI_PROVIDER_UNAVAILABLE", log_event, request.state.request_id)
+        return _error(502, "AI_PROVIDER_UNAVAILABLE", "AI 답변을 준비할 수 없습니다.")
+
+    def events() -> Iterator[str]:
+        yield _sse("meta", meta)
+        yield _sse("delta", {"text": first_delta})
+        try:
+            for delta in deltas:
+                yield _sse("delta", {"text": delta})
+        except ClinicalChatProviderUnavailableError:
+            # HTTP status is already 200 after the first event.  Do not
+            # disclose provider details, prompts, or EMR in an SSE error.
+            if on_failure is not None:
+                on_failure()
+            logger.warning("%s request_id=%s code=AI_PROVIDER_UNAVAILABLE stage=streaming", log_event, request.state.request_id)
+            yield _sse("error", {"code": "AI_PROVIDER_UNAVAILABLE", "message": "AI 답변을 준비하는 중 연결이 종료되었습니다."})
+        else:
+            yield _sse("done", {})
+        finally:
+            close = getattr(deltas, "close", None)
+            if callable(close):
+                close()
+
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+def _context_error(request: Request, log_event: str, error: Exception) -> JSONResponse:
+    if isinstance(error, PatientMismatchError):
+        logger.warning("%s request_id=%s code=PATIENT_MISMATCH", log_event, request.state.request_id)
+        return _error(403, "PATIENT_MISMATCH", "환자 정보가 일치하지 않습니다.")
+    assert isinstance(error, PatientContextUnavailableError)
+    logger.warning(
+        "%s request_id=%s code=EMR_UNAVAILABLE failure=%s",
+        log_event, request.state.request_id, _safe_context_failure(error),
+    )
+    return _error(502, "EMR_UNAVAILABLE", "환자 EMR 정보를 준비할 수 없습니다.")
 
 
 def _error(status_code: int, code: str, message: str) -> JSONResponse:

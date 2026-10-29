@@ -49,6 +49,22 @@ class PatientContextStoreTest(TestCase):
         with self.assertRaises(PatientContextNotReadyError):
             self.store.get("patient-1")
 
+    def test_prepare_without_summary_is_immediately_available_until_discarded(self) -> None:
+        snapshot, updated_at = self.store.prepare_without_summary("patient-1", raw_payload())
+
+        self.assertEqual(self.store.get("patient-1"), (snapshot, updated_at))
+        self.assertIsNone(self.service.received)
+        self.store.discard("patient-1")
+        with self.assertRaises(PatientContextNotReadyError):
+            self.store.get("patient-1")
+
+    def test_map_once_does_not_store_context(self) -> None:
+        snapshot, _updated_at = self.store.map_once("patient-1", raw_payload())
+
+        self.assertIn("blood_sugar", snapshot)
+        with self.assertRaises(PatientContextNotReadyError):
+            self.store.get("patient-1")
+
     def test_invalid_or_cross_patient_snapshot_is_not_prepared(self) -> None:
         with self.assertRaises(PatientContextUnavailableError):
             self.store.prepare("patient-1", {"success": False})

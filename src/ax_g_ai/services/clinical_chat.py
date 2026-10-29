@@ -8,7 +8,7 @@ import logging
 from collections.abc import Iterator
 from typing import Any, Mapping
 
-from ax_g_ai.adapters.openai import OpenAIProviderError, OpenAIRequest, OpenAIResponsesClient
+from ax_g_ai.adapters.openai import OpenAIProviderError, OpenAIRequest, ProviderClient
 from ax_g_ai.domain.patient_context import PatientContext
 from ax_g_ai.services.access_policy import AccessDeniedError, ContextGuard, VerifiedContext
 from ax_g_ai.services.audit import AuditEventType, AuditSink, audit_event
@@ -26,6 +26,7 @@ from ax_g_ai.services.prepared_patient_summary import (
 from ax_g_ai.prompts.clinical import (
     CLINICAL_INSTRUCTIONS,
     INITIAL_PATIENT_SUMMARY_REQUEST,
+    ONE_SHOT_PATIENT_SUMMARY_REQUEST,
     compose_prepared_snapshot_question as _compose_prepared_snapshot_question,
 )
 
@@ -89,7 +90,7 @@ class ClinicalChatService:
         self,
         guard: ContextGuard,
         knowledge_store: ApprovedKnowledgeStore,
-        openai: OpenAIResponsesClient,
+        openai: ProviderClient,
         audit_sink: AuditSink,
         evaluation_gate: EvaluationGate,
         version: ChatVersion,
@@ -220,6 +221,37 @@ class ClinicalChatService:
             return PreparedPatientSummary.from_provider_text(response.answer)
         except OpenAIProviderError as error:
             self._log_provider_failure("patient_context_summary_schema", error)
+            raise ClinicalChatProviderUnavailableError("patient summary is unavailable") from error
+
+    def summarize_once(self, *, snapshot: Mapping[str, Any]) -> str:
+        """비식별 EMR에서 독립적인 간결 요약을 한 번 생성한다."""
+        try:
+            response = self._openai.respond(OpenAIRequest(
+                instructions=CLINICAL_INSTRUCTIONS,
+                input=compose_prepared_snapshot_question(ONE_SHOT_PATIENT_SUMMARY_REQUEST, snapshot),
+            ))
+            if not response.answer.strip():
+                raise OpenAIProviderError("OpenAI returned an empty patient summary")
+            return response.answer.strip()
+        except Exception as error:
+            self._log_provider_failure("one_shot_patient_summary", error)
+            raise ClinicalChatProviderUnavailableError("patient summary is unavailable") from error
+
+    def stream_summary_once(self, *, snapshot: Mapping[str, Any]) -> Iterator[str]:
+        """Yield the one-shot EMR summary as provider text becomes available.
+
+        Unlike ``summarize_prepared_snapshot`` this has no JSON schema, so the
+        first sentence can be shown before the whole summary is generated.
+        """
+        try:
+            yield from self._openai.stream(
+                OpenAIRequest(
+                    instructions=CLINICAL_INSTRUCTIONS,
+                    input=compose_prepared_snapshot_question(ONE_SHOT_PATIENT_SUMMARY_REQUEST, snapshot),
+                )
+            )
+        except Exception as error:
+            self._log_provider_failure("one_shot_patient_summary_stream", error)
             raise ClinicalChatProviderUnavailableError("patient summary is unavailable") from error
 
     @staticmethod

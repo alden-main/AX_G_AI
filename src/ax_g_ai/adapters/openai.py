@@ -1,18 +1,23 @@
-"""OpenAI Responses API의 비스트리밍 서버 측 Adapter.
+"""OpenAI Responses API의 서버 측 Adapter와 Provider 공통 경계.
 
 환자 문맥은 호출자가 만든 최소 비식별 프롬프트만 ``input``으로 전달한다. API Key와
 OpenAI의 원문 오류 응답은 이 모듈 밖으로 노출하지 않는다. Responses API의 기본 보관을
 피하기 위해 모든 요청에 ``store: false``를 명시한다.
+
+서비스 계층은 ``ProviderClient``의 ``respond``/``stream``만 사용한다. vLLM 등 OpenAI 호환
+Chat Completions 서버는 ``openai_compatible`` 모듈의 Client로 교체한다.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 import json
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from typing import Mapping, Protocol
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
+
+import httpx
 
 
 class OpenAIProviderError(RuntimeError):
@@ -45,11 +50,24 @@ class HttpResponse:
 
 @dataclass(frozen=True)
 class HttpStreamResponse:
-    """An HTTP response whose body is read incrementally."""
+    """An HTTP response whose body is read incrementally.
+
+    ``close`` releases the connection even when ``lines`` was never iterated,
+    for example after a non-success status.
+    """
 
     status_code: int
     content_type: str | None
     lines: Iterator[bytes]
+    close: Callable[[], None] | None = None
+
+
+class ProviderClient(Protocol):
+    """서비스 계층이 의존하는 AI Provider 호출 경계."""
+
+    def respond(self, request: OpenAIRequest) -> ProviderAnswer: ...
+
+    def stream(self, request: OpenAIRequest) -> Iterator[str]: ...
 
 
 class HttpTransport(Protocol):
@@ -85,7 +103,61 @@ class UrllibHttpTransport:
                 while line := response.readline():
                     yield line
 
-        return HttpStreamResponse(response.status, response.headers.get("Content-Type"), read_lines())
+        return HttpStreamResponse(
+            response.status, response.headers.get("Content-Type"), read_lines(), response.close
+        )
+
+
+class HttpxHttpTransport:
+    """Reuse pooled keep-alive connections across Provider calls.
+
+    ``urllib`` opens a new TCP/TLS connection for every request, which adds a
+    handshake before the first token.  One ``httpx.Client`` is thread-safe and
+    is shared by FastAPI's worker threads.
+    """
+
+    def __init__(self, max_connections: int = 64, transport: httpx.BaseTransport | None = None) -> None:
+        self._client = httpx.Client(
+            limits=httpx.Limits(max_connections=max_connections, max_keepalive_connections=max_connections),
+            transport=transport,
+        )
+
+    def post(self, url: str, headers: dict[str, str], body: bytes, timeout_seconds: float) -> HttpResponse:
+        response = self._client.post(url, headers=headers, content=body, timeout=timeout_seconds)
+        return HttpResponse(response.status_code, response.headers.get("Content-Type"), response.content)
+
+    def post_stream(
+        self, url: str, headers: dict[str, str], body: bytes, timeout_seconds: float
+    ) -> HttpStreamResponse:
+        request = self._client.build_request("POST", url, headers=headers, content=body, timeout=timeout_seconds)
+        response = self._client.send(request, stream=True)
+
+        def read_lines() -> Iterator[bytes]:
+            try:
+                for line in response.iter_lines():
+                    yield line.encode("utf-8")
+            finally:
+                response.close()
+
+        return HttpStreamResponse(
+            response.status_code, response.headers.get("Content-Type"), read_lines(), response.close
+        )
+
+
+def closing_lines(response: HttpStreamResponse, deltas: Iterator[str]) -> Iterator[str]:
+    """Release the provider connection when the caller stops or fails early."""
+    try:
+        yield from deltas
+    finally:
+        close_response(response)
+
+
+def close_response(response: HttpStreamResponse) -> None:
+    if response.close is not None:
+        try:
+            response.close()
+        except Exception:
+            pass
 
 
 class OpenAIResponsesClient:
@@ -98,6 +170,9 @@ class OpenAIResponsesClient:
         model: str,
         timeout_seconds: float,
         endpoint: str = "https://api.openai.com/v1/responses",
+        *,
+        reasoning_effort: str | None = None,
+        max_output_tokens: int | None = None,
     ) -> None:
         if not api_key.strip():
             raise ValueError("OpenAI API key is required")
@@ -112,30 +187,11 @@ class OpenAIResponsesClient:
         self._model = model
         self._endpoint = endpoint
         self._timeout_seconds = timeout_seconds
+        self._reasoning_effort = reasoning_effort
+        self._max_output_tokens = max_output_tokens
 
     def respond(self, request: OpenAIRequest) -> ProviderAnswer:
-        if not request.instructions.strip() or not request.input.strip():
-            raise OpenAIProviderError("OpenAI request requires instructions and input")
-        payload: dict[str, object] = {
-            "model": self._model,
-            "instructions": request.instructions,
-            "input": request.input,
-            "store": False,
-        }
-        if request.output_schema is not None:
-            payload["text"] = {
-                "format": {
-                    "type": "json_schema",
-                    "name": request.output_schema_name,
-                    "strict": True,
-                    "schema": request.output_schema,
-                }
-            }
-        body = json.dumps(
-            payload,
-            ensure_ascii=False,
-            separators=(",", ":"),
-        ).encode("utf-8")
+        body = self._request_body(request)
         try:
             response = self._transport.post(
                 self._endpoint,
@@ -164,10 +220,12 @@ class OpenAIResponsesClient:
         except Exception as error:
             raise OpenAIProviderError("OpenAI transport failed") from error
         if not 200 <= response.status_code < 300:
+            close_response(response)
             raise OpenAIProviderError(f"OpenAI returned a non-success status (status={response.status_code})")
         if not response.content_type or not response.content_type.lower().startswith("text/event-stream"):
+            close_response(response)
             raise OpenAIProviderError("OpenAI returned an unexpected streaming content type")
-        return self._parse_stream(response.lines)
+        return closing_lines(response, self._parse_stream(response.lines))
 
     def _request_body(self, request: OpenAIRequest, *, stream: bool = False) -> bytes:
         if not request.instructions.strip() or not request.input.strip():
@@ -180,6 +238,12 @@ class OpenAIResponsesClient:
         }
         if stream:
             payload["stream"] = True
+        if self._reasoning_effort is not None:
+            # Reasoning tokens are generated before any visible text, so the
+            # effort level directly controls time-to-first-token.
+            payload["reasoning"] = {"effort": self._reasoning_effort}
+        if self._max_output_tokens is not None:
+            payload["max_output_tokens"] = self._max_output_tokens
         if request.output_schema is not None:
             payload["text"] = {
                 "format": {

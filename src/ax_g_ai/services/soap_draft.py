@@ -13,7 +13,7 @@ import json
 import logging
 from typing import Any, Literal, Mapping
 
-from ax_g_ai.adapters.openai import OpenAIProviderError, OpenAIRequest, OpenAIResponsesClient
+from ax_g_ai.adapters.openai import OpenAIProviderError, OpenAIRequest, ProviderClient
 from ax_g_ai.services.clinical_calculations import CalculationResult
 from ax_g_ai.services.deidentified_snapshot import deidentified_snapshot
 from ax_g_ai.prompts.clinical import SOAP_DRAFT_INSTRUCTIONS
@@ -126,7 +126,7 @@ SOAP_DRAFT_OUTPUT_SCHEMA: dict[str, object] = {
 class SoapDraftService:
     """검증된 입력과 준비된 최소 EMR 문맥으로 SOAP 초안을 생성한다."""
 
-    def __init__(self, openai: OpenAIResponsesClient) -> None:
+    def __init__(self, openai: ProviderClient) -> None:
         self._openai = openai
 
     def draft(self, *, request: SoapDraftRequest, snapshot: Mapping[str, Any]) -> SoapDraft:

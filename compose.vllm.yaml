@@ -1,0 +1,73 @@
+# A100 서버에서 vLLM과 AX-G AI를 함께 실행하는 Compose 파일입니다.
+# 소스 없이 `docker load`한 AX-G AI 이미지와 .env만 있으면 실행됩니다.
+#   docker compose -f compose.vllm.yaml up -d
+# 자세한 절차는 docs/vllm_a100_deploy.md를 참고하세요.
+services:
+  vllm:
+    image: ${VLLM_IMAGE:-vllm/vllm-openai:v0.11.0}
+    command:
+      - --model=${VLLM_MODEL:-Qwen/Qwen3-32B-AWQ}
+      - --served-model-name=${AI_MODEL:-qwen3-32b-awq}
+      - --max-model-len=${VLLM_MAX_MODEL_LEN:-16384}
+      - --gpu-memory-utilization=${VLLM_GPU_MEMORY_UTILIZATION:-0.90}
+      # Qwen3 사고 출력이 content에 섞이지 않게 분리합니다. 다른 계열 모델은 비우세요.
+      - --reasoning-parser=${VLLM_REASONING_PARSER:-qwen3}
+      - --enable-prefix-caching
+      - --host=0.0.0.0
+      - --port=8000
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+      # 모델을 한 번 내려받은 뒤 1로 바꾸면 외부 접속 없이 기동합니다.
+      HF_HUB_OFFLINE: ${HF_HUB_OFFLINE:-0}
+    volumes:
+      - ${HF_CACHE_DIR:-./hf-cache}:/root/.cache/huggingface
+    ipc: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      # 최초 기동은 모델 다운로드·로딩·CUDA graph 캡처로 수 분이 걸립니다.
+      start_period: 900s
+    networks:
+      - ai-inference
+      - model-download
+    restart: unless-stopped
+
+  ax-g-ai:
+    image: ${AX_G_AI_IMAGE:-ax-g-ai:1.0.0}
+    env_file:
+      - .env
+    environment:
+      AI_PROVIDER: openai_compatible
+      AI_BASE_URL: http://vllm:8000/v1
+      AI_MODEL: ${AI_MODEL:-qwen3-32b-awq}
+    expose:
+      - "8100"
+    ports:
+      # 서버 내부 확인용입니다. Bridge와 같은 네트워크로만 쓰려면 이 항목을 지우세요.
+      - "127.0.0.1:${AX_G_PORT:-8100}:8100"
+    depends_on:
+      vllm:
+        condition: service_healthy
+    networks:
+      - bridge-ai
+      - ai-inference
+    restart: unless-stopped
+
+networks:
+  # Bridge와 AI service만 연결하는 내부 네트워크입니다.
+  bridge-ai:
+    internal: true
+  # AX-G AI와 vLLM 사이의 내부 네트워크입니다. EMR 프롬프트는 이 네트워크 밖으로 나가지 않습니다.
+  ai-inference:
+    internal: true
+  # vLLM의 모델 다운로드용 네트워크입니다. AX-G AI는 연결하지 않습니다.
+  model-download: {}

@@ -3,9 +3,12 @@ from __future__ import annotations
 import json
 import unittest
 
+import httpx
+
 from ax_g_ai.adapters.openai import (
     HttpResponse,
     HttpStreamResponse,
+    HttpxHttpTransport,
     OpenAIProviderError,
     OpenAIRequest,
     OpenAIResponsesClient,
@@ -104,6 +107,58 @@ class OpenAIResponsesClientTest(unittest.TestCase):
 
         self.assertEqual(list(client.stream(OpenAIRequest("instructions", "input"))), ["정상 ", "응답"])
         self.assertTrue(json.loads(transport.calls[0][2])["stream"])
+
+
+    def test_sends_reasoning_effort_and_output_limit_when_configured(self) -> None:
+        transport = RecordingTransport(HttpResponse(
+            200, "application/json",
+            b'{"output":[{"type":"message","content":[{"type":"output_text","text":"ok"}]}]}',
+        ))
+        client = OpenAIResponsesClient(
+            transport, "secret", "gpt-5-mini", 5, reasoning_effort="low", max_output_tokens=800,
+        )
+
+        client.respond(OpenAIRequest("instructions", "input"))
+
+        sent = json.loads(transport.calls[0][2])
+        self.assertEqual(sent["reasoning"], {"effort": "low"})
+        self.assertEqual(sent["max_output_tokens"], 800)
+
+    def test_non_success_stream_releases_the_connection(self) -> None:
+        closed: list[bool] = []
+        client = OpenAIResponsesClient(
+            StreamingTransport(HttpStreamResponse(429, "application/json", iter(()), lambda: closed.append(True))),
+            "secret", "gpt-5-mini", 5,
+        )
+
+        with self.assertRaises(OpenAIProviderError):
+            client.stream(OpenAIRequest("instructions", "input"))
+        self.assertEqual(closed, [True])
+
+
+class HttpxHttpTransportTest(unittest.TestCase):
+    def test_posts_and_streams_lines_with_blank_event_separators(self) -> None:
+        seen: list[httpx.Request] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            seen.append(request)
+            if request.url.path.endswith("/stream"):
+                return httpx.Response(
+                    200, headers={"Content-Type": "text/event-stream"},
+                    content=b'data: {"a":1}\n\ndata: [DONE]\n\n',
+                )
+            return httpx.Response(200, headers={"Content-Type": "application/json"}, content=b"{}")
+
+        transport = HttpxHttpTransport(transport=httpx.MockTransport(handler))
+
+        response = transport.post("http://ai/v1/x", {"Authorization": "Bearer k"}, b"body", 5)
+        streamed = transport.post_stream("http://ai/v1/stream", {}, b"body", 5)
+
+        self.assertEqual((response.status_code, response.body), (200, b"{}"))
+        self.assertEqual(seen[0].headers["Authorization"], "Bearer k")
+        self.assertEqual(seen[0].content, b"body")
+        self.assertTrue(streamed.content_type.startswith("text/event-stream"))
+        self.assertEqual(list(streamed.lines), [b'data: {"a":1}', b"", b"data: [DONE]", b""])
 
 
 if __name__ == "__main__":

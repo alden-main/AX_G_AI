@@ -13,9 +13,9 @@ import os
 from pathlib import Path
 import unittest
 
-from ax_g_ai.adapters.openai import OpenAIResponsesClient, UrllibHttpTransport
 from ax_g_ai.adapters.main_bridge import MainBridgePayloadMapper
-from ax_g_ai.config import OpenAISettings
+from ax_g_ai.config import AISettings
+from ax_g_ai.adapters.provider import build_provider_client
 from ax_g_ai.domain.patient_context import Encounter, PatientContextBuilder
 from ax_g_ai.services.access_policy import AccessRequest, ContextGuard
 from ax_g_ai.services.audit import InMemoryAuditSink
@@ -50,8 +50,8 @@ class LiveEmrChatTest(unittest.TestCase):
         )
 
         today = date.today()
-        settings = OpenAISettings.from_environment()
-        version = ChatVersion("openai", settings.model, "fixture-demo-v1", "fixture-demo-guide-v1")
+        settings = AISettings.from_environment()
+        version = ChatVersion(settings.provider, settings.model, "fixture-demo-v1", "fixture-demo-guide-v1")
         audit = InMemoryAuditSink()
         guard = ContextGuard(_AllowDemoAccess(), _DiscardSessionState(), audit)
         verified = guard.activate(
@@ -74,7 +74,7 @@ class LiveEmrChatTest(unittest.TestCase):
                 KnowledgeDocument(knowledge_id, "더미 EMR 요약 시험", "v1", today,
                                   "시험 데이터 검토", True, today, None),
             )),
-            OpenAIResponsesClient(UrllibHttpTransport(), settings.api_key, settings.model, settings.timeout_seconds),
+            build_provider_client(settings),
             audit,
             EvaluationGate((
                 EvaluationRecord(version, "fixture-demo-set", today, "local-demo", True, "local-only"),

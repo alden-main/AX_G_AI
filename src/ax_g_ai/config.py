@@ -31,34 +31,102 @@ def reference_data_database_path() -> Path | None:
     return path
 
 
-@dataclass(frozen=True)
-class OpenAISettings:
-    """OpenAI Responses API의 서버 전용 접속 설정."""
+AI_PROVIDER_OPENAI = "openai"
+AI_PROVIDER_OPENAI_COMPATIBLE = "openai_compatible"
+_REASONING_EFFORTS = frozenset({"minimal", "low", "medium", "high"})
 
-    api_key: str
+
+def _env(name: str, legacy_name: str | None = None, default: str = "") -> str:
+    """``AI_*`` 값을 우선하고, 기존 배포의 ``OPENAI_*`` 값을 대체로 읽는다."""
+    value = os.getenv(name, "").strip()
+    if not value and legacy_name is not None:
+        value = os.getenv(legacy_name, "").strip()
+    return value or default
+
+
+@dataclass(frozen=True)
+class AISettings:
+    """AI Provider의 서버 전용 접속 설정.
+
+    Attributes:
+        provider: ``openai``는 OpenAI Responses API, ``openai_compatible``은 vLLM 등
+            OpenAI 호환 Chat Completions API다.
+        base_url: ``/responses`` 또는 ``/chat/completions`` 앞의 API 기준 주소다.
+        api_key: Bearer 토큰이다. 인증 없는 내부 vLLM에서는 ``None``일 수 있다.
+        reasoning_effort: 추론 모델의 사고량이다. 낮을수록 첫 글자가 빨라진다.
+        disable_thinking: Qwen3 계열처럼 chat template에서 사고 모드를 끌 수 있는
+            모델에 ``enable_thinking=false``를 전달할지 여부다.
+    """
+
+    provider: str
+    base_url: str
+    api_key: str | None
     model: str
     timeout_seconds: float
+    reasoning_effort: str | None = None
+    disable_thinking: bool = True
+    max_output_tokens: int | None = None
 
     @classmethod
-    def from_environment(cls) -> "OpenAISettings":
-        """환경 변수에서 API Key·모델·시간 초과를 읽는다.
+    def from_environment(cls) -> "AISettings":
+        """환경 변수에서 Provider 종류·주소·API Key·모델·시간 초과를 읽는다.
 
-        ``OPENAI_API_KEY``는 서버에서만 주입한다. ``NEXT_PUBLIC_*`` 변수는
-        브라우저에 노출될 수 있으므로 여기서 읽지 않는다.
+        API Key는 서버에서만 주입한다. ``NEXT_PUBLIC_*`` 변수는 브라우저에 노출될 수
+        있으므로 여기서 읽지 않는다. ``AI_*``가 없으면 기존 ``OPENAI_*``를 읽는다.
         """
-        api_key = os.getenv("OPENAI_API_KEY", "").strip()
-        if not api_key:
-            raise ConfigurationError("OPENAI_API_KEY is required")
-        model = os.getenv("OPENAI_MODEL", "gpt-5-mini").strip()
+        provider = _env("AI_PROVIDER", default=AI_PROVIDER_OPENAI).lower()
+        if provider not in {AI_PROVIDER_OPENAI, AI_PROVIDER_OPENAI_COMPATIBLE}:
+            raise ConfigurationError("AI_PROVIDER must be openai or openai_compatible")
+        is_openai = provider == AI_PROVIDER_OPENAI
+        # OPENAI_* values belong to OpenAI only.  They must not leak to a
+        # self-hosted server when an old .env still contains the OpenAI key.
+        legacy = (lambda name: f"OPENAI_{name}") if is_openai else (lambda name: None)
+        default_base_url = "https://api.openai.com/v1" if is_openai else ""
+        base_url = _env("AI_BASE_URL", legacy("BASE_URL"), default_base_url).rstrip("/")
+        if not base_url.startswith(("https://", "http://")):
+            raise ConfigurationError("AI_BASE_URL must be an HTTP(S) URL")
+        if is_openai and not base_url.startswith("https://"):
+            raise ConfigurationError("AI_BASE_URL must use HTTPS for the openai provider")
+        api_key = _env("AI_API_KEY", legacy("API_KEY")) or None
+        if is_openai and api_key is None:
+            raise ConfigurationError("AI_API_KEY or OPENAI_API_KEY is required")
+        model = _env("AI_MODEL", legacy("MODEL"), "gpt-5-mini" if is_openai else "")
         if not model:
-            raise ConfigurationError("OPENAI_MODEL is required")
+            raise ConfigurationError("AI_MODEL is required")
         try:
-            timeout_seconds = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "30"))
+            timeout_seconds = float(_env("AI_TIMEOUT_SECONDS", "OPENAI_TIMEOUT_SECONDS", "30"))
         except ValueError as error:
-            raise ConfigurationError("OPENAI_TIMEOUT_SECONDS must be numeric") from error
+            raise ConfigurationError("AI_TIMEOUT_SECONDS must be numeric") from error
         if timeout_seconds <= 0:
-            raise ConfigurationError("OPENAI_TIMEOUT_SECONDS must be positive")
-        return cls(api_key, model, timeout_seconds)
+            raise ConfigurationError("AI_TIMEOUT_SECONDS must be positive")
+        reasoning_effort = _env("AI_REASONING_EFFORT", "OPENAI_REASONING_EFFORT").lower() or None
+        if reasoning_effort is not None and reasoning_effort not in _REASONING_EFFORTS:
+            raise ConfigurationError("AI_REASONING_EFFORT must be minimal, low, medium, or high")
+        disable_thinking = _env("AI_DISABLE_THINKING", default="true").lower()
+        if disable_thinking not in {"true", "false"}:
+            raise ConfigurationError("AI_DISABLE_THINKING must be true or false")
+        max_output_tokens: int | None = None
+        if raw_max := _env("AI_MAX_OUTPUT_TOKENS"):
+            try:
+                max_output_tokens = int(raw_max)
+            except ValueError as error:
+                raise ConfigurationError("AI_MAX_OUTPUT_TOKENS must be an integer") from error
+            if max_output_tokens <= 0:
+                raise ConfigurationError("AI_MAX_OUTPUT_TOKENS must be positive")
+        return cls(
+            provider=provider,
+            base_url=base_url,
+            api_key=api_key,
+            model=model,
+            timeout_seconds=timeout_seconds,
+            reasoning_effort=reasoning_effort,
+            disable_thinking=disable_thinking == "true",
+            max_output_tokens=max_output_tokens,
+        )
+
+
+# Kept as an import-compatible name for the manual live tests.
+OpenAISettings = AISettings
 
 
 @dataclass(frozen=True)

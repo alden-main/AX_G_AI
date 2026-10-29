@@ -7,7 +7,7 @@ from typing import Mapping
 
 from fastapi import Request
 
-from ax_g_ai.adapters.openai import OpenAIResponsesClient, UrllibHttpTransport
+from ax_g_ai.adapters.provider import build_provider_client
 from ax_g_ai.adapters.emr import EmrAdapterError
 from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
 from ax_g_ai.api import (
@@ -16,7 +16,7 @@ from ax_g_ai.api import (
     PatientContextUnavailableError,
     create_app,
 )
-from ax_g_ai.config import ConfigurationError, OpenAISettings, reference_data_database_path
+from ax_g_ai.config import AISettings, ConfigurationError, reference_data_database_path
 from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
 from ax_g_ai.services.audit import InMemoryAuditSink
 from ax_g_ai.services.clinical_chat import (
@@ -35,7 +35,7 @@ class PatientContextStore:
     def __init__(self, service: ClinicalChatService, mapper: RawEmrPayloadMapper | None = None) -> None:
         self._service = service
         self._mapper = mapper or RawEmrPayloadMapper()
-        self._snapshots: dict[str, tuple[Mapping[str, object], PreparedPatientSummary, datetime]] = {}
+        self._snapshots: dict[str, tuple[Mapping[str, object], PreparedPatientSummary | None, datetime]] = {}
 
     def prepare(
         self, patient_id: str, emr_payload: Mapping[str, object]
@@ -43,21 +43,45 @@ class PatientContextStore:
         # A refresh starts by invalidating the old item.  Neither malformed EMR
         # data nor a failed summary may leave stale patient context available.
         self._snapshots.pop(patient_id, None)
-        try:
-            context = self._mapper.map(patient_id, emr_payload)
-        except EmrAdapterError as error:
-            if "patient does not match" in str(error):
-                raise PatientMismatchError() from error
-            # Raw EMR validation messages name only a schema location; they do
-            # not contain EMR values.  Preserve it so the API log can identify
-            # the malformed field without recording the payload itself.
-            raise PatientContextUnavailableError(str(error)) from error
+        context = self._map(patient_id, emr_payload)
         try:
             summary = self._service.summarize_prepared_snapshot(patient_id=patient_id, snapshot=context.data)
         except ClinicalChatProviderUnavailableError:
             raise
         self._snapshots[patient_id] = (context.data, summary, context.updated_at)
         return summary, context.updated_at
+
+    def prepare_without_summary(
+        self, patient_id: str, emr_payload: Mapping[str, object]
+    ) -> tuple[Mapping[str, object], datetime]:
+        """Store the mapped context at once so a summary can stream afterwards.
+
+        The caller must ``discard`` the item if the streamed summary fails.
+        """
+        self._snapshots.pop(patient_id, None)
+        context = self._map(patient_id, emr_payload)
+        self._snapshots[patient_id] = (context.data, None, context.updated_at)
+        return context.data, context.updated_at
+
+    def discard(self, patient_id: str) -> None:
+        self._snapshots.pop(patient_id, None)
+
+    def summarize_once(self, patient_id: str, emr_payload: Mapping[str, object]) -> tuple[str, datetime]:
+        context = self._map(patient_id, emr_payload)
+        return self._service.summarize_once(snapshot=context.data), context.updated_at
+
+    def map_once(self, patient_id: str, emr_payload: Mapping[str, object]) -> tuple[Mapping[str, object], datetime]:
+        """Map an EMR payload for a one-shot summary without storing it."""
+        context = self._map(patient_id, emr_payload)
+        return context.data, context.updated_at
+
+    def _map(self, patient_id: str, emr_payload: Mapping[str, object]):
+        try:
+            return self._mapper.map(patient_id, emr_payload)
+        except EmrAdapterError as error:
+            if "patient does not match" in str(error):
+                raise PatientMismatchError() from error
+            raise PatientContextUnavailableError(str(error)) from error
 
     def get(self, patient_id: str) -> tuple[Mapping[str, object], datetime]:
         try:
@@ -77,17 +101,16 @@ class _NoopSessionState:
         return None
 
 
-def _services(settings: OpenAISettings) -> ClinicalChatService:
+def _services(settings: AISettings) -> ClinicalChatService:
     """신규 경로는 provider 호출만 사용하지만 기존 서비스 경계를 재사용한다."""
     today = date.today()
-    version = ChatVersion("openai", settings.model, "bridge-v1", "not-used")
+    version = ChatVersion(settings.provider, settings.model, "bridge-v2", "not-used")
     audit = InMemoryAuditSink()
     guard = ContextGuard(_AllowAllAuthorizer(), _NoopSessionState(), audit)
-    openai = OpenAIResponsesClient(UrllibHttpTransport(), settings.api_key, settings.model, settings.timeout_seconds)
     clinical = ClinicalChatService(
         guard,
         ApprovedKnowledgeStore((KnowledgeDocument("placeholder", "placeholder", "v1", today, "", True, today, None),)),
-        openai,
+        build_provider_client(settings),
         audit,
         EvaluationGate((EvaluationRecord(version, "runtime", today, "runtime", True, "runtime"),)),
         version,
@@ -98,7 +121,7 @@ def _services(settings: OpenAISettings) -> ClinicalChatService:
 def create_runtime_app():
     """필수 server-to-server 설정이 없으면 fail-closed 앱을 생성한다."""
     try:
-        ai_settings = OpenAISettings.from_environment()
+        ai_settings = AISettings.from_environment()
     except ConfigurationError:
         return create_app()
     service = _services(ai_settings)
