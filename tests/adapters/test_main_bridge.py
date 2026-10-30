@@ -5,8 +5,8 @@ import json
 from pathlib import Path
 import unittest
 
-from ax_g_ai.adapters.emr import EmrAdapterError
 from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
+from ax_g_ai.errors import PatientContextUnavailableError, PatientMismatchError
 from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
 
 
@@ -30,15 +30,35 @@ class RawEmrPayloadMapperTest(unittest.TestCase):
         for forbidden in ("홍길동", "doc-5567", "임꺽정", "instructions", "하루 3번"):
             self.assertNotIn(forbidden, rendered)
 
-    def test_null_or_missing_lists_are_empty_and_server_time_is_used_without_dates(self) -> None:
+    def test_null_or_missing_lists_are_omitted_and_server_time_is_used_without_dates(self) -> None:
         context = self.mapper.map("patient-1", {"patient": {"patientId": "patient-1"}, "bloodPressureList": None}, prepared_at=datetime.fromisoformat("2026-09-22T10:30:00+09:00"))
 
-        self.assertEqual(context.data, {"blood_pressure": [], "blood_sugar": [], "oxygen_saturation": [], "lab_results": [], "prescriptions": [], "diagnoses": [], "calculation_results": [], "calculation_input_needed": ["BMI·체표면적 계산에는 체중(kg)과 키(cm) 입력이 필요합니다.", "Cockcroft–Gault CrCl 계산에는 연령, 성별(male/female), 체중(kg), 혈청 크레아티닌(mg/dL) 입력이 필요합니다."]})
+        self.assertEqual(context.data, {"calculation_input_needed": ["BMI·체표면적 계산에는 체중(kg)과 키(cm) 입력이 필요합니다.", "Cockcroft–Gault CrCl 계산에는 연령, 성별(male/female), 체중(kg), 혈청 크레아티닌(mg/dL) 입력이 필요합니다."]})
         self.assertEqual(context.updated_at.isoformat(), "2026-09-22T10:30:00+09:00")
 
-    def test_patient_mismatch_is_rejected_before_context_is_created(self) -> None:
-        with self.assertRaisesRegex(EmrAdapterError, "patient does not match"):
+    def test_patient_mismatch_and_schema_failures_are_typed_with_safe_diagnostics(self) -> None:
+        with self.assertRaises(PatientMismatchError):
             self.mapper.map("other", self.payload)
+        with self.assertRaises(PatientContextUnavailableError) as missing:
+            self.mapper.map("patient-1", {"success": False})
+        with self.assertRaises(PatientContextUnavailableError) as blank:
+            self.mapper.map("patient-1", {"patient": {"patientId": " "}})
+        self.assertEqual(missing.exception.failure, "emr_payload.patient:missing_or_not_object")
+        self.assertEqual(blank.exception.failure, "emr_payload.patient.patientId:missing_or_blank")
+
+    def test_identifiers_nested_in_allowed_fields_are_removed(self) -> None:
+        context = self.mapper.map("patient-1", {
+            "patient": {"patientId": "patient-1", "patientName": "홍길동"},
+            "medicineDtailList": [{"medCode": "100", "dosage": {"amount": 1, "doctorId": "doc-1"}}],
+            "calculationContext": {"weight_kg": 70, "height_cm": 170},
+        })
+
+        rendered = json.dumps(context.data, ensure_ascii=False)
+        self.assertEqual(context.data["prescriptions"], [{"med_code": "100", "dosage": {"amount": 1}}])
+        self.assertNotIn("홍길동", rendered)
+        self.assertNotIn("doc-1", rendered)
+        # Calculation names are clinical labels, not identifiers.
+        self.assertTrue(all("name" in result for result in context.data["calculation_results"]))
 
     def test_maps_the_bridge_data_envelope_and_additional_deidentified_clinical_fields(self) -> None:
         context = self.mapper.map("patient-1", {

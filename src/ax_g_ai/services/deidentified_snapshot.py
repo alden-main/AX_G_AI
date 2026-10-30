@@ -1,8 +1,8 @@
-"""Provider 입력 전 EMR snapshot의 직접 식별자를 제거한다."""
+"""Provider 입력 전 EMR 값에서 직접 식별자를 제거하는 단일 경계."""
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Mapping
 
 
 _IDENTIFIER_KEYS = frozenset({
@@ -13,17 +13,8 @@ _IDENTIFIER_KEYS = frozenset({
 })
 
 
-def deidentified_snapshot(snapshot: Mapping[str, Any]) -> dict[str, object]:
-    """모든 임상 필드를 보존하되 직접 식별자와 지원하지 않는 값은 재귀적으로 제거한다."""
-    return {
-        key: safe_value
-        for key, raw_value in snapshot.items()
-        if not is_identifier_key(key)
-        and (safe_value := _deidentify_value(raw_value)) is not None
-    }
-
-
-def _deidentify_value(value: object) -> object | None:
+def deidentify(value: object) -> object | None:
+    """임상 값은 보존하되 식별자 키·빈 값·지원하지 않는 타입은 재귀적으로 제거한다."""
     if value is None:
         return None
     if isinstance(value, (str, int, float, bool)):
@@ -34,11 +25,11 @@ def _deidentify_value(value: object) -> object | None:
             for key, raw_value in value.items()
             if isinstance(key, str)
             and not is_identifier_key(key)
-            and (safe_value := _deidentify_value(raw_value)) is not None
+            and (safe_value := deidentify(raw_value)) is not None
         }
         return result or None
     if isinstance(value, list):
-        result = [safe_value for item in value if (safe_value := _deidentify_value(item)) is not None]
+        result = [safe_value for item in value if (safe_value := deidentify(item)) is not None]
         return result or None
     return None
 

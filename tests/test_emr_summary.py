@@ -2,9 +2,9 @@ import unittest
 
 from fastapi.testclient import TestClient
 
-from ax_g_ai.adapters.openai import ProviderAnswer
+from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
+from ax_g_ai.adapters.openai import OpenAIProviderError, ProviderAnswer
 from ax_g_ai.api import create_app
-from ax_g_ai.runtime import PatientContextStore
 from ax_g_ai.services.clinical_chat import ClinicalChatService
 
 
@@ -13,18 +13,17 @@ class Provider:
         self.requests = []
         self.fail = False
 
-    def respond(self, request):
+    async def respond(self, request):
         self.requests.append(request)
         if self.fail:
-            raise RuntimeError('failed')
+            raise OpenAIProviderError('failed')
         return ProviderAnswer('상태: 혈당 120. 처방: 기록 없음.')
 
 
 class EmrSummaryTest(unittest.TestCase):
     def test_one_shot_summary_and_failures(self):
         provider = Provider()
-        service = ClinicalChatService(None, None, provider, None, None, None)
-        client = TestClient(create_app(service, PatientContextStore(service)))
+        client = TestClient(create_app(ClinicalChatService(provider), RawEmrPayloadMapper()))
         payload = {'patient': {'patientId': 'p1', 'patientName': '비밀이름'}, 'bloodSugarList': [{'measuredAt': '2026-09-22 10:30:00', 'glucoseValue': 120}]}
         response = client.post('/internal/v1/emr-summary', json={'patient_id': 'p1', 'emr_payload': payload})
         assert response.status_code == 200

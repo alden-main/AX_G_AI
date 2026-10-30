@@ -1,51 +1,59 @@
-"""배포 환경별 외부 연동 설정.
+"""배포 환경별 설정.
 
-EMR 주소·경로·HTTP 방식·시간 초과·서버 측 인증 토큰은 코드에 넣지 않고 환경 변수로
-주입한다. 설정값을 로그나 감사 이벤트에 기록하지 않으며, 실제 비밀값은 배포 환경의
-비밀 저장소에서 ``AX_G_BRIDGE_ACCESS_TOKEN``으로 제공해야 한다.
+AI Provider 주소·API Key·모델과 런타임 경로는 코드에 넣지 않고 환경 변수로 주입한다.
+설정값을 로그나 오류 메시지에 기록하지 않는다. 검증 실패는 필드 이름과 사유만 담은
+``ConfigurationError``로 바뀐다.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
-from pathlib import Path
+from typing import Any, Literal
+
+from pydantic import (
+    FilePath,
+    NonNegativeInt,
+    PositiveFloat,
+    PositiveInt,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ConfigurationError(ValueError):
     """필수 환경 설정이 없거나 허용되지 않은 값일 때 발생한다."""
 
 
-def reference_data_database_path() -> Path | None:
-    """Return the optional approved reference-data SQLite path.
-
-    A missing setting leaves reference enrichment disabled; a configured but
-    missing file fails closed during application assembly.
-    """
-    configured = os.getenv("AX_G_REFERENCE_DATA_DB_PATH", "").strip()
-    if not configured:
-        return None
-    path = Path(configured)
-    if not path.is_file():
-        raise ConfigurationError("AX_G_REFERENCE_DATA_DB_PATH must reference an existing SQLite file")
-    return path
-
-
 AI_PROVIDER_OPENAI = "openai"
 AI_PROVIDER_OPENAI_COMPATIBLE = "openai_compatible"
-_REASONING_EFFORTS = frozenset({"minimal", "low", "medium", "high"})
+
+_OPENAI_DEFAULTS = {"base_url": "https://api.openai.com/v1", "model": "gpt-5-mini"}
+# Legacy ``OPENAI_*`` names are read when the matching ``AI_*`` is unset.  The
+# credentials and endpoint belong to OpenAI only: they must not leak to a
+# self-hosted server when an old .env still contains the OpenAI key.
+_OPENAI_ONLY_LEGACY_FIELDS = ("base_url", "api_key", "model")
+_SHARED_LEGACY_FIELDS = ("timeout_seconds", "reasoning_effort")
 
 
-def _env(name: str, legacy_name: str | None = None, default: str = "") -> str:
-    """``AI_*`` 값을 우선하고, 기존 배포의 ``OPENAI_*`` 값을 대체로 읽는다."""
-    value = os.getenv(name, "").strip()
-    if not value and legacy_name is not None:
-        value = os.getenv(legacy_name, "").strip()
-    return value or default
+class _EnvironmentSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_ignore_empty=True, str_strip_whitespace=True, frozen=True)
+
+    @classmethod
+    def from_environment(cls):
+        try:
+            return cls()
+        except ValidationError as error:
+            prefix = cls.model_config.get("env_prefix", "")
+            reasons = "; ".join(
+                f"{prefix + '.'.join(map(str, item['loc'])).upper() if item['loc'] else cls.__name__}: {item['msg']}"
+                for item in error.errors(include_input=False, include_url=False)
+            )
+            raise ConfigurationError(reasons) from error
 
 
-@dataclass(frozen=True)
-class AISettings:
+class AISettings(_EnvironmentSettings):
     """AI Provider의 서버 전용 접속 설정.
 
     Attributes:
@@ -56,129 +64,70 @@ class AISettings:
         reasoning_effort: 추론 모델의 사고량이다. 낮을수록 첫 글자가 빨라진다.
         disable_thinking: Qwen3 계열처럼 chat template에서 사고 모드를 끌 수 있는
             모델에 ``enable_thinking=false``를 전달할지 여부다.
+        max_retries: 첫 토큰 전 연결 오류·429·5xx의 SDK 재시도 횟수다.
     """
 
-    provider: str
-    base_url: str
-    api_key: str | None
-    model: str
-    timeout_seconds: float
-    reasoning_effort: str | None = None
+    model_config = SettingsConfigDict(env_prefix="AI_")
+
+    provider: Literal["openai", "openai_compatible"] = AI_PROVIDER_OPENAI
+    base_url: str = ""
+    api_key: str | None = None
+    model: str = ""
+    timeout_seconds: PositiveFloat = 30
+    reasoning_effort: Literal["minimal", "low", "medium", "high"] | None = None
     disable_thinking: bool = True
-    max_output_tokens: int | None = None
+    max_output_tokens: PositiveInt | None = None
+    max_retries: NonNegativeInt = 2
 
+    @model_validator(mode="before")
     @classmethod
-    def from_environment(cls) -> "AISettings":
-        """환경 변수에서 Provider 종류·주소·API Key·모델·시간 초과를 읽는다.
-
-        API Key는 서버에서만 주입한다. ``NEXT_PUBLIC_*`` 변수는 브라우저에 노출될 수
-        있으므로 여기서 읽지 않는다. ``AI_*``가 없으면 기존 ``OPENAI_*``를 읽는다.
-        """
-        provider = _env("AI_PROVIDER", default=AI_PROVIDER_OPENAI).lower()
-        if provider not in {AI_PROVIDER_OPENAI, AI_PROVIDER_OPENAI_COMPATIBLE}:
-            raise ConfigurationError("AI_PROVIDER must be openai or openai_compatible")
+    def _apply_legacy_and_provider_defaults(cls, data: Any) -> Any:
+        values = dict(data)
+        provider = str(values.get("provider") or AI_PROVIDER_OPENAI).strip().lower()
+        values["provider"] = provider
         is_openai = provider == AI_PROVIDER_OPENAI
-        # OPENAI_* values belong to OpenAI only.  They must not leak to a
-        # self-hosted server when an old .env still contains the OpenAI key.
-        legacy = (lambda name: f"OPENAI_{name}") if is_openai else (lambda name: None)
-        default_base_url = "https://api.openai.com/v1" if is_openai else ""
-        base_url = _env("AI_BASE_URL", legacy("BASE_URL"), default_base_url).rstrip("/")
-        if not base_url.startswith(("https://", "http://")):
-            raise ConfigurationError("AI_BASE_URL must be an HTTP(S) URL")
-        if is_openai and not base_url.startswith("https://"):
-            raise ConfigurationError("AI_BASE_URL must use HTTPS for the openai provider")
-        api_key = _env("AI_API_KEY", legacy("API_KEY")) or None
-        if is_openai and api_key is None:
-            raise ConfigurationError("AI_API_KEY or OPENAI_API_KEY is required")
-        model = _env("AI_MODEL", legacy("MODEL"), "gpt-5-mini" if is_openai else "")
-        if not model:
-            raise ConfigurationError("AI_MODEL is required")
-        try:
-            timeout_seconds = float(_env("AI_TIMEOUT_SECONDS", "OPENAI_TIMEOUT_SECONDS", "30"))
-        except ValueError as error:
-            raise ConfigurationError("AI_TIMEOUT_SECONDS must be numeric") from error
-        if timeout_seconds <= 0:
-            raise ConfigurationError("AI_TIMEOUT_SECONDS must be positive")
-        reasoning_effort = _env("AI_REASONING_EFFORT", "OPENAI_REASONING_EFFORT").lower() or None
-        if reasoning_effort is not None and reasoning_effort not in _REASONING_EFFORTS:
-            raise ConfigurationError("AI_REASONING_EFFORT must be minimal, low, medium, or high")
-        disable_thinking = _env("AI_DISABLE_THINKING", default="true").lower()
-        if disable_thinking not in {"true", "false"}:
-            raise ConfigurationError("AI_DISABLE_THINKING must be true or false")
-        max_output_tokens: int | None = None
-        if raw_max := _env("AI_MAX_OUTPUT_TOKENS"):
-            try:
-                max_output_tokens = int(raw_max)
-            except ValueError as error:
-                raise ConfigurationError("AI_MAX_OUTPUT_TOKENS must be an integer") from error
-            if max_output_tokens <= 0:
-                raise ConfigurationError("AI_MAX_OUTPUT_TOKENS must be positive")
-        return cls(
-            provider=provider,
-            base_url=base_url,
-            api_key=api_key,
-            model=model,
-            timeout_seconds=timeout_seconds,
-            reasoning_effort=reasoning_effort,
-            disable_thinking=disable_thinking == "true",
-            max_output_tokens=max_output_tokens,
-        )
+        legacy_fields = (*_OPENAI_ONLY_LEGACY_FIELDS, *_SHARED_LEGACY_FIELDS) if is_openai else _SHARED_LEGACY_FIELDS
+        for name in legacy_fields:
+            if not values.get(name) and (legacy := os.getenv(f"OPENAI_{name.upper()}", "").strip()):
+                values[name] = legacy
+        if is_openai:
+            for name, default in _OPENAI_DEFAULTS.items():
+                values.setdefault(name, default)
+        if isinstance(values.get("reasoning_effort"), str):
+            values["reasoning_effort"] = values["reasoning_effort"].lower()
+        return values
+
+    @field_validator("base_url")
+    @classmethod
+    def _http_url(cls, value: str) -> str:
+        if not value.startswith(("https://", "http://")):
+            raise ValueError("must be an HTTP(S) URL")
+        return value.rstrip("/")
+
+    @model_validator(mode="after")
+    def _openai_requirements(self) -> "AISettings":
+        if not self.model:
+            raise ValueError("AI_MODEL is required")
+        if self.provider == AI_PROVIDER_OPENAI:
+            if not self.base_url.startswith("https://"):
+                raise ValueError("AI_BASE_URL must use HTTPS for the openai provider")
+            if self.api_key is None:
+                raise ValueError("AI_API_KEY or OPENAI_API_KEY is required")
+        return self
 
 
-# Kept as an import-compatible name for the manual live tests.
-OpenAISettings = AISettings
-
-
-@dataclass(frozen=True)
-class BridgeSnapshotSettings:
-    """Bridge의 환자 EMR Snapshot API 접속 정보.
+class RuntimeSettings(_EnvironmentSettings):
+    """프로세스 런타임 설정.
 
     Attributes:
-        bridge_base_url: 예를 들어 ``https://bridge.example.org``인 Bridge 기준 주소다.
-        snapshot_path: 환자 Snapshot endpoint 경로다.
-        method: Bridge Snapshot API의 HTTP 방식이다.
-        timeout_seconds: Bridge 응답을 기다리는 양수 초 단위 시간이다.
-        access_token: AX-G AI가 Bridge에 보내는 Bearer 토큰이다.
+        reference_data_db_path: 승인된 참조 SQLite 경로다. 없으면 참조 보강을 끄고,
+            설정했는데 파일이 없으면 앱 조립 시 fail-closed한다.
+        patient_context_ttl_seconds: 준비된 환자 문맥을 메모리에 보관하는 시간이다.
+        patient_context_max_entries: 메모리에 보관하는 환자 문맥의 최대 개수다.
     """
 
-    bridge_base_url: str
-    snapshot_path: str
-    method: str
-    timeout_seconds: float
-    access_token: str | None
-    send_request_context: bool = True
+    model_config = SettingsConfigDict(env_prefix="AX_G_")
 
-    @classmethod
-    def from_environment(cls) -> "BridgeSnapshotSettings":
-        """환경 변수에서 Bridge Snapshot 접속 정보를 읽어 검증한다.
-
-        Required:
-            AX_G_BRIDGE_BASE_URL: Bridge API 기준 주소다.
-
-        Optional:
-            AX_G_BRIDGE_SNAPSHOT_PATH: 기본 Snapshot endpoint 경로다.
-            AX_G_BRIDGE_METHOD: ``GET`` 또는 ``POST``이며 기본은 ``POST``다.
-            AX_G_BRIDGE_TIMEOUT_SECONDS: 양수 초 단위이며 기본은 ``10``이다.
-            AX_G_BRIDGE_ACCESS_TOKEN: AX-G AI가 Bridge에 보내는 Bearer 토큰이다.
-        """
-        bridge_base_url = os.getenv("AX_G_BRIDGE_BASE_URL", "").strip()
-        if not bridge_base_url.startswith(("https://", "http://")):
-            raise ConfigurationError("AX_G_BRIDGE_BASE_URL must be an HTTP(S) URL")
-        method = os.getenv("AX_G_BRIDGE_METHOD", "POST").upper().strip()
-        if method not in {"GET", "POST"}:
-            raise ConfigurationError("AX_G_BRIDGE_METHOD must be GET or POST")
-        try:
-            timeout_seconds = float(os.getenv("AX_G_BRIDGE_TIMEOUT_SECONDS", "10"))
-        except ValueError as error:
-            raise ConfigurationError("AX_G_BRIDGE_TIMEOUT_SECONDS must be numeric") from error
-        if timeout_seconds <= 0:
-            raise ConfigurationError("AX_G_BRIDGE_TIMEOUT_SECONDS must be positive")
-        token = os.getenv("AX_G_BRIDGE_ACCESS_TOKEN")
-        return cls(
-            bridge_base_url=bridge_base_url.rstrip("/"),
-            snapshot_path=os.getenv("AX_G_BRIDGE_SNAPSHOT_PATH", "/internal/v1/patient-context/snapshot").strip(),
-            method=method,
-            timeout_seconds=timeout_seconds,
-            access_token=token.strip() if token and token.strip() else None,
-            send_request_context=True,
-        )
+    reference_data_db_path: FilePath | None = None
+    patient_context_ttl_seconds: PositiveFloat = 12 * 60 * 60
+    patient_context_max_entries: PositiveInt = 1000

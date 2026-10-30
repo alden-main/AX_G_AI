@@ -4,12 +4,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from ax_g_ai.adapters.openai import OpenAIResponsesClient
-from ax_g_ai.adapters.openai_compatible import OpenAICompatibleChatClient
-from ax_g_ai.config import AISettings, ConfigurationError
-from ax_g_ai.adapters.provider import build_provider_client
-from tests.adapters.test_openai import RecordingTransport
-from ax_g_ai.adapters.openai import HttpResponse
+from ax_g_ai.config import AISettings, ConfigurationError, RuntimeSettings
 
 
 def settings(**environment: str) -> AISettings:
@@ -60,19 +55,30 @@ class AISettingsTest(unittest.TestCase):
                 settings(**environment)
 
 
-class ProviderClientFactoryTest(unittest.TestCase):
-    def test_builds_the_configured_provider_endpoint(self) -> None:
-        transport = RecordingTransport(HttpResponse(200, "application/json", b"{}"))
+class RuntimeSettingsTest(unittest.TestCase):
+    def test_defaults_disable_reference_data_and_bound_the_context_store(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            result = RuntimeSettings.from_environment()
 
-        openai = build_provider_client(settings(AI_API_KEY="k", AI_REASONING_EFFORT="low"), transport)
-        compatible = build_provider_client(
-            settings(AI_PROVIDER="openai_compatible", AI_BASE_URL="http://vllm:8000/v1", AI_MODEL="m"), transport,
-        )
+        self.assertIsNone(result.reference_data_db_path)
+        self.assertEqual(result.patient_context_ttl_seconds, 12 * 60 * 60)
+        self.assertEqual(result.patient_context_max_entries, 1000)
 
-        self.assertIsInstance(openai, OpenAIResponsesClient)
-        self.assertEqual(openai._endpoint, "https://api.openai.com/v1/responses")
-        self.assertIsInstance(compatible, OpenAICompatibleChatClient)
-        self.assertEqual(compatible._endpoint, "http://vllm:8000/v1/chat/completions")
+    def test_rejects_a_missing_reference_database_or_invalid_store_limits(self) -> None:
+        for environment in (
+            {"AX_G_REFERENCE_DATA_DB_PATH": "/nonexistent/reference.sqlite"},
+            {"AX_G_PATIENT_CONTEXT_TTL_SECONDS": "0"},
+            {"AX_G_PATIENT_CONTEXT_MAX_ENTRIES": "many"},
+        ):
+            with self.subTest(environment=environment), patch.dict(os.environ, environment, clear=True):
+                with self.assertRaises(ConfigurationError):
+                    RuntimeSettings.from_environment()
+
+    def test_configuration_errors_do_not_echo_secret_values(self) -> None:
+        with self.assertRaises(ConfigurationError) as raised:
+            settings(AI_API_KEY="very-secret-key", AI_BASE_URL="http://proxy/v1")
+
+        self.assertNotIn("very-secret-key", str(raised.exception))
 
 
 if __name__ == "__main__":

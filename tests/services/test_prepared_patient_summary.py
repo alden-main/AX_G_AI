@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 
 from ax_g_ai.adapters.openai import OpenAIProviderError
-from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
+from ax_g_ai.services.prepared_patient_summary import PATIENT_SUMMARY_OUTPUT_SCHEMA, PreparedPatientSummary
 
 
 class PreparedPatientSummaryTest(unittest.TestCase):
@@ -27,6 +27,15 @@ class PreparedPatientSummaryTest(unittest.TestCase):
             PreparedPatientSummary.from_provider_text(
                 '{"message":"제목","sections":[],"guidance":""}'
             )
+
+
+    def test_output_schema_is_compatible_with_strict_structured_outputs(self) -> None:
+        objects = [PATIENT_SUMMARY_OUTPUT_SCHEMA, *PATIENT_SUMMARY_OUTPUT_SCHEMA["$defs"].values()]  # type: ignore[union-attr]
+
+        for schema in objects:
+            self.assertIs(schema["additionalProperties"], False)
+            self.assertEqual(set(schema["required"]), set(schema["properties"]))
+        self.assertNotIn("minLength", str(PATIENT_SUMMARY_OUTPUT_SCHEMA))
 
 
 if __name__ == "__main__":

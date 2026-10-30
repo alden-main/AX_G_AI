@@ -1,4 +1,8 @@
-"""Bridge가 전달한 원문 EMR의 PoC 전용 최소 문맥 변환기."""
+"""Bridge가 전달한 원문 EMR의 PoC 전용 최소 문맥 변환기.
+
+이 모듈이 Provider로 가는 환자 문맥의 유일한 비식별 경계다. 알려진 목록은 허용 필드만
+정규화하고, 새로 추가된 임상 필드는 직접 식별자를 제거한 뒤에만 보존한다.
+"""
 
 from __future__ import annotations
 
@@ -7,14 +11,15 @@ from datetime import datetime, timezone
 from typing import Any, Mapping
 from zoneinfo import ZoneInfo
 
-from ax_g_ai.adapters.emr import EmrAdapterError
+from ax_g_ai.errors import PatientContextUnavailableError, PatientMismatchError
 from ax_g_ai.services.clinical_calculations import calculate_review_aids
+from ax_g_ai.services.deidentified_snapshot import deidentify, is_identifier_key
 from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
 
 
 @dataclass(frozen=True)
 class PreparedRawEmrContext:
-    """원문에서 허용 목록만 추린, Provider 전송 전의 메모리 문맥이다."""
+    """원문에서 허용 목록만 추린, Provider에 그대로 보낼 수 있는 비식별 문맥이다."""
 
     data: Mapping[str, object]
     updated_at: datetime
@@ -28,95 +33,51 @@ class RawEmrPayloadMapper:
         "patient", "bloodPressureList", "bloodSugarList", "oxygenSaturationList",
         "labResultList", "medicineDtailList", "diagnosisList", "calculationContext",
     })
-    _IDENTIFIER_KEYS = frozenset({
-        "patient", "patientid", "name", "firstname", "lastname", "fullname", "birthdate",
-        "dateofbirth", "phone", "mobile", "email", "address", "zipcode", "ssn", "rrn",
-        "nationalid", "medicalrecordnumber", "mrn", "encounterid", "visitid", "recordid",
-        "documentid", "providerid", "doctorid", "userid",
-    })
 
     def __init__(self, reference_lookup: SqliteReferenceLookup | None = None) -> None:
         self._reference_lookup = reference_lookup
 
     def map(self, patient_id: str, payload: Mapping[str, Any], *, prepared_at: datetime | None = None) -> PreparedRawEmrContext:
         # The Bridge may pass the EMR object itself or its usual {"data": ...}
-        # response envelope. Known fields are normalized below and newly added
-        # clinical fields are retained only after direct identifiers are removed.
+        # response envelope.
         raw_data = payload.get("data")
         source = raw_data if isinstance(raw_data, Mapping) else payload
         patient = source.get("patient")
         if not isinstance(patient, Mapping):
-            raise EmrAdapterError("raw EMR payload has no patient object")
+            raise PatientContextUnavailableError("emr_payload.patient:missing_or_not_object")
         raw_patient_id = patient.get("patientId")
         if not isinstance(raw_patient_id, str) or not raw_patient_id.strip():
-            raise EmrAdapterError("raw EMR payload requires patient.patientId")
+            raise PatientContextUnavailableError("emr_payload.patient.patientId:missing_or_blank")
         if raw_patient_id != patient_id:
-            raise EmrAdapterError("raw EMR patient does not match the request")
+            raise PatientMismatchError()
 
         timestamps: list[datetime] = []
-        blood_pressure = self._blood_pressure(source.get("bloodPressureList"), timestamps)
-        blood_sugar = self._single_value(source.get("bloodSugarList"), "glucoseValue", "mg/dL", timestamps, extra=("timingType", "timing_type"))
-        oxygen_saturation = self._single_value(source.get("oxygenSaturationList"), "spo2Value", "%", timestamps)
-        lab_results = self._labs(source.get("labResultList"), timestamps)
-        prescriptions = self._prescriptions(source.get("medicineDtailList"), self._reference_lookup)
-        diagnoses = self._diagnoses(source.get("diagnosisList"), self._reference_lookup)
         calculations, calculation_input_needed = calculate_review_aids(source.get("calculationContext"))
         fallback = prepared_at or datetime.now(timezone.utc)
         if fallback.tzinfo is None:
             fallback = fallback.replace(tzinfo=timezone.utc)
         data: dict[str, object] = {
-            "blood_pressure": blood_pressure,
-            "blood_sugar": blood_sugar,
-            "oxygen_saturation": oxygen_saturation,
-            "lab_results": lab_results,
-            "prescriptions": prescriptions,
-            "diagnoses": diagnoses,
+            "blood_pressure": self._blood_pressure(source.get("bloodPressureList"), timestamps),
+            "blood_sugar": self._single_value(source.get("bloodSugarList"), "glucoseValue", "mg/dL", timestamps, extra=("timingType", "timing_type")),
+            "oxygen_saturation": self._single_value(source.get("oxygenSaturationList"), "spo2Value", "%", timestamps),
+            "lab_results": self._labs(source.get("labResultList"), timestamps),
+            "prescriptions": self._prescriptions(source.get("medicineDtailList"), self._reference_lookup),
+            "diagnoses": self._diagnoses(source.get("diagnosisList"), self._reference_lookup),
             "calculation_results": [result.as_dict() for result in calculations],
             "calculation_input_needed": list(calculation_input_needed),
+            "additional_clinical_data": {
+                key: value
+                for key, raw_value in source.items()
+                if key not in self._HANDLED_SOURCE_FIELDS
+                and not is_identifier_key(key)
+                and (value := deidentify(raw_value)) is not None
+            },
         }
-        additional = self._additional_clinical_data(source)
-        if additional:
-            data["additional_clinical_data"] = additional
         return PreparedRawEmrContext(
-            data=data,
+            # Empty groups add prompt tokens without clinical content.
+            data={key: value for key, value in data.items() if value},
             updated_at=max(timestamps, default=fallback),
         )
-
-    @classmethod
-    def _additional_clinical_data(cls, source: Mapping[str, Any]) -> dict[str, object]:
-        """Keep newly supplied clinical fields while excluding direct identifiers."""
-        return {
-            key: value
-            for key, raw_value in source.items()
-            if key not in cls._HANDLED_SOURCE_FIELDS
-            and not cls._is_identifier_key(key)
-            and (value := cls._deidentify_value(raw_value)) is not None
-        }
-
-    @classmethod
-    def _deidentify_value(cls, value: object) -> object | None:
-        if value is None:
-            return None
-        if isinstance(value, (str, int, float, bool)):
-            return value
-        if isinstance(value, Mapping):
-            result = {
-                key: safe_value
-                for key, raw_value in value.items()
-                if isinstance(key, str)
-                and not cls._is_identifier_key(key)
-                and (safe_value := cls._deidentify_value(raw_value)) is not None
-            }
-            return result or None
-        if isinstance(value, list):
-            result = [safe_value for item in value if (safe_value := cls._deidentify_value(item)) is not None]
-            return result or None
-        return None
-
-    @classmethod
-    def _is_identifier_key(cls, key: str) -> bool:
-        normalized = "".join(character for character in key.casefold() if character.isalnum())
-        return normalized in cls._IDENTIFIER_KEYS or normalized.endswith("identifier")
 
     def _blood_pressure(self, items: object, timestamps: list[datetime]) -> list[dict[str, object]]:
         result: list[dict[str, object]] = []
@@ -126,10 +87,9 @@ class RawEmrPayloadMapper:
                 continue
             timestamps.append(measured_at)
             row: dict[str, object] = {"measured_at": measured_at.isoformat(), "unit": "mmHg"}
-            if item.get("sbp") is not None:
-                row["sbp"] = item["sbp"]
-            if item.get("dbp") is not None:
-                row["dbp"] = item["dbp"]
+            for key in ("sbp", "dbp"):
+                if (value := deidentify(item.get(key))) is not None:
+                    row[key] = value
             if len(row) > 2:
                 result.append(row)
         return result
@@ -138,13 +98,13 @@ class RawEmrPayloadMapper:
         result: list[dict[str, object]] = []
         for item in self._items(items):
             measured_at = self._timestamp(item.get("measuredAt"))
-            value = item.get(value_key)
+            value = deidentify(item.get(value_key))
             if measured_at is None or value is None:
                 continue
             timestamps.append(measured_at)
             row: dict[str, object] = {"measured_at": measured_at.isoformat(), "value": value, "unit": unit}
-            if extra is not None and item.get(extra[0]) is not None:
-                row[extra[1]] = item[extra[0]]
+            if extra is not None and (extra_value := deidentify(item.get(extra[0]))) is not None:
+                row[extra[1]] = extra_value
             result.append(row)
         return result
 
@@ -169,7 +129,9 @@ class RawEmrPayloadMapper:
         allowed = (("medCode", "med_code"), ("medName", "med_name"), ("category", "category"), ("dosage", "dosage"), ("unit", "unit"), ("frequency", "frequency"), ("interval", "interval"), ("durationDays", "duration_days"))
         result: list[dict[str, object]] = []
         for item in RawEmrPayloadMapper._items(items):
-            row = {target: item[source] for source, target in allowed if item.get(source) is not None}
+            # Allowed values may still be nested objects, so they pass the same
+            # identifier boundary as unknown fields.
+            row = {target: value for source, target in allowed if (value := deidentify(item.get(source))) is not None}
             reference = None if reference_lookup is None else reference_lookup.medicine(item.get("medCode"))
             if reference is not None:
                 row.setdefault("med_name", reference.name_ko)
@@ -207,7 +169,7 @@ class RawEmrPayloadMapper:
         if not isinstance(value, str) or not value.strip():
             return None
         try:
-            parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00").replace(" ", "T"))
+            parsed = datetime.fromisoformat(value.strip())
         except ValueError:
             return None
         return parsed.replace(tzinfo=self._SEOUL) if parsed.tzinfo is None else parsed
@@ -221,7 +183,3 @@ class RawEmrPayloadMapper:
         value = source.get(key)
         if isinstance(value, str) and value.strip():
             target[target_key] = value
-
-
-# Kept as an import-compatible name while the Bridge migrates to the raw PoC contract.
-MainBridgePayloadMapper = RawEmrPayloadMapper

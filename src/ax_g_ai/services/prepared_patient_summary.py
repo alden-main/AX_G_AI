@@ -1,102 +1,61 @@
-"""환자 EMR 준비 완료 메시지의 화면용 구조화 계약."""
+"""환자 EMR 준비 완료 메시지의 화면용 구조화 계약.
+
+같은 Pydantic 모델이 Provider에 보내는 Structured Output JSON Schema, 응답 검증, API 응답
+본문을 모두 정의한다. 문자열 공백 검증은 ``AfterValidator``로 두어 OpenAI strict 모드가
+지원하지 않는 ``minLength`` 키워드가 스키마에 들어가지 않게 한다.
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-import json
-from typing import Any, Mapping
+from typing import Annotated
+
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, ValidationError
 
 from ax_g_ai.adapters.openai import OpenAIProviderError
 
 
-@dataclass(frozen=True)
-class PreparedPatientSummarySection:
+def _non_blank(value: str) -> str:
+    value = value.strip()
+    if not value:
+        raise ValueError("must not be blank")
+    return value
+
+
+NonBlankText = Annotated[str, AfterValidator(_non_blank)]
+
+
+class PreparedPatientSummarySection(BaseModel):
     """채팅 말풍선에서 라벨과 함께 표시할 EMR 요약 항목."""
 
-    label: str
-    content: str
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
-    def as_dict(self) -> dict[str, str]:
-        return {"label": self.label, "content": self.content}
+    label: NonBlankText = Field(description="예: 최근 혈압, 최근 검사, 복용 약물")
+    content: NonBlankText = Field(
+        description="해당 항목의 사실을 자연스럽게 연결한 읽기 쉬운 완결 한국어 문장. 단순 나열이나 데이터 부재 안내는 넣지 않는다.",
+    )
 
 
-@dataclass(frozen=True)
-class PreparedPatientSummary:
+class PreparedPatientSummary(BaseModel):
     """환자 선택 직후 표시하는 최초 AI 메시지의 안정된 형태."""
 
-    message: str
-    sections: tuple[PreparedPatientSummarySection, ...]
-    guidance: str
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    message: NonBlankText = Field(description="첫 문장. 예: EMR 데이터가 로드되었습니다.")
+    sections: tuple[PreparedPatientSummarySection, ...] = Field(description="표시할 수 있는 EMR 항목만 담는다.")
+    guidance: NonBlankText = Field(
+        description="현재 EMR 요약에 대한 간결한 후속 확인 또는 사용 안내 한두 문장. AI 생성·의료진 검토 필요 등의 일반 경고 문구는 넣지 않는다.",
+    )
 
     def as_dict(self) -> dict[str, object]:
-        return {
-            "message": self.message,
-            "sections": [section.as_dict() for section in self.sections],
-            "guidance": self.guidance,
-        }
+        return self.model_dump(mode="json")
 
     @classmethod
     def from_provider_text(cls, text: str) -> "PreparedPatientSummary":
-        """Responses Structured Output을 검증해 내부 DTO로 바꾼다."""
+        """Structured Output을 검증해 내부 DTO로 바꾼다."""
         try:
-            value = json.loads(text)
-        except json.JSONDecodeError as error:
-            raise OpenAIProviderError("OpenAI returned invalid patient summary JSON") from error
-        if not isinstance(value, Mapping):
-            raise OpenAIProviderError("OpenAI returned an invalid patient summary shape")
-        message = _required_text(value, "message")
-        guidance = _required_text(value, "guidance")
-        raw_sections = value.get("sections")
-        if not isinstance(raw_sections, list):
-            raise OpenAIProviderError("OpenAI returned invalid patient summary sections")
-        sections = tuple(
-            PreparedPatientSummarySection(
-                label=_required_text(item, "label"),
-                content=_required_text(item, "content"),
-            )
-            for item in raw_sections
-            if isinstance(item, Mapping)
-        )
-        if len(sections) != len(raw_sections):
-            raise OpenAIProviderError("OpenAI returned invalid patient summary sections")
-        return cls(message=message, sections=sections, guidance=guidance)
+            return cls.model_validate_json(text)
+        except ValidationError as error:
+            raise OpenAIProviderError("Provider returned an invalid patient summary") from error
 
 
-def _required_text(value: Mapping[str, Any], key: str) -> str:
-    item = value.get(key)
-    if not isinstance(item, str) or not item.strip():
-        raise OpenAIProviderError("OpenAI returned an invalid patient summary field")
-    return item.strip()
-
-
-PATIENT_SUMMARY_OUTPUT_SCHEMA: dict[str, object] = {
-    "type": "object",
-    "additionalProperties": False,
-    "properties": {
-        "message": {
-            "type": "string",
-            "description": "첫 문장. 예: EMR 데이터가 로드되었습니다.",
-        },
-        "sections": {
-            "type": "array",
-            "description": "표시할 수 있는 EMR 항목만 담는다.",
-            "items": {
-                "type": "object",
-                "additionalProperties": False,
-                "properties": {
-                    "label": {"type": "string", "description": "예: 최근 혈압, 최근 검사, 복용 약물"},
-                    "content": {
-                        "type": "string",
-                        "description": "해당 항목의 사실을 자연스럽게 연결한 읽기 쉬운 완결 한국어 문장. 단순 나열이나 데이터 부재 안내는 넣지 않는다.",
-                    },
-                },
-                "required": ["label", "content"],
-            },
-        },
-        "guidance": {
-            "type": "string",
-            "description": "현재 EMR 요약에 대한 간결한 후속 확인 또는 사용 안내 한두 문장. AI 생성·의료진 검토 필요 등의 일반 경고 문구는 넣지 않는다.",
-        },
-    },
-    "required": ["message", "sections", "guidance"],
-}
+PATIENT_SUMMARY_OUTPUT_SCHEMA: dict[str, object] = PreparedPatientSummary.model_json_schema()

@@ -179,7 +179,7 @@ def _write_database(
                 precautions TEXT
             ) WITHOUT ROWID;
             CREATE INDEX diseases_name_ko_idx ON diseases(name_ko);
-            CREATE INDEX medicines_kd_code_idx ON medicines(kd_code);
+            CREATE INDEX medicines_kd_code_idx ON medicines(kd_code, name_ko);
             CREATE INDEX medicines_name_ko_idx ON medicines(name_ko);
             """
         )

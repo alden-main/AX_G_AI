@@ -1,72 +1,62 @@
 from __future__ import annotations
 
+from datetime import datetime
+import os
+import time
 from unittest import TestCase
+from unittest.mock import patch
 
-from ax_g_ai.api import (
-    PatientContextNotReadyError,
-    PatientContextUnavailableError,
-    PatientMismatchError,
-)
-from ax_g_ai.runtime import PatientContextStore
-from ax_g_ai.services.clinical_chat import ClinicalChatProviderUnavailableError
-from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
+from fastapi.testclient import TestClient
 
-
-def raw_payload(patient_id: str = "patient-1") -> dict[str, object]:
-    return {"patient": {"patientId": patient_id}, "bloodSugarList": [{"measuredAt": "2026-09-22 10:30:00", "glucoseValue": 120}]}
+from ax_g_ai.adapters.main_bridge import PreparedRawEmrContext
+from ax_g_ai.errors import PatientContextNotReadyError
+from ax_g_ai.runtime import create_runtime_app
+from ax_g_ai.services.patient_context_store import PatientContextStore
 
 
-class SummaryService:
-    def __init__(self) -> None:
-        self.fail = False
-        self.received: object | None = None
-
-    def summarize_prepared_snapshot(self, *, patient_id: str, snapshot: object) -> PreparedPatientSummary:
-        self.received = snapshot
-        if self.fail:
-            raise ClinicalChatProviderUnavailableError()
-        return PreparedPatientSummary("EMR 데이터가 로드되었습니다.", (), "현재 기록을 확인하세요.")
+def context() -> PreparedRawEmrContext:
+    return PreparedRawEmrContext({"blood_sugar": [{"value": 120}]}, datetime.fromisoformat("2026-09-22T10:30:00+09:00"))
 
 
 class PatientContextStoreTest(TestCase):
-    def setUp(self) -> None:
-        self.service = SummaryService()
-        self.store = PatientContextStore(self.service)  # type: ignore[arg-type]
+    def test_context_is_available_until_discarded(self) -> None:
+        store = PatientContextStore()
+        store.put("patient-1", context())
 
-    def test_prepares_the_supplied_snapshot_without_external_read(self) -> None:
-        summary, updated_at = self.store.prepare("patient-1", raw_payload())
-
-        self.assertEqual(summary.message, "EMR 데이터가 로드되었습니다.")
-        self.assertEqual(updated_at.isoformat(), "2026-09-22T10:30:00+09:00")
-        self.assertIsNotNone(self.service.received)
-
-    def test_failed_refresh_discards_previous_context(self) -> None:
-        self.store.prepare("patient-1", raw_payload())
-        self.service.fail = True
-
-        with self.assertRaises(ClinicalChatProviderUnavailableError):
-            self.store.prepare("patient-1", raw_payload())
+        self.assertEqual(store.get("patient-1"), context())
+        store.discard("patient-1")
         with self.assertRaises(PatientContextNotReadyError):
-            self.store.get("patient-1")
+            store.get("patient-1")
 
-    def test_prepare_without_summary_is_immediately_available_until_discarded(self) -> None:
-        snapshot, updated_at = self.store.prepare_without_summary("patient-1", raw_payload())
-
-        self.assertEqual(self.store.get("patient-1"), (snapshot, updated_at))
-        self.assertIsNone(self.service.received)
-        self.store.discard("patient-1")
+    def test_expired_or_evicted_context_requires_a_new_prepare(self) -> None:
+        expiring = PatientContextStore(ttl_seconds=0.01)
+        expiring.put("patient-1", context())
+        time.sleep(0.02)
         with self.assertRaises(PatientContextNotReadyError):
-            self.store.get("patient-1")
+            expiring.get("patient-1")
 
-    def test_map_once_does_not_store_context(self) -> None:
-        snapshot, _updated_at = self.store.map_once("patient-1", raw_payload())
-
-        self.assertIn("blood_sugar", snapshot)
+        bounded = PatientContextStore(max_entries=1)
+        bounded.put("patient-1", context())
+        bounded.put("patient-2", context())
         with self.assertRaises(PatientContextNotReadyError):
-            self.store.get("patient-1")
+            bounded.get("patient-1")
+        self.assertEqual(bounded.get("patient-2"), context())
 
-    def test_invalid_or_cross_patient_snapshot_is_not_prepared(self) -> None:
-        with self.assertRaises(PatientContextUnavailableError):
-            self.store.prepare("patient-1", {"success": False})
-        with self.assertRaises(PatientMismatchError):
-            self.store.prepare("patient-1", raw_payload("patient-2"))
+
+class RuntimeAssemblyTest(TestCase):
+    def test_invalid_configuration_fails_closed_without_calling_a_provider(self) -> None:
+        for environment in (
+            {},
+            {"OPENAI_API_KEY": "test-key", "AX_G_REFERENCE_DATA_DB_PATH": "/nonexistent/reference.sqlite"},
+        ):
+            with self.subTest(environment=environment), patch.dict(os.environ, environment, clear=True):
+                with self.assertLogs("uvicorn.error", level="WARNING") as logs:
+                    client = TestClient(create_runtime_app())
+                response = client.post(
+                    "/internal/v1/patient-context",
+                    json={"patient_id": "patient-1", "emr_payload": {"patient": {"patientId": "patient-1"}}},
+                )
+
+            self.assertEqual(response.json()["code"], "AI_PROVIDER_UNAVAILABLE")
+            self.assertTrue(any("runtime_configuration_invalid" in line for line in logs.output))
+            self.assertFalse(any("test-key" in line for line in logs.output))
