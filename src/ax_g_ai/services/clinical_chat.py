@@ -91,7 +91,7 @@ class ClinicalChatService:
     def _summary_request(snapshot: Mapping[str, Any]) -> OpenAIRequest:
         return OpenAIRequest(
             instructions=CLINICAL_INSTRUCTIONS,
-            input=compose_prepared_snapshot_question(ONE_SHOT_PATIENT_SUMMARY_REQUEST, snapshot),
+            input=compose_prepared_snapshot_question(ONE_SHOT_PATIENT_SUMMARY_REQUEST, snapshot, one_shot_summary=True),
         )
 
 

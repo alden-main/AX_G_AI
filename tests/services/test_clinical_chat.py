@@ -72,6 +72,14 @@ class ClinicalChatServiceTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await service.summarize_once(snapshot=SNAPSHOT), "요약 답변")
         self.assertEqual([delta async for delta in service.stream_summary_once(snapshot=SNAPSHOT)], ["부분 ", "답변"])
         self.assertTrue(all(request.instructions == CLINICAL_INSTRUCTIONS for request in provider.requests))
+        self.assertEqual(provider.requests[0].input, provider.requests[1].input)
+        prompt = provider.requests[0].input
+        self.assertIn("전체 3~5개의 짧은 항목", prompt)
+        self.assertIn("중요한 이상 소견은 빠뜨리지 마세요", prompt)
+        self.assertIn("처방 상태가 불명확하면 현재 복용으로 단정하지 마세요", prompt)
+        self.assertIn("`•`로 시작하는 짧은 목록", prompt)
+        self.assertNotIn("제목·목록·표·경고 문구 없이", prompt)
+        self.assertNotIn("모든 비식별 임상 데이터를 답변에 활용", prompt)
 
 
 class PreparedSnapshotPromptTest(unittest.TestCase):
