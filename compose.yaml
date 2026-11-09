@@ -3,6 +3,9 @@ services:
     build: .
     expose:
       - "8100"
+    ports:
+      # 사내망 PC에서 테스트할 수 있도록 호스트에 API 포트를 게시합니다.
+      - "8100:8100"
     env_file:
       - .env
     networks:

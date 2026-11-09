@@ -15,7 +15,7 @@ docker info
 
 ## 1. 환경 변수 보관 원칙
 
-`.env`에는 실제 OpenAI API 키가 들어가므로 Linux 서버에서만 생성한다. `.env`는 Git에 커밋하거나 이미지에 포함하지 않으며, 로컬 PC에서 만든 이미지 tar 파일에도 포함되지 않는다.
+운영용 `.env`에는 실제 OpenAI API 키가 들어갈 수 있으므로 배포 대상 서버에서 안전하게 관리한다. `.env`는 Git에 커밋하거나 이미지에 포함하지 않으며, 로컬 PC에서 만든 이미지 tar 파일에도 포함되지 않는다.
 
 ## 2. 로컬 PC에서 Linux 대상 이미지 빌드
 
@@ -95,8 +95,11 @@ chmod 600 .env
 OPENAI_API_KEY=실제_키
 OPENAI_MODEL=gpt-5-mini
 OPENAI_TIMEOUT_SECONDS=30
+AI_REASONING_EFFORT=low
 AX_G_PORT=8100
 ```
+
+A100 서버에서 vLLM과 함께 실행하는 경우는 아래 vLLM 절을 따른다.
 
 ## 6. Linux 서버에서 컨테이너 실행
 
@@ -167,4 +170,128 @@ docker image ls ax-g-ai
 docker image rm ax-g-ai:1.0.0
 ```
 
-Bridge와 같은 Docker 네트워크에서 운영할 때는 호스트 포트를 공개하지 말고 `--network`으로 전용 네트워크에 연결한다. 전체 Compose 배포와 이미지 전달 절차는 [docker_local_run.md](docker_local_run.md)를 참고한다.
+Bridge와 같은 Docker 네트워크에서 운영할 때는 호스트 포트를 공개하지 말고 `--network`으로 전용 네트워크에 연결한다. 네트워크와 포트는 실제 Bridge 배치에 맞춰 구성한다.
+
+
+## 참조 데이터와 로컬 Compose
+
+Docker 이미지는 `data/reference_data.sqlite`를 포함하며 기본 경로는 `/app/data/reference_data.sqlite`이다. 빌드 전에 파일이 있어야 한다. 원본이 변경된 경우 DB 생성 방법과 데이터 검증 사항은 [참조 데이터 설계](reference_data_sqlite.md)를 따른다. 별도 DB를 사용할 경우 읽기 전용 볼륨으로 마운트하고 `AX_G_REFERENCE_DATA_DB_PATH`를 설정한다.
+
+소스가 있는 환경에서 `.env`를 준비한 후 로컬 Compose를 실행할 수 있다. `compose.yaml`은 8100 포트를 호스트에 공개하므로 네트워크 접근 범위를 확인한다.
+
+```bash
+docker compose up --build -d
+docker compose ps
+docker compose logs -f ax-g-ai
+docker compose down
+```
+
+## A100 서버에서 vLLM 실행
+
+```
+Bridge ──(bridge-ai, internal)──> AX-G AI ──(ai-inference, internal)──> vLLM(A100)
+                                                                       └─(model-download)─> Hugging Face
+```
+
+- AX-G AI는 `AI_PROVIDER=openai_compatible`이면 `{AI_BASE_URL}/chat/completions`를 호출한다. 서비스 코드는 OpenAI와 vLLM을 구분하지 않는다.
+- EMR 프롬프트는 `ai-inference` 내부 네트워크 밖으로 나가지 않는다. 외부 네트워크에는 vLLM만 연결되며, 모델 다운로드에만 쓴다.
+
+## 서버 사전 조건
+
+```bash
+nvidia-smi                                   # A100 인식 확인
+docker run --rm --gpus all ubuntu nvidia-smi # NVIDIA Container Toolkit 확인
+docker compose version                       # Compose v2
+```
+
+## 1. 개발 PC: 이미지 빌드 및 전달
+
+```bash
+docker buildx build --platform linux/amd64 --tag ax-g-ai:1.0.0 \
+  --output type=docker,dest=ax-g-ai_1.0.0_linux_amd64.tar .
+scp ax-g-ai_1.0.0_linux_amd64.tar compose.vllm.yaml deploy@SERVER_HOST:/opt/ax-g/deploy/
+```
+
+## 2. A100 서버: 적재와 .env 준비
+
+```bash
+cd /opt/ax-g/deploy
+docker load --input ax-g-ai_1.0.0_linux_amd64.tar
+vi .env && chmod 600 .env
+```
+
+`.env` 예시:
+
+```dotenv
+AX_G_AI_IMAGE=ax-g-ai:1.0.0
+VLLM_MODEL=Qwen/Qwen3-32B-AWQ
+AI_MODEL=qwen3-32b-awq
+VLLM_MAX_MODEL_LEN=16384
+VLLM_GPU_MEMORY_UTILIZATION=0.90
+HF_CACHE_DIR=/opt/ax-g/hf-cache
+# 비공개(gated) 모델에만 필요
+# HF_TOKEN=
+AI_TIMEOUT_SECONDS=60
+```
+
+`compose.vllm.yaml`이 `AI_PROVIDER`, `AI_BASE_URL`, `AI_MODEL`을 AX-G AI 컨테이너에 설정한다. `openai_compatible`일 때는 `.env`에 `OPENAI_API_KEY`가 남아 있어도 vLLM으로 보내지 않는다.
+
+## 3. 실행
+
+```bash
+docker compose -f compose.vllm.yaml up -d
+docker compose -f compose.vllm.yaml logs -f vllm   # 모델 다운로드·로딩 진행 확인
+```
+
+최초 기동은 모델 다운로드(약 20GB)와 로딩 때문에 수 분 이상 걸린다. vLLM health check가 통과해야 AX-G AI가 시작된다. 모델을 받은 뒤 `.env`에 `HF_HUB_OFFLINE=1`을 설정하면 외부 접속 없이 기동한다.
+
+## 4. 확인
+
+```bash
+# vLLM 단독 확인
+docker compose -f compose.vllm.yaml exec ax-g-ai python -c \
+  "import httpx; print(httpx.get('http://vllm:8000/v1/models').text)"
+
+# AX-G AI 첫 글자 시간 측정 (TTFB = 첫 SSE 이벤트 도착 시각)
+curl -sN -X POST http://127.0.0.1:8100/internal/v1/patient-context/stream \
+  -H 'Content-Type: application/json' \
+  -d '{"patient_id":"pid-4356","emr_payload":{"patient":{"patientId":"pid-4356"},"bloodSugarList":[{"measuredAt":"2026-09-22 10:30:00","glucoseValue":120}]}}' \
+  -w '\nTTFB=%{time_starttransfer}s total=%{time_total}s\n'
+```
+
+같은 환자에 이어서 `/internal/v1/clinical-chat/stream`을 호출하면 지시문과 EMR 부분은 vLLM prefix cache를 재사용하므로 두 번째 질문부터 첫 글자가 더 빨라진다. vLLM 로그의 `Prefix cache hit rate`로 확인한다.
+
+수동 live 테스트도 같은 설정으로 vLLM에 보낼 수 있다(소스가 있는 환경).
+
+```bash
+AI_PROVIDER=openai_compatible AI_BASE_URL=http://127.0.0.1:8000/v1 AI_MODEL=qwen3-32b-awq \
+AX_G_RUN_LIVE_SOAP_SCENARIO=true uv run python -m unittest tests.manual.test_live_soap_scenario
+```
+
+## 모델 선택 (A100 40GB)
+
+| 모델 | 메모리(가중치) | 비고 |
+|---|---|---|
+| `Qwen/Qwen3-32B-AWQ` | 약 19GB | 기본값. int4 AWQ, KV cache 여유 충분 |
+| `Qwen/Qwen3-14B` (BF16) | 약 28GB | 양자화 없음. `VLLM_MAX_MODEL_LEN=8192` 권장 |
+| `Qwen/Qwen3-14B-AWQ` | 약 10GB | 더 빠른 응답, 품질 비교용 |
+| EXAONE 계열 | 모델별 상이 | 한국어 강점. 상업 이용 라이선스 확인 필요. `VLLM_REASONING_PARSER` 행 제거 |
+
+- 32B BF16(약 64GB)은 40GB에 들어가지 않는다.
+- A100(Ampere)은 FP8 연산을 하드웨어로 지원하지 않으므로 FP8 모델은 속도 이득이 거의 없다. AWQ/GPTQ int4를 권장한다.
+- Qwen3는 기본으로 사고(thinking) 출력을 생성해 첫 글자가 늦어진다. AX-G AI는 기본으로 `enable_thinking=false`를 보낸다(`AI_DISABLE_THINKING=true`).
+- Qwen3 계열이 아니면 `compose.vllm.yaml`의 `--reasoning-parser` 행을 지운다.
+- 모델 교체 후에는 SOAP 형식·근거 반영을 수동 live 테스트와 임상 검토로 다시 확인한다. 프롬프트·모델 변경 시 적용 환경의 평가 및 승인 절차를 따른다.
+
+## 튜닝 항목
+
+| 설정 | 효과 |
+|---|---|
+| `VLLM_MAX_MODEL_LEN` | 현재 입력은 약 2~3천 토큰이다. 줄일수록 KV cache 동시 처리 여유가 커진다 |
+| `VLLM_GPU_MEMORY_UTILIZATION` | 0.90 기본. 같은 GPU에 다른 프로세스가 있으면 낮춘다 |
+| `AI_MAX_OUTPUT_TOKENS` | 응답 상한. 긴 응답의 꼬리 지연과 GPU 점유를 제한한다 |
+| `VLLM_IMAGE` | 기본 `vllm/vllm-openai:v0.11.0`. 검증된 최신 버전으로 고정해 교체한다 |
+
+## OpenAI로 되돌리기
+
+`compose.vllm.yaml` 대신 기존 방식(`docker run --env-file .env ...`)으로 실행하고 `.env`에 `AI_PROVIDER=openai`(또는 생략)와 `OPENAI_API_KEY`를 둔다. OpenAI의 첫 글자 시간은 `AI_REASONING_EFFORT=low`(또는 `minimal`)로 줄인다.

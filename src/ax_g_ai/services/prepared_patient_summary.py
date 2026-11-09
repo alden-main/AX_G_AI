@@ -40,10 +40,10 @@ class PreparedPatientSummary(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    message: NonBlankText = Field(description="첫 문장. 예: EMR 데이터가 로드되었습니다.")
-    sections: tuple[PreparedPatientSummarySection, ...] = Field(description="표시할 수 있는 EMR 항목만 담는다.")
+    message: NonBlankText = Field(description="EMR에서 확인되는 환자 상태의 한 문장 요약.")
+    sections: tuple[PreparedPatientSummarySection, ...] = Field(description="EMR 사실을 한 줄씩 담는 추가 요약 항목. 기록이 부족하면 항목 수를 줄인다.")
     guidance: NonBlankText = Field(
-        description="현재 EMR 요약에 대한 간결한 후속 확인 또는 사용 안내 한두 문장. AI 생성·의료진 검토 필요 등의 일반 경고 문구는 넣지 않는다.",
+        description="추가 요약의 마지막 한 줄. EMR에서 확인되는 사실을 담는다.",
     )
 
     def as_dict(self) -> dict[str, object]:

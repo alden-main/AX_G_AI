@@ -62,6 +62,10 @@ class ClinicalChatServiceTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(summary.sections[0].label, "혈당")
         self.assertEqual(provider.requests[0].output_schema, PATIENT_SUMMARY_OUTPUT_SCHEMA)
+        self.assertIn("message에 EMR에서 확인되는 환자 상태를 한 문장", provider.requests[0].input)
+        self.assertIn("추가 요약 4~5줄", provider.requests[0].input)
+        self.assertIn("새로운 추정 진단이나 감별 진단은 제시하지 마세요", provider.requests[0].input)
+        self.assertNotIn("요약·분석하세요", provider.requests[0].input)
         with self.assertLogs("uvicorn.error", level="WARNING"), self.assertRaises(ClinicalChatProviderUnavailableError):
             await ClinicalChatService(RecordingProvider(answer="자유 형식")).summarize_prepared_snapshot(snapshot=SNAPSHOT)
 
@@ -74,10 +78,12 @@ class ClinicalChatServiceTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(all(request.instructions == CLINICAL_INSTRUCTIONS for request in provider.requests))
         self.assertEqual(provider.requests[0].input, provider.requests[1].input)
         prompt = provider.requests[0].input
-        self.assertIn("전체 3~5개의 짧은 항목", prompt)
+        self.assertIn("추가 요약 4~5줄", prompt)
         self.assertIn("중요한 이상 소견은 빠뜨리지 마세요", prompt)
+        self.assertIn("새로운 추정 진단이나 감별 진단은 제시하지 마세요", prompt)
+        self.assertIn("기록이 부족하면 내용을 만들거나 반복하지 말고 줄 수를 줄이세요", prompt)
         self.assertIn("처방 상태가 불명확하면 현재 복용으로 단정하지 마세요", prompt)
-        self.assertIn("`•`로 시작하는 짧은 목록", prompt)
+        self.assertIn("첫 줄은 한 문장 요약", prompt)
         self.assertNotIn("제목·목록·표·경고 문구 없이", prompt)
         self.assertNotIn("모든 비식별 임상 데이터를 답변에 활용", prompt)
 
