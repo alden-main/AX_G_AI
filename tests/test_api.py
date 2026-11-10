@@ -28,8 +28,11 @@ class Service:
             guidance="현재 기록을 함께 확인하세요.",
         )
 
+    def find_evidence(self, question: str) -> tuple:
+        return ()
+
     async def answer_prepared_snapshot(
-        self, *, question: str, snapshot: object, reference_record: str | None = None
+        self, *, question: str, snapshot: object, reference_record: str | None = None, evidence=None
     ) -> str:
         self.called = True
         self.question = question
@@ -37,7 +40,7 @@ class Service:
         return "최근 혈당 추이를 확인하세요."
 
     async def stream_prepared_snapshot(
-        self, *, question: str, snapshot: object, reference_record: str | None = None
+        self, *, question: str, snapshot: object, reference_record: str | None = None, evidence=None
     ):
         self.called = True
         self.question = question

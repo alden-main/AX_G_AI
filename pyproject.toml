@@ -9,6 +9,7 @@ dependencies = [
     "fastapi>=0.115,<1",
     "httpx>=0.27,<1",
     "openai>=1.99,<3",
+    "psycopg[binary]>=3.2,<4",
     "pydantic-settings>=2.4,<3",
     "uvicorn[standard]>=0.30,<1",
 ]
@@ -21,6 +22,7 @@ dev = [
 [project.scripts]
 ax-g-ai = "ax_g_ai:main"
 ax-g-ai-reference-db = "ax_g_ai.reference_data:main"
+ax-g-ai-load-corpus = "ax_g_ai.corpus_store.loader:main"
 
 [build-system]
 requires = ["uv_build>=0.12.13,<0.13.0"]

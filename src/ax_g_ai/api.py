@@ -18,6 +18,7 @@ from uuid import uuid4
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, StreamingResponse
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, StringConstraints
 
 from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
@@ -27,7 +28,7 @@ from ax_g_ai.errors import (
     PatientContextUnavailableError,
     PatientMismatchError,
 )
-from ax_g_ai.services.clinical_chat import ClinicalChatService
+from ax_g_ai.services.clinical_chat import ClinicalChatService, evidence_payload
 from ax_g_ai.services.patient_context_store import PatientContextStore
 from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
 
@@ -72,6 +73,8 @@ class ClinicalChatResponseBody(BaseModel):
     answer: str
     source: str = _SOURCE
     emr_updated_at: datetime
+    # 답변에 붙인 최신화 근거([근거 n] 번호와 같음). 근거가 없으면 필드를 생략한다. 미검수 근거는 review_label 로 구분한다.
+    evidence: list[dict[str, object]] | None = None
 
 
 class ErrorBody(BaseModel):
@@ -178,28 +181,36 @@ def create_app(
         answer = await require_service().summarize_once(snapshot=context.data)
         return ClinicalChatResponseBody(answer=answer, emr_updated_at=context.updated_at)
 
-    @app.post("/internal/v1/clinical-chat", response_model=ClinicalChatResponseBody, responses=_responses, tags=["internal"])
+    @app.post("/internal/v1/clinical-chat", response_model=ClinicalChatResponseBody, response_model_exclude_none=True, responses=_responses, tags=["internal"])
     async def clinical_chat(body: ClinicalChatRequestBody) -> ClinicalChatResponseBody:
         context = store.get(body.patient_id)
-        answer = await require_service().answer_prepared_snapshot(
+        service = require_service()
+        # Retrieval may call the embedding server and database; keep it off the event loop.
+        evidence = await run_in_threadpool(service.find_evidence, body.question)
+        answer = await service.answer_prepared_snapshot(
             question=body.question,
             reference_record=body.reference_record,
             snapshot=context.data,
+            evidence=evidence,
         )
-        return ClinicalChatResponseBody(answer=answer, emr_updated_at=context.updated_at)
+        return ClinicalChatResponseBody(answer=answer, emr_updated_at=context.updated_at, evidence=evidence_payload(evidence) or None)
 
     @app.post("/internal/v1/clinical-chat/stream", response_model=None, responses=_responses, tags=["internal"])
     async def clinical_chat_stream(body: ClinicalChatRequestBody, request: Request) -> StreamingResponse:
         """Return the same clinical answer as SSE without exposing provider events."""
         context = store.get(body.patient_id)
+        service = require_service()
+        evidence = await run_in_threadpool(service.find_evidence, body.question)
         return await _stream(
             request,
-            lambda: require_service().stream_prepared_snapshot(
+            lambda: service.stream_prepared_snapshot(
                 question=body.question,
                 reference_record=body.reference_record,
                 snapshot=context.data,
+                evidence=evidence,
             ),
-            {"source": _SOURCE, "emr_updated_at": context.updated_at.isoformat()},
+            {"source": _SOURCE, "emr_updated_at": context.updated_at.isoformat(),
+             **({"evidence": evidence_payload(evidence)} if evidence else {})},
         )
 
     @app.post("/internal/v1/patient-context/stream", response_model=None, responses=_responses, tags=["internal"])

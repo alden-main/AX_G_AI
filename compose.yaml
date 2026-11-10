@@ -1,6 +1,73 @@
 services:
+  # 말뭉치 DB(PostgreSQL + pgvector). 내부망(ai-data)에만 연결하고 호스트 포트를 열지 않습니다.
+  postgres:
+    image: ${POSTGRES_IMAGE:-pgvector/pgvector:0.8.7-pg16}
+    environment:
+      POSTGRES_DB: ${CORPUS_DB_NAME:-axg_corpus}
+      POSTGRES_USER: ${CORPUS_DB_USER:-axg}
+      POSTGRES_PASSWORD: ${CORPUS_DB_PASSWORD:?CORPUS_DB_PASSWORD를 .env에 설정하세요}
+    volumes:
+      - corpus-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ai-data
+    restart: unless-stopped
+
+  # 임베딩 서버(TEI CPU + nlpai-lab/KURE-v1). 질문 문장은 내부망 밖으로 나가지 않습니다.
+  # 최초 기동 시 모델(약 2.3GB)을 내려받으므로 model-download 네트워크가 필요합니다. 받은 뒤 HF_HUB_OFFLINE=1.
+  # ARM 서버는 EMBEDDING_IMAGE=ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-1.9.4
+  embedding:
+    image: ${EMBEDDING_IMAGE:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.4}
+    command:
+      - --model-id=${EMBEDDING_MODEL_ID:-nlpai-lab/KURE-v1}
+      - --max-batch-tokens=${EMBEDDING_MAX_BATCH_TOKENS:-4096}
+      - --max-client-batch-size=16
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+      HF_HUB_OFFLINE: ${HF_HUB_OFFLINE:-0}
+    volumes:
+      - ${HF_CACHE_DIR:-./hf-cache}:/data
+    # 모델 적재 때 4GB 한도에서 OOM이 나는 것을 확인했습니다. CPU 4코어 이상 권장.
+    mem_limit: ${EMBEDDING_MEM_LIMIT:-6g}
+    cpus: ${EMBEDDING_CPUS:-4}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:80/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 600s
+    networks:
+      - ai-inference
+      - model-download
+    restart: unless-stopped
+
+  # 말뭉치 적재(1회 실행): 새 말뭉치면 새 릴리스로 적재 → 바뀐 문단만 임베딩 → 활성 전환. 같은 말뭉치면 바로 끝납니다.
+  # 롤백: docker compose run --rm corpus-loader --activate <release_id>
+  corpus-loader:
+    image: ${AX_G_AI_IMAGE:-ax-g-ai:local}
+    entrypoint: ["ax-g-ai-load-corpus"]
+    environment:
+      AX_G_CORPUS_DATABASE_URL: postgresql://${CORPUS_DB_USER:-axg}:${CORPUS_DB_PASSWORD}@postgres:5432/${CORPUS_DB_NAME:-axg_corpus}
+      AX_G_EMBEDDING_URL: http://embedding:80
+      AX_G_EMBEDDING_MODEL: ${AX_G_EMBEDDING_MODEL:-kure-v1}
+      AX_G_EMBEDDING_TIMEOUT_SECONDS: "120"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      embedding:
+        condition: service_healthy
+    networks:
+      - ai-data
+      - ai-inference
+    restart: "no"
+
   ax-g-ai:
     build: .
+    image: ${AX_G_AI_IMAGE:-ax-g-ai:local}
     expose:
       - "8100"
     ports:
@@ -8,9 +75,18 @@ services:
       - "8100:8100"
     env_file:
       - .env
+    environment:
+      AX_G_CORPUS_DATABASE_URL: postgresql://${CORPUS_DB_USER:-axg}:${CORPUS_DB_PASSWORD}@postgres:5432/${CORPUS_DB_NAME:-axg_corpus}
+      AX_G_EMBEDDING_URL: http://embedding:80
+      AX_G_EMBEDDING_MODEL: ${AX_G_EMBEDDING_MODEL:-kure-v1}
+    depends_on:
+      corpus-loader:
+        condition: service_completed_successfully
     networks:
       - bridge-ai
       - ai-provider-egress
+      - ai-inference
+      - ai-data
 
 networks:
   # Bridge와 AI service만 연결하는 내부 네트워크입니다.
@@ -18,3 +94,14 @@ networks:
     internal: true
   # AI Provider 호출용 네트워크입니다. Bridge는 이 네트워크에 연결하지 않습니다.
   ai-provider-egress: {}
+  # AX-G AI와 임베딩 서버 사이의 내부 네트워크입니다.
+  ai-inference:
+    internal: true
+  # 말뭉치 DB 전용 내부 네트워크입니다.
+  ai-data:
+    internal: true
+  # 임베딩 모델 다운로드용 네트워크입니다. AX-G AI는 연결하지 않습니다.
+  model-download: {}
+
+volumes:
+  corpus-db: {}

@@ -33,7 +33,7 @@ class RawEmrPayloadMapperTest(unittest.TestCase):
     def test_null_or_missing_lists_are_omitted_and_server_time_is_used_without_dates(self) -> None:
         context = self.mapper.map("patient-1", {"patient": {"patientId": "patient-1"}, "bloodPressureList": None}, prepared_at=datetime.fromisoformat("2026-09-22T10:30:00+09:00"))
 
-        self.assertEqual(context.data, {"calculation_input_needed": ["BMI·체표면적 계산에는 체중(kg)과 키(cm) 입력이 필요합니다.", "Cockcroft–Gault CrCl 계산에는 연령, 성별(male/female), 체중(kg), 혈청 크레아티닌(mg/dL) 입력이 필요합니다."]})
+        self.assertEqual(context.data, {"calculation_input_needed": ["BMI·체표면적 계산에는 체중(kg)과 키(cm) 입력이 필요합니다.", "Cockcroft–Gault CrCl 계산에는 연령, 성별(male/female), 체중(kg), 혈청 크레아티닌(mg/dL) 입력이 필요합니다.", "CKD-EPI 2021 eGFR 계산에는 연령, 성별(male/female), 혈청 크레아티닌(mg/dL) 입력이 필요합니다."]})
         self.assertEqual(context.updated_at.isoformat(), "2026-09-22T10:30:00+09:00")
 
     def test_patient_mismatch_and_schema_failures_are_typed_with_safe_diagnostics(self) -> None:

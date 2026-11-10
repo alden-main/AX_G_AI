@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Iterator, Sequence
 from contextlib import contextmanager
 import logging
 from typing import Any, Mapping
@@ -19,6 +19,7 @@ from ax_g_ai.services.prepared_patient_summary import (
     PATIENT_SUMMARY_OUTPUT_SCHEMA,
     PreparedPatientSummary,
 )
+from ax_g_ai.services.clinical_evidence import EvidenceChunk, EvidenceRetriever
 from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
 
 logger = logging.getLogger("uvicorn.error")
@@ -32,24 +33,51 @@ class ClinicalChatService:
     프롬프트·EMR·API Key 없이 분류된 사유만 남는다.
     """
 
-    def __init__(self, provider: ProviderClient, reference_lookup: SqliteReferenceLookup | None = None) -> None:
+    def __init__(
+        self,
+        provider: ProviderClient,
+        reference_lookup: SqliteReferenceLookup | None = None,
+        evidence: EvidenceRetriever | None = None,
+        evidence_limit: int = 3,
+    ) -> None:
         self._provider = provider
         self._reference_lookup = reference_lookup
+        self._evidence = evidence
+        self._evidence_limit = evidence_limit
+
+    def find_evidence(self, question: str) -> tuple[EvidenceChunk, ...]:
+        """Corpus evidence to cite for ``question``; logs chunk ids only (no question text)."""
+        if self._evidence is None:
+            return ()
+        try:
+            chunks = self._evidence.search(question, self._evidence_limit)
+        except Exception as error:  # evidence is optional; never block the answer
+            logger.warning("clinical_evidence_failed error_type=%s", type(error).__name__)
+            return ()
+        if chunks:
+            logger.info(
+                "clinical_evidence_cited chunk_ids=%s unreviewed=%d",
+                ",".join(chunk.chunk_id for chunk in chunks),
+                sum(1 for chunk in chunks if chunk.review_status != "approved"),
+            )
+        return chunks
 
     async def answer_prepared_snapshot(
-        self, *, question: str, snapshot: Mapping[str, Any], reference_record: str | None = None
+        self, *, question: str, snapshot: Mapping[str, Any], reference_record: str | None = None,
+        evidence: Sequence[EvidenceChunk] | None = None,
     ) -> str:
         """준비된 동일 환자의 EMR 문맥으로 한국어 답변을 생성한다."""
         with _provider_failure("prepared_snapshot_chat"):
-            response = await self._provider.respond(self._chat_request(question, snapshot, reference_record))
+            response = await self._provider.respond(self._chat_request(question, snapshot, reference_record, evidence))
         return response.answer
 
     async def stream_prepared_snapshot(
-        self, *, question: str, snapshot: Mapping[str, Any], reference_record: str | None = None
+        self, *, question: str, snapshot: Mapping[str, Any], reference_record: str | None = None,
+        evidence: Sequence[EvidenceChunk] | None = None,
     ) -> AsyncIterator[str]:
         """Yield a prepared-snapshot answer as provider text becomes available."""
         with _provider_failure("prepared_snapshot_chat_stream"):
-            async for delta in self._provider.stream(self._chat_request(question, snapshot, reference_record)):
+            async for delta in self._provider.stream(self._chat_request(question, snapshot, reference_record, evidence)):
                 yield delta
 
     async def summarize_prepared_snapshot(self, *, snapshot: Mapping[str, Any]) -> PreparedPatientSummary:
@@ -79,12 +107,16 @@ class ClinicalChatService:
                 yield delta
 
     def _chat_request(
-        self, question: str, snapshot: Mapping[str, Any], reference_record: str | None
+        self, question: str, snapshot: Mapping[str, Any], reference_record: str | None,
+        evidence: Sequence[EvidenceChunk] | None,
     ) -> OpenAIRequest:
         references = self._reference_lookup.search_question(question) if self._reference_lookup else None
+        chunks = self.find_evidence(question) if evidence is None else evidence
         return OpenAIRequest(
             instructions=CLINICAL_INSTRUCTIONS,
-            input=compose_prepared_snapshot_question(question, snapshot, reference_record, references),
+            input=compose_prepared_snapshot_question(
+                question, snapshot, reference_record, references, evidence=evidence_payload(chunks),
+            ),
         )
 
     @staticmethod
@@ -93,6 +125,11 @@ class ClinicalChatService:
             instructions=CLINICAL_INSTRUCTIONS,
             input=compose_prepared_snapshot_question(ONE_SHOT_PATIENT_SUMMARY_REQUEST, snapshot, one_shot_summary=True),
         )
+
+
+def evidence_payload(chunks: Sequence[EvidenceChunk]) -> list[dict[str, object]]:
+    """Numbered evidence for the prompt and the API response (same numbering)."""
+    return [{"n": number, **chunk.as_dict()} for number, chunk in enumerate(chunks, start=1)]
 
 
 @contextmanager

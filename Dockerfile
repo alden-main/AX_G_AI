@@ -10,6 +10,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     AX_G_REFERENCE_DATA_DB_PATH=/app/data/reference_data.sqlite \
+    AX_G_EVIDENCE_CORPUS_DIR=/app/text_data/corpus \
     PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
@@ -28,6 +29,10 @@ RUN uv sync --locked --no-dev --no-install-project
 COPY src ./src
 COPY data ./data
 RUN test -s data/reference_data.sqlite
+# Generated corpus (build_corpus.py output). The corpus-loader service loads it into PostgreSQL;
+# without a database the API searches these files directly.
+COPY text_data/corpus ./text_data/corpus
+RUN test -s text_data/corpus/chunks.jsonl
 RUN uv sync --locked --no-dev
 
 # The ASGI server exposes /health, /docs, and the Bridge internal API routes.

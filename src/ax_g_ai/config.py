@@ -11,10 +11,13 @@ import os
 from typing import Any, Literal
 
 from pydantic import (
+    DirectoryPath,
+    Field,
     FilePath,
     NonNegativeInt,
     PositiveFloat,
     PositiveInt,
+    SecretStr,
     ValidationError,
     field_validator,
     model_validator,
@@ -124,10 +127,34 @@ class RuntimeSettings(_EnvironmentSettings):
             설정했는데 파일이 없으면 앱 조립 시 fail-closed한다.
         patient_context_ttl_seconds: 준비된 환자 문맥을 메모리에 보관하는 시간이다.
         patient_context_max_entries: 메모리에 보관하는 환자 문맥의 최대 개수다.
+        evidence_corpus_dir: 최신화 말뭉치(``text_data/corpus``) 경로다. 없으면 근거 인용을 끈다.
+        evidence_include_unreviewed: 의료진 미검수(draft) 근거도 '미검수' 표시와 함께 인용할지 여부다.
+            기본값은 끔이며, 켜도 A등급 출처·원문 확인 항목만 대상이다.
+        evidence_max_chunks: 질문 하나에 인용할 근거 문단 최대 개수다.
+        corpus_database_url: 말뭉치 PostgreSQL(pgvector) 접속 URL이다. 설정하면 DB 하이브리드 검색을 쓰고,
+            연결 실패 시 ``evidence_corpus_dir`` 의 파일 검색으로 대체한다. 값은 로그에 쓰지 않는다.
+        embedding_url: 내부 TEI 임베딩 서버 주소다(예: ``http://embedding:80``). 없으면 어휘 검색만 한다.
+        embedding_model: 저장된 임베딩을 구분하는 모델 ID다(적재기와 같아야 한다).
+        evidence_similarity_floor: 의미 검색만으로 근거를 인용할 최소 코사인 유사도다.
     """
 
     model_config = SettingsConfigDict(env_prefix="AX_G_")
 
     reference_data_db_path: FilePath | None = None
+    evidence_corpus_dir: DirectoryPath | None = None
+    evidence_include_unreviewed: bool = False
+    evidence_max_chunks: int = Field(default=3, ge=1, le=5)
+    corpus_database_url: SecretStr | None = None
+    embedding_url: str | None = None
+    embedding_model: str = "kure-v1"
+    embedding_timeout_seconds: PositiveFloat = 10
+    evidence_similarity_floor: float = Field(default=0.6, ge=0, le=1)
+
+    @field_validator("embedding_url")
+    @classmethod
+    def _embedding_http_url(cls, value: str | None) -> str | None:
+        if value is not None and not value.startswith(("https://", "http://")):
+            raise ValueError("must be an HTTP(S) URL")
+        return value
     patient_context_ttl_seconds: PositiveFloat = 12 * 60 * 60
     patient_context_max_entries: PositiveInt = 1000
