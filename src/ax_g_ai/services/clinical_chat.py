@@ -55,12 +55,17 @@ class ClinicalChatService:
         self._evidence = evidence
         self._evidence_limit = evidence_limit
 
-    def find_evidence(self, question: str) -> tuple[EvidenceChunk, ...]:
-        """Corpus evidence to cite for ``question``; logs chunk ids only (no question text)."""
-        if self._evidence is None:
+    def find_evidence(self, question: str, retriever: EvidenceRetriever | None = None) -> tuple[EvidenceChunk, ...]:
+        """Corpus evidence to cite for ``question``; logs chunk ids only (no question text).
+
+        ``retriever`` is the request's corpus snapshot; without it the service's own retriever is used.
+        """
+        if retriever is None:  # not ``or``: an empty index is falsy (``__len__``) but still the snapshot's index
+            retriever = self._evidence
+        if retriever is None:
             return ()
         try:
-            chunks = self._evidence.search(question, self._evidence_limit)
+            chunks = retriever.search(question, self._evidence_limit)
         except Exception as error:  # evidence is optional; never block the answer
             logger.warning("clinical_evidence_failed error_type=%s", type(error).__name__)
             return ()

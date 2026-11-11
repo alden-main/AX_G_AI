@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime
 import os
 import time
@@ -21,26 +22,26 @@ def context() -> PreparedRawEmrContext:
 class PatientContextStoreTest(TestCase):
     def test_context_is_available_until_discarded(self) -> None:
         store = PatientContextStore()
-        store.put("patient-1", context())
+        asyncio.run(store.put("patient-1", context()))
 
-        self.assertEqual(store.get("patient-1"), context())
-        store.discard("patient-1")
+        self.assertEqual(asyncio.run(store.get("patient-1")), context())
+        asyncio.run(store.discard("patient-1"))
         with self.assertRaises(PatientContextNotReadyError):
-            store.get("patient-1")
+            asyncio.run(store.get("patient-1"))
 
     def test_expired_or_evicted_context_requires_a_new_prepare(self) -> None:
         expiring = PatientContextStore(ttl_seconds=0.01)
-        expiring.put("patient-1", context())
+        asyncio.run(expiring.put("patient-1", context()))
         time.sleep(0.02)
         with self.assertRaises(PatientContextNotReadyError):
-            expiring.get("patient-1")
+            asyncio.run(expiring.get("patient-1"))
 
         bounded = PatientContextStore(max_entries=1)
-        bounded.put("patient-1", context())
-        bounded.put("patient-2", context())
+        asyncio.run(bounded.put("patient-1", context()))
+        asyncio.run(bounded.put("patient-2", context()))
         with self.assertRaises(PatientContextNotReadyError):
-            bounded.get("patient-1")
-        self.assertEqual(bounded.get("patient-2"), context())
+            asyncio.run(bounded.get("patient-1"))
+        self.assertEqual(asyncio.run(bounded.get("patient-2")), context())
 
 
 class RuntimeAssemblyTest(TestCase):

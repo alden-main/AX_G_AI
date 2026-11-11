@@ -216,16 +216,18 @@ class PostgresDurStoreTest(unittest.TestCase):
 class DurRuntimeTest(unittest.TestCase):
     def test_unreachable_database_disables_dur_without_logging_credentials(self) -> None:
         from ax_g_ai.config import RuntimeSettings
-        from ax_g_ai.runtime import _dur_checker
+        from ax_g_ai.runtime import _corpus_source
 
         settings = RuntimeSettings(corpus_database_url="postgresql://nobody:secret@127.0.0.1:1/none")
         with self.assertLogs("uvicorn.error", level="WARNING") as logs:
-            self.assertIsNone(_dur_checker(settings))
-        self.assertTrue(any("dur_unavailable" in line for line in logs.output))
+            snapshot = _corpus_source(settings).current
+        self.assertIsNone(snapshot.recommender)
+        self.assertIsNone(snapshot.dur_dataset_id)
+        self.assertTrue(any("fallback=files" in line for line in logs.output))
         self.assertFalse(any("secret" in line or "nobody" in line for line in logs.output))
-        with self.assertLogs("uvicorn.error", level="WARNING"):
-            self.assertIsNone(_dur_checker(RuntimeSettings()))  # no database configured
-        self.assertIsNone(_dur_checker(RuntimeSettings(dur_enabled=False)))
+        with self.assertLogs("uvicorn.error", level="WARNING") as logs:
+            _corpus_source(RuntimeSettings())  # no database configured
+        self.assertTrue(any("dur_unavailable reason=no_database_url" in line for line in logs.output))
 
 
 @unittest.skipUnless((REPO_SNAPSHOT / "manifest.json").is_file(), "data/dur snapshot not built")

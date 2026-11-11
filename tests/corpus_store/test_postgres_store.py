@@ -184,7 +184,7 @@ class PostgresCorpusStoreTest(unittest.TestCase):
     def retriever(self, embedder, **kwargs):
         from ax_g_ai.corpus_store.retriever import PostgresEvidenceRetriever
 
-        return PostgresEvidenceRetriever(TEST_DATABASE_URL, embedder=embedder, model_id="test-model", include_unreviewed=True, **kwargs)
+        return PostgresEvidenceRetriever.open(TEST_DATABASE_URL, embedder=embedder, model_id="test-model", include_unreviewed=True, **kwargs)
 
     def test_load_reuse_and_incremental_embedding(self) -> None:
         first = self.load(FakeEmbedder())
@@ -234,6 +234,28 @@ class PostgresCorpusStoreTest(unittest.TestCase):
         self.assertTrue(result.warnings)
         self.assertEqual(self.load(FakeEmbedder()).embedded, len(CHUNKS))
 
+    def test_live_corpus_swaps_evidence_and_rules_of_the_same_release(self) -> None:
+        from ax_g_ai.config import RuntimeSettings
+        from ax_g_ai.runtime import _corpus_source
+
+        first = self.load()
+        settings = RuntimeSettings(corpus_database_url=TEST_DATABASE_URL, evidence_include_unreviewed=True, dur_enabled=False,
+                                   corpus_refresh_seconds=3600)
+        corpus = _corpus_source(settings)
+        self.addCleanup(corpus.close)
+        before = corpus.current
+        self.assertEqual((before.release_id, before.evidence.release_id), (first.release_id, first.release_id))
+        self.assertIsNotNone(before.recommender)
+        self.assertFalse(corpus.refresh())
+        write_corpus(self.dir, [*CHUNKS[:-1], chunk("900-C99", "새 주제", "새 문장")])
+        second = self.load()
+        self.assertTrue(corpus.refresh())
+        after = corpus.current
+        self.assertEqual((after.release_id, after.evidence.release_id), (second.release_id, second.release_id))
+        self.assertIsNot(after.recommender, before.recommender)
+        # In-flight requests keep the snapshot they started with.
+        self.assertEqual(before.evidence.release_id, first.release_id)
+
     def test_rollback_by_activating_previous_release(self) -> None:
         from ax_g_ai.corpus_store.loader import CorpusLoadError, activate
 
@@ -252,7 +274,7 @@ class PostgresCorpusStoreTest(unittest.TestCase):
         self.assertNotIn("369-C10-chunk", [c.chunk_id for c in retriever.search("급성 담낭염 비상업 근거", 5)])
         from ax_g_ai.corpus_store.retriever import PostgresEvidenceRetriever
 
-        approved_only = PostgresEvidenceRetriever(TEST_DATABASE_URL, embedder=None, model_id="test-model", include_unreviewed=False)
+        approved_only = PostgresEvidenceRetriever.open(TEST_DATABASE_URL, embedder=None, model_id="test-model", include_unreviewed=False)
         self.assertEqual(len(approved_only), 0)
 
     def test_rules_read_from_the_active_release_match_the_file_gate(self) -> None:
@@ -302,7 +324,7 @@ class PostgresCorpusStoreTest(unittest.TestCase):
 class RuntimeFallbackTest(unittest.TestCase):
     def test_unreachable_database_falls_back_to_file_index(self) -> None:
         from ax_g_ai.config import RuntimeSettings
-        from ax_g_ai.runtime import _evidence_retriever
+        from ax_g_ai.runtime import _corpus_source
         from ax_g_ai.services.clinical_evidence import InMemoryEvidenceIndex
 
         with tempfile.TemporaryDirectory() as raw:
@@ -311,8 +333,11 @@ class RuntimeFallbackTest(unittest.TestCase):
                 corpus_database_url="postgresql://nobody:x@127.0.0.1:1/none", evidence_corpus_dir=raw, evidence_include_unreviewed=True,
             )
             with self.assertLogs("uvicorn.error", level="INFO") as logs:
-                retriever = _evidence_retriever(settings)
-        self.assertIsInstance(retriever, InMemoryEvidenceIndex)
+                snapshot = _corpus_source(settings).current
+        # Evidence and rules both come from the files: never one from each backend.
+        self.assertIsInstance(snapshot.evidence, InMemoryEvidenceIndex)
+        self.assertIsNotNone(snapshot.recommender)
+        self.assertIsNone(snapshot.release_id)
         self.assertTrue(any("fallback=files" in line for line in logs.output))
         self.assertFalse(any("nobody" in line for line in logs.output))  # credentials never logged
 

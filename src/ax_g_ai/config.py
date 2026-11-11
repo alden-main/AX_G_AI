@@ -157,6 +157,12 @@ class RuntimeSettings(_EnvironmentSettings):
         dur_enabled: 심평원 DUR 의약품 목록(PostgreSQL ``dur`` 스키마, ``ax-g-ai-load-dur`` 로 적재)으로 추천 의견·처방 관련
             채팅에서 현재 처방의 병용금기·연령금기·임부금기·노인주의를 점검할지 여부다(공공누리 제1유형 — 출처 표시).
             ``corpus_database_url`` 의 DB를 쓰며, DB나 활성 데이터셋이 없으면 경고 후 점검을 끈다.
+        corpus_refresh_seconds: PostgreSQL 활성 말뭉치 릴리스·DUR 데이터셋을 확인하는 주기(초)다. 바뀌면 근거 검색·규칙·DUR을
+            한 스냅샷으로 함께 교체한다(요청 경로에서 다시 읽지 않는다).
+        patient_context_redis_url: 준비된 환자 문맥을 Redis(``redis://``·``rediss://``)에 둔다. 여러 워커(``WEB_CONCURRENCY``)·인스턴스가
+            문맥을 공유할 때 설정한다. 없으면 프로세스 메모리(가장 빠름, 워커 1개)이며, 기동 시 연결할 수 없으면 경고 후 메모리를 쓴다.
+            값은 로그에 쓰지 않는다.
+        patient_context_store_timeout_seconds: Redis 연결·명령 제한 시간(초)이다.
         attributed_sources_only: 출처를 밝히면 쓸 수 있는 자료만 AI에 쓴다(기본 true). 켜면 (1) 근거·규칙의 모든 출처에
             라이선스(CC0·CC BY·퍼블릭 도메인)와 제목이 있어야 하고, (2) 출처·라이선스가 확인되지 않은 참조 DB
             (``reference_data_db_path``, 약품 효능·주의사항)를 쓰지 않으며, (3) 추천 의견에서 출처 없는 일반 의학 지식 제안을 막는다.
@@ -179,8 +185,11 @@ class RuntimeSettings(_EnvironmentSettings):
     attributed_sources_only: bool = True
     clinical_doses_enabled: bool = False
     dur_enabled: bool = True
+    corpus_refresh_seconds: PositiveFloat = 60
     patient_context_ttl_seconds: PositiveFloat = 12 * 60 * 60
     patient_context_max_entries: PositiveInt = 1000
+    patient_context_redis_url: SecretStr | None = None
+    patient_context_store_timeout_seconds: PositiveFloat = 1.0
 
 
 class LoaderSettings(_EnvironmentSettings):

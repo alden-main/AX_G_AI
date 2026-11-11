@@ -1,0 +1,41 @@
+# 준비된 환자 문맥을 Redis에 두고 AX-G AI를 여러 워커로 실행합니다(compose.yaml에 덧붙여 씁니다).
+#   docker compose -f compose.yaml -f compose.redis.yaml up -d
+# 워커 1개로 충분하면 이 파일 없이 실행하세요. 메모리 저장소가 가장 빠릅니다.
+# .env: REDIS_PASSWORD(필수), AX_G_WORKERS(기본 2), REDIS_MAXMEMORY(기본 256mb)
+services:
+  # 내부망(ai-data)에만 연결하고 호스트 포트를 열지 않습니다. 디스크에 저장하지 않습니다(RDB·AOF 끔):
+  # 문맥은 보관 기간(기본 12시간) 동안만 쓰는 비식별 캐시이며, 재시작 후에는 Bridge가 환자 문맥을 다시 준비합니다.
+  redis:
+    image: ${REDIS_IMAGE:-redis:7.4-alpine}
+    command:
+      - redis-server
+      - --requirepass
+      - ${REDIS_PASSWORD:?REDIS_PASSWORD를 .env에 설정하세요}
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+      - --maxmemory
+      - ${REDIS_MAXMEMORY:-256mb}
+      # 메모리가 차면 만료가 걸린 키 중 오래 쓰지 않은 것부터 비웁니다(문맥 키는 모두 만료가 있습니다).
+      - --maxmemory-policy
+      - volatile-lru
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    networks:
+      - ai-data
+    restart: unless-stopped
+
+  ax-g-ai:
+    environment:
+      AX_G_PATIENT_CONTEXT_REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      # uvicorn이 읽는 워커 수입니다. 워커마다 말뭉치 스냅샷·DB 풀(최대 10)을 따로 둡니다.
+      WEB_CONCURRENCY: ${AX_G_WORKERS:-2}
+    depends_on:
+      redis:
+        condition: service_healthy

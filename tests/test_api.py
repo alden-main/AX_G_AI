@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import unittest
 
 from fastapi.testclient import TestClient
@@ -28,11 +29,11 @@ class Service:
             guidance="현재 기록을 함께 확인하세요.",
         )
 
-    def find_evidence(self, question: str) -> tuple:
+    def find_evidence(self, question: str, retriever=None) -> tuple:
         return ()
 
     async def answer_prepared_snapshot(
-        self, *, question: str, snapshot: object, reference_record: str | None = None, evidence=None
+        self, *, question: str, snapshot: object, reference_record: str | None = None, evidence=None, assessment=None
     ) -> str:
         self.called = True
         self.question = question
@@ -40,7 +41,7 @@ class Service:
         return "최근 혈당 추이를 확인하세요."
 
     async def stream_prepared_snapshot(
-        self, *, question: str, snapshot: object, reference_record: str | None = None, evidence=None
+        self, *, question: str, snapshot: object, reference_record: str | None = None, evidence=None, assessment=None
     ):
         self.called = True
         self.question = question
@@ -67,7 +68,7 @@ def app_client(service: object | None, store: PatientContextStore | None = None)
 
 def is_ready(store: PatientContextStore, patient_id: str) -> bool:
     try:
-        store.get(patient_id)
+        asyncio.run(store.get(patient_id))
     except PatientContextNotReadyError:
         return False
     return True

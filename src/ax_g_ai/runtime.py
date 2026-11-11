@@ -1,8 +1,16 @@
-"""환경 설정으로 Bridge API 런타임을 조립한다."""
+"""환경 설정으로 Bridge API 런타임을 조립한다.
+
+말뭉치(근거 검색·규칙)와 DUR은 하나의 스냅샷(``CorpusSnapshot``)으로 묶는다. PostgreSQL을 쓸 수
+있으면 근거와 규칙을 같은 활성 릴리스에서 읽고 ``LiveCorpus``가 릴리스·DUR 데이터셋 변경을 함께
+반영한다. DB를 쓸 수 없으면 근거와 규칙을 모두 파일 말뭉치에서 읽어 기동 시점으로 고정한다.
+"""
 
 from __future__ import annotations
 
 import logging
+import os
+from collections.abc import Callable
+from pathlib import Path
 
 from fastapi import FastAPI
 
@@ -13,8 +21,9 @@ from ax_g_ai.config import AISettings, ConfigurationError, RuntimeSettings
 from ax_g_ai.services.clinical_chat import ClinicalChatService
 from ax_g_ai.services.clinical_evidence import EvidenceRetriever, InMemoryEvidenceIndex
 from ax_g_ai.services.clinical_recommendation import ClinicalRecommender, RuleCorpus
+from ax_g_ai.services.corpus_snapshot import CorpusSnapshot, CorpusSource, StaticCorpus
 from ax_g_ai.services.emr_mapping import SiteCodeMap
-from ax_g_ai.services.patient_context_store import PatientContextStore
+from ax_g_ai.services.patient_context_store import ContextStore, PatientContextStore
 from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
 
 logger = logging.getLogger("uvicorn.error")
@@ -35,119 +44,148 @@ def create_runtime_app() -> FastAPI:
         logger.warning("reference_data_disabled reason=attributed_sources_only")
         database_path = None
     lookup = None if database_path is None else SqliteReferenceLookup(database_path)
-    evidence = _evidence_retriever(runtime_settings)
-    close = getattr(evidence, "close", None)  # pooled DB / embedding connections (PostgreSQL backend only)
+    corpus = _corpus_source(runtime_settings)
     return create_app(
         ClinicalChatService(
-            build_provider_client(ai_settings), lookup, evidence, runtime_settings.evidence_max_chunks,
+            build_provider_client(ai_settings), lookup, None, runtime_settings.evidence_max_chunks,
             allow_general_knowledge=not runtime_settings.attributed_sources_only,
         ),
         RawEmrPayloadMapper(lookup),
-        PatientContextStore(
-            runtime_settings.patient_context_ttl_seconds,
-            runtime_settings.patient_context_max_entries,
-        ),
-        _clinical_recommender(runtime_settings),
-        on_shutdown=(close,) if close is not None else (),
+        _context_store(runtime_settings),
+        corpus=corpus,
+        on_shutdown=(corpus.close,),
     )
 
 
-def _clinical_recommender(settings: RuntimeSettings) -> ClinicalRecommender | None:
-    """Stage-2 rules from the active database release, else the corpus files, else none."""
-    if not settings.clinical_rules_enabled:
-        return None
-    include_unreviewed = settings.evidence_include_unreviewed
-    corpus: RuleCorpus | None = None
-    backend = "files"
-    if settings.corpus_database_url is not None:
-        import psycopg
+def _context_store(settings: RuntimeSettings) -> ContextStore:
+    """Redis when configured and reachable (shared by workers), else this process's memory."""
+    workers = os.getenv("WEB_CONCURRENCY", "1")
+    if settings.patient_context_redis_url is not None:
+        import redis
 
-        from ax_g_ai.corpus_store.retriever import CorpusUnavailableError
-        from ax_g_ai.corpus_store.rules import read_rows_from_database
+        from ax_g_ai.adapters.redis_context_store import RedisPatientContextStore
 
         try:
-            release_id, rows = read_rows_from_database(settings.corpus_database_url.get_secret_value())
-        except (psycopg.Error, CorpusUnavailableError) as error:
-            logger.warning("clinical_rules_database_unavailable error_type=%s fallback=files", type(error).__name__)
+            store = RedisPatientContextStore.connect(
+                settings.patient_context_redis_url.get_secret_value(), ttl_seconds=settings.patient_context_ttl_seconds,
+                timeout_seconds=settings.patient_context_store_timeout_seconds,
+            )
+        except redis.RedisError as error:
+            # Error class only; the URL holds the password.
+            logger.warning("patient_context_store_unavailable error_type=%s fallback=memory", type(error).__name__)
         else:
-            corpus = RuleCorpus.from_rows(rows, include_unreviewed=include_unreviewed, require_license=settings.attributed_sources_only)
-            backend = f"postgres release_id={release_id}"
-    if corpus is None:
-        if settings.evidence_corpus_dir is None:
-            return None
-        corpus = RuleCorpus.load(settings.evidence_corpus_dir, include_unreviewed=include_unreviewed, require_license=settings.attributed_sources_only)
+            logger.info("patient_context_store backend=redis workers=%s", workers)
+            return store
+    if workers.strip() not in ("", "1"):
+        logger.warning("patient_context_store backend=memory workers=%s: contexts are not shared between workers "
+                       "(set AX_G_PATIENT_CONTEXT_REDIS_URL)", workers)
+    return PatientContextStore(settings.patient_context_ttl_seconds, settings.patient_context_max_entries)
+
+
+def _corpus_source(settings: RuntimeSettings) -> CorpusSource:
+    """Evidence and rules of the active PostgreSQL release (kept current), else of the corpus files (fixed)."""
+    if settings.corpus_database_url is not None:
+        live = _live_corpus(settings)
+        if live is not None:
+            return live
+    elif settings.dur_enabled:
+        logger.warning("dur_unavailable reason=no_database_url")
+    evidence: EvidenceRetriever | None = None
+    rules: RuleCorpus | None = None
+    if settings.evidence_corpus_dir is not None:
+        evidence = InMemoryEvidenceIndex.load(
+            settings.evidence_corpus_dir, include_unreviewed=settings.evidence_include_unreviewed,
+            require_license=settings.attributed_sources_only,
+        )
+        logger.info("clinical_evidence_loaded backend=files chunks=%d unreviewed=%d", len(evidence), evidence.unreviewed_count)
+        if settings.clinical_rules_enabled:
+            rules = RuleCorpus.load(
+                settings.evidence_corpus_dir, include_unreviewed=settings.evidence_include_unreviewed,
+                require_license=settings.attributed_sources_only,
+            )
+    recommender = _recommender(settings, rules, None, backend="files")
+    return StaticCorpus(CorpusSnapshot(evidence, recommender))
+
+
+def _live_corpus(settings: RuntimeSettings) -> CorpusSource | None:
+    # Imported lazily so deployments without the database never load the driver.
+    import psycopg
+
+    from ax_g_ai.corpus_store.embedding import TeiEmbeddingClient
+    from ax_g_ai.corpus_store.live import LiveCorpus
+    from ax_g_ai.corpus_store.retriever import CorpusUnavailableError, PostgresEvidenceRetriever, load_index, open_pool
+    from ax_g_ai.corpus_store.rules import read_rows
+    from ax_g_ai.dur_store.reader import read_tables
+    from ax_g_ai.services.dur_check import DurChecker, DurUnavailableError
+
+    embedder = None if settings.embedding_url is None else TeiEmbeddingClient(
+        settings.embedding_url, timeout_seconds=settings.embedding_timeout_seconds,
+    )
+    include_unreviewed, require_license = settings.evidence_include_unreviewed, settings.attributed_sources_only
+
+    def build(conn: psycopg.Connection, release_id: int, dur_dataset_id: int | None) -> CorpusSnapshot:
+        index = load_index(conn, release_id, include_unreviewed=include_unreviewed, require_license=require_license)
+        evidence = PostgresEvidenceRetriever(
+            pool, release_id, index, embedder=embedder, model_id=settings.embedding_model,
+            include_unreviewed=include_unreviewed, similarity_floor=settings.evidence_similarity_floor,
+        )
+        logger.info(
+            "clinical_evidence_loaded backend=postgres release_id=%d chunks=%d unreviewed=%d semantic=%s",
+            release_id, len(evidence), evidence.unreviewed_count, embedder is not None,
+        )
+        rules = None
+        if settings.clinical_rules_enabled:
+            rules = RuleCorpus.from_rows(read_rows(conn, release_id), include_unreviewed=include_unreviewed, require_license=require_license)
+        dur = None
+        if settings.dur_enabled:
+            if dur_dataset_id is None:
+                logger.warning("dur_unavailable reason=no active dur dataset")
+            else:
+                try:
+                    dur = DurChecker(read_tables(conn, dur_dataset_id))
+                except DurUnavailableError as error:
+                    logger.warning("dur_unavailable reason=%s", error)
+                else:
+                    logger.info("dur_loaded backend=postgres dataset_id=%s products=%d source=%s",
+                                dur.dataset_id, len(dur), dur.source.get("id"))
+        recommender = _recommender(settings, rules, dur, backend=f"postgres release_id={release_id}")
+        return CorpusSnapshot(evidence, recommender, release_id, dur_dataset_id if dur is not None else None)
+
+    closers: list[Callable[[], None]] = [embedder.close] if embedder is not None else []
+    try:
+        pool = open_pool(settings.corpus_database_url.get_secret_value())  # type: ignore[union-attr]
+    except psycopg.Error as error:
+        _close_all(closers)
+        logger.warning("clinical_corpus_database_unavailable error_type=%s fallback=files", type(error).__name__)
+        return None
+    try:
+        return LiveCorpus(pool, build, refresh_seconds=settings.corpus_refresh_seconds, watch_dur=settings.dur_enabled,
+                          on_close=closers)
+    except (psycopg.Error, CorpusUnavailableError) as error:
+        pool.close()
+        _close_all(closers)
+        logger.warning("clinical_corpus_database_unavailable error_type=%s fallback=files", type(error).__name__)
+        return None
+
+
+def _recommender(settings: RuntimeSettings, rules: RuleCorpus | None, dur, *, backend: str) -> ClinicalRecommender | None:
+    if rules is None:
+        return None
     site_map = None
     if settings.site_code_map_path is not None:
-        # A malformed site map is a deployment error: fail at start-up, not per patient.
-        site_map = SiteCodeMap.load(settings.site_code_map_path, corpus.catalog)
+        # A malformed site map is a deployment error: fail at start-up (a later release keeps the current snapshot).
+        site_map = SiteCodeMap.load(Path(settings.site_code_map_path), rules.catalog)
     recommender = ClinicalRecommender(
-        corpus, site_map, max_evidence=settings.recommendation_max_evidence, dur=_dur_checker(settings),
-        doses=settings.clinical_doses_enabled,
+        rules, site_map, max_evidence=settings.recommendation_max_evidence, dur=dur, doses=settings.clinical_doses_enabled,
     )
     logger.info(
-        "clinical_rules_loaded backend=%s rules=%d unreviewed=%d skipped=%d site_map=%s doses=%s dose_rules=%d",
-        backend, len(recommender), recommender.unreviewed_count, corpus.skipped, site_map is not None,
-        settings.clinical_doses_enabled, recommender.dose_rule_count,
+        "clinical_rules_loaded backend=%s rules=%d unreviewed=%d skipped=%d site_map=%s doses=%s dose_rules=%d dur=%s",
+        backend, len(recommender), recommender.unreviewed_count, rules.skipped, site_map is not None,
+        settings.clinical_doses_enabled, recommender.dose_rule_count, dur is not None,
     )
     return recommender
 
 
-def _dur_checker(settings: RuntimeSettings):
-    """HIRA DUR lists from the active ``dur`` dataset in PostgreSQL, else none (logged)."""
-    if not settings.dur_enabled:
-        return None
-    if settings.corpus_database_url is None:
-        logger.warning("dur_unavailable reason=no_database_url")
-        return None
-    import psycopg
-
-    from ax_g_ai.dur_store.reader import read_active_tables
-    from ax_g_ai.services.dur_check import DurChecker, DurUnavailableError
-
-    try:
-        dur = DurChecker(read_active_tables(settings.corpus_database_url.get_secret_value()))
-    except (psycopg.Error, DurUnavailableError) as error:
-        # Error class (and our own reason text) only; the database URL is never logged.
-        reason = error if isinstance(error, DurUnavailableError) else type(error).__name__
-        logger.warning("dur_unavailable reason=%s", reason)
-        return None
-    logger.info("dur_loaded backend=postgres dataset_id=%s products=%d source=%s", dur.dataset_id, len(dur), dur.source.get("id"))
-    return dur
-
-
-def _evidence_retriever(settings: RuntimeSettings) -> EvidenceRetriever | None:
-    """PostgreSQL hybrid retrieval when configured, else the file index, else none."""
-    include_unreviewed = settings.evidence_include_unreviewed
-    if settings.corpus_database_url is not None:
-        # Imported lazily so deployments without the database never load the driver.
-        import psycopg
-
-        from ax_g_ai.corpus_store.embedding import TeiEmbeddingClient
-        from ax_g_ai.corpus_store.retriever import CorpusUnavailableError, PostgresEvidenceRetriever
-
-        embedder = None if settings.embedding_url is None else TeiEmbeddingClient(
-            settings.embedding_url, timeout_seconds=settings.embedding_timeout_seconds
-        )
-        try:
-            retriever = PostgresEvidenceRetriever(
-                settings.corpus_database_url.get_secret_value(), embedder=embedder, model_id=settings.embedding_model,
-                include_unreviewed=include_unreviewed, similarity_floor=settings.evidence_similarity_floor,
-                require_license=settings.attributed_sources_only,
-            )
-        except (psycopg.Error, CorpusUnavailableError) as error:
-            if embedder is not None:
-                embedder.close()  # the file index has no semantic search
-            logger.warning("clinical_evidence_database_unavailable error_type=%s fallback=files", type(error).__name__)
-        else:
-            logger.info(
-                "clinical_evidence_loaded backend=postgres release_id=%d chunks=%d unreviewed=%d semantic=%s",
-                retriever.release_id, len(retriever), retriever.unreviewed_count, embedder is not None,
-            )
-            return retriever
-    if settings.evidence_corpus_dir is None:
-        return None
-    index = InMemoryEvidenceIndex.load(
-        settings.evidence_corpus_dir, include_unreviewed=include_unreviewed, require_license=settings.attributed_sources_only,
-    )
-    logger.info("clinical_evidence_loaded backend=files chunks=%d unreviewed=%d", len(index), index.unreviewed_count)
-    return index
+def _close_all(closers: list[Callable[[], None]]) -> None:
+    for close in closers:
+        close()

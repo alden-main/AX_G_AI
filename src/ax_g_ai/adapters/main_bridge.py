@@ -17,6 +17,34 @@ from ax_g_ai.services.patient_context_store import PreparedRawEmrContext
 from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
 
 
+# EMR fields the rule mapping reads (``emr_mapping.map_emr``, ``ClinicalRecommender.prepare``). A whitelist, so
+# no identifier passes; unlike ``deidentify`` it keeps empty lists and null values, which the rules read as
+# "recorded: none" versus "not recorded".
+_RULE_LIST_FIELDS: dict[str, tuple[str, ...]] = {
+    "labResultList": ("examCode", "itemName", "unit", "value", "testDate"),
+    "bloodSugarList": ("glucoseValue", "measuredAt"),
+    "glycatedHemoglobinList": ("hba1cValue", "testDate"),
+    "bloodPressureList": ("sbp", "dbp", "measuredAt"),
+    "oxygenSaturationList": ("spo2Value", "measuredAt"),
+    "medicineDtailList": ("medCode", "medName", "dosage", "unit", "frequency", "interval", "durationDays"),
+    "diagnosisList": ("diagnosisCode", "kcdCode"),
+}
+_RULE_CONTEXT_FIELDS = ("age_years", "sex", "weight_kg", "height_cm")
+
+
+def rule_source(source: Mapping[str, Any]) -> dict[str, Any]:
+    """The part of the EMR object the rule mapping reads, as JSON-ready data."""
+    result: dict[str, Any] = {}
+    for key, fields in _RULE_LIST_FIELDS.items():
+        items = source.get(key)
+        if isinstance(items, list):
+            result[key] = [{name: item[name] for name in fields if name in item} for item in items if isinstance(item, Mapping)]
+    context = source.get("calculationContext")
+    if isinstance(context, Mapping):
+        result["calculationContext"] = {name: context[name] for name in _RULE_CONTEXT_FIELDS if name in context}
+    return result
+
+
 def emr_source(payload: Mapping[str, Any]) -> Mapping[str, Any]:
     """The EMR object itself, whether the Bridge sent it bare or in its ``{"data": ...}`` envelope."""
     raw_data = payload.get("data")
@@ -74,6 +102,7 @@ class RawEmrPayloadMapper:
             # Empty groups add prompt tokens without clinical content.
             data={key: value for key, value in data.items() if value},
             updated_at=max(timestamps, default=fallback),
+            rule_source=rule_source(source),
         )
 
     def _blood_pressure(self, items: object, timestamps: list[datetime]) -> list[dict[str, object]]:
