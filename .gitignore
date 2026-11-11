@@ -219,3 +219,10 @@ __marimo__/
 
 # Hugging Face model cache (compose HF_CACHE_DIR)
 hf-cache/
+
+# 말뭉치 작성용 원문 재구성 md(로컬 작업본, git에 올리지 않음). 서빙에는 text_data/corpus만 쓴다.
+text_data/by_chapter/*.md
+text_data/enriched/*.md
+text_data/reconstructed/*.md
+# 위 md가 참조하는 그림(LLM 입력·서빙 말뭉치에서 쓰지 않음).
+text_data/assets/

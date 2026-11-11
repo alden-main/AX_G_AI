@@ -17,3 +17,9 @@ docs
 ai_cc.md
 *.sqlite
 hf-cache
+# 말뭉치 작성용 원문 재구성 md(.gitignore와 같은 범위). 이미지에는 text_data/corpus만 들어간다.
+text_data/by_chapter/*.md
+text_data/enriched/*.md
+text_data/reconstructed/*.md
+# 위 md가 참조하는 그림(LLM 입력·서빙 말뭉치에서 쓰지 않음).
+text_data/assets/
