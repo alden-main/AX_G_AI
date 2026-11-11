@@ -6,7 +6,7 @@ from pathlib import Path
 from ax_g_ai.services.clinical_dosing import (
     DoseFormulaError, MissingInput, evaluate_formula, formula_variables, prescribed_daily_mg, range_label, select_band,
 )
-from ax_g_ai.services.clinical_recommendation import DOSE_NOTICE, ClinicalRecommender, RuleCorpus
+from ax_g_ai.services.clinical_recommendation import ClinicalRecommender, RuleCorpus
 from tests.services.test_clinical_recommendation import GATE, RULES, TESTS
 
 REPO_CORPUS = Path(__file__).resolve().parents[2] / "text_data" / "corpus"
@@ -133,8 +133,9 @@ class DoseAssessmentTest(unittest.TestCase):
         check = item["prescriptions"][0]["check"]
         self.assertEqual((item["prescriptions"][0]["daily_mg"], check["limit_daily_mg"], check["status"]), (300, 75, "exceeds"))
         self.assertEqual(item["alert"], "high")
-        self.assertEqual((item["review_label"], item["region"]), ("의료진 미검수", "US"))
-        self.assertIn("국내 허가", item["notice"])
+        self.assertEqual((item["review_status"], item["region"], item["region_label"]), ("draft", "US", "미국"))
+        self.assertNotIn("review_label", item)
+        self.assertNotIn("notice", item)
         self.assertEqual([entry["key"] for entry in item["reference"]], ["standard_dose"])
         self.assertTrue(item["evidence_refs"])
 
@@ -161,13 +162,13 @@ class DoseAssessmentTest(unittest.TestCase):
         self.assertEqual((alteplase["total_mg"]["value"], alteplase["bolus_mg"]["value"], alteplase["bolus_mg"]["unit"]), (52.2, 5.2, "mg"))
         insulin = items["DR-BASAL-INSULIN"]
         self.assertEqual((insulin["drug"]["type"], insulin["calculations"][0]["range"]), ("class", [5.8, 11.6]))
-        self.assertNotIn("notice", insulin)  # domestic source
+        self.assertEqual(insulin["region"], "KR")
         self.assertNotIn("DR-REGIMEN-ONLY", items)
         self.assertEqual({entry["input"]: entry["reason"] for entry in assessment.unmatched_dose_drugs},
                          {"아세트아미노펜": "말뭉치에 이 약의 용량 규칙 없음", "모르는약": "성분을 확인할 수 없음"})
         payload = assessment.as_dict()
-        self.assertEqual(payload["dose_notice"], DOSE_NOTICE)
-        self.assertTrue(payload["unreviewed"])
+        self.assertNotIn("dose_notice", payload)
+        self.assertNotIn("unreviewed", payload)
 
     def test_prescribed_class_member_anchors_class_rules(self) -> None:
         r = engine()

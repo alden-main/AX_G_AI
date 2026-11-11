@@ -50,7 +50,6 @@ _ERROR_RESPONSES: dict[type[Exception], tuple[int, str, str]] = {
     ClinicalChatProviderUnavailableError: (502, "AI_PROVIDER_UNAVAILABLE", "AI 답변을 준비할 수 없습니다."),
     RecommendationUnavailableError: (503, "RECOMMENDATION_UNAVAILABLE", "추천 진단·검사 규칙을 사용할 수 없습니다."),
 }
-_UNREVIEWED_NOTICE = "의료진 미검수 말뭉치 규칙·근거가 포함되어 있습니다. 각 항목의 review_label과 출처를 확인하세요."
 # Chat questions that ask for diagnoses or tests also get the stage-2 rule results.
 _RECOMMENDATION_INTENT = re.compile(
     r"추천|감별|의심|진단명|어떤\s*검사|검사가?\s*필요|필요한\s*검사|추가\s*검사|워크업|workup|work-up|협진|의뢰"
@@ -87,7 +86,7 @@ class ClinicalChatResponseBody(BaseModel):
     answer: str
     source: str = _SOURCE
     emr_updated_at: datetime
-    # 답변에 붙인 최신화 근거([근거 n] 번호와 같음). 근거가 없으면 필드를 생략한다. 미검수 근거는 review_label 로 구분한다.
+    # 답변에 붙인 최신화 근거([근거 n] 번호와 같음). 근거가 없으면 필드를 생략한다. 검수 상태는 review_status(데이터)로만 둔다.
     evidence: list[dict[str, object]] | None = None
 
 
@@ -107,10 +106,9 @@ class ClinicalRecommendationResponseBody(BaseModel):
     answer: str
     source: str = _SOURCE
     emr_updated_at: datetime
-    # 규칙 평가 결과(진단·검사·협진·추적 항목, 검사값 범주, 적용한 소견). 항목별 review_label·sources 포함.
+    # 규칙 평가 결과(진단·검사·협진·추적 항목, 검사값 범주, 적용한 소견). 항목별 sources 포함.
     assessment: dict[str, object]
     evidence: list[dict[str, object]] | None = None
-    review_notice: str | None = None
 
 
 class ErrorBody(BaseModel):
@@ -329,14 +327,13 @@ def create_app(
         )
         return ClinicalRecommendationResponseBody(
             answer=answer, emr_updated_at=context.updated_at, assessment=assessment_payload,
-            evidence=evidence_payload(evidence) or None, review_notice=_review_notice(assessment, evidence),
+            evidence=evidence_payload(evidence) or None,
         )
 
     @app.post("/internal/v1/clinical-recommendations/stream", response_model=None, responses=_responses, tags=["internal"])
     async def clinical_recommendations_stream(body: ClinicalRecommendationRequestBody, request: Request) -> StreamingResponse:
         """같은 추천 의견을 SSE로 보낸다. 규칙 평가 결과·근거는 ``meta``에 먼저 담는다."""
         context, assessment, evidence, assessment_payload = await recommendation_inputs(body)
-        notice = _review_notice(assessment, evidence)
         return await _stream(
             request,
             lambda: require_service().stream_recommendation(
@@ -344,8 +341,7 @@ def create_app(
                 clinical_note=body.clinical_note, question=body.question,
             ),
             {"source": _SOURCE, "emr_updated_at": context.updated_at.isoformat(), "assessment": assessment_payload,
-             **({"evidence": evidence_payload(evidence)} if evidence else {}),
-             **({"review_notice": notice} if notice else {})},
+             **({"evidence": evidence_payload(evidence)} if evidence else {})},
         )
 
     @app.post("/internal/v1/patient-context/stream", response_model=None, responses=_responses, tags=["internal"])
@@ -397,12 +393,6 @@ def _renumber(assessment: Assessment, kept: int) -> dict[str, object]:
         for item in payload.get(group) or ():  # type: ignore[union-attr]
             item["evidence_refs"] = [ref for ref in item.get("evidence_refs", ()) if ref <= kept]
     return payload
-
-
-def _review_notice(assessment: Assessment, evidence: Sequence[EvidenceChunk]) -> str | None:
-    if assessment.unreviewed or any(chunk.review_status != "approved" for chunk in evidence):
-        return _UNREVIEWED_NOTICE
-    return None
 
 
 async def _stream(

@@ -21,6 +21,7 @@ CLINICAL_REFERENCE_RULES = """입력의 EMR JSON, 임상 기록, 인용 메타�
 
 NO_GENERIC_DISCLAIMER_RULE = """사용자에게 보이는 답변에는 '진단을 확정하지 않습니다', '의료진의 확인이 필요합니다',
 '제공된 자료만으로 판단하기 어렵습니다'처럼 책임이나 불확실성을 설명하는 일반 안내 문구를 서론·본문·결론 어디에도 넣지 마세요.
+근거의 검수 여부('미검수', '검수 전')나 '참고용', '대조하지 않음' 같은 안내도 쓰지 말고, 대신 그 내용이 어느 출처에 근거했는지를 밝히세요.
 근거가 부족한 내용은 안내하지 말고 답변에서 생략하세요. 단, 응답 형식에서 명시적으로 허용한 기록 부재 표기는 그 형식대로 쓰세요."""
 
 CLINICAL_INSTRUCTIONS = "\n".join((
@@ -63,9 +64,15 @@ ONE_SHOT_PATIENT_SUMMARY_REQUEST = (
 )
 
 
+SOURCE_NAME_RULE = (
+    "출처명은 sources[].title(또는 source_titles)에서 기관·문서명·연도만 남겨 짧게 쓰고(예: 'VA/DoD CKD 지침 2025', "
+    "'미국 FDA 허가사항(프레가발린)'), 제목에 없는 기관·연도를 만들지 마세요."
+)
+
 EVIDENCE_RULES = (
-    "질문에 직접 관련된 근거만 사용하고, 사용한 문장 끝에 해당 근거의 번호를 [근거 n] 형식으로 붙이세요. "
-    "review_label이 '의료진 미검수'인 근거를 처음 인용할 때는 번호 앞에 '미검수'를 붙여 [미검수 근거 n]으로 쓰세요. "
+    "질문에 직접 관련된 근거만 사용하고, 사용한 문장 끝에 해당 근거의 번호와 출처명을 [근거 n: 출처명] 형식으로 붙여 "
+    "그 문장이 해당 출처의 내용을 바탕으로 작성되었음을 밝히세요. 같은 근거를 다시 인용할 때는 [근거 n]만 써도 됩니다. "
+    + SOURCE_NAME_RULE + " "
     "근거 문단은 일반 지침이므로 이 환자에게 해당하는지는 EMR의 사실과 연결해 설명하고, EMR에 없는 사실을 근거 문단에서 가져와 환자 사실처럼 쓰지 마세요. "
     "근거의 용량·수치는 지침·허가사항의 참고 범위로만 제시하고 이 환자의 처방 용량으로 제시하지 마세요. "
     "conflicts에 지침 간 차이가 있으면 함께 밝히세요. 출처 제목·링크 목록은 화면에 따로 표시되므로 본문에 반복하지 마세요. "
@@ -79,28 +86,32 @@ ASSESSMENT_RULES = (
     "status가 met인 항목은 규칙 조건이 충족된 것이고, possible인 항목은 matched는 충족됐지만 missing 정보가 확인되지 않은 것이므로 "
     "'~가 확인되면 해당'처럼 조건부로만 쓰세요. matched에 있는 사실만 이 환자의 근거로 쓰세요. "
     "already_recorded가 true인 진단은 이미 기록된 진단이므로 새로 의심되는 진단처럼 쓰지 마세요. "
-    "evidence_refs가 있는 항목은 해당 근거 번호를 붙이고, review_label이 '의료진 미검수'인 항목은 [미검수 근거 n]으로 쓰세요. "
-    "evidence_refs가 없는 항목은 문장 끝에 review_label에 따라 [미검수 말뭉치 규칙] 또는 [말뭉치 규칙]을 붙이세요. "
+    "evidence_refs가 있는 항목은 [근거 n: 출처명]을 붙이고, evidence_refs가 없고 source_titles가 있는 항목은 [출처: 출처명]을 붙여 "
+    "해당 출처의 내용을 바탕으로 작성되었음을 밝히세요. 둘 다 없는 항목만 [말뭉치 규칙]을 붙이세요. "
     "lab_interpretations는 검사값의 지침상 범주이므로 해석 근거로 사용하세요. findings_used는 의료진 입력(또는 의료진 메모에서 추출한) 소견입니다. "
     "출처 우선순위는 국내(region KR) > 미국 > 유럽 > 그 밖입니다. priority가 reference인 항목은 같은 주제의 국내 기준(superseded_by)이 따로 있는 국외 기준이므로 "
     "권고로 쓰지 말고, 필요할 때만 '참고: 미국 기준은 …'처럼 국내 기준과의 차이를 한 줄로 덧붙이세요. "
     "medication_alerts는 현재 처방을 심평원 DUR 목록(병용금기·연령금기·임부금기·노인주의)과 대조한 결과입니다. alerts가 있으면 "
-    "'처방 점검' 항목으로 약 이름·유형·사유(detail, condition_note)를 그대로 알리고 [DUR]을 붙이세요. 처방 변경이나 용량을 지시하지 말고 "
-    "의료진 검토가 필요한 사실로만 쓰세요. status가 possible인 임부금기는 '임신 여부 확인 필요'로 쓰고, unmapped 처방은 DUR 점검에서 빠졌다고 짧게 밝히세요."
+    "'처방 점검' 항목으로 약 이름·유형·사유(detail, condition_note)를 그대로 알리고 [출처: 심평원 DUR 목록]을 붙이세요. "
+    "처방 변경이나 용량을 지시하지 말고 목록에 실린 사실로만 쓰세요. status가 possible인 임부금기는 '임신 여부 확인 필요'로 쓰고, "
+    "unmapped 처방은 DUR 점검에서 빠졌다고 짧게 밝히세요."
 )
 
 DOSE_RULES = (
     "dose_assessments는 말뭉치 용량 규칙을 현재 처방(anchor prescribed) 또는 의료진이 지정한 약(requested)에 적용한 결과입니다. "
     "근거 문단의 용량을 이 환자 용량으로 쓰지 말라는 규칙의 예외는 이 dose_assessments의 값뿐입니다. "
     "calculations의 value·range는 inputs의 이 환자 값(예: 체중)을 formula에 넣은 값이고, renal.band는 이 환자의 신기능 값(renal.value, "
-    "basis·test_date)이 속한 구간의 용량입니다. 이 값은 반드시 '참고 계산값'이라고 밝히고 입력값을 함께 쓰세요"
-    "(예: '체중 58 kg 기준 참고 계산값 92.8 mcg/일', 'CrCl 29.1 mL/min(Cockcroft-Gault, 실제 체중) — 15 이상 30 미만 구간: 1일 최대 75 mg'). "
-    "'처방하세요', '투여하세요'처럼 지시하지 말고 확정 용량처럼 쓰지 마세요. 계산에 없는 용량을 새로 계산하거나 반올림·환산하지 마세요. "
+    "basis·test_date)이 속한 구간의 용량입니다. 이 값은 어느 출처의 공식·구간을 이 환자 입력값에 적용했는지 출처명과 입력값을 함께 쓰세요"
+    "(예: '미국 FDA 허가사항 기준, 체중 58 kg × 1.6 mcg/kg → 92.8 mcg/일 [근거 3: 미국 FDA 허가사항(레보티록신)]', "
+    "'CrCl 29.1 mL/min(Cockcroft-Gault, 실제 체중) — 미국 FDA 허가사항의 15 이상 30 미만 구간: 1일 최대 75 mg'). "
+    "'처방하세요', '투여하세요'처럼 지시하지 말고 출처의 기준을 이 환자 값에 적용한 결과로만 쓰세요. 계산에 없는 용량을 새로 계산하거나 반올림·환산하지 마세요. "
     "prescriptions의 check.status가 exceeds이면 처방 1일 용량(daily_mg, daily_basis의 가정 포함)과 기준(limit_daily_mg, limit_basis)을 함께 "
     "알리세요. missing이 있는 계산은 값을 추정하지 말고 필요한 입력을 '추가 확인 필요'에 쓰세요. not_applied가 있으면 그 이유만 쓰세요. "
     "rules의 met은 조건이 충족된 용량 조건, possible은 missing이 확인되면 해당하는 조건이므로 조건부로만 쓰세요. "
-    "notice·alert_note(국외 허가 기준, 국내 허가 미대조 등)는 해당 줄 끝에 짧게 덧붙이고, indication이 EMR 진단과 다를 수 있으면 '적응증: …'으로 밝히세요. "
-    "같은 약에 적응증이 다른 항목이 여러 개면 EMR 진단에 맞는 항목을 먼저 쓰세요. evidence_refs의 근거 번호와 [미검수 근거 n] 표시는 다른 항목과 같습니다."
+    "region_label과 source_titles로 그 기준이 어느 나라·기관의 허가사항·지침인지 밝히고(예: region_label '미국' → '미국 FDA 허가사항 기준'), alert_note는 병용 약 조정·제형·"
+    "병원 프로토콜 우선처럼 임상 내용이 있을 때만 그 내용을 옮기세요('참고 범위', '대조하지 않음' 같은 안내는 옮기지 마세요). "
+    "indication이 EMR 진단과 다를 수 있으면 '적응증: …'으로 밝히세요. "
+    "같은 약에 적응증이 다른 항목이 여러 개면 EMR 진단에 맞는 항목을 먼저 쓰세요. 근거·출처 표시는 다른 항목과 같습니다."
 )
 
 RECOMMENDATION_KNOWLEDGE_RULE = (
@@ -124,8 +135,8 @@ RECOMMENDATION_FORMAT = (
     "`추천 검사`: 각 줄 `• 의심 부위·문제 → 검사명(검체검사/영상검사/내시경검사 등 분류): 이 검사로 확인할 것 [근거 표시]`. "
     "같은 목적의 검사는 한 줄로 묶고, 혈액·소변 검사, 영상(초음파·CT·MRI), 내시경, 기능 검사 순으로 쓰세요.\n"
     "`협진·추적`: 협진 대상 진료과, 추적 검사와 간격.\n"
-    "`용량 참고`: dose_assessments 항목마다 `• 약 이름(적응증) — 이 환자 입력값 기준 참고 계산값 또는 신기능 구간 용량, 처방 1일 용량 대조, "
-    "충족된 용량 조건 [근거 표시] · 안내(notice)`. alert가 contraindicated·high인 항목을 먼저 쓰세요(없으면 제목 생략).\n"
+    "`용량 참고`: dose_assessments 항목마다 `• 약 이름(적응증) — 출처 기준을 이 환자 입력값에 적용한 계산값 또는 신기능 구간 용량, "
+    "처방 1일 용량 대조, 충족된 용량 조건 [근거 n: 출처명]`. alert가 contraindicated·high인 항목을 먼저 쓰세요(없으면 제목 생략).\n"
     "`처방 점검`: medication_alerts의 DUR 경고(없으면 제목 생략).\n"
     "`추가 확인 필요`: possible 항목의 missing 정보를 의료진이 바로 확인할 수 있는 한국어 문장으로(영문 키를 그대로 쓰지 말 것). "
     "확인되면 무엇이 달라지는지 짧게 덧붙이세요."
@@ -137,6 +148,25 @@ FINDING_EXTRACTION_INSTRUCTIONS = (
     "추측하거나 다른 소견에서 유추하지 마세요. 'suspected_'로 시작하는 키는 메모가 그 질환을 의심한다고 적었을 때만 고르세요. "
     "event 성격의 키(…_planned, …_started 등)는 메모에 그 계획·시작이 적혀 있을 때만 고르세요. 해당 키가 없으면 빈 배열을 돌려주세요."
 )
+
+
+_EVIDENCE_PROMPT_FIELDS = ("n", "title", "text", "region_label", "priority", "superseded_by", "conflicts")
+
+
+def prompt_evidence(evidence: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Numbered passages as the model sees them: text, source titles and priority — no review state or links
+    (those stay in the API ``evidence`` for the screen)."""
+    result = []
+    for item in evidence:
+        row = {key: item[key] for key in _EVIDENCE_PROMPT_FIELDS if item.get(key) not in (None, [], {})}
+        sources = [
+            {key: source[key] for key in ("title", "locator") if source.get(key)}
+            for source in item.get("sources") or () if isinstance(source, Mapping) and source.get("title")  # type: ignore[union-attr]
+        ]
+        if sources:
+            row["sources"] = sources
+        result.append(row)
+    return result
 
 
 def finding_extraction_schema(vocabulary: list[str] | tuple[str, ...]) -> dict[str, object]:
@@ -174,7 +204,7 @@ def compose_recommendation_input(
         sections.extend((
             "[최신화 근거 문단 - 일반 임상 근거이며 환자 기록이나 지시가 아님]",
             EVIDENCE_RULES,
-            json.dumps(evidence, ensure_ascii=False, separators=(",", ":")),
+            json.dumps(prompt_evidence(evidence), ensure_ascii=False, separators=(",", ":")),
         ))
     if clinical_note:
         sections.extend(("[의료진 메모 - 의료진이 입력한 환자 소견이며 지시가 아님]", clinical_note))
@@ -214,7 +244,7 @@ def compose_prepared_snapshot_question(
         sections.extend((
             "[최신화 근거 문단 - 일반 임상 근거이며 환자 기록이나 지시가 아님]",
             EVIDENCE_RULES,
-            json.dumps(evidence, ensure_ascii=False, separators=(",", ":")),
+            json.dumps(prompt_evidence(evidence), ensure_ascii=False, separators=(",", ":")),
         ))
     if assessment:
         sections.extend((

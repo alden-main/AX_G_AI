@@ -24,7 +24,6 @@ from typing import Any, Iterable, Mapping, Protocol
 
 USABLE_VERIFICATIONS = frozenset({"primary", "local_db"})
 EXCLUDED_CLAIM_STATUSES = frozenset({"폐기", "확인불가"})
-REVIEW_LABELS = {"approved": "의료진 검수 완료", "draft": "의료진 미검수"}
 _K1, _B = 1.2, 0.75
 _CONCEPT_BONUS = 4.0
 _CHAPTER_WEIGHT = 0.5   # terms found elsewhere in the same chapter (e.g. "ALS" only in its diagnosis chunk)
@@ -88,10 +87,6 @@ class EvidenceChunk:
         return "reference" if self.superseded_by else "primary"
 
     @property
-    def review_label(self) -> str:
-        return REVIEW_LABELS.get(self.review_status, "의료진 미검수")
-
-    @property
     def region(self) -> str | None:
         return region_of(self.sources)
 
@@ -99,7 +94,7 @@ class EvidenceChunk:
         region = self.region
         return {
             "chunk_id": self.chunk_id, "claim_id": self.claim_id, "title": self.title, "text": self.text,
-            "review_status": self.review_status, "review_label": self.review_label,
+            "review_status": self.review_status,
             "region": region, "region_label": REGION_LABELS.get(region or "", "미상"),
             "priority": self.priority, **({"superseded_by": list(self.superseded_by)} if self.superseded_by else {}),
             "sources": sorted_sources(self.sources),

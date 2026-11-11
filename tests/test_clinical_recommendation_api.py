@@ -27,7 +27,7 @@ class ScriptedProvider:
             return ProviderAnswer(self.extraction)
         if request.output_schema is not None:
             return ProviderAnswer('{"message":"로드됨","sections":[],"guidance":"확인"}')
-        return ProviderAnswer("의심 진단: 만성 콩팥병 가능성 [미검수 근거 1]")
+        return ProviderAnswer("의심 진단: 만성 콩팥병 가능성 [근거 1: VA/DoD CKD 2025]")
 
     async def stream(self, request: OpenAIRequest):
         self.requests.append(request)
@@ -46,7 +46,7 @@ def client(provider: ScriptedProvider, *, rules: bool = True, general_knowledge:
 
 
 class ClinicalRecommendationApiTest(unittest.TestCase):
-    def test_recommendation_applies_note_findings_rules_and_labels_unreviewed_evidence(self) -> None:
+    def test_recommendation_applies_note_findings_rules_without_review_warnings(self) -> None:
         provider = ScriptedProvider()
         api = client(provider)
         self.assertEqual(api.post("/internal/v1/patient-context", json=payload()).status_code, 200)
@@ -57,17 +57,17 @@ class ClinicalRecommendationApiTest(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         body = response.json()
-        self.assertEqual(body["answer"], "의심 진단: 만성 콩팥병 가능성 [미검수 근거 1]")
-        self.assertIn("미검수", body["review_notice"])
+        self.assertEqual(body["answer"], "의심 진단: 만성 콩팥병 가능성 [근거 1: VA/DoD CKD 2025]")
+        self.assertNotIn("review_notice", body)  # no repeated warning: reference use is the service's stated purpose
         assessment = body["assessment"]
         # Explicit findings override the note extraction.
         self.assertEqual(assessment["findings_used"], {"hematochezia": False, "prior_hbv_triple_panel": False})
         ids = {item["record_id"]: item for item in assessment["items"]}
         self.assertEqual(ids["362-C01-K1"]["status"], "met")
         self.assertNotIn("352-C01-K1", ids)
-        self.assertTrue(all(item["review_label"] == "의료진 미검수" for item in assessment["items"]))
+        self.assertTrue(all(item["review_status"] == "draft" and "review_label" not in item for item in assessment["items"]))
         self.assertEqual(body["evidence"][0]["n"], 1)
-        self.assertEqual(body["evidence"][0]["review_label"], "의료진 미검수")
+        self.assertNotIn("review_label", body["evidence"][0])
 
         extraction, answer = provider.requests[-2], provider.requests[-1]
         self.assertIn("hematochezia", extraction.output_schema["properties"]["present"]["items"]["enum"])  # type: ignore[index]
@@ -98,7 +98,7 @@ class ClinicalRecommendationApiTest(unittest.TestCase):
         meta = json.loads(events[0].split("data: ", 1)[1])
         self.assertEqual(events[0].split("\n")[0], "event: meta")
         self.assertIn("items", meta["assessment"])
-        self.assertIn("review_notice", meta)
+        self.assertNotIn("review_notice", meta)
         self.assertTrue(events[-1].startswith("event: done"))
 
     def test_invalid_extraction_is_ignored_and_findings_endpoint_lists_vocabulary(self) -> None:
@@ -191,8 +191,10 @@ class DoseRecommendationApiTest(unittest.TestCase):
         doses = {item["record_id"]: item for item in body["assessment"]["dose_assessments"]}
         self.assertEqual(set(doses), {"DR-PREGABALIN", "DR-LEVOTHYROXINE"})
         self.assertEqual(doses["DR-PREGABALIN"]["prescriptions"][0]["check"]["status"], "exceeds")
-        self.assertIn("dose_notice", body["assessment"])
-        self.assertEqual(body["review_notice"], "의료진 미검수 말뭉치 규칙·근거가 포함되어 있습니다. 각 항목의 review_label과 출처를 확인하세요.")
+        for key in ("dose_notice", "unreviewed"):
+            self.assertNotIn(key, body["assessment"])
+        self.assertNotIn("review_notice", body)
+        self.assertNotIn("notice", doses["DR-PREGABALIN"])
         refs = [ref for item in doses.values() for ref in item["evidence_refs"]]
         self.assertTrue(refs and max(refs) <= len(body["evidence"]))
         prompt = self.provider.requests[-1].input

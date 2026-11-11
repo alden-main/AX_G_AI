@@ -4,14 +4,14 @@ Rules come from the same generated corpus as the evidence passages
 (``text_data/corpus`` or the active PostgreSQL release) and pass the same gate as cited
 evidence (``clinical_evidence.is_citable``): every source licensed for commercial AI use,
 checked against the primary text, not retired. Clinician-approved rules are always used;
-draft rules only when ``include_unreviewed`` is enabled, and every result then carries
-``review_label = '의료진 미검수'`` plus its sources so the screen can show both.
+draft rules only when ``include_unreviewed`` is enabled. Every result carries its sources and
+``review_status`` (data only — no warning text: the service is a reference tool by design).
 
 Stage 3 (``doses=True``): ``dose_rules`` are applied to the current prescriptions and to the
 drugs the clinician names (``dose_drugs``) — weight-based formulas, the renal-function band
 the patient falls in, dose-condition rules, and the prescribed daily amount against a numeric
 band maximum (``clinical_dosing``). Values are reference calculations that always carry their
-inputs, formula, sources and the review label. Treatment choice (``treatment.jsonl``) stays out.
+inputs, formula and sources. Treatment choice (``treatment.jsonl``) stays out.
 
 Evaluation is three-valued (``clinical_corpus.evaluate``). A rule is reported as
 - ``met``: the condition is true for the facts we have;
@@ -61,11 +61,6 @@ _TEST_KEY_LABEL = {"review": "검토", "calc": "계산", "score": "점수·위�
 
 # ── stage 3 (dose) presentation ──────────────────────────────────────────────
 ADULT_AGE = 18
-DOSE_NOTICE = (
-    "용량 값은 말뭉치 용량 규칙(지침·허가사항)의 공식·신기능 구간에 이 환자 입력값을 넣은 참고 계산값입니다. "
-    "처방 전 적응증·국내 허가사항·제형 규격·병원 프로토콜을 의료진이 확인해야 합니다."
-)
-_FOREIGN_NOTICE = "국외 허가·지침 기준 — 국내 허가사항과 대조하지 않은 참고값"
 # Record keys the dose stage evaluates or shows elsewhere; the rest is shown as reference text.
 _DOSE_HANDLED = frozenset({
     "id", "claim_id", "chapter", "topic", "ai_tier", "claim_status", "verification", "review_status", "usable", "sources",
@@ -205,8 +200,6 @@ class Assessment:
         doses: dict[str, object] = {}
         if self.dose_assessments is not None:
             doses["dose_assessments"] = [dict(item) for item in self.dose_assessments]
-            if self.dose_assessments:
-                doses["dose_notice"] = DOSE_NOTICE
             if self.unmatched_dose_drugs:
                 doses["unmatched_dose_drugs"] = [dict(item) for item in self.unmatched_dose_drugs]
         return {
@@ -215,21 +208,32 @@ class Assessment:
             "findings_used": dict(self.findings_used),
             "unknown_findings": list(self.unknown_findings),
             "mapping_issues": [dict(issue) for issue in self.mapping_issues],
-            "unreviewed": self.unreviewed,
             **({"medication_alerts": dict(self.medication_alerts)} if self.medication_alerts is not None else {}),
             **doses,
         }
 
 
-_PROMPT_DROP = frozenset({"sources", "claim_id", "chapter", "review_status", "record_id", "mapping_issues"})
+# The answer attributes content to its sources (source_titles, region_label); ids and review state are not repeated.
+_PROMPT_DROP = frozenset({"claim_id", "chapter", "review_status", "record_id", "mapping_issues"})
 
 
 def prompt_view(payload: Mapping[str, Any]) -> dict[str, Any]:
-    """Assessment payload for the LLM: sources and ids are shown on screen, not repeated in the prompt."""
+    """Assessment payload for the LLM: ids and review state are left out, and full source records (shown on screen)
+    shrink to ``source_titles`` so the answer can say which source each statement is based on."""
 
     def strip(value: Any) -> Any:
         if isinstance(value, Mapping):
-            return {key: strip(item) for key, item in value.items() if key not in _PROMPT_DROP and item not in (None, [], {})}
+            result = {}
+            for key, item in value.items():
+                if key in _PROMPT_DROP or item in (None, [], {}):
+                    continue
+                if key == "sources" and isinstance(item, list):
+                    titles = [source["title"] for source in item if isinstance(source, Mapping) and source.get("title")]
+                    if titles:
+                        result["source_titles"] = list(dict.fromkeys(titles))
+                    continue
+                result[key] = strip(item)
+            return result
         if isinstance(value, list):
             return [strip(item) for item in value]
         return value
@@ -489,10 +493,7 @@ class ClinicalRecommender:
             + ["high" for prescription in prescriptions if (prescription.get("check") or {}).get("status") == "exceeds"]
         )
         item["review_status"] = record.get("review_status")
-        item["review_label"] = "의료진 검수 완료" if record.get("review_status") == "approved" else "의료진 미검수"
         item.update(self._provenance(record))
-        if item.get("region") != "KR":
-            item["notice"] = _FOREIGN_NOTICE
         return item
 
     def _drug_name(self, target: str) -> str:
@@ -750,7 +751,6 @@ class ClinicalRecommender:
         item["matched"] = [self._describe(leaf, facts) for leaf in leaves if leaf.result is True and not leaf.negated]
         item["missing"] = _unique(self._missing(leaf) for leaf in leaves if leaf.result is None)
         item["review_status"] = record.get("review_status")
-        item["review_label"] = "의료진 검수 완료" if record.get("review_status") == "approved" else "의료진 미검수"
         item.update(self._provenance(record))
         if record.get("conflicts"):
             item["conflicts"] = list(record["conflicts"])
@@ -838,7 +838,6 @@ class ClinicalRecommender:
                     "test_date": source.test_date if source else None, "band": band.get("label"),
                     "context": record.get("context") or record.get("topic"),
                     "review_status": record.get("review_status"),
-                    "review_label": "의료진 검수 완료" if record.get("review_status") == "approved" else "의료진 미검수",
                     **{key: value for key, value in self._provenance(record).items() if key != "sources"},
                 }, record))
         return result

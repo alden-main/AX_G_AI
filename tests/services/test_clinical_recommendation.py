@@ -132,7 +132,7 @@ class RuleGateTest(unittest.TestCase):
 
 
 class AssessmentTest(unittest.TestCase):
-    def test_met_rules_carry_tests_matched_facts_sources_and_unreviewed_label(self) -> None:
+    def test_met_rules_carry_tests_matched_facts_sources_and_review_status(self) -> None:
         engine = recommender()
         items = by_id(engine.assess(engine.prepare(source())))
 
@@ -140,7 +140,8 @@ class AssessmentTest(unittest.TestCase):
         self.assertEqual(ckd["status"], "met")
         self.assertEqual(ckd["matched"], ["진단 기록 E11 (E11.9)"])
         self.assertEqual(ckd["tests"], [{"id": "UACR", "name": "소변 알부민/크레아티닌 비", "category": "검체검사(혈액·소변 등)", "reason": "알부민뇨"}])
-        self.assertEqual(ckd["review_label"], "의료진 미검수")
+        self.assertEqual(ckd["review_status"], "draft")
+        self.assertNotIn("review_label", ckd)
         self.assertEqual(ckd["sources"], [{"id": "VADOD-CKD-2025", "title": "VA/DoD CKD 2025", "url": "https://example.org",
                                            "license": "Public domain (U.S. Government work)"}])
         self.assertEqual(ckd["strength"], "VA/DoD Rec 1 (Weak for)")
@@ -219,7 +220,7 @@ class AssessmentTest(unittest.TestCase):
         )
         self.assertTrue(assessment.unreviewed)
         payload = assessment.as_dict()
-        self.assertEqual(set(payload), {"items", "lab_interpretations", "findings_used", "unknown_findings", "mapping_issues", "unreviewed"})
+        self.assertEqual(set(payload), {"items", "lab_interpretations", "findings_used", "unknown_findings", "mapping_issues"})
 
     def test_empty_emr_gives_no_patient_specific_items(self) -> None:
         engine = recommender()

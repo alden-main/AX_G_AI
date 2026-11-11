@@ -91,9 +91,10 @@ class EvidenceSearchTest(unittest.TestCase):
         # A concept name alone is only a booster, never enough to cite.
         self.assertEqual(self.index.search("세파졸린", 3), ())
 
-    def test_payload_carries_label_sources_and_conflicts(self) -> None:
+    def test_payload_carries_review_status_sources_and_conflicts(self) -> None:
         found = self.index.search("급성 담낭염 수술 시기", 1)[0].as_dict()
-        self.assertEqual(found["review_label"], "의료진 미검수")
+        self.assertEqual(found["review_status"], "draft")
+        self.assertNotIn("review_label", found)
         self.assertEqual(found["sources"], [{k: SOURCE_A[k] for k in ("id", "title", "locator", "url")}])
         self.assertTrue(found["conflicts"])
 
@@ -123,9 +124,12 @@ class EvidenceChatTest(unittest.IsolatedAsyncioTestCase):
             await service.answer_prepared_snapshot(question="급성 담낭염 수술 시기", snapshot=SNAPSHOT)
         prompt = provider.requests[0].input
         self.assertIn("[최신화 근거 문단", prompt)
-        self.assertIn("[미검수 근거 n]", prompt)
+        self.assertIn("[근거 n: 출처명]", prompt)
         self.assertIn('"n":1', prompt)
-        self.assertIn("의료진 미검수", prompt)
+        self.assertIn('"sources":[{"title":', prompt)  # source titles reach the model so it can attribute
+        # No review-state warnings in the answer: content is attributed to its sources instead.
+        self.assertNotIn("미검수", prompt)
+        self.assertNotIn("review_label", prompt)
         self.assertLess(prompt.index("[비식별 EMR 요약"), prompt.index("[최신화 근거 문단"))
         self.assertTrue(any("clinical_evidence_cited chunk_ids=369-C03-chunk" in line and "unreviewed=1" in line for line in logs.output))
         self.assertFalse(any("급성 담낭염" in line for line in logs.output))  # question text is never logged
@@ -151,7 +155,7 @@ class EvidenceApiTest(unittest.TestCase):
         self.addCleanup(raw.cleanup)
         write_corpus(Path(raw.name), CHUNKS)
         found = InMemoryEvidenceIndex.load(Path(raw.name), include_unreviewed=True).search("급성 담낭염 수술 시기", 2)
-        self.provider = RecordingProvider(answer="조기 복강경 담낭절제를 고려합니다 [미검수 근거 1].")
+        self.provider = RecordingProvider(answer="조기 복강경 담낭절제를 고려합니다 [근거 1: WSES 지침].")
         self.client = TestClient(create_app(ClinicalChatService(self.provider, evidence=StaticRetriever(found)), RawEmrPayloadMapper()))
         payload = {"patient": {"patientId": "pid-1"}, "bloodSugarList": [{"measuredAt": "2026-09-22 10:30:00", "glucoseValue": 120}]}
         self.provider_answer_for_summary()
@@ -175,8 +179,9 @@ class EvidenceApiTest(unittest.TestCase):
         response = self.client.post("/internal/v1/clinical-chat", json=body)
         self.assertEqual(response.status_code, 200)
         evidence = response.json()["evidence"]
-        self.assertEqual([(e["n"], e["chunk_id"], e["review_label"]) for e in evidence],
-                         [(1, "369-C03-chunk", "의료진 미검수"), (2, "369-C04-chunk", "의료진 검수 완료")])
+        self.assertEqual([(e["n"], e["chunk_id"], e["review_status"]) for e in evidence],
+                         [(1, "369-C03-chunk", "draft"), (2, "369-C04-chunk", "approved")])
+        self.assertFalse(any("review_label" in e for e in evidence))
         self.assertEqual(evidence[0]["sources"][0]["url"], "https://example.org/wses")
         stream = self.client.post("/internal/v1/clinical-chat/stream", json=body)
         meta = json.loads(stream.text.split("\n")[1].removeprefix("data: "))

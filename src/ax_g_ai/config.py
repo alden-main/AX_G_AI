@@ -128,7 +128,7 @@ class RuntimeSettings(_EnvironmentSettings):
         patient_context_ttl_seconds: 준비된 환자 문맥을 메모리에 보관하는 시간이다.
         patient_context_max_entries: 메모리에 보관하는 환자 문맥의 최대 개수다.
         evidence_corpus_dir: 최신화 말뭉치(``text_data/corpus``) 경로다. 없으면 근거 인용을 끈다.
-        evidence_include_unreviewed: 의료진 미검수(draft) 근거도 '미검수' 표시와 함께 인용할지 여부다.
+        evidence_include_unreviewed: 의료진 미검수(draft) 근거·규칙도 쓸지 여부다(경고 문구 없이 출처로 근거를 밝힌다).
             기본값은 끔이며, 켜도 A등급 출처·원문 확인 항목만 대상이다.
         evidence_max_chunks: 질문 하나에 인용할 근거 문단 최대 개수다.
         corpus_database_url: 말뭉치 PostgreSQL(pgvector) 접속 URL이다. 설정하면 DB 하이브리드 검색을 쓰고,
@@ -143,7 +143,7 @@ class RuntimeSettings(_EnvironmentSettings):
         recommendation_max_evidence: 추천 의견 하나에 붙일 규칙 근거 문단 최대 개수다.
         clinical_doses_enabled: 말뭉치 용량 규칙(3단계)을 현재 처방·의료진 지정 약에 적용해 체중·신기능 기준 참고 용량,
             용량 조건 규칙, 처방 1일 용량 대조를 낼지 여부다(기본 끔). 규칙은 2단계와 같은 게이트를 지나며 미검수 규칙은
-            ``evidence_include_unreviewed`` 가 켜져 있을 때만 쓰고, 모든 항목에 검수 표시·출처·국내 허가 미대조 안내가 붙는다.
+            ``evidence_include_unreviewed`` 가 켜져 있을 때만 쓰고, 항목마다 출처·region(국외 기준 여부)이 붙는다.
         dur_enabled: 심평원 DUR 의약품 목록(PostgreSQL ``dur`` 스키마, ``ax-g-ai-load-dur`` 로 적재)으로 추천 의견·처방 관련
             채팅에서 현재 처방의 병용금기·연령금기·임부금기·노인주의를 점검할지 여부다(공공누리 제1유형 — 출처 표시).
             ``corpus_database_url`` 의 DB를 쓰며, DB나 활성 데이터셋이 없으면 경고 후 점검을 끈다.
