@@ -23,6 +23,8 @@ dev = [
 ax-g-ai = "ax_g_ai:main"
 ax-g-ai-reference-db = "ax_g_ai.reference_data:main"
 ax-g-ai-load-corpus = "ax_g_ai.corpus_store.loader:main"
+ax-g-ai-build-dur = "ax_g_ai.dur_store.snapshot:main"
+ax-g-ai-load-dur = "ax_g_ai.dur_store.loader:main"
 
 [build-system]
 requires = ["uv_build>=0.12.13,<0.13.0"]

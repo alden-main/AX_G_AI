@@ -7,10 +7,12 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable, Sequence
+from dataclasses import replace
 from datetime import datetime
 import json
 import logging
+import re
 from time import perf_counter
 from typing import Annotated, Mapping
 from uuid import uuid4
@@ -19,16 +21,19 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, StreamingResponse
 from starlette.concurrency import run_in_threadpool
-from pydantic import BaseModel, ConfigDict, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
+from ax_g_ai.adapters.main_bridge import PreparedRawEmrContext, RawEmrPayloadMapper, emr_source
 from ax_g_ai.errors import (
     ClinicalChatProviderUnavailableError,
     PatientContextNotReadyError,
     PatientContextUnavailableError,
     PatientMismatchError,
+    RecommendationUnavailableError,
 )
 from ax_g_ai.services.clinical_chat import ClinicalChatService, evidence_payload
+from ax_g_ai.services.clinical_evidence import EvidenceChunk
+from ax_g_ai.services.clinical_recommendation import Assessment, ClinicalRecommender
 from ax_g_ai.services.patient_context_store import PatientContextStore
 from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
 
@@ -43,7 +48,16 @@ _ERROR_RESPONSES: dict[type[Exception], tuple[int, str, str]] = {
     PatientMismatchError: (403, "PATIENT_MISMATCH", "환자 정보가 일치하지 않습니다."),
     PatientContextUnavailableError: (502, "EMR_UNAVAILABLE", "환자 EMR 정보를 준비할 수 없습니다."),
     ClinicalChatProviderUnavailableError: (502, "AI_PROVIDER_UNAVAILABLE", "AI 답변을 준비할 수 없습니다."),
+    RecommendationUnavailableError: (503, "RECOMMENDATION_UNAVAILABLE", "추천 진단·검사 규칙을 사용할 수 없습니다."),
 }
+_UNREVIEWED_NOTICE = "의료진 미검수 말뭉치 규칙·근거가 포함되어 있습니다. 각 항목의 review_label과 출처를 확인하세요."
+# Chat questions that ask for diagnoses or tests also get the stage-2 rule results.
+_RECOMMENDATION_INTENT = re.compile(
+    r"추천|감별|의심|진단명|어떤\s*검사|검사가?\s*필요|필요한\s*검사|추가\s*검사|워크업|workup|work-up|협진|의뢰"
+    r"|병용|금기|상호\s*작용|DUR|처방\s*(점검|검토)|약물\s*(점검|검토)|복용\s*약"
+    r"|용량|투여량|감량|증량|mg\s*/\s*kg|신기능\s*(조정|보정)|dose|dosing", re.I,
+)
+_RULE_EVIDENCE_IN_CHAT = 4
 
 NonBlankText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
@@ -77,6 +91,28 @@ class ClinicalChatResponseBody(BaseModel):
     evidence: list[dict[str, object]] | None = None
 
 
+class ClinicalRecommendationRequestBody(PatientIdBody):
+    # 의료진이 입력한 증상·소견 메모. 소견 키로 추출해 규칙에 반영하고, 추천 문장 생성에도 쓴다.
+    clinical_note: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=4000)] | None = None
+    # 소견 키 → 있음(true)/없음(false). 메모 추출 결과보다 우선한다. 키 목록은 GET /internal/v1/clinical-recommendations/findings.
+    findings: dict[str, bool] | None = Field(default=None, max_length=200)
+    question: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)] | None = None
+    # 용량을 계산할 약(성분 ID 또는 한글·영문 성분명). 현재 처방 약은 자동 포함. 목록은 GET .../findings 의 dose_drugs.
+    dose_drugs: list[Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]] | None = Field(
+        default=None, max_length=20,
+    )
+
+
+class ClinicalRecommendationResponseBody(BaseModel):
+    answer: str
+    source: str = _SOURCE
+    emr_updated_at: datetime
+    # 규칙 평가 결과(진단·검사·협진·추적 항목, 검사값 범주, 적용한 소견). 항목별 review_label·sources 포함.
+    assessment: dict[str, object]
+    evidence: list[dict[str, object]] | None = None
+    review_notice: str | None = None
+
+
 class ErrorBody(BaseModel):
     code: str
     message: str
@@ -86,6 +122,7 @@ def create_app(
     service: ClinicalChatService | None = None,
     mapper: RawEmrPayloadMapper | None = None,
     store: PatientContextStore | None = None,
+    recommender: ClinicalRecommender | None = None,
 ) -> FastAPI:
     """새 내부 계약만 노출하는 ASGI 앱을 조립한다.
 
@@ -100,6 +137,41 @@ def create_app(
         if service is None:
             raise ClinicalChatProviderUnavailableError("AI provider is not configured")
         return service
+
+    def require_recommender() -> ClinicalRecommender:
+        if recommender is None or len(recommender) == 0:
+            raise RecommendationUnavailableError()
+        return recommender
+
+    def prepare(patient_id: str, payload: Mapping[str, object]) -> PreparedRawEmrContext:
+        context = mapper.map(patient_id, payload)
+        if recommender is None:
+            return context
+        try:
+            rule_input = recommender.prepare(emr_source(payload))
+        except Exception as error:  # rule facts are optional; never block EMR preparation
+            logger.warning("clinical_rule_mapping_failed error_type=%s", type(error).__name__)
+            return context
+        return replace(context, rule_input=rule_input)
+
+    def chat_grounding(question: str, context: PreparedRawEmrContext) -> tuple[tuple[EvidenceChunk, ...], dict[str, object] | None]:
+        """Evidence (and, for diagnosis/test questions, rule results) for one chat question."""
+        chat = require_service()
+        searched = chat.find_evidence(question)
+        if not searched:
+            # A generic question ("추천 검사는?") has no topic words: add the recorded diagnoses.
+            hint = _diagnosis_hint(context)
+            if hint:
+                searched = chat.find_evidence(f"{question} {hint}")
+        if recommender is None or context.rule_input is None or not _RECOMMENDATION_INTENT.search(question):
+            return searched, None
+        assessment = recommender.assess(context.rule_input)
+        alerts = (assessment.medication_alerts or {}).get("alerts")
+        if not assessment.items and not assessment.lab_interpretations and not alerts and not assessment.dose_assessments:
+            return searched, None
+        rule_chunks = assessment.evidence[:_RULE_EVIDENCE_IN_CHAT]
+        payload = _renumber(assessment, len(rule_chunks))
+        return _merge(rule_chunks, searched), payload
 
     @app.middleware("http")
     async def request_logging(request: Request, call_next):
@@ -162,14 +234,14 @@ def create_app(
     async def health() -> dict[str, str]:
         return {"status": "ok"}
 
-    _responses = {status: {"model": ErrorBody} for status in (400, 403, 404, 502)}
+    _responses = {status: {"model": ErrorBody} for status in (400, 403, 404, 502, 503)}
 
     @app.post("/internal/v1/patient-context", response_model=PatientContextReadyBody, responses=_responses, tags=["internal"])
     async def prepare_patient_context(body: PatientContextRequestBody) -> PatientContextReadyBody:
         # A refresh starts by invalidating the old item.  Neither malformed EMR
         # data nor a failed summary may leave stale patient context available.
         store.discard(body.patient_id)
-        context = mapper.map(body.patient_id, body.emr_payload)
+        context = prepare(body.patient_id, body.emr_payload)
         summary = await require_service().summarize_prepared_snapshot(snapshot=context.data)
         store.put(body.patient_id, context)
         return PatientContextReadyBody(patient_id=body.patient_id, patient_summary=summary, emr_updated_at=context.updated_at)
@@ -186,12 +258,13 @@ def create_app(
         context = store.get(body.patient_id)
         service = require_service()
         # Retrieval may call the embedding server and database; keep it off the event loop.
-        evidence = await run_in_threadpool(service.find_evidence, body.question)
+        evidence, assessment = await run_in_threadpool(chat_grounding, body.question, context)
         answer = await service.answer_prepared_snapshot(
             question=body.question,
             reference_record=body.reference_record,
             snapshot=context.data,
             evidence=evidence,
+            **({"assessment": assessment} if assessment else {}),
         )
         return ClinicalChatResponseBody(answer=answer, emr_updated_at=context.updated_at, evidence=evidence_payload(evidence) or None)
 
@@ -200,7 +273,7 @@ def create_app(
         """Return the same clinical answer as SSE without exposing provider events."""
         context = store.get(body.patient_id)
         service = require_service()
-        evidence = await run_in_threadpool(service.find_evidence, body.question)
+        evidence, assessment = await run_in_threadpool(chat_grounding, body.question, context)
         return await _stream(
             request,
             lambda: service.stream_prepared_snapshot(
@@ -208,9 +281,71 @@ def create_app(
                 reference_record=body.reference_record,
                 snapshot=context.data,
                 evidence=evidence,
+                **({"assessment": assessment} if assessment else {}),
             ),
             {"source": _SOURCE, "emr_updated_at": context.updated_at.isoformat(),
              **({"evidence": evidence_payload(evidence)} if evidence else {})},
+        )
+
+    async def recommendation_inputs(
+        body: ClinicalRecommendationRequestBody,
+    ) -> tuple[PreparedRawEmrContext, Assessment, tuple[EvidenceChunk, ...], dict[str, object]]:
+        context = store.get(body.patient_id)
+        rules = require_recommender()
+        service = require_service()
+        if context.rule_input is None:
+            # Prepared before rules were available, or EMR mapping failed: evaluate with no EMR facts.
+            context = replace(context, rule_input=rules.prepare({}))
+        findings: dict[str, bool] = {}
+        if body.clinical_note:
+            findings.update(await service.extract_findings(note=body.clinical_note, vocabulary=rules.finding_vocabulary))
+        findings.update(body.findings or {})  # explicit clinician input wins over extraction
+        assessment = rules.assess(context.rule_input, findings, body.dose_drugs or ())  # type: ignore[arg-type]
+        query = " ".join(part for part in (body.question, body.clinical_note, _diagnosis_hint(context)) if part)
+        searched = await run_in_threadpool(service.find_evidence, query) if query else ()
+        evidence = _merge(assessment.evidence, searched)
+        logger.info(
+            "clinical_recommendation_assessed items=%d met=%d findings=%d unknown_findings=%d evidence=%d unreviewed=%s doses=%d",
+            len(assessment.items), sum(1 for item in assessment.items if item.get("status") == "met"),
+            len(assessment.findings_used), len(assessment.unknown_findings), len(evidence), assessment.unreviewed,
+            len(assessment.dose_assessments or ()),
+        )
+        return context, assessment, evidence, assessment.as_dict()
+
+    @app.get("/internal/v1/clinical-recommendations/findings", tags=["internal"])
+    async def recommendation_findings() -> dict[str, object]:
+        """규칙이 사용하는 소견·사건 키 목록(``findings`` 입력용)과 용량 규칙이 있는 약(``dose_drugs`` 입력용)."""
+        rules = require_recommender()
+        return {"findings": list(rules.finding_vocabulary), "rules": len(rules), "unreviewed_rules": rules.unreviewed_count,
+                "dose_drugs": list(rules.dose_drugs)}
+
+    @app.post("/internal/v1/clinical-recommendations", response_model=ClinicalRecommendationResponseBody, response_model_exclude_none=True, responses=_responses, tags=["internal"])
+    async def clinical_recommendations(body: ClinicalRecommendationRequestBody) -> ClinicalRecommendationResponseBody:
+        """말뭉치 규칙 평가 + 근거 인용으로 의심 진단·추천 검사·협진 의견을 만든다."""
+        context, assessment, evidence, assessment_payload = await recommendation_inputs(body)
+        answer = await require_service().recommend(
+            snapshot=context.data, assessment=assessment_payload, evidence=evidence,
+            clinical_note=body.clinical_note, question=body.question,
+        )
+        return ClinicalRecommendationResponseBody(
+            answer=answer, emr_updated_at=context.updated_at, assessment=assessment_payload,
+            evidence=evidence_payload(evidence) or None, review_notice=_review_notice(assessment, evidence),
+        )
+
+    @app.post("/internal/v1/clinical-recommendations/stream", response_model=None, responses=_responses, tags=["internal"])
+    async def clinical_recommendations_stream(body: ClinicalRecommendationRequestBody, request: Request) -> StreamingResponse:
+        """같은 추천 의견을 SSE로 보낸다. 규칙 평가 결과·근거는 ``meta``에 먼저 담는다."""
+        context, assessment, evidence, assessment_payload = await recommendation_inputs(body)
+        notice = _review_notice(assessment, evidence)
+        return await _stream(
+            request,
+            lambda: require_service().stream_recommendation(
+                snapshot=context.data, assessment=assessment_payload, evidence=evidence,
+                clinical_note=body.clinical_note, question=body.question,
+            ),
+            {"source": _SOURCE, "emr_updated_at": context.updated_at.isoformat(), "assessment": assessment_payload,
+             **({"evidence": evidence_payload(evidence)} if evidence else {}),
+             **({"review_notice": notice} if notice else {})},
         )
 
     @app.post("/internal/v1/patient-context/stream", response_model=None, responses=_responses, tags=["internal"])
@@ -221,7 +356,7 @@ def create_app(
         fails before ``done`` discards the context, as the JSON endpoint does.
         """
         store.discard(body.patient_id)
-        context = mapper.map(body.patient_id, body.emr_payload)
+        context = prepare(body.patient_id, body.emr_payload)
         store.put(body.patient_id, context)
         return await _stream(
             request,
@@ -241,6 +376,33 @@ def create_app(
         )
 
     return app
+
+
+def _diagnosis_hint(context: PreparedRawEmrContext) -> str:
+    diagnoses = context.data.get("diagnoses")
+    names = [item.get("name_ko") for item in diagnoses if isinstance(item, Mapping)] if isinstance(diagnoses, list) else []
+    return " ".join(name for name in names if isinstance(name, str))[:300]
+
+
+def _merge(first: Sequence[EvidenceChunk], second: Sequence[EvidenceChunk]) -> tuple[EvidenceChunk, ...]:
+    """Concatenate keeping ``first``'s numbering (rule evidence refs point into it)."""
+    seen = {chunk.chunk_id for chunk in first}
+    return (*first, *(chunk for chunk in second if chunk.chunk_id not in seen))
+
+
+def _renumber(assessment: Assessment, kept: int) -> dict[str, object]:
+    """Assessment payload whose evidence refs only point at the first ``kept`` passages."""
+    payload = assessment.as_dict()
+    for group in ("items", "lab_interpretations", "dose_assessments"):
+        for item in payload.get(group) or ():  # type: ignore[union-attr]
+            item["evidence_refs"] = [ref for ref in item.get("evidence_refs", ()) if ref <= kept]
+    return payload
+
+
+def _review_notice(assessment: Assessment, evidence: Sequence[EvidenceChunk]) -> str | None:
+    if assessment.unreviewed or any(chunk.review_status != "approved" for chunk in evidence):
+        return _UNREVIEWED_NOTICE
+    return None
 
 
 async def _stream(

@@ -13,6 +13,7 @@ from zoneinfo import ZoneInfo
 
 from ax_g_ai.errors import PatientContextUnavailableError, PatientMismatchError
 from ax_g_ai.services.clinical_calculations import calculate_review_aids
+from ax_g_ai.services.clinical_recommendation import RuleInput
 from ax_g_ai.services.deidentified_snapshot import deidentify, is_identifier_key
 from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
 
@@ -23,6 +24,14 @@ class PreparedRawEmrContext:
 
     data: Mapping[str, object]
     updated_at: datetime
+    # Corpus concept facts for stage-2 rule evaluation (concept ids, values, KCD codes only).
+    rule_input: RuleInput | None = None
+
+
+def emr_source(payload: Mapping[str, Any]) -> Mapping[str, Any]:
+    """The EMR object itself, whether the Bridge sent it bare or in its ``{"data": ...}`` envelope."""
+    raw_data = payload.get("data")
+    return raw_data if isinstance(raw_data, Mapping) else payload
 
 
 class RawEmrPayloadMapper:
@@ -40,8 +49,7 @@ class RawEmrPayloadMapper:
     def map(self, patient_id: str, payload: Mapping[str, Any], *, prepared_at: datetime | None = None) -> PreparedRawEmrContext:
         # The Bridge may pass the EMR object itself or its usual {"data": ...}
         # response envelope.
-        raw_data = payload.get("data")
-        source = raw_data if isinstance(raw_data, Mapping) else payload
+        source = emr_source(payload)
         patient = source.get("patient")
         if not isinstance(patient, Mapping):
             raise PatientContextUnavailableError("emr_payload.patient:missing_or_not_object")

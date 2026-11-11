@@ -255,6 +255,27 @@ class PostgresCorpusStoreTest(unittest.TestCase):
         approved_only = PostgresEvidenceRetriever(TEST_DATABASE_URL, embedder=None, model_id="test-model", include_unreviewed=False)
         self.assertEqual(len(approved_only), 0)
 
+    def test_rules_read_from_the_active_release_match_the_file_gate(self) -> None:
+        from ax_g_ai.corpus_store.rules import read_rows_from_database
+        from ax_g_ai.services.clinical_recommendation import ClinicalRecommender, RuleCorpus
+
+        workup = {"id": "369-C03-K1", "claim_id": "369-C03", "chapter": "369", "kind": "workup", "topic": "담낭염 평가",
+                  "ai_tier": "A", "claim_status": "개정", "verification": "primary", "review_status": "draft", "usable": False,
+                  "sources": [SOURCE_A], "trigger": {"dx": "K81"}, "tests": [{"lab": "K", "reason": "전해질"}]}
+        (self.dir / "workup.jsonl").write_text(json.dumps(workup, ensure_ascii=False) + "\n", encoding="utf-8")
+        result = self.load()
+
+        release_id, rows = read_rows_from_database(TEST_DATABASE_URL)
+        self.assertEqual(release_id, result.release_id)
+        self.assertEqual([row["id"] for row in rows["workup.jsonl"]], ["369-C03-K1"])
+        self.assertNotIn("369-C10-chunk", [row["chunk_id"] for row in rows["chunks.jsonl"]])  # SQL gate
+        self.assertEqual(len(RuleCorpus.from_rows(rows, include_unreviewed=False)), 0)
+        engine = ClinicalRecommender(RuleCorpus.from_rows(rows, include_unreviewed=True))
+        assessment = engine.assess(engine.prepare({"diagnosisList": [{"diagnosisCode": "K81.0"}]}))
+        self.assertEqual([(item["record_id"], item["status"]) for item in assessment.items], [("369-C03-K1", "met")])
+        self.assertEqual([chunk.chunk_id for chunk in assessment.evidence], ["369-C03-chunk"])
+        self.assertEqual(assessment.items[0]["tests"][0]["name"], "칼륨")
+
     def test_hybrid_search_semantic_floor_and_fallback(self) -> None:
         self.load(FakeEmbedder())
         hybrid = self.retriever(FakeEmbedder(), similarity_floor=0.6)

@@ -18,7 +18,7 @@ import math
 import re
 import unicodedata
 from collections import Counter, defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Protocol
 
@@ -41,6 +41,32 @@ _STOP_BIGRAMS = frozenset({
 _STOP_WORDS = frozenset({"the", "and", "for", "with", "of", "in", "to"})
 
 
+# Source fields shown with every cited passage or rule: enough to attribute it (CC BY needs title, author, license).
+SOURCE_FIELDS = ("id", "title", "citation", "locator", "url", "license", "region")
+# Source priority: domestic (Korea) > United States > Europe > others. A record whose claim is listed in a
+# higher-priority record's ``preferred_over`` is shown only as a reference, never as the recommendation.
+REGION_ORDER = ("KR", "US", "EU", "INTL")
+REGION_LABELS = {"KR": "국내", "US": "미국", "EU": "유럽", "INTL": "국제·기타"}
+
+
+def region_rank(sources: Iterable[Mapping[str, Any]]) -> int:
+    ranks = [REGION_ORDER.index(source["region"]) for source in sources
+             if isinstance(source, Mapping) and source.get("region") in REGION_ORDER]
+    return min(ranks, default=len(REGION_ORDER))
+
+
+def region_of(sources: Iterable[Mapping[str, Any]]) -> str | None:
+    rank = region_rank(sources)
+    return REGION_ORDER[rank] if rank < len(REGION_ORDER) else None
+
+
+def sorted_sources(sources: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """Display form of sources, domestic first."""
+    items = [{key: source.get(key) for key in SOURCE_FIELDS if source.get(key) is not None}
+             for source in sources if isinstance(source, Mapping)]
+    return sorted(items, key=lambda item: region_rank([item]))
+
+
 @dataclass(frozen=True)
 class EvidenceChunk:
     chunk_id: str
@@ -53,34 +79,69 @@ class EvidenceChunk:
     conflicts: tuple[str, ...]
     updated_at: str | None
     doc_path: str | None
+    preferred_over: tuple[str, ...] = ()
+    # Claims of loaded higher-priority (domestic) passages that supersede this one; set at index load.
+    superseded_by: tuple[str, ...] = ()
+
+    @property
+    def priority(self) -> str:
+        return "reference" if self.superseded_by else "primary"
 
     @property
     def review_label(self) -> str:
         return REVIEW_LABELS.get(self.review_status, "의료진 미검수")
 
+    @property
+    def region(self) -> str | None:
+        return region_of(self.sources)
+
     def as_dict(self) -> dict[str, object]:
+        region = self.region
         return {
             "chunk_id": self.chunk_id, "claim_id": self.claim_id, "title": self.title, "text": self.text,
             "review_status": self.review_status, "review_label": self.review_label,
-            "sources": [
-                {key: source.get(key) for key in ("id", "title", "locator", "url") if source.get(key) is not None}
-                for source in self.sources
-            ],
+            "region": region, "region_label": REGION_LABELS.get(region or "", "미상"),
+            "priority": self.priority, **({"superseded_by": list(self.superseded_by)} if self.superseded_by else {}),
+            "sources": sorted_sources(self.sources),
             "conflicts": list(self.conflicts), "updated_at": self.updated_at,
         }
+
+
+def mark_superseded(chunks: Iterable[EvidenceChunk]) -> list[EvidenceChunk]:
+    """Flag passages whose claim a loaded passage lists in ``preferred_over`` (domestic over foreign)."""
+    items = list(chunks)
+    superseders: dict[str, list[str]] = defaultdict(list)
+    for chunk in items:
+        for target in chunk.preferred_over:
+            if target != chunk.claim_id:
+                superseders[target].append(chunk.claim_id)
+    return [replace(chunk, superseded_by=tuple(dict.fromkeys(superseders[chunk.claim_id]))) if chunk.claim_id in superseders else chunk
+            for chunk in items]
+
+
+def prioritize(chunks: Iterable[EvidenceChunk]) -> list[EvidenceChunk]:
+    """Keep relevance order but put superseded (reference-only) passages after the others."""
+    items = list(chunks)
+    return [chunk for chunk in items if not chunk.superseded_by] + [chunk for chunk in items if chunk.superseded_by]
 
 
 class EvidenceRetriever(Protocol):
     def search(self, question: str, limit: int) -> tuple[EvidenceChunk, ...]: ...
 
 
-def is_citable(record: Mapping[str, Any], *, include_unreviewed: bool) -> bool:
+def is_citable(record: Mapping[str, Any], *, include_unreviewed: bool, require_license: bool = False) -> bool:
+    """Gate for every corpus record the AI may use.
+
+    ``require_license`` (attribution-only mode) also demands that each source names its
+    license and title, i.e. that the source can actually be attributed on screen.
+    """
     sources = record.get("sources")
     review = record.get("review_status")
     return (
         record.get("ai_tier") == "A"
         and isinstance(sources, list) and bool(sources)
         and all(isinstance(source, Mapping) and source.get("ai_use") == "A" for source in sources)
+        and (not require_license or all(source.get("license") and source.get("title") for source in sources))
         and record.get("verification") in USABLE_VERIFICATIONS
         and record.get("claim_status") not in EXCLUDED_CLAIM_STATUSES
         and (review == "approved" or (include_unreviewed and review == "draft"))
@@ -103,7 +164,7 @@ def terms(text: str) -> list[str]:
 
 class InMemoryEvidenceIndex:
     def __init__(self, chunks: Iterable[EvidenceChunk], concept_names: Mapping[str, frozenset[str]] | None = None) -> None:
-        self._chunks = tuple(chunks)
+        self._chunks = tuple(mark_superseded(chunks))
         self._by_id = {chunk.chunk_id: chunk for chunk in self._chunks}
         self._concept_names = concept_names or {}   # normalized name → claim ids that use the concept
         self._doc_terms: list[Counter[str]] = []
@@ -129,18 +190,20 @@ class InMemoryEvidenceIndex:
         return sum(1 for chunk in self._chunks if chunk.review_status != "approved")
 
     @classmethod
-    def load(cls, corpus_dir: Path, *, include_unreviewed: bool) -> "InMemoryEvidenceIndex":
+    def load(cls, corpus_dir: Path, *, include_unreviewed: bool, require_license: bool = False) -> "InMemoryEvidenceIndex":
         return cls.from_records(
             _jsonl(corpus_dir / "chunks.jsonl"),
             concept_names(*(_jsonl(corpus_dir / name) for name in ("test_concepts.jsonl", "drug_concepts.jsonl", "drug_classes.jsonl"))),
-            include_unreviewed=include_unreviewed,
+            include_unreviewed=include_unreviewed, require_license=require_license,
         )
 
     @classmethod
     def from_records(
-        cls, records: Iterable[Mapping[str, Any]], names: Mapping[str, frozenset[str]], *, include_unreviewed: bool
+        cls, records: Iterable[Mapping[str, Any]], names: Mapping[str, frozenset[str]], *, include_unreviewed: bool,
+        require_license: bool = False,
     ) -> "InMemoryEvidenceIndex":
-        return cls((chunk_from_record(r) for r in records if is_citable(r, include_unreviewed=include_unreviewed)), names)
+        return cls((chunk_from_record(r) for r in records
+                    if is_citable(r, include_unreviewed=include_unreviewed, require_license=require_license)), names)
 
     def matched_claims(self, question: str) -> dict[str, int]:
         """Claim id → number of distinct concepts named in the question that the claim uses."""
@@ -162,7 +225,7 @@ class InMemoryEvidenceIndex:
             return ()
         scored = self.scored(question)
         cutoff = lexical_cutoff(scored)
-        return tuple(chunk for score, chunk in scored[:limit] if score >= cutoff)
+        return tuple(prioritize(chunk for score, chunk in scored if score >= cutoff)[:limit])
 
     def chunk(self, chunk_id: str) -> EvidenceChunk | None:
         return self._by_id.get(chunk_id)
@@ -201,7 +264,7 @@ def chunk_from_record(record: Mapping[str, Any]) -> EvidenceChunk:
         title=" > ".join(record.get("title_path") or ()), text=record.get("text", ""),
         review_status=record["review_status"], sources=tuple(record["sources"]),
         conflicts=tuple(record.get("conflicts") or ()), updated_at=record.get("updated_at"),
-        doc_path=record.get("doc_path"),
+        doc_path=record.get("doc_path"), preferred_over=tuple(record.get("preferred_over") or ()),
     )
 
 

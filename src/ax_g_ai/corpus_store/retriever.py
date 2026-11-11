@@ -21,7 +21,7 @@ import psycopg
 from psycopg.rows import dict_row
 
 from ax_g_ai.corpus_store.embedding import EmbeddingError, TeiEmbeddingClient, vector_literal
-from ax_g_ai.services.clinical_evidence import EvidenceChunk, InMemoryEvidenceIndex, concept_names, lexical_cutoff
+from ax_g_ai.services.clinical_evidence import EvidenceChunk, InMemoryEvidenceIndex, concept_names, lexical_cutoff, prioritize
 
 logger = logging.getLogger("uvicorn.error")
 _RRF_K = 60
@@ -34,12 +34,13 @@ class CorpusUnavailableError(RuntimeError):
 class PostgresEvidenceRetriever:
     def __init__(
         self, database_url: str, *, embedder: TeiEmbeddingClient | None, model_id: str, include_unreviewed: bool,
-        similarity_floor: float = 0.6, candidates: int = 30, refresh_seconds: float = 60.0,
+        similarity_floor: float = 0.6, candidates: int = 30, refresh_seconds: float = 60.0, require_license: bool = False,
     ) -> None:
         self._database_url = database_url
         self._embedder = embedder
         self._model_id = model_id
         self._include_unreviewed = include_unreviewed
+        self._require_license = require_license
         self._similarity_floor = similarity_floor
         self._candidates = candidates
         self._refresh_seconds = refresh_seconds
@@ -84,7 +85,9 @@ class PostgresEvidenceRetriever:
             grouped[kind].append({**row["payload"], "used_by": row["used_by"]})
         names = concept_names(grouped["test"], grouped["drug"], grouped["class"])
         # is_citable() runs again in Python as a second gate behind the SQL view.
-        index = InMemoryEvidenceIndex.from_records(chunks, names, include_unreviewed=self._include_unreviewed)
+        index = InMemoryEvidenceIndex.from_records(
+            chunks, names, include_unreviewed=self._include_unreviewed, require_license=self._require_license,
+        )
         return release_id, index
 
     def _maybe_refresh(self) -> None:
@@ -141,4 +144,4 @@ class PostgresEvidenceRetriever:
             fused[chunk_id] += 1 / (_RRF_K + rank)
         ordered = sorted((chunk_id for chunk_id in accepted if index.chunk(chunk_id) is not None),
                          key=lambda chunk_id: (-fused[chunk_id], chunk_id))
-        return tuple(index.chunk(chunk_id) for chunk_id in ordered[:limit])  # type: ignore[misc]
+        return tuple(prioritize(index.chunk(chunk_id) for chunk_id in ordered)[:limit])  # type: ignore[misc]

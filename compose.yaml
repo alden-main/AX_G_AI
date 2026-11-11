@@ -65,6 +65,20 @@ services:
       - ai-inference
     restart: "no"
 
+  # DUR 적재(1회 실행): 이미지의 /app/data/dur 스냅샷을 dur 스키마에 데이터셋으로 적재 → 활성 전환. 같은 내용이면 바로 끝납니다.
+  # 롤백: docker compose run --rm dur-loader --activate <dataset_id>
+  dur-loader:
+    image: ${AX_G_AI_IMAGE:-ax-g-ai:local}
+    entrypoint: ["ax-g-ai-load-dur"]
+    environment:
+      AX_G_CORPUS_DATABASE_URL: postgresql://${CORPUS_DB_USER:-axg}:${CORPUS_DB_PASSWORD}@postgres:5432/${CORPUS_DB_NAME:-axg_corpus}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ai-data
+    restart: "no"
+
   ax-g-ai:
     build: .
     image: ${AX_G_AI_IMAGE:-ax-g-ai:local}
@@ -81,6 +95,8 @@ services:
       AX_G_EMBEDDING_MODEL: ${AX_G_EMBEDDING_MODEL:-kure-v1}
     depends_on:
       corpus-loader:
+        condition: service_completed_successfully
+      dur-loader:
         condition: service_completed_successfully
     networks:
       - bridge-ai

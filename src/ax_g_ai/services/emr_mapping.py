@@ -222,6 +222,11 @@ class MedicationMatch:
     classes: tuple[str, ...]
     matched_by: str  # site_map | name
     complete: bool
+    # EMR dosage/unit/frequency/interval as given (no identifiers) — read by the dose stage only.
+    dose: Mapping[str, Any] | None = None
+
+
+_DOSE_FIELDS = ("dosage", "unit", "frequency", "interval", "durationDays")
 
 
 @dataclass(frozen=True)
@@ -270,7 +275,7 @@ def map_emr(source: Mapping[str, Any], catalog: ConceptCatalog, site_map: SiteCo
     for derived in _derived(latest, age, sex):
         keep(derived)
     for concept, lab in latest.items():
-        for corpus_id in catalog.tests[concept].get("corpus_ids") or (concept,):
+        for corpus_id in (catalog.tests.get(concept) or {}).get("corpus_ids") or (concept,):
             values[corpus_id] = lab.value
 
     medications, meds_complete = _map_medications(source, catalog, site, issues)
@@ -377,10 +382,15 @@ def _vital_values(source: Mapping[str, Any], catalog: ConceptCatalog, issues: li
     for list_key, value_key, date_key, concept, unit in (
         ("bloodSugarList", "glucoseValue", "measuredAt", "Glucose", "mg/dL"),
         ("glycatedHemoglobinList", "hba1cValue", "testDate", "HbA1c", "%"),
+        ("bloodPressureList", "sbp", "measuredAt", "SBP", "mmHg"),
+        ("bloodPressureList", "dbp", "measuredAt", "DBP", "mmHg"),
+        ("oxygenSaturationList", "spo2Value", "measuredAt", "SpO2", "%"),
     ):
         if concept not in catalog.tests:
             continue
         for item in _items(source.get(list_key)):
+            if item.get(value_key) is None:
+                continue  # e.g. a blood pressure row with only the diastolic value
             value = _checked_value(concept, item.get(value_key), unit, catalog, issues, list_key, value_key)
             if value is not None:
                 result.append(LabValue(concept, value, unit, item.get(value_key), unit, _text(item.get(date_key)), list_key, "emr_vital"))
@@ -445,7 +455,8 @@ def _map_medications(source: Mapping[str, Any], catalog: ConceptCatalog, site: S
         if not item_complete:
             complete = False
             issues.append(MappingIssue("med_partial", code, name, f"일부 성분만 확인됨: {', '.join(ingredients)}"))
-        result.append(MedicationMatch(code, name, tuple(ingredients), route, tuple(asserted), matched_by, item_complete))
+        dose = {key: item[key] for key in _DOSE_FIELDS if isinstance(item.get(key), (str, int, float)) and not isinstance(item.get(key), bool)}
+        result.append(MedicationMatch(code, name, tuple(ingredients), route, tuple(asserted), matched_by, item_complete, dose or None))
     return result, complete
 
 

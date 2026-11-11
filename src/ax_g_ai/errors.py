@@ -28,3 +28,7 @@ class PatientMismatchError(PermissionError):
 
 class ClinicalChatProviderUnavailableError(RuntimeError):
     """AI Provider가 설정되지 않았거나 호출·응답 검증이 실패했을 때 발생한다."""
+
+
+class RecommendationUnavailableError(RuntimeError):
+    """말뭉치 규칙(추천 진단·검사)이 설정되지 않았거나 불러온 규칙이 없을 때 발생한다."""
