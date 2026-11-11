@@ -9,7 +9,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
-    AX_G_REFERENCE_DATA_DB_PATH=/app/data/reference_data.sqlite \
     AX_G_DUR_SNAPSHOT_DIR=/app/data/dur \
     AX_G_EVIDENCE_CORPUS_DIR=/app/text_data/corpus \
     PATH="/app/.venv/bin:$PATH"
@@ -28,8 +27,9 @@ COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --locked --no-dev --no-install-project
 
 COPY src ./src
-COPY data/reference_data.sqlite ./data/reference_data.sqlite
-RUN test -s data/reference_data.sqlite
+# 참조 DB(data/reference_data.sqlite, 약품 효능·주의사항)는 이미지에 넣지 않는다. 출처·라이선스 미확인이라
+# AX_G_ATTRIBUTED_SOURCES_ONLY=true(기본)에서는 쓰지 않으며, 파일이 325MB라 git(100MB 제한)에도 없다.
+# 쓰려면 읽기 전용 볼륨으로 마운트하고 AX_G_REFERENCE_DATA_DB_PATH 와 AX_G_ATTRIBUTED_SOURCES_ONLY=false 를 설정한다.
 # 심평원 DUR 의약품 목록 스냅샷(ax-g-ai-build-dur 로 생성). dur-loader 서비스가 PostgreSQL dur 스키마에 적재하고,
 # API는 활성 데이터셋을 DB에서 읽는다(처방 병용·연령·임부금기, 노인주의 점검).
 COPY data/dur ./data/dur

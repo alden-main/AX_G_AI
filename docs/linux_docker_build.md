@@ -175,7 +175,7 @@ Bridge와 같은 Docker 네트워크에서 운영할 때는 호스트 포트를 
 
 ## 참조 데이터와 로컬 Compose
 
-Docker 이미지는 `data/reference_data.sqlite`를 포함하며 기본 경로는 `/app/data/reference_data.sqlite`이다. 빌드 전에 파일이 있어야 한다. 원본이 변경된 경우 DB 생성 방법과 데이터 검증 사항은 [참조 데이터 설계](reference_data_sqlite.md)를 따른다. 별도 DB를 사용할 경우 읽기 전용 볼륨으로 마운트하고 `AX_G_REFERENCE_DATA_DB_PATH`를 설정한다.
+Docker 이미지에는 참조 DB(`data/reference_data.sqlite`, 약 325MB)를 넣지 않는다. 출처·라이선스가 확인되지 않아 기본 설정(`AX_G_ATTRIBUTED_SOURCES_ONLY=true`)에서는 쓰지 않고, GitHub 파일 크기 제한(100MB)으로 git에도 없다. 그래서 git에서 받은 소스만으로 이미지를 빌드할 수 있다. 쓰려면 DB를 읽기 전용 볼륨으로 마운트하고 `AX_G_REFERENCE_DATA_DB_PATH`와 `AX_G_ATTRIBUTED_SOURCES_ONLY=false`를 설정한다. DB 생성 방법과 데이터 검증 사항은 [참조 데이터 설계](reference_data_sqlite.md)를 따른다.
 
 소스가 있는 환경에서 `.env`를 준비한 후 로컬 Compose를 실행할 수 있다. `compose.yaml`은 8100 포트를 호스트에 공개하므로 네트워크 접근 범위를 확인한다.
 
@@ -232,6 +232,10 @@ HF_CACHE_DIR=/opt/ax-g/hf-cache
 # 비공개(gated) 모델에만 필요
 # HF_TOKEN=
 AI_TIMEOUT_SECONDS=60
+# 말뭉치 DB 비밀번호(필수). 예: openssl rand -hex 24
+CORPUS_DB_PASSWORD=임의의_긴_값
+# 미검수 근거 인용(검수 단계 운영 시에만 true)
+# AX_G_EVIDENCE_INCLUDE_UNREVIEWED=false
 ```
 
 `compose.vllm.yaml`이 `AI_PROVIDER`, `AI_BASE_URL`, `AI_MODEL`을 AX-G AI 컨테이너에 설정한다. `openai_compatible`일 때는 `.env`에 `OPENAI_API_KEY`가 남아 있어도 vLLM으로 보내지 않는다.
@@ -244,6 +248,47 @@ docker compose -f compose.vllm.yaml logs -f vllm   # 모델 다운로드·로딩
 ```
 
 최초 기동은 모델 다운로드(약 20GB)와 로딩 때문에 수 분 이상 걸린다. vLLM health check가 통과해야 AX-G AI가 시작된다. 모델을 받은 뒤 `.env`에 `HF_HUB_OFFLINE=1`을 설정하면 외부 접속 없이 기동한다.
+
+### 근거 인용용 말뭉치 DB·임베딩 서버
+
+같은 Compose가 다음 서비스를 함께 띄운다. 기동 순서는 `postgres`·`embedding` 정상 → `corpus-loader`·`dur-loader` 성공 종료 → `ax-g-ai`.
+
+| 서비스 | 역할 | 자원 |
+|---|---|---|
+| `postgres` | PostgreSQL 16 + pgvector. 말뭉치·검사/약제 개념·임베딩 저장. 내부망 `ai-data`에만 연결, 호스트 포트 없음 | 볼륨 `corpus-db`(수십 MB) |
+| `embedding` | TEI CPU + `nlpai-lab/KURE-v1`(MIT, 1024차원). 질문·문단 임베딩 | 메모리 6GB 한도(4GB에서는 모델 적재 중 OOM 확인), CPU 4코어, 모델 캐시 약 2.3GB |
+| `corpus-loader` | 이미지에 든 `text_data/corpus`를 새 릴리스로 적재 → 사전 계산 임베딩 파일(`corpus/embeddings/kure-v1.jsonl`)로 벡터 채움(임베딩 서버로 표본 3개 일치 확인) → 파일에 없는 문단만 서버로 계산 → 활성 전환. 같은 말뭉치면 즉시 종료 | 최초 적재 약 6초(파일 사용). 파일 없이 전부 계산하면 개발 PC CPU 기준 약 2분 20초 |
+| `dur-loader` | 이미지에 든 DUR 스냅샷(`/app/data/dur`)을 `dur` 스키마에 새 데이터셋으로 적재 → 활성 전환. 같은 내용이면 즉시 종료 | 최초 적재 약 2초, 데이터셋 1개당 DB 약 12MB |
+
+```bash
+docker compose -f compose.vllm.yaml logs corpus-loader          # "release N active (new|reused)" 확인
+docker compose -f compose.vllm.yaml logs dur-loader             # "dur dataset N active (new|reused)" 확인
+docker compose -f compose.vllm.yaml logs ax-g-ai | grep -E "clinical_evidence_loaded|dur_loaded|clinical_rules_loaded"
+# 이전 릴리스로 롤백(최근 5개 보관) / DUR 이전 데이터셋으로 롤백(최근 3개 보관) — 롤백 후 ax-g-ai 재시작
+docker compose -f compose.vllm.yaml run --rm corpus-loader --activate <release_id>
+docker compose -f compose.vllm.yaml run --rm dur-loader --activate <dataset_id>
+```
+
+DUR 목록 갱신(공공데이터포털에서 새 CSV를 받은 경우): CSV 5개를 `dur/`에 바꿔 넣고 스냅샷을 다시 만든 뒤 이미지를 빌드한다. 원본 CSV(약 260MB)는 이미지에 넣지 않는다.
+
+```bash
+uv run ax-g-ai-build-dur --input dur --output data/dur --replace   # "product 20106, pair_rule 23639, …" 출력 확인
+```
+
+- 이미지 빌드는 사전 계산 임베딩이 말뭉치 전체를 덮지 않으면 실패한다. 말뭉치를 바꾼 뒤에는 `build_corpus.py` → `build_embeddings.py` 순서로 실행하고 둘 다 커밋한다(아래). 의도적으로 건너뛰려면 `--build-arg ALLOW_STALE_EMBEDDINGS=1`(그 문단들은 서버 첫 기동 때 계산된다).
+- DB나 임베딩 서버를 쓸 수 없으면 AX-G AI는 이미지 안 말뭉치 파일의 어휘 검색으로 동작한다(`backend=files`).
+- 임베딩 모델도 최초 1회 다운로드한다. 받은 뒤 `HF_HUB_OFFLINE=1`이면 외부 접속 없이 기동한다.
+- 질의당 임베딩은 개발 PC CPU에서 약 0.1초였다(첫 질의는 워밍업으로 2~3초).
+
+말뭉치를 바꾼 뒤 사전 계산 임베딩 갱신(새·변경 문단만 계산, 운영과 같은 KURE-v1 서버 필요):
+
+```bash
+uv run --with pyyaml python text_data/tools/build_corpus.py
+docker run -d --name kure -p 127.0.0.1:18080:80 -v "$PWD/hf-cache:/data" \
+  ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.4 --model-id nlpai-lab/KURE-v1   # 메모리 6GB 이상
+uv run python text_data/tools/build_embeddings.py --embedding-url http://127.0.0.1:18080 --generator "TEI cpu-1.9.4"
+uv run python text_data/tools/build_embeddings.py --check
+```
 
 ## 4. 확인
 
