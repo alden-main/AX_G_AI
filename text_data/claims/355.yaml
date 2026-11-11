@@ -1,0 +1,78 @@
+# 355장 급성 장폐쇄 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: WSES 수술력 없는 복부의 소장 폐쇄 입장문(World J Emerg Surg 2021, CC BY — 유착성 소장 폐쇄 지침 원칙 요약 포함).
+# 주의: 유착성 소장 폐쇄 Bologna 지침(2017) 원문은 이번에 대조하지 않음.
+
+chapter: "355"
+title: 급성 장폐쇄
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 355-C01
+    topic: 소장 폐쇄 초기 평가와 검사
+    type: workup
+    original:
+      text: "혈액검사는 전혈구, 혈청 전해질, 크레아티닌. 구토·탈수로 저칼륨·저염소혈증, BUN/Cr 상승, 대사성 알칼리증. 경구·정주 조영 CT."
+      location: {file: by_chapter/355장.md, line: 94}
+    status: 유지
+    current:
+      text: >
+        초기 평가의 최우선은 응급 수술 적응(복막염, 교액, 허혈 징후)을 찾는 것이다. 진찰에서 복벽 탈장을 찾는다.
+        검사실은 혈구, CRP, 젖산, 전해질, BUN/크레아티닌, 응고 검사를 하며, CRP 상승·좌방이동 백혈구 증가·젖산 상승은 복막염·장 허혈을 시사하지만 정상이라도 허혈을 배제할 수 없다.
+        CT는 원인, 폐쇄 위치·정도(부분·완전), 이행부, 응급 수술 필요성을 예측해 소장 폐쇄의 1차 진단 도구다. 수용성 조영제를 쓰면 CT 진단 가치가 높아지고 24시간 뒤 X선으로 조영제 진행을 본다.
+      sources:
+        - {id: PAPER-WSES-SBO-2021, locator: "Initial assessment; Computed tomography; Water-soluble contrast"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: suspected_bowel_obstruction}
+        tests:
+          - {lab: CBC, reason: "백혈구·좌방이동"}
+          - {lab: CRP, reason: "복막염·허혈"}
+          - {lab: Lactate, reason: "허혈(정상이라도 배제 불가)"}
+          - {lab: Electrolytes, reason: "저칼륨·저염소"}
+          - {lab: BUN, reason: "탈수"}
+          - {lab: SCr, reason: "탈수"}
+          - {lab: Coagulation, reason: "수술 대비"}
+          - {exam: CT_abdomen_contrast, reason: "원인·정도·응급 수술 예측"}
+
+  - id: 355-C02
+    topic: 비수술 치료와 수용성 조영제
+    type: treatment
+    original:
+      text: "수액소생, 전해질 보충, 비위관 감압. 기계적 장폐쇄 60~80%는 보존 치료 가능. 완전 장폐쇄는 중재 적응. 목조름 우려 시 초기 외과 자문."
+      location: {file: by_chapter/355장.md, line: 116}
+    status: 유지
+    current:
+      text: >
+        유착성 소장 폐쇄의 대부분은 비수술로 치료하며(약 70%에서 안전·효과적) 금식, 수액·전해질 보충, 비위관 감압이 기본이고 수용성 조영제를 쓴다.
+        수용성 조영제 투여 후 4–24시간 안에 대장에 조영제가 보이면 비수술 치료 성공을 예측하는 예후적 가치(민감도 96%)와 치료적 가능성이 있다.
+        복막염·교액·허혈 징후가 있으면 응급 수술, 비수술 치료에 실패하면 나중에 수술한다. 수술력 없는 복부의 소장 폐쇄도 대부분 양성(유착 포함)이므로 기존 유착성 폐쇄 지침에 따라 치료할 수 있다.
+      sources:
+        - {id: PAPER-WSES-SBO-2021, locator: "Introduction; Water-soluble contrast; Operative/Non-operative management; Conclusion"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: referral
+        to: 외과(응급)
+        criteria:
+          - {all: [{finding: bowel_obstruction}, {any: [{finding: peritonitis}, {finding: strangulation_signs}, {finding: bowel_ischemia}]}]}
+        purpose: ["응급 수술"]
+      - kind: treatment
+        condition: {kcd: [K56]}
+        recommendations:
+          - when: {all: [{finding: adhesive_small_bowel_obstruction}, {not: {finding: strangulation_signs}}, {not: {finding: peritonitis}}]}
+            recommend: {steps: ["금식·수액·전해질", "비위관 감압", "수용성 조영제(4–24시간 대장 도달 확인)"]}
+
+  - id: 355-C03
+    topic: 마비성 장폐쇄·오길비 증후군·창자꼬임
+    type: treatment
+    original:
+      text: "마비성 장폐쇄 보존 치료, 오길비 증후군 네오스티그민, 구불창자꼬임 내시경 감압 후 선택 절제."
+      location: {file: by_chapter/355장.md, line: 118}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "이번 묶음에서 A등급 출처 미확보."

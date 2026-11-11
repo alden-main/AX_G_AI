@@ -1,0 +1,187 @@
+# 395장 통풍 및 기타 크리스탈 관절병증 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: openFDA(CC0). 통풍 진료지침(ACR·EULAR)은 C등급이라 사용하지 않음.
+
+chapter: "395"
+title: 통풍 및 기타 크리스탈 관절병증
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 395-C01
+    topic: 급성 통풍 — 콜히친
+    type: dose
+    original:
+      text: >
+        콜히친 경구가 전통적. 0.6 mg을 8시간 간격으로 투여하다 줄이거나, 1.2 mg 후 0.6 mg을 매시간 투여하며 반응에 따라 하루 용량 결정. 묽은 변 즉시 중단.
+      location: {file: by_chapter/395장.md, line: 42}
+    status: 개정
+    current:
+      text: >
+        급성 통풍(미국 허가): 첫 증상 때 1.2 mg(2정), 1시간 뒤 0.6 mg(1정). 더 많은 용량은 효과가 더 좋지 않으며, 최대는 1시간 동안 1.8 mg이다.
+        예방 투여 중 발작이면 같은 방식(1.2 mg 후 1시간 뒤 0.6 mg)으로 치료하고 12시간 뒤 예방 용량을 재개한다.
+        신기능(Cockcroft–Gault CrCl): 경도(50–80)·중등도(30–50)는 조정 불필요하나 이상반응을 면밀히 감시. 중증은 용량 조정은 없으나 2주에 한 번 넘게 반복하지 않는다(반복 필요 시 다른 치료 고려).
+        투석 환자는 0.6 mg 단회로 줄이고 2주에 한 번 넘게 반복하지 않는다.
+      sources:
+        - {id: OPENFDA-COLCHICINE, locator: "2.1 Gout Flares; 2.4 Renal Impairment"}
+    verification: primary
+    conflicts:
+      - "원문 '1.2 mg 후 0.6 mg을 매시간, 반응에 따라'는 현행 허가(1시간 내 최대 1.8 mg)와 다름 — 말뭉치에서 제외."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-COLCHICINE-GOUT-FLARE
+        ingredient: colchicine
+        indication: 급성 통풍 발작
+        renal_param: CrCl
+        renal_method: Cockcroft-Gault
+        source_priority: [OPENFDA-COLCHICINE]
+        standard_dose: "1.2 mg 후 1시간 뒤 0.6 mg(1시간 내 최대 1.8 mg)"
+        rules:
+          - {when: {var: CrCl, op: ">=", value: 30}, action: "조정 불필요, 이상반응 감시"}
+          - {when: {all: [{var: CrCl, op: "<", value: 30}, {not: {event: dialysis}}]}, action: "용량 동일, 2주에 1회 넘게 반복 금지", alert: caution}
+          - {when: {event: dialysis}, action: "0.6 mg 단회, 2주에 1회 넘게 반복 금지", alert: high}
+        alert_note: "미국 허가 기준 — CYP3A4·P-gp 억제제 병용 시 추가 조정 필요(라벨 참조, 이번에 대조 안 함)"
+
+  - id: 395-C02
+    topic: 급성 통풍 — NSAID·스테로이드
+    type: treatment
+    original:
+      text: >
+        NSAID 최대 항염 용량(인도메타신 25–50 mg 1일 3회, 나프록센 500 mg 1일 2회, 이부프로펜 800 mg 1일 3회, 디클로페낙 50 mg 1일 3회, 세레콕시브),
+        당질코르티코이드, IL-1 억제제(아나킨라 등).
+      location: {file: by_chapter/395장.md, line: 42}
+    status: 개정
+    current:
+      text: >
+        통풍 발작은 가능한 빨리, 되도록 12시간 안에 치료하며 환자가 첫 경고 증상에서 스스로 약을 시작하도록 교육한다.
+        콜키신, NSAID, 당질코르티코이드(경구·관절내·근육주사)가 1차 치료이며, 약제는 동반질환, 이전 치료 반응, 발작의 중증도, 침범 관절의 수와 종류로 고른다.
+        콜키신은 신장애가 있으면 줄이고 중증 신장애(GFR <30 mL/min)나 강한 P-당단백·CYP3A4 억제제 병용 시 피한다.
+        표준 치료에 반응이 부족하거나 금기이면 IL-1 억제제를 고려할 수 있다.
+      sources:
+        - {id: PAPER-HK-GOUT-2023, locator: "Consensus statements 1–3, 5 (management of acute gout flare)"}
+    verification: primary
+    note: "약 용량은 3단계(용량 규칙)에서 다룬다 — 이 주장에는 용량 수치를 넣지 않았다."
+    review: {status: draft}
+
+  - id: 395-C03
+    topic: 요산저하치료 — 알로퓨리놀
+    type: dose
+    original:
+      text: >
+        목표 혈청 요산 <5.0–6.0 mg/dL, 대개 평생 지속. 알로퓨리놀은 100 mg으로 시작해 필요에 따라 800 mg까지, 신부전이면 크레아티닌에 따라 소량으로 시작.
+        급성 발병 중에는 시작하지 않고 안정 후 저용량 콜히친 예방과 함께 시작.
+      location: {file: by_chapter/395장.md, line: 50}
+    status: 개정
+    current:
+      text: >
+        알로퓨리놀(미국 허가, 2026): 시작 전 혈청 요산, CBC, 화학검사, 간·신기능을 확인하고 발작 예방 치료를 함께 권장한다. 신기능 정상은 100 mg 1일 1회로 시작해
+        매주 100 mg씩 혈청 요산 ≤6 mg/dL까지 증량, 최대 800 mg/일. 신기능 저하는 저용량으로 시작해 2–4주마다 50 mg/일씩 증량한다 —
+        시작 용량 eGFR >60 조정 없음, 30–60 50 mg 1일 1회, 15–30 50 mg 격일, 5–15 50 mg 주 2회, <5 50 mg 주 1회(eGFR별 최대 용량은 정해지지 않음).
+        CKD 환자는 시작 시 신기능을 면밀히 감시한다. 피부 발진 등 과민반응 첫 징후에 영구 중단한다.
+        HLA-B*58:01 보유자는 알로퓨리놀 과민증후군 위험이 높아 이득이 위험을 명백히 넘지 않으면 사용을 권장하지 않는다. 이 대립유전자 빈도가 높은 집단(아프리카계, 한국인·한족·태국인 등 아시아계,
+        하와이 원주민·태평양 섬 주민)에서는 시작 전 HLA-B*58:01 선별을 고려한다.
+      sources:
+        - {id: OPENFDA-ALLOPURINOL, locator: "2.1–2.3, 2.6 Table 1; 5 Warnings (Hypersensitivity, HLA-B*58:01)"}
+    verification: primary
+    conflicts:
+      - "원문은 신부전 시 '크레아티닌에 따라 소량 시작'만 제시 — 현행 라벨은 eGFR별 시작 용량과 2–4주마다 50 mg 증량을 명시."
+      - "국내 허가사항의 HLA-B*58:01 관련 문구는 이번에 대조하지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-ALLOPURINOL-GOUT
+        ingredient: allopurinol
+        indication: 통풍(요산저하)
+        renal_param: eGFR
+        source_priority: [OPENFDA-ALLOPURINOL]
+        target: "혈청 요산 ≤6 mg/dL"
+        bands:
+          - {range: {min: 60.001}, start: "100 mg 1일 1회", titration: "매주 100 mg", max_daily_mg: 800}
+          - {range: {min: 30.001, max: 60}, start: "50 mg 1일 1회", titration: "2–4주마다 50 mg/일", alert: caution}
+          - {range: {min: 15.001, max: 30}, start: "50 mg 격일", titration: "2–4주마다 50 mg/일", alert: caution}
+          - {range: {min: 5, max: 15}, start: "50 mg 주 2회", titration: "2–4주마다 50 mg/일", alert: caution}
+          - {range: {max: 4.999}, start: "50 mg 주 1회", titration: "2–4주마다 50 mg/일", alert: high}
+        pretreatment: [Uric_acid, CBC, Chemistry_panel, LFT, Renal_function]
+        rules:
+          - {when: {finding: hla_b5801_positive}, action: "이득이 명백히 크지 않으면 사용 비권장", alert: high}
+          - {when: {finding: skin_rash_on_allopurinol}, action: "영구 중단", alert: high}
+      - kind: workup
+        trigger: {all: [{event: allopurinol_initiation_planned}, {finding: high_prevalence_hla_b5801_population}]}
+        tests:
+          - {lab: HLA_B5801, reason: "알로퓨리놀 과민증후군 위험(한국인 등 고빈도 집단 — 선별 고려)"}
+
+  - id: 395-C04
+    topic: 요산저하치료 — 페북소스타트
+    type: dose
+    original:
+      text: "(원문 해당 범위에 페북소스타트 언급 없음)"
+      location: {file: by_chapter/395장.md, line: 50}
+    status: 보완
+    current:
+      text: >
+        페북소스타트(미국 허가): 심혈관질환이 있는 통풍 환자에서 알로퓨리놀보다 심혈관 사망률이 높았다는 박스 경고가 있다. 최대 용량까지 올린 알로퓨리놀에 반응이 부족하거나,
+        알로퓨리놀을 견디지 못하거나, 알로퓨리놀이 적절하지 않은 환자에게만 쓴다. 40 mg 1일 1회로 시작해 2주 후 혈청 요산 <6 mg/dL에 도달하지 못하면 80 mg 1일 1회.
+        중증 신기능 저하는 40 mg 1일 1회로 제한한다. 시작 시 발작 예방을 권장한다.
+      sources:
+        - {id: OPENFDA-FEBUXOSTAT, locator: "Boxed Warning; 2.1–2.4"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-FEBUXOSTAT
+        ingredient: febuxostat
+        indication: 통풍(요산저하)
+        source_priority: [OPENFDA-FEBUXOSTAT]
+        standard_dose: "40 mg 1일 1회, 2주 후 요산 ≥6 mg/dL이면 80 mg"
+        rules:
+          - {when: {finding: severe_renal_impairment}, action: "최대 40 mg 1일 1회", alert: caution}
+          - {when: {finding: established_cvd}, action: "박스 경고 — 심혈관 사망 증가, 알로퓨리놀 실패·불내·부적합 시에만", alert: high}
+      - kind: treatment
+        condition: {kcd: [M10]}
+        recommendations:
+          - when: {all: [{med: febuxostat}, {not: {finding: allopurinol_failed_or_intolerant_or_inappropriate}}]}
+            recommend: {action: review, detail: "페북소스타트는 알로퓨리놀 실패·불내·부적합 환자에게만(박스 경고)"}
+            alert_level: high
+
+  - id: 395-C05
+    topic: 요산저하치료 시작 시 발작 예방
+    type: dose
+    original:
+      text: "콜히친 0.6 mg 1일 1–2회를 요산저하제와 함께, 6개월간 발병이 없고 요산이 정상이 될 때까지. 결절이 있으면 지속."
+      location: {file: by_chapter/395장.md, line: 52}
+    status: 유지
+    current:
+      text: >
+        요산저하치료(페글로티카제, 페북소스타트, 알로퓨리놀) 시작 후 조직의 요산 침착이 동원되며 발작이 늘 수 있어, 시작 시 콜히친 예방을 권장한다.
+        예방 용량은 16세 초과 0.6 mg 1일 1–2회, 최대 1.2 mg/일이며 요산저하치료 첫 6개월 이상 도움이 될 수 있다.
+        신기능 경도·중등도는 조정 불필요(감시), 중증은 0.3 mg/일로 시작해 면밀히 감시하며 증량, 투석은 0.3 mg 주 2회로 시작한다.
+      sources:
+        - {id: OPENFDA-COLCHICINE, locator: "2.1 Prophylaxis of Gout Flares; 2.4 Renal Impairment"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-COLCHICINE-GOUT-PROPHYLAXIS
+        ingredient: colchicine
+        indication: 요산저하치료 중 발작 예방
+        renal_param: CrCl
+        source_priority: [OPENFDA-COLCHICINE]
+        standard_dose: "0.6 mg 1일 1–2회(최대 1.2 mg/일), 요산저하치료 첫 6개월 이상"
+        rules:
+          - {when: {var: CrCl, op: ">=", value: 30}, action: "조정 불필요, 감시"}
+          - {when: {all: [{var: CrCl, op: "<", value: 30}, {not: {event: dialysis}}]}, action: "0.3 mg/일 시작, 면밀히 감시하며 증량", alert: caution}
+          - {when: {event: dialysis}, action: "0.3 mg 주 2회 시작", alert: high}
+
+  - id: 395-C06
+    topic: 통풍 진단 검사
+    type: workup
+    original:
+      text: >
+        관절액 편광현미경에서 강한 음성 복굴절의 바늘 모양 요산 결정. 급성 발병 시 혈청 요산은 정상·저하일 수 있어 진단적 한계. 24시간 요 요산 >800 mg은 과잉생산.
+        초음파 이중 윤곽 징후, 이중에너지 CT.
+      location: {file: by_chapter/395장.md, line: 32}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 출처 미확보(ACR/EULAR 분류 기준은 C등급). 진단 절차는 원문 대조용으로만 유지."

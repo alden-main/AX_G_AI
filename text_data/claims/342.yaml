@@ -1,0 +1,142 @@
+# 342장 콩팥돌증 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: AUA·EAU 요로결석 지침 비교 종설(J Clin Med 2024, CC BY), openFDA(CC0) 탐스로신.
+# AUA·EAU 지침 원문은 C·B등급이라 직접 인용하지 않는다.
+
+chapter: "342"
+title: 콩팥돌증
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 342-C01
+    topic: 급성 신산통 영상·검사
+    type: workup
+    original:
+      text: "최적의 진단방법은 비조영증강 나선식 CT. 혈청 화학검사는 대개 정상, 백혈구 상승 가능, 요 침전물에 적혈구·백혈구·결정. 혈뇨가 없다고 돌을 배제할 수 없음."
+      location: {file: by_chapter/342장.md, line: 126}
+    status: 유지
+    current:
+      text: >
+        증상이 있으면 비조영 CT가 선택 검사다(돌 밀도·크기·부피·피부 거리 평가, 초음파·정맥요로조영보다 정확). 무증상이면 EAU는 초음파를 첫 검사로 권한다. CT를 할 예정이면 KUB 단순촬영은 필요 없다.
+        중재가 예정되면 혈청 크레아티닌, 요산, 이온화 칼슘, 나트륨, 칼륨, 혈구, CRP, 응고 검사를 하고, 모든 중재 전 소변 배양과 현미경 검사를 한다.
+        임신부는 초음파 → MRI → 마지막으로 CT 순서, 소아는 초음파를 1차로 한다(ALARA).
+      sources:
+        - {id: PAPER-KIDNEY-STONE-GUIDELINES-2024, locator: "2.2 Investigations; 5.1 Paediatric; 5.2 Pregnancy"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: suspected_renal_colic}
+        tests:
+          - {exam: CT_abdomen_noncontrast, reason: "증상성 요로결석 선택 검사(임신부·소아는 초음파 먼저)"}
+          - {lab: Urinalysis, reason: "혈뇨·백혈구·결정"}
+          - {lab: SCr, reason: "신기능"}
+          - {lab: CBC, reason: "감염"}
+          - {lab: CRP, reason: "감염"}
+          - {lab: Urine_culture, when: "중재 전 또는 발열", reason: "감염된 폐쇄"}
+
+  - id: 342-C02
+    topic: 신산통 진통·감염된 폐쇄·약물 배출 요법
+    type: treatment
+    original:
+      text: "(원문 해당 범위에 급성기 진통·배출 요법 서술 제한적)"
+      location: {file: by_chapter/342장.md, line: 84}
+    status: 보완
+    current:
+      text: >
+        신산통은 금기를 배제한 뒤 파라세타몰과 NSAID를 1차로 쓴다(아편유사제보다 통증 조절이 낫고 재발 통증을 줄임). 진통에도 통증이 지속되면 신장 감압과 내시경 결석 제거를 한다.
+        감염된 폐쇄(패혈증)는 경피 신루설치나 요관 스텐트로 응급 감압하고(둘 사이 우열 없음) 패혈증이 해결될 때까지 확정 치료를 미룬다. 항생제를 늦추지 않으며 감압 때 소변 검체를 얻는다.
+        합병증 없는 원위 요관결석은 알파차단제로 배출 요법을 한다(AUA 10 mm 이하, EAU 5 mm 초과에서 고려). AUA는 4–6주 시도 후 실패하면 확정 치료를 계획한다. 탐스로신의 미국 허가 적응증은 양성 전립선비대증이며 결석 배출은 허가 외다.
+        요관결석의 능동 치료는 위치·크기(10 mm 기준)에 따라 체외충격파쇄석술 또는 요관경, 20 mm 초과 신장결석은 경피 신절석술이 1차다.
+      sources:
+        - {id: PAPER-KIDNEY-STONE-GUIDELINES-2024, locator: "3.1 Medical Treatment; 4.1 Renal Colic; 4.2 Obstruction, Sepsis, Anuria; 4.3; 4.4"}
+        - {id: OPENFDA-TAMSULOSIN, locator: "1; 2"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N20, N23]}
+        recommendations:
+          - when: {all: [{finding: renal_colic}, {not: {finding: nsaid_contraindication}}]}
+            recommend: {first_choice: [nsaid, paracetamol], detail: "아편유사제보다 우선"}
+          - when: {all: [{any: [{dx: N20.1}, {finding: ureteral_stone}]}, {finding: fever}, {finding: hydronephrosis}]}
+            recommend: {action: urgent_decompression, detail: "감염된 폐쇄 — 신루 또는 스텐트, 항생제 즉시"}
+            alert_level: high
+          - when: {all: [{finding: distal_ureteral_stone}, {var: stone_size_mm, op: "<=", value: 10}, {not: {finding: infected_obstruction}}]}
+            recommend: {ingredient: tamsulosin, purpose: "배출 요법(허가 외)", duration: "4–6주"}
+      - kind: referral
+        to: 비뇨의학과
+        criteria:
+          - {all: [{finding: ureteral_stone}, {finding: infected_obstruction}]}
+          - {all: [{finding: renal_colic}, {finding: refractory_pain}]}
+          - {var: stone_size_mm, op: ">", value: 10}
+        purpose: ["감압", "능동 결석 제거"]
+
+  - id: 342-C03
+    topic: 재발 예방 평가와 수분 섭취
+    type: workup
+    original:
+      text: "처음 돌을 경험한 환자 절반 이상이 재발. 혈청 전해질·칼슘·요산·크레아티닌, 24시간 소변 검사. 24시간 소변량은 하루 2 L 이상."
+      location: {file: by_chapter/342장.md, line: 130}
+    status: 개정
+    current:
+      text: >
+        새로 진단된 모든 환자는 병력·영양·약물력, 소변 검사(딥스틱·현미경), 혈액 검사(부갑상선기능항진증 의심 시 PTH 포함)로 초기 선별을 한다. 처음 생긴 돌은 가능하면 X선 회절이나 적외선 분광법으로 성분 분석하고, 재발하거나 약물 치료 중 재발하면 다시 분석한다.
+        고위험군은 24시간 소변 1–2회(AUA는 2회 선호)로 대사 평가를 하며 pH, 양, 칼슘, 요산, 나트륨, 시트르산, 옥살산, 칼륨, 크레아티닌을 본다.
+        모든 돌에서 수분을 충분히 섭취해 24시간 소변량을 2.5 L 이상으로 유지한다.
+      sources:
+        - {id: PAPER-KIDNEY-STONE-GUIDELINES-2024, locator: "5.5 Recurrence Prevention and Metabolic Evaluation"}
+    verification: primary
+    conflicts:
+      - "목표 소변량: 원문 2 L 이상 vs EAU·AUA 2.5 L 초과."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {any: [{dx: N20}, {event: stone_passed}]}
+        tests:
+          - {lab: Stone_analysis, reason: "첫 돌·재발 시"}
+          - {lab: Urinalysis, reason: "초기 선별"}
+          - {lab: Calcium, reason: "부갑상선기능항진증 선별"}
+          - {lab: Uric_acid, reason: "요산돌"}
+          - {lab: Urine_24h_stone_panel, when: "고위험·재발", reason: "pH·양·칼슘·요산·나트륨·시트르산·옥살산·칼륨·크레아티닌"}
+
+  - id: 342-C04
+    topic: 돌 유형별 약물 예방
+    type: treatment
+    original:
+      text: "옥살산칼슘돌: 칼슘 제한하지 않고 나트륨·동물성 단백 제한, 티아지드, 시트르산칼륨. 요산돌: 소변 pH 6~7을 목표로 시트르산칼륨(선호)·중탄산염."
+      location: {file: by_chapter/342장.md, line: 134}
+    status: 유지
+    current:
+      text: >
+        24시간 소변에 이상이 없는 재발성 칼슘돌은 시트르산칼륨 그리고/또는 티아지드로 치료한다(AUA). 고칼슘뇨에는 티아지드, 나트륨 제한(약 2,300 mg/일), 식이 칼슘 1,000–1,200 mg/일(칼슘 제한하지 않음)을 권한다.
+        저시트르산뇨에는 시트르산칼륨, 비유제품 동물성 단백질 제한을 권한다. 고요산뇨 칼슘돌에는 알로푸리놀을 쓴다.
+        요산돌은 시트르산칼륨으로 소변 pH를 올리며 지속적 알칼리화로 기존 돌을 녹일 수 있다. 요산돌에 알로푸리놀을 1차로 쓰지 않는다(AUA)는 권고와 소변 요산이 높으면 쓰라(EAU)는 권고가 다르다.
+      sources:
+        - {id: PAPER-KIDNEY-STONE-GUIDELINES-2024, locator: "5.6 Calcium Oxalate Stones (Table 3); 5.7 Uric Acid Stones (Table 4)"}
+    verification: primary
+    conflicts:
+      - "요산돌 알로푸리놀: AUA 1차 비권장 vs EAU 고요산뇨 시 강하게 권장."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N20]}
+        recommendations:
+          - when: {all: [{finding: recurrent_calcium_stone}, {finding: normal_24h_urine}]}
+            recommend: {options: [potassium_citrate, thiazide]}
+          - when: {finding: uric_acid_stone}
+            recommend: {ingredient: potassium_citrate, purpose: "소변 알칼리화(용해 가능)"}
+          - when: {all: [{finding: calcium_stone}, {finding: dietary_calcium_restriction}]}
+            recommend: {action: avoid, detail: "식이 칼슘 1,000–1,200 mg/일 유지, 나트륨 제한"}
+
+  - id: 342-C05
+    topic: 시스틴돌·스트루바이트돌
+    type: treatment
+    original:
+      text: "시스틴돌: 수분 섭취, 소변 알칼리화, 틸오프로닌. 스트루바이트돌: 완전 제거와 감염 치료."
+      location: {file: by_chapter/342장.md, line: 164}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "종설 5.8·5.10 절을 이번에 세부 대조하지 않음."

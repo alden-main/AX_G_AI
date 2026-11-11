@@ -1,0 +1,194 @@
+# 361장 독성 및 약물유발간염 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: LiverTox(NIDDK, copyright free — 출처 표시 요청), openFDA(CC0)
+
+chapter: "361"
+title: 독성 및 약물유발간염
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 361-C01
+    topic: 약물유발 간손상 유형(R 비)
+    type: diagnosis
+    original:
+      text: "표 361-1: 간세포성, 담즙정체성, 혼합형 등 손상 양상에 따라 분류."
+      location: {file: by_chapter/361장.md, line: 42}
+    status: 유지
+    current:
+      text: >
+        R 비 = (ALT/정상 상한) ÷ (ALP/정상 상한). R ≥5는 간세포성, R ≤2는 담즙정체성, 2–5는 혼합형으로 정의하지만 항상 정확하지는 않다.
+        간세포성 예: 이소니아지드, 녹차 추출물, 니트로푸란토인, 메틸도파. 담즙정체성 예: 아목시실린/클라불란산, 시프로플록사신, 설폰요소제.
+        혼합형 예: 설폰아마이드, 페니토인, 에날라프릴. 혼합형은 약물유발 간손상에서 가장 특징적이며 다른 급성 간질환에서는 드물다.
+      sources:
+        - {id: LIVERTOX, locator: "ClinicalCourse.nxml — Pattern of injury"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: formula
+        name: R ratio (DILI pattern)
+        output: {var: DILI_R_ratio}
+        expression: "(ALT / ALT_ULN) / (ALP / ALP_ULN)"
+        implement_in: src/ax_g_ai/services/clinical_calculations.py
+      - kind: lab_threshold
+        lab: DILI_R_ratio
+        unit: ratio
+        context: 약물유발 간손상 양상
+        bands:
+          - {label: 담즙정체성, max: 2.0}
+          - {label: 혼합형, min: 2.0001, max: 4.9999}
+          - {label: 간세포성, min: 5.0}
+
+  - id: 361-C02
+    topic: 인과성 판단 요소와 잠복기
+    type: diagnosis
+    original:
+      text: "약물유발 간손상은 노출 시기, 손상 양상, 다른 원인 배제로 판단. 이상반응 첫 징후에 의심 약물 중단."
+      location: {file: by_chapter/361장.md, line: 72}
+    status: 유지
+    current:
+      text: >
+        약물유발 간손상 가능성은 6가지로 판단한다: 약 시작 후 발병까지 기간(잠복기), 중단 후 회복 기간, 손상 양상·임상형, 다른 원인 배제,
+        해당 약이 알려진 간손상 원인인지(가능도), 재노출 반응. 잠복기는 대개 시작 후 5일–3개월이며, 과민반응(특히 재노출 시 설폰아마이드·마크로라이드)은 24–72시간으로 짧을 수 있다.
+        흔한 간질환 원인을 먼저 배제해야 약물을 원인으로 본다.
+      sources:
+        - {id: LIVERTOX, locator: "ClinicalCourse.nxml — Diagnosis, Time to Onset"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{finding: liver_enzyme_elevation}, {event: new_drug_within_3mo}]}
+        tests:
+          - {review: drug_start_dates, reason: "잠복기(대개 5일–3개월) 확인"}
+          - {lab: ALT, reason: R 비 계산}
+          - {lab: ALP, reason: R 비 계산}
+          - {lab: Bilirubin_total, reason: 중증도 평가}
+          - {lab: INR, reason: 중증도 평가}
+        notes: ["다른 간질환 원인 배제 필요(바이러스 간염, 담도 폐쇄 등)"]
+
+  - id: 361-C03
+    topic: 약물유발 간손상 중증도(DILIN)
+    type: threshold
+    original:
+      text: "황달을 동반한 간세포 손상(Hy's Law 사례)은 심한 간독성의 예측인자."
+      location: {file: by_chapter/361장.md, line: 60}
+    status: 유지
+    current:
+      text: >
+        DILIN 5단계: 1+ 경증 — 아미노전이효소/ALP 상승, 총빌리루빈 <2.5 mg/dL, INR <1.5. 2+ 중등도 — 빌리루빈 ≥2.5 또는 INR ≥1.5.
+        3+ 중등도–중증 — 빌리루빈 ≥2.5와 입원(또는 입원 연장). 4+ 중증 — 빌리루빈 ≥2.5와 3개월 넘는 황달·증상, 간 비대상(INR ≥1.5, 복수, 뇌병증), 또는 관련 장기부전 중 하나.
+        5+ 사망 또는 간이식. 급성 간염형 약물유발 간손상은 급성 간부전으로 가기 쉽고 사망률이 최소 10%다(Hy's Law).
+      sources:
+        - {id: LIVERTOX, locator: "Severity.nxml; Phenotypes_acutehepa.nxml"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: diagnosis
+        condition: {name: 약물유발 간손상 중증도, kcd: [K71]}
+        severity:
+          - {label: "1+ 경증", when: {all: [{var: Bilirubin_total, op: "<", value: 2.5}, {var: INR, op: "<", value: 1.5}]}}
+          - {label: "2+ 이상(중등도 이상)", when: {any: [{var: Bilirubin_total, op: ">=", value: 2.5}, {var: INR, op: ">=", value: 1.5}]}}
+          - {label: "4+ 중증 의심", when: {all: [{var: Bilirubin_total, op: ">=", value: 2.5}, {any: [{var: INR, op: ">=", value: 1.5}, {finding: ascites}, {finding: encephalopathy}]}]}}
+
+  - id: 361-C04
+    topic: 아세트아미노펜 간독성
+    type: diagnosis
+    original:
+      text: >
+        서양에서 급성 간부전의 가장 흔한 원인. 복용 4시간 후 농도 >300 μg/mL면 심한 손상, <150 μg/mL면 손상 드묾. 4–12시간 구역·구토, 24–48시간 후 간손상 명확, 3–5일 최고조.
+        알코올·약물·기아는 위험 증가.
+      location: {file: by_chapter/361장.md, line: 82}
+    status: 유지
+    current:
+      text: >
+        간독성은 대개 7.5 g 초과(보통 15 g 초과)의 단회 과량 복용 후 생기며, 24–72시간에 ALT·AST가 크게(흔히 2,000 U/L 초과) 오르고 48–96시간에 황달·혼돈·간부전이 나타난다.
+        의도적 과량은 대개 1회 10 g 이상이고, 비의도적 과량은 영양불량·알코올 중독·만성 간질환·동반 질환에서 3–5일에 걸친 더 적은 양으로도 생긴다(마약성 복합제와 흔히 연관).
+        하루 4 g 지속 복용에서도 일부(최고치가 3배 초과하는 경우 39%)에서 3–7일 후 일시적·무증상 아미노전이효소 상승이 생긴다.
+        Rumack-Matthew 노모그램으로 위험을 판단하며, 만성·비의도적 과량에서는 정확도가 떨어진다.
+      sources:
+        - {id: LIVERTOX, locator: "Acetaminophen.nxml — Hepatotoxicity, Outcome and Management"}
+    verification: primary
+    note: "원문의 4시간 농도 기준(300·150 μg/mL)은 노모그램 수치로, 이번에 A등급 원문 그림을 대조하지 않아 말뭉치에서 제외."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: suspected_acetaminophen_overdose}
+        tests:
+          - {lab: Acetaminophen_level, timing: "복용 후 최소 4시간", reason: "노모그램 위험 판단"}
+          - {lab: AST, reason: 간손상}
+          - {lab: ALT, reason: 간손상}
+          - {lab: Bilirubin_total, reason: 간손상}
+          - {lab: INR, reason: 간기능}
+          - {lab: SCr, reason: 신기능}
+          - {lab: BUN, reason: 신기능}
+          - {lab: Glucose, reason: 대사}
+          - {lab: Electrolytes, reason: 수액·전해질}
+
+  - id: 361-C05
+    topic: 아세트아미노펜 과량 — N-아세틸시스테인 치료
+    type: dose
+    original:
+      text: >
+        N-acetylcysteine 경구 또는 정맥 — '140 mg/kg 부하용량을 한 시간 동안, 이어서 70 mg/kg을 4시간마다 15–20회'(원문 표기, 원문도 재확인 필요로 표시).
+        간독성 가능성이 있으면 지역 중독센터에 연락.
+      location: {file: by_chapter/361장.md, line: 158}
+    status: 개정
+    current:
+      text: >
+        정맥 아세틸시스테인(미국 허가) 3단계, 총 21시간: 1단계 150 mg/kg를 1시간, 2단계 50 mg/kg를 4시간, 3단계 100 mg/kg를 16시간에 걸쳐 주입한다.
+        41 kg 이상은 각각 200 mL, 500 mL, 1,000 mL 희석액(멸균수·0.45% 식염수·5% 포도당, 0.45% 식염수 선호), 100 kg 이상은 100 kg 기준 용량(15,000/5,000/10,000 mg)으로 상한.
+        21–40 kg, 5–20 kg은 체중별 희석량이 다르다. 시작 전 AST, ALT, 빌리루빈, INR, 크레아티닌, BUN, 혈당, 전해질을 확인한다.
+        아세트아미노펜 농도는 복용 후 최소 4시간에 측정한다(더 이르면 최고치를 반영하지 못함). 복용 시각을 모르거나, 8시간 안에 농도를 얻을 수 없거나, 독성 소견이 있거나,
+        복용 8시간 넘어 왔으면 즉시 부하 용량을 투여한다. 8시간 안에 왔고 시각·농도를 알면 개정 Rumack-Matthew 노모그램으로 치료 여부를 정한다.
+        반복 과다복용에는 노모그램을 적용하지 않는다. 원문의 140/70 mg/kg 반복은 정맥이 아니라 경구 요법의 용량이다.
+      sources:
+        - {id: OPENFDA-ACETYLCYSTEINE-IV, locator: "2.1–2.6 Dosage and Administration; Tables 2–4"}
+        - {id: LIVERTOX, locator: "Acetaminophen.nxml — Outcome and Management (NAC 즉시 투여)"}
+    verification: primary
+    conflicts:
+      - "원문은 정맥 투여를 '140 mg/kg 후 70 mg/kg 4시간마다'로 적었으나 이는 경구 요법 용량 — 정맥은 150/50/100 mg/kg 3단계(21시간). 경구 아세틸시스테인 허가사항은 이번에 A등급으로 대조하지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-ACETYLCYSTEINE-IV-APAP
+        ingredient: acetylcysteine
+        route: IV
+        indication: 아세트아미노펜 과량
+        source_priority: [OPENFDA-ACETYLCYSTEINE-IV]
+        calculation:
+          bag1_mg: {formula: "min(weight_kg, 100) × 150", infuse_h: 1}
+          bag2_mg: {formula: "min(weight_kg, 100) × 50", infuse_h: 4}
+          bag3_mg: {formula: "min(weight_kg, 100) × 100", infuse_h: 16}
+        diluent_volume_ml_ge41kg: {bag1: 200, bag2: 500, bag3: 1000}
+        rules:
+          - {when: {any: [{finding: ingestion_time_unknown}, {var: hours_since_ingestion, op: ">", value: 8}, {finding: clinical_apap_toxicity}]}, action: "즉시 부하 용량 투여", alert: high}
+          - {when: {var: hours_since_ingestion, op: "<", value: 4}, action: "농도 측정은 4시간 이후(이전 값은 최고치 미반영)"}
+          - {when: {finding: repeated_supratherapeutic_ingestion}, action: "노모그램 적용 불가 — 농도·검사로 판단"}
+        alert_note: "응급 치료 참고값 — 중독센터·병원 프로토콜이 우선"
+
+  - id: 361-C06
+    topic: 주요 간독성 약물
+    type: workup
+    original:
+      text: >
+        이소니아지드, 발프로에이트, 니트로푸란토인, 아목시실린-클라불란산, 페니토인, 아미오다론, 에리스로마이신, 경구피임약, 단백동화스테로이드,
+        트리메토프림-설파메톡사졸, 스타틴, 총정맥영양, 보완대체약물, HAART 등.
+      location: {file: by_chapter/361장.md, line: 164}
+    status: 유지
+    current:
+      text: >
+        LiverTox 가능도 A등급(임상적으로 뚜렷한 간손상의 잘 확립된 원인): 이소니아지드, 발프로에이트, 아목시실린/클라불란산, 니트로푸란토인, 페니토인, 아미오다론,
+        아토르바스타틴, 에리스로마이신, 메토트렉세이트(만성 간손상·문맥고혈압·간경변). 이 약을 쓰는 환자에서 간효소 상승·황달이 생기면 약물유발 간손상을 우선 감별한다.
+      sources:
+        - {id: LIVERTOX, locator: "Isoniazid, Valproate, AmoxicillinClavulana, Nitrofurantoin, Phenytoin, Amiodarone, Atorvastatin, Erythromycin, Methotrexate .nxml — Likelihood score"}
+    verification: primary
+    note: "트리메토프림-설파메톡사졸·단백동화스테로이드는 LiverTox 파일명이 달라 이번에 대조하지 못함."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {finding: liver_enzyme_elevation}
+            - {any: [{med: isoniazid}, {med: valproate}, {med: amoxicillin_clavulanate}, {med: nitrofurantoin}, {med: phenytoin}, {med: amiodarone}, {med: atorvastatin}, {med: erythromycin}, {med: methotrexate}]}
+        tests:
+          - {review: dili_causality, reason: "LiverTox 가능도 A 약물 — 약물유발 간손상 우선 감별"}

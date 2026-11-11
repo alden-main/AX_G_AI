@@ -1,0 +1,17 @@
+{
+  "site": "example",
+  "version": "2026-11-10",
+  "status": "template",
+  "note": "형식 예시. 실제 병원 검사·약품 마스터로 만든 뒤 의료진·검사실 검수를 거쳐 사용한다. labs.unit 은 그 병원 검사실의 보고 단위다.",
+  "labs": [
+    {"code": "HbA1c", "concept": "HbA1c", "unit": "%"},
+    {"code": "LAB-0002", "concept": "SCr", "unit": "mg/dL"},
+    {"code": "LAB-0003", "concept": "eGFR", "unit": "mL/min/1.73m2"},
+    {"code": "LAB-0004", "concept": "CRP", "unit": "mg/dL"}
+  ],
+  "meds": [
+    {"code": "med-011", "ingredients": ["metformin"], "route": "oral"},
+    {"code": "med-022", "ingredients": ["amlodipine"], "route": "oral"},
+    {"code": "MED-0003", "product": "buprenorphine_naloxone", "route": "oral", "classes": ["long_term_opioid"]}
+  ]
+}

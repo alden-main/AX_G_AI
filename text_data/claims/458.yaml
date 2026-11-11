@@ -1,0 +1,103 @@
+# 458장 다발성경화증 및 기타 탈수초 질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 다발성경화증 재발 진단·치료 권고(J Pers Med 2021, CC BY — 스페인 전문가 합의), 독일신경과학회(DGN) MS 지침 쟁점 입장문(Neurol Res Pract 2021, CC BY).
+
+chapter: "458"
+title: 다발성경화증 및 기타 탈수초 질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 458-C01
+    topic: 재발과 가성 재발 구분
+    type: diagnosis
+    original:
+      text: "급성 악화가 재발인지 기온상승·발열·감염에 의한 가성악화인지 감별, 후자는 스테로이드 불필요."
+      location: {file: by_chapter/458장.md, line: 245}
+    status: 유지
+    current:
+      text: >
+        재발은 발열·감염·급성 상태 없이 24시간 이상 지속되는 전형적 중추신경 염증성 탈수초 사건이다. 첫 발생 후 30일 안의 새 증상은 새 재발이 아니라 같은 삽화의 악화로 본다.
+        가성 재발은 새 염증 활동 없이 감염(주로 요로·상기도), 스트레스, 체온 상승(뜨거운 샤워·더위·발열·운동, Uhthoff 현상)으로 기존 증상이 악화되는 것으로, 오진하면 불필요한 스테로이드·치료 변경 위험이 있다.
+        명확한 재발에는 뇌·척수 MRI가 필요 없으나, 불명확하거나 객관적으로 관찰되지 않은 경우에는 권한다.
+      sources:
+        - {id: PAPER-MS-RELAPSE-2021, locator: "2.1 Relapse definition; 2.2 Pseudo-relapses; MRI (Table 2)"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{dx: G35}, {finding: acute_neurologic_worsening}]}
+        tests:
+          - {lab: Urinalysis, reason: "가성 재발(요로감염) 배제"}
+          - {lab: CRP, reason: "감염 배제"}
+          - {review: body_temperature, reason: "발열·Uhthoff 현상"}
+          - {exam: MRI_brain_spine, when: "재발 불명확", reason: "확인"}
+
+  - id: 458-C02
+    topic: 재발 치료(고용량 메틸프레드니솔론·혈장교환)
+    type: dose
+    original:
+      text: "메틸프레드니솔론 500~1,000 mg 3~5일 정주 후 바로 끊거나 경구 프레드니손 60~80 mg 2주 감량. 같은 용량 경구 가능. 불응 시 혈장교환(2주 동안 격일 7회)."
+      location: {file: by_chapter/458장.md, line: 247}
+    status: 유지
+    current:
+      text: >
+        스테로이드는 재발 증상을 줄이고 기간을 단축하지만 후유증이나 장기 경과는 바꾸지 않으므로, 경미한 재발(EDSS 1점 미만 증가, 특히 감각 재발)은 삶의 질에 큰 영향이 없으면 치료하지 않는다.
+        표준 1차는 고용량 메틸프레드니솔론: 경구 1 g 3–5일(또는 NICE 경구 500 mg 이상 5일), 선호·경구 실패·중증 입원 시 정주 1 g 3–5일. 2주 안에 EDSS가 악화되면 반응 부족으로 보고, 1–2.5점 증가면 2차 스테로이드, 3점 이상 증가면 혈장교환(격일 총 5회)을 고려한다.
+        소아는 정주 메틸프레드니솔론 30 mg/kg/일(최대 1,000 mg) 3–5일. 흔한 부작용은 불면, 기분 변화, 위장 장애, 두근거림이며, 드물게 정신병·우울·조증이 있다.
+      sources:
+        - {id: PAPER-MS-RELAPSE-2021, locator: "4. Treatment — corticosteroids; inadequate response; plasmapheresis; adverse effects; pediatrics"}
+    verification: primary
+    conflicts:
+      - "혈장교환 횟수: 원문 2주 동안 격일 7회 vs 권고 격일 총 5회."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-MP-MS-RELAPSE
+        ingredient: methylprednisolone
+        indication: 다발성경화증 재발
+        source_priority: [PAPER-MS-RELAPSE-2021]
+        standard_dose: "경구 또는 정주 1 g/일 3–5일(경구 500 mg 이상 5일 대안)"
+        pediatric: "정주 30 mg/kg/일(최대 1,000 mg) 3–5일"
+        rules:
+          - {when: {var: EDSS_increase_after_2wk, op: ">=", value: 3}, action: "스테로이드 반응 부족 — 혈장교환(격일 5회) 고려", alert: high}
+          - {when: {finding: pseudo_relapse}, action: "가성 재발 — 스테로이드 불필요, 유발 요인 치료", alert: medium}
+
+  - id: 458-C03
+    topic: 질병조절치료 시작과 효능 범주
+    type: treatment
+    original:
+      text: "FDA 허가 약제: 인터페론 베타, 글라티라머, 나탈리주맙, 핑골리모드, 디메틸푸마레이트, 테리플루노마이드, 미톡산트론, 알렘투주맙."
+      location: {file: by_chapter/458장.md, line: 253}
+    status: 개정
+    current:
+      text: >
+        DGN 지침: CIS나 재발완화형 MS로 진단되면 조기 치료의 장기 이득 때문에 면역치료를 시작한다(강한 권고). 처음부터 경과가 경미할 것으로 보이면 면밀한 감시와 상의 후 지연을 고려할 수 있다(예외). DIS·DIT 기준을 충족하지 못한 첫 사건(단독 시신경염·척수염)은 예외적으로만 치료한다.
+        미치료 RRMS는 지난 2년 안에 객관적 재발 1회 이상 또는 MRI 활동이 있으면 면역치료를 제안한다. 재발률 감소 기준 효능 범주: 1군(위약 대비 30–50%) 인터페론 베타·디메틸푸마레이트·글라티라머·테리플루노마이드, 2군(50–60%) 클라드리빈·핑골리모드·오자니모드, 3군(60% 초과) 알렘투주맙·항CD20(오크렐리주맙·리툭시맙)·나탈리주맙.
+        장기 안전성 때문에 고활성으로 보이지 않으면 1군으로 시작하고, 고활성이면 처음부터 2·3군을 쓸 수 있다(고정된 단계 사다리는 아님). 나탈리주맙·S1P 조절제(·항CD20)는 중단 후 반동 위험으로 대체 없이 완전 중단하지 않는다.
+      sources:
+        - {id: PAPER-DGN-MS-POSITION-2021, locator: "Key questions 1–3; Recommendations A14–A28"}
+    verification: primary
+    note: "리툭시맙은 MS 허가 외. 오파투무맙·우블리툭시맙 등 2021 이후 약제는 미반영."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G35]}
+        recommendations:
+          - when: {all: [{dx: G35}, {finding: relapsing_ms}, {not: {med_class: ms_dmt}}]}
+            recommend: {action: start_dmt, detail: "CIS·RRMS 진단 시 면역치료 시작(DGN 강한 권고)"}
+            alert_level: medium
+          - when: {all: [{any: [{med: natalizumab}, {med: fingolimod}, {med: ozanimod}, {med: ocrelizumab}]}, {event: dmt_discontinuation_planned}, {not: {finding: replacement_dmt_planned}}]}
+            recommend: {action: alert, detail: "중단 후 반동 위험 — 대체 치료 없이 중단하지 않음"}
+            alert_level: high
+
+  - id: 458-C04
+    topic: 진행형 MS·시신경척수염 스펙트럼·임신
+    type: treatment
+    original:
+      text: "진행형 MS 치료, 시신경척수염, 급성 파종성 뇌척수염, 임신의 영향."
+      location: {file: by_chapter/458장.md, line: 233}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "이번 묶음에서 A등급 출처 미확보."

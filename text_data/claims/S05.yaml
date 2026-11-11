@@ -1,0 +1,576 @@
+# S05 국내 기준 — 국가암검진, 고혈압(대한고혈압학회), 국가건강검진 판정기준
+# 스키마: text_data/claims/README.md (보충 장: original 없음, status 보완만, A등급 current 필수)
+# preferred_over: 같은 주제의 국외 기준 주장(또는 corpus 항목)보다 이 국내 기준을 우선한다.
+#   런타임은 국외 항목을 권고로 쓰지 않고 '참고(국외 기준)'로만 보여준다. 출처 우선순위: 국내 > 미국 > 유럽 > 그 밖.
+
+chapter: "S05"
+title: 국내 기준 — 국가암검진·고혈압·국가건강검진 판정
+original_source: SUPPLEMENT
+updated_at: "2026-11-11"
+
+claims:
+  - id: S05-C01
+    topic: 국가 위암검진(국내 기준)
+    type: workup
+    status: 보완
+    current:
+      text: >
+        위암 검진은 40세 이상 남녀를 대상으로 2년마다 실시한다(암관리법 시행령 별표 1).
+        위내시경을 기본 검진 방법으로 하고, 위내시경을 하기 어려운 경우 위장조영검사를 선택적으로 시행한다. 위내시경 도중 의사가 필요하다고 판단하면 조직검사를 한다.
+        위장조영검사에서 위암이 의심되면 위내시경을 시행한다(암검진 실시기준 별표 1).
+      sources:
+        - {id: KR-CANCER-ACT-DECREE-ANNEX1, locator: "별표 1 위암"}
+        - {id: KR-CANCER-SCREENING-NOTICE-2026, locator: "별표 1 위암(위내시경·조직검사·위장조영검사)"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {var: age, op: ">=", value: 40}
+            - {not: {finding: gastric_screening_up_to_date}}
+        tests:
+          - {exam: Upper_endoscopy, reason: "국가 위암검진 기본 방법 — 2년마다"}
+          - {exam: Upper_GI_series, reason: "위내시경이 어려운 경우 선택"}
+
+  - id: S05-C02
+    topic: 국가 간암검진(국내 기준)
+    type: workup
+    status: 보완
+    current:
+      text: >
+        간암 검진은 40세 이상 남녀 중 간암 발생 고위험군을 대상으로 6개월마다 실시한다. 간암 발생 고위험군은 간경변증, B형 간염 항원 양성, C형 간염 항체 양성,
+        B형 또는 C형 간염 바이러스에 의한 만성 간질환 환자다(암관리법 시행령 별표 1).
+        간초음파 검사와 혈청 알파태아단백(AFP) 검사는 반드시 동시에 실시한다(암검진 실시기준 별표 1).
+      sources:
+        - {id: KR-CANCER-ACT-DECREE-ANNEX1, locator: "별표 1 간암 및 주 1)"}
+        - {id: KR-CANCER-SCREENING-NOTICE-2026, locator: "별표 1 간암(간초음파·혈청알파태아단백), 주5)"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {var: age, op: ">=", value: 40}
+            - any:
+                - {dx: K74}
+                - {dx: K70.3}
+                - {dx: B18.0}
+                - {dx: B18.1}
+                - {dx: B18.2}
+                - {finding: hbsag_positive}
+                - {finding: anti_hcv_positive}
+        tests:
+          - {exam: Liver_ultrasound, reason: "국가 간암검진 — 6개월마다, AFP와 동시"}
+          - {lab: AFP, reason: "국가 간암검진 — 6개월마다, 간초음파와 동시"}
+
+  - id: S05-C03
+    topic: 국가 대장암검진(국내 기준)
+    type: workup
+    status: 보완
+    preferred_over: [S04-C01]
+    current:
+      text: >
+        대장암 검진은 50세 이상 남녀를 대상으로 1년마다 분변잠혈검사로 실시한다(암관리법 시행령 별표 1).
+        분변잠혈검사는 정성법(분변잠혈반응검사) 또는 정량법(분변혈색정량법)으로 측정하며, 결과가 '잠혈반응 있음'이면 대장내시경을 시행한다(암검진 실시기준 별표 1).
+      sources:
+        - {id: KR-CANCER-ACT-DECREE-ANNEX1, locator: "별표 1 대장암"}
+        - {id: KR-CANCER-SCREENING-NOTICE-2026, locator: "별표 1 대장암(분변잠혈검사·대장내시경)"}
+    verification: primary
+    conflicts:
+      - "미국(CDC) 기준은 45–75세이며 대장내시경 10년마다 등 여러 검사를 선택 — 국내 국가검진(50세 이상, 분변잠혈 매년)을 우선하고 미국 기준은 참고로 표시."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {var: age, op: ">=", value: 50}
+            - {not: {finding: colorectal_screening_up_to_date}}
+        tests:
+          - {lab: FIT, reason: "국가 대장암검진 — 분변잠혈검사 1년마다"}
+      - kind: workup
+        trigger: {finding: fobt_positive}
+        tests:
+          - {exam: Colonoscopy, reason: "분변잠혈 '잠혈반응 있음' — 대장내시경"}
+
+  - id: S05-C04
+    topic: 국가 유방암검진(국내 기준)
+    type: workup
+    status: 보완
+    preferred_over: [S04-C03]
+    current:
+      text: >
+        유방암 검진은 40세 이상 여성을 대상으로 2년마다 실시한다(암관리법 시행령 별표 1). 유방촬영은 양측 각 2회(내외사위·상하위) 표준촬영법으로 하며 영상의학과 전문의가 판독한다(암검진 실시기준 별표 1).
+      sources:
+        - {id: KR-CANCER-ACT-DECREE-ANNEX1, locator: "별표 1 유방암"}
+        - {id: KR-CANCER-SCREENING-NOTICE-2026, locator: "별표 1 유방암(유방촬영)"}
+    verification: primary
+    conflicts:
+      - "미국(CDC) 기준은 40–74세 2년마다로 상한 연령이 있음 — 국내 국가검진(40세 이상 여성, 상한 없음)을 우선."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {not: {finding: male}}
+            - {var: age, op: ">=", value: 40}
+            - {not: {finding: breast_screening_up_to_date}}
+        tests:
+          - {exam: Mammography, reason: "국가 유방암검진 — 40세 이상 여성 2년마다"}
+
+  - id: S05-C05
+    topic: 국가 자궁경부암검진(국내 기준)
+    type: workup
+    status: 보완
+    preferred_over: [S04-C04]
+    current:
+      text: >
+        자궁경부암 검진은 20세 이상 여성을 대상으로 2년마다 실시한다(암관리법 시행령 별표 1). 자궁경부세포검사는 의사가 직접 진찰·검체 채취하고(브러쉬 사용) Papanicolaou 염색법으로 실시한다(암검진 실시기준 별표 1).
+      sources:
+        - {id: KR-CANCER-ACT-DECREE-ANNEX1, locator: "별표 1 자궁경부암"}
+        - {id: KR-CANCER-SCREENING-NOTICE-2026, locator: "별표 1 자궁경부암(자궁경부세포검사)"}
+    verification: primary
+    conflicts:
+      - "미국(CDC) 기준은 21세 시작, 30–65세 HPV 검사 선택 가능, 65세 넘으면 중단 가능 — 국내 국가검진(20세 이상 여성 2년마다 세포검사)을 우선."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {not: {finding: male}}
+            - {var: age, op: ">=", value: 20}
+            - {not: {finding: cervical_screening_up_to_date}}
+            - {not: {finding: total_hysterectomy_benign}}
+        tests:
+          - {lab: Cervical_cytology, reason: "국가 자궁경부암검진 — 20세 이상 여성 2년마다"}
+
+  - id: S05-C06
+    topic: 국가 폐암검진(국내 기준)
+    type: workup
+    status: 보완
+    preferred_over: [S04-C02]
+    current:
+      text: >
+        폐암 검진은 54세 이상 74세 이하 남녀 중 폐암 발생 고위험군을 대상으로 2년마다 저선량 흉부 CT로 실시한다(암관리법 시행령 별표 1).
+        폐암 발생 고위험군은 30갑년[하루 평균 담배 소비량(갑) × 흡연 기간(년)] 이상의 흡연력을 가진 현재 흡연자와 보건복지부장관이 고시하는 사람이다.
+        고위험군으로 국가폐암검진을 받았던 사람은 검진 후 금연해도 금연 15년 이내, 74세까지 대상자에 포함된다(암검진 실시기준 별표 1 주7).
+      sources:
+        - {id: KR-CANCER-ACT-DECREE-ANNEX1, locator: "별표 1 폐암 및 주 2)"}
+        - {id: KR-CANCER-SCREENING-NOTICE-2026, locator: "별표 1 폐암(저선량 흉부CT), 주7)"}
+    verification: primary
+    conflicts:
+      - "미국(CDC) 기준은 50–80세, 20갑년, 매년 — 국내 국가검진(54–74세, 30갑년 현재 흡연자, 2년마다)을 우선."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {var: age, op: ">=", value: 54}
+            - {var: age, op: "<=", value: 74}
+            - any:
+                - {all: [{var: pack_years, op: ">=", value: 30}, {finding: current_smoker}]}
+                - {finding: smoking_30_pack_years_current}
+                - {all: [{finding: prior_national_lung_screening}, {var: years_since_quit_smoking, op: "<=", value: 15}]}
+        tests:
+          - {exam: LDCT_chest, reason: "국가 폐암검진 — 2년마다"}
+        notes: ["흡연량·금연 연수는 의료진 입력 값 — 수치가 없으면 '30갑년 이상 현재 흡연' 소견으로 판정"]
+
+  - id: S05-C07
+    topic: 고혈압 진단 기준과 진료실 밖 혈압(대한고혈압학회)
+    type: diagnosis
+    status: 보완
+    preferred_over: [S01-C01]
+    current:
+      text: >
+        고혈압 진단은 표준 방법으로 반복 방문 시 반복 측정한 진료실 혈압으로 확인하고, 활동혈압(ABPM)이나 가정혈압(HBPM) 측정을 보완적으로 권고한다.
+        고혈압 기준: 진료실 혈압 ≥140/90 mmHg, 24시간 활동혈압 ≥130/80, 주간 ≥135/85, 야간 ≥120/70, 가정혈압 ≥135/85, 자동 진료실 혈압(AOBP) ≥135/85 mmHg.
+        가정혈압은 진단 시 1주 이상(주 5일 넘게 아침·저녁 1–3회) 측정해 첫날 값을 빼고 평균한다. 백의고혈압은 진료실 혈압만 높고 진료실 밖 혈압이 정상인 경우, 가면고혈압은 그 반대다.
+        고혈압 전단계(130–139/80–89 mmHg)에서는 가면고혈압을 배제하기 위해 활동혈압 또는 가정혈압 측정을 권고하며, 매년 혈압을 측정한다. 40세 넘거나 비만이거나 고혈압 가족력이 있는 성인은 매년 혈압을 잰다.
+      sources:
+        - {id: PAPER-KSH-HTN-2018-DX, locator: "Blood pressure measurement; Table 3 (Criteria for definition of hypertension with different methods); Prehypertension"}
+        - {id: PAPER-KSH-HTN-2022-UPDATE, locator: "Diagnosis — repeat OBP, ABPM/HBPM thresholds (Table 4), BP phenotypes"}
+    verification: primary
+    conflicts:
+      - "VA/DoD 2026은 추적 진료실 혈압 >130/>90 mmHg를 고혈압 진단 기준으로 씀 — 국내 기준(대한고혈압학회 ≥140/90)을 우선하고 미국 기준은 참고로 표시."
+    review: {status: draft}
+    corpus:
+      - kind: diagnosis
+        condition: {name: 고혈압, kcd: [I10]}
+        logic:
+          any:
+            - {var: SBP, op: ">=", value: 140}
+            - {var: DBP, op: ">=", value: 90}
+        notes:
+          - "반복 방문 시 반복 측정한 진료실 혈압으로 확인 — EMR 혈압은 가장 최근 1회 값"
+      - kind: workup
+        trigger:
+          all:
+            - {any: [{var: SBP, op: ">=", value: 140}, {var: DBP, op: ">=", value: 90}]}
+            - {not: {dx: I10}}
+        tests:
+          - {exam: HBPM, reason: "진단 확인(가정혈압 ≥135/85, 1주 이상 측정)"}
+          - {exam: ABPM, reason: "진단 확인·백의고혈압 감별(24시간 ≥130/80)"}
+      - kind: workup
+        trigger:
+          all:
+            - {not: {dx: I10}}
+            - {var: SBP, op: "<", value: 140}
+            - {var: DBP, op: "<", value: 90}
+            - any:
+                - {var: SBP, op: ">=", value: 130}
+                - {var: DBP, op: ">=", value: 80}
+        tests:
+          - {exam: HBPM, reason: "고혈압 전단계 — 가면고혈압 배제"}
+          - {exam: ABPM, reason: "고혈압 전단계 — 가면고혈압 배제"}
+
+  - id: S05-C08
+    topic: 고혈압 치료 목표(대한고혈압학회)
+    type: monitoring
+    status: 보완
+    preferred_over: [S01-C02]
+    current:
+      text: >
+        저·중등도 위험 고혈압 환자의 목표 혈압은 140/90 mmHg 미만이다. 고위험 환자 — 추가 심혈관 위험인자 3개 이상, 위험인자 1개 이상을 동반한 당뇨병,
+        무증상 장기 손상, 관상동맥·혈관 질환, 심부전, 단백뇨를 동반한 만성 콩팥병, 뇌 열공경색 — 는 130/80 mmHg 미만을 목표로 한다.
+        뇌경색, 만성 콩팥병(단백뇨 없음), 노인은 근거가 부족해 일반적으로 140/90 mmHg 미만을 목표로 한다.
+        진료실 목표 140/90에 해당하는 가정혈압·주간 활동혈압은 135/85, 24시간 활동혈압은 130/80 mmHg다.
+      sources:
+        - {id: PAPER-KSH-HTN-2022-UPDATE, locator: "Abstract; Target BP (Table 6, Table 9)"}
+        - {id: PAPER-KSH-HTN-2018-DX, locator: "Target BP; corresponding out-of-office BP"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: monitoring
+        rules:
+          - when: {all: [{dx: I10}, {any: [{var: SBP, op: ">=", value: 140}, {var: DBP, op: ">=", value: 90}]}]}
+            action: "목표 혈압(<140/90) 미달 — 순응도·생활습관 점검, 치료 조정 검토"
+          - when:
+              all:
+                - {dx: I10}
+                - {any: [{dx: I25}, {dx: I70}, {dx: I73}, {dx: I50}, {finding: proteinuric_ckd}, {finding: lacunar_infarction}, {finding: subclinical_organ_damage}]}
+                - {any: [{var: SBP, op: ">=", value: 130}, {var: DBP, op: ">=", value: 80}]}
+            action: "고위험군 목표 혈압(<130/80) 미달 — 치료 조정 검토"
+
+  - id: S05-C09
+    topic: 국가건강검진 검사항목별 판정기준
+    type: threshold
+    status: 보완
+    current:
+      text: >
+        일반건강검진 검사항목별 판정(정상A / 정상B(경계) / 질환의심): 혈압 <120이며 <80 / 120–139 또는 80–89 / ≥140 또는 ≥90 mmHg.
+        체질량지수 18.5–24.9 / 25–29.9 또는 <18.5 / ≥30 kg/m². 허리둘레 남 <90·여 <85 cm / — / 남 ≥90·여 ≥85 cm.
+        혈색소 남 13.0–16.5·여 12.0–15.5 / 남 12.0–12.9·여 10.0–11.9 / 남 <12.0·여 <10.0 g/dL. 공복혈당 <100 / 100–125 / ≥126 mg/dL.
+        총콜레스테롤 <200 / 200–239 / ≥240, HDL ≥60 / 40–59 / <40, 중성지방 <150 / 150–199 / ≥200, LDL <130 / 130–159 / ≥160 mg/dL(당뇨병 동반 시 LDL <100, 의사 판단 시 수정 가능).
+        AST ≤40 / 41–50 / ≥51, ALT ≤35 / 36–45 / ≥46 U/L, 감마지티피 남 11–63 / 64–77 / ≥78·여 8–35 / 36–45 / ≥46 U/L.
+        혈청 크레아티닌 ≤1.5 / — / >1.5 mg/dL, eGFR ≥60 / — / <60 mL/min/1.73m².
+        '질환의심'은 질환으로 발전할 가능성이 있어 추적검사나 전문 의료기관의 정확한 진단·치료가 필요한 경우다.
+      sources:
+        - {id: KR-HEALTH-SCREENING-NOTICE-2026, locator: "별표 4 판정기준, 별표 4의 별첨 검사항목별 판정기준"}
+    verification: primary
+    note: "국가건강검진 결과 판정용 구간이며 진단 기준이 아니다. eGFR·크레아티닌은 CKD 병기(335장)와 목적이 달라 대체하지 않는다."
+    review: {status: draft}
+    corpus:
+      - kind: lab_threshold
+        lab: SBP
+        unit: mmHg
+        context: 국가건강검진 판정(수축기) — 이완기와 함께 해석
+        bands:
+          - {label: 정상A, max: 119.999}
+          - {label: "정상B(경계)", min: 120, max: 139.999}
+          - {label: 질환의심, min: 140}
+      - kind: lab_threshold
+        lab: DBP
+        unit: mmHg
+        context: 국가건강검진 판정(이완기) — 수축기와 함께 해석
+        bands:
+          - {label: 정상A, max: 79.999}
+          - {label: "정상B(경계)", min: 80, max: 89.999}
+          - {label: 질환의심, min: 90}
+      - kind: lab_threshold
+        lab: BMI
+        unit: kg/m²
+        context: 국가건강검진 판정(비만)
+        preferred_over: [416-C01-K1, 416-C01-K2]
+        bands:
+          - {label: "정상B(경계·저체중)", max: 18.499}
+          - {label: 정상A, min: 18.5, max: 24.999}
+          - {label: "정상B(경계)", min: 25, max: 29.999}
+          - {label: 질환의심, min: 30}
+      - kind: lab_threshold
+        lab: Waist_circumference
+        unit: cm
+        context: 국가건강검진 판정(허리둘레)
+        bands:
+          - {label: 정상A, sex: male, max: 89.999}
+          - {label: 질환의심, sex: male, min: 90}
+          - {label: 정상A, sex: female, max: 84.999}
+          - {label: 질환의심, sex: female, min: 85}
+      - kind: lab_threshold
+        lab: Hb
+        unit: g/dL
+        context: 국가건강검진 판정(빈혈)
+        bands:
+          - {label: 질환의심, sex: male, max: 11.999}
+          - {label: "정상B(경계)", sex: male, min: 12.0, max: 12.999}
+          - {label: 정상A, sex: male, min: 13.0, max: 16.5}
+          - {label: 질환의심, sex: female, max: 9.999}
+          - {label: "정상B(경계)", sex: female, min: 10.0, max: 11.999}
+          - {label: 정상A, sex: female, min: 12.0, max: 15.5}
+      - kind: lab_threshold
+        lab: FPG
+        unit: mg/dL
+        context: 국가건강검진 판정(당뇨병)
+        preferred_over: [417-C02-K1]
+        bands:
+          - {label: 정상A, max: 99.999}
+          - {label: "정상B(경계)", min: 100, max: 125.999}
+          - {label: 질환의심, min: 126}
+      - kind: lab_threshold
+        lab: Total_cholesterol
+        unit: mg/dL
+        context: 국가건강검진 판정(이상지질혈증)
+        bands:
+          - {label: 정상A, max: 199.999}
+          - {label: "정상B(경계)", min: 200, max: 239.999}
+          - {label: 질환의심, min: 240}
+      - kind: lab_threshold
+        lab: HDL
+        unit: mg/dL
+        context: 국가건강검진 판정(이상지질혈증)
+        bands:
+          - {label: 질환의심, max: 39.999}
+          - {label: "정상B(경계)", min: 40, max: 59.999}
+          - {label: 정상A, min: 60}
+      - kind: lab_threshold
+        lab: TG
+        unit: mg/dL
+        context: 국가건강검진 판정(이상지질혈증)
+        bands:
+          - {label: 정상A, max: 149.999}
+          - {label: "정상B(경계)", min: 150, max: 199.999}
+          - {label: 질환의심, min: 200}
+      - kind: lab_threshold
+        lab: LDL
+        unit: mg/dL
+        context: "국가건강검진 판정(이상지질혈증, 당뇨병 동반 시 LDL <100 — 의사 판단으로 수정 가능)"
+        bands:
+          - {label: 정상A, max: 129.999}
+          - {label: "정상B(경계)", min: 130, max: 159.999}
+          - {label: 질환의심, min: 160}
+      - kind: lab_threshold
+        lab: AST
+        unit: U/L
+        context: 국가건강검진 판정(간장질환)
+        bands:
+          - {label: 정상A, max: 40}
+          - {label: "정상B(경계)", min: 40.001, max: 50.999}
+          - {label: 질환의심, min: 51}
+      - kind: lab_threshold
+        lab: ALT
+        unit: U/L
+        context: 국가건강검진 판정(간장질환)
+        bands:
+          - {label: 정상A, max: 35}
+          - {label: "정상B(경계)", min: 35.001, max: 45.999}
+          - {label: 질환의심, min: 46}
+      - kind: lab_threshold
+        lab: GGT
+        unit: U/L
+        context: 국가건강검진 판정(간장질환)
+        bands:
+          - {label: 정상A, sex: male, max: 63.999}
+          - {label: "정상B(경계)", sex: male, min: 64, max: 77.999}
+          - {label: 질환의심, sex: male, min: 78}
+          - {label: 정상A, sex: female, max: 35.999}
+          - {label: "정상B(경계)", sex: female, min: 36, max: 45.999}
+          - {label: 질환의심, sex: female, min: 46}
+      - kind: lab_threshold
+        lab: SCr
+        unit: mg/dL
+        context: 국가건강검진 판정(신장질환)
+        bands:
+          - {label: 정상A, max: 1.5}
+          - {label: 질환의심, min: 1.50001}
+      - kind: lab_threshold
+        lab: eGFR
+        unit: mL/min/1.73m²
+        context: 국가건강검진 판정(신장질환)
+        bands:
+          - {label: 정상A, min: 60}
+          - {label: 질환의심, max: 59.999}
+
+  - id: S05-C10
+    topic: 국가건강검진 연령별 검사 항목
+    type: workup
+    status: 보완
+    current:
+      text: >
+        일반건강검진의 연령·성별 검사 항목(건강검진 실시기준 별표 1): 이상지질혈증 4종(총·HDL·LDL 콜레스테롤, 중성지방)은 남성 24세 이상, 여성 40세 이상에서 4년마다.
+        B형간염 표면항원·항체는 40세(표면항원 양성자, 예방접종 등으로 항체가 형성된 사람은 제외). C형간염 항체는 56세.
+        골밀도 검사는 54·60·66세 여성. 기본 폐기능 검사는 56·66세. 인지기능장애 평가(KDSQ-C)는 66세 이상 2년마다이며 6점 이상이면 신경과·정신건강의학과 등 전문의나 치매안심센터로 안내한다.
+        우울증 검사(PHQ-9)는 20–34세 2년마다, 35–39·40–49·50–59·60–69·70–79세에 각 1회이며, 총점 10점 이상이거나 9번 문항 1점 이상이면 정신건강의학과 등 전문의로 의뢰한다.
+        조기정신증 검사(CAPE-15)는 20–34세 2년마다이며 빈도 또는 고통 총점 6점 이상이면 의뢰한다. 노인 신체기능 검사(낙상: 하지기능·평형성)는 66·70·80세.
+        생활습관 평가(흡연·음주·운동·영양·비만)는 40·50·60·70세. 혈압은 5분 이상 안정 후 재며, 120/80 mmHg 이상이면 2분 이상 간격을 두고 다시 잰다.
+        국가검진의 eGFR은 나이·성별·혈청 크레아티닌으로 CKD-EPI 식(2009 계수)으로 계산한다.
+      sources:
+        - {id: KR-HEALTH-SCREENING-NOTICE-2026, locator: "별표 1 일반건강검진 검사항목·대상자·검사방법(혈액검사, 간염검사, 골밀도, 폐기능, 인지기능, 생활습관평가, 정신건강검사, 노인신체기능검사)"}
+    verification: primary
+    conflicts:
+      - "국가검진 eGFR은 CKD-EPI 2009 계수(141·144) 식이고, 이 시스템의 계산식은 CKD-EPI 2021 — 같은 크레아티닌이라도 값이 다를 수 있음(검사실 보고값을 우선)."
+      - "B형·C형간염 선별: 미국(CDC)은 성인 전체 1회 선별, 국내 국가검진은 40세(B형)·56세(C형) — 국내 기준을 우선하고 미국 기준은 참고로 표시."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - any:
+                - {all: [{finding: male}, {var: age, op: ">=", value: 24}]}
+                - {all: [{not: {finding: male}}, {var: age, op: ">=", value: 40}]}
+            - {not: {finding: lipid_panel_within_4_years}}
+        tests:
+          - {lab: Total_cholesterol, reason: "국가검진 이상지질혈증 — 4년마다"}
+          - {lab: HDL, reason: "국가검진 이상지질혈증 — 4년마다"}
+          - {lab: TG, reason: "국가검진 이상지질혈증 — 4년마다"}
+          - {lab: LDL, reason: "국가검진 이상지질혈증 — 4년마다"}
+      - kind: workup
+        preferred_over: [362-C01-K1]
+        trigger:
+          all:
+            - {var: age, op: ">=", value: 40}
+            - {var: age, op: "<", value: 41}
+            - {not: {finding: hbsag_positive}}
+            - {not: {finding: hbv_immune}}
+        tests:
+          - {lab: HBsAg, reason: "국가검진 40세 B형간염 검사"}
+          - {lab: Anti_HBs, reason: "국가검진 40세 B형간염 검사"}
+      - kind: workup
+        preferred_over: [362-C04-K1]
+        trigger:
+          all:
+            - {var: age, op: ">=", value: 56}
+            - {var: age, op: "<", value: 57}
+        tests:
+          - {lab: Anti_HCV, reason: "국가검진 56세 C형간염 항체 검사 — 양성이면 확진검사"}
+      - kind: workup
+        trigger:
+          all:
+            - {not: {finding: male}}
+            - any:
+                - {all: [{var: age, op: ">=", value: 54}, {var: age, op: "<", value: 55}]}
+                - {all: [{var: age, op: ">=", value: 60}, {var: age, op: "<", value: 61}]}
+                - {all: [{var: age, op: ">=", value: 66}, {var: age, op: "<", value: 67}]}
+        tests:
+          - {exam: DXA, reason: "국가검진 골밀도 — 54·60·66세 여성"}
+      - kind: workup
+        trigger:
+          any:
+            - {all: [{var: age, op: ">=", value: 56}, {var: age, op: "<", value: 57}]}
+            - {all: [{var: age, op: ">=", value: 66}, {var: age, op: "<", value: 67}]}
+        tests:
+          - {exam: Spirometry_basic, reason: "국가검진 폐기능 — 56·66세"}
+      - kind: workup
+        trigger: {var: age, op: ">=", value: 66}
+        tests:
+          - {score: KDSQ_C, reason: "국가검진 인지기능 — 66세 이상 2년마다(6점 이상 전문의·치매안심센터 안내)"}
+      - kind: workup
+        trigger:
+          all:
+            - {var: age, op: ">=", value: 20}
+            - {var: age, op: "<", value: 80}
+        tests:
+          - {score: PHQ9, reason: "국가검진 우울증 — 20–34세 2년마다, 이후 연령대별 1회"}
+      - kind: workup
+        trigger:
+          all:
+            - {var: age, op: ">=", value: 20}
+            - {var: age, op: "<", value: 35}
+        tests:
+          - {score: CAPE15, reason: "국가검진 조기정신증 — 20–34세 2년마다"}
+      - kind: workup
+        trigger:
+          any:
+            - {all: [{var: age, op: ">=", value: 66}, {var: age, op: "<", value: 67}]}
+            - {all: [{var: age, op: ">=", value: 70}, {var: age, op: "<", value: 71}]}
+            - {all: [{var: age, op: ">=", value: 80}, {var: age, op: "<", value: 81}]}
+        tests:
+          - {exam: Elderly_fall_test, reason: "국가검진 노인 신체기능(낙상) — 66·70·80세"}
+      - kind: referral
+        to: 신경과·정신건강의학과 등 전문의 또는 치매안심센터
+        purpose: "인지기능장애 평가(KDSQ-C) 6점 이상 — 자세한 검사와 진료"
+        criteria:
+          - {var: KDSQ_C, op: ">=", value: 6}
+      - kind: referral
+        to: 정신건강의학과 등 전문의(정신건강복지센터 상담 안내)
+        purpose: "PHQ-9 10점 이상(주요우울장애 의심) 또는 9번 문항 1점 이상"
+        criteria:
+          - {var: PHQ9, op: ">=", value: 10}
+          - {finding: phq9_item9_positive}
+      - kind: referral
+        to: 정신건강의학과 등 전문의(정신건강복지센터 상담 안내)
+        purpose: "CAPE-15 빈도 또는 고통 총점 6점 이상"
+        criteria:
+          - {var: CAPE15, op: ">=", value: 6}
+
+  - id: S05-C11
+    topic: 국가예방접종 대상(성인 중심)
+    type: workup
+    status: 보완
+    current:
+      text: >
+        국가예방접종 대상과 표준접종시기(예방접종의 실시기준 및 방법 별표 1) 중 성인 관련 항목:
+        인플루엔자는 65세 이상, 생후 6개월–14세, 임신부, 조혈모세포이식 환자에게 매년 국가예방접종사업 시기에 1회(과거 접종력이 없는 6개월–9세 미만 소아는 첫해 1개월 간격 2회).
+        폐렴구균은 65세 이상 노인에게 폐렴구균 다당질 백신으로 1회 접종한다(영유아·18세 이하 고위험군은 단백결합 백신).
+        사람유두종바이러스(HPV)는 12–26세 여성(18–26세는 저소득층으로 한정)과 12세 남성이 대상이며, 12–14세 여성은 0·6개월 2회, 15–26세 여성은 0·2·6개월 3회 접종한다.
+      sources:
+        - {id: KR-NIP-NOTICE-2026, locator: "제3조, 별표 1 ⑥ 폐렴구균, ⑫ 사람유두종바이러스 감염증, ⑬ 인플루엔자"}
+    verification: primary
+    note: "국가가 비용을 지원하는 접종 대상·시기이며, 그 밖의 접종 권고(예: 대상포진)는 이 고시 범위가 아니다."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {any: [{var: age, op: ">=", value: 65}, {finding: pregnancy}]}
+            - {not: {finding: influenza_vaccinated_this_season}}
+        tests:
+          - {screen: Influenza_vaccination, reason: "국가예방접종 — 매년 사업 시기 1회(65세 이상·임신부)"}
+      - kind: workup
+        trigger:
+          all:
+            - {var: age, op: ">=", value: 65}
+            - {not: {finding: ppsv23_received}}
+        tests:
+          - {screen: PPSV23_vaccination, reason: "국가예방접종 — 65세 이상 1회"}
+      - kind: workup
+        trigger:
+          all:
+            - {not: {finding: male}}
+            - {var: age, op: ">=", value: 12}
+            - {var: age, op: "<", value: 27}
+            - {not: {finding: hpv_vaccination_complete}}
+        tests:
+          - {screen: HPV_vaccination, reason: "국가예방접종 — 12–17세 여성, 18–26세는 저소득층 여성"}
+
+  - id: S05-C12
+    topic: 결핵·잠복결핵감염 검진 의무기관 종사자
+    type: workup
+    status: 보완
+    current:
+      text: >
+        결핵예방법 제11조 제1항에 따라 의료기관, 산후조리업, 학교(초·중등), 유치원, 어린이집, 아동복지시설의 장은 종사자에게 결핵 검진과 잠복결핵감염 검진을 실시해야 한다.
+      sources:
+        - {id: KR-TB-ACT-ART11, locator: "제11조 제1항 제1–6호"}
+    verification: primary
+    note: "검진 주기·방법은 시행규칙 사항으로 이 출처에서 확인하지 않았다. 검사 선택(IGRA·TST)은 S03-C04를 참고한다."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          any:
+            - {finding: healthcare_facility_worker}
+            - {finding: postpartum_care_worker}
+            - {finding: school_or_kindergarten_worker}
+            - {finding: daycare_or_child_welfare_worker}
+        tests:
+          - {exam: Chest_xray, reason: "결핵예방법 검진 의무기관 종사자 — 결핵 검진"}
+          - {lab: Latent_TB_screen, reason: "결핵예방법 검진 의무기관 종사자 — 잠복결핵감염 검진"}

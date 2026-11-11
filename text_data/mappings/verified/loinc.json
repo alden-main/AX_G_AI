@@ -1,0 +1,782 @@
+{
+ "103560-9": {
+  "name": "Aldosterone/Renin [Ratio] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:18Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "10501-5": {
+  "name": "Lutropin [Units/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:18Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "10835-7": {
+  "name": "Lipoprotein a [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:19Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "11011-4": {
+  "name": "Hepatitis C virus RNA [Units/volume] (viral load) in Serum or Plasma by NAA with probe detection",
+  "retrieved_at": "2026-11-10T05:10:20Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "11557-6": {
+  "name": "Carbon dioxide [Partial pressure] in Blood",
+  "retrieved_at": "2026-11-10T05:10:21Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "11558-4": {
+  "name": "pH of Blood",
+  "retrieved_at": "2026-11-10T05:10:22Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "13087-2": {
+  "name": "Complement alternate pathway AH50 [Units/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:22Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "13248-0": {
+  "name": "Hepatitis D virus Ab [Presence] in Serum",
+  "retrieved_at": "2026-11-10T05:12:32Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "13457-7": {
+  "name": "Cholesterol in LDL [Mass/volume] in Serum or Plasma by calculation",
+  "retrieved_at": "2026-11-10T05:10:23Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "13953-5": {
+  "name": "Hepatitis B virus e Ab [Presence] in Serum or Plasma by Immunoassay",
+  "retrieved_at": "2026-11-10T05:10:24Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "13954-3": {
+  "name": "Hepatitis B virus e Ag [Presence] in Serum or Plasma by Immunoassay",
+  "retrieved_at": "2026-11-10T05:10:24Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "14959-1": {
+  "name": "Microalbumin/Creatinine [Mass Ratio] in Urine",
+  "retrieved_at": "2026-11-10T05:10:25Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "15067-2": {
+  "name": "Follitropin [Units/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:26Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "1518-0": {
+  "name": "Glucose [Mass/volume] in Serum or Plasma --2 hours post 75 g glucose PO",
+  "retrieved_at": "2026-11-10T05:10:26Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "1558-6": {
+  "name": "Fasting glucose [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:27Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "16128-1": {
+  "name": "Hepatitis C virus Ab [Presence] in Serum",
+  "retrieved_at": "2026-11-10T05:10:28Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "16137-2": {
+  "name": "Centromere Ab [Presence] in Serum",
+  "retrieved_at": "2026-11-10T05:12:33Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "16933-4": {
+  "name": "Hepatitis B virus core Ab [Presence] in Serum",
+  "retrieved_at": "2026-11-10T05:10:29Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "16935-9": {
+  "name": "Hepatitis B virus surface Ab [Units/volume] in Serum",
+  "retrieved_at": "2026-11-10T05:10:29Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "1742-6": {
+  "name": "Alanine aminotransferase [Enzymatic activity/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:30Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "1749-1": {
+  "name": "Albumin [Mass/volume] in Peritoneal fluid",
+  "retrieved_at": "2026-11-10T05:12:34Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "1751-7": {
+  "name": "Albumin [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:31Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "17856-6": {
+  "name": "Hemoglobin A1c/Hemoglobin.total in Blood by HPLC",
+  "retrieved_at": "2026-11-10T05:10:31Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "17861-6": {
+  "name": "Calcium [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:32Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "18262-6": {
+  "name": "Cholesterol in LDL [Mass/volume] in Serum or Plasma by Direct assay",
+  "retrieved_at": "2026-11-10T05:10:33Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "1834-1": {
+  "name": "Alpha-1-Fetoprotein [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:34Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "19049-6": {
+  "name": "Metanephrine [Mass/time] in 24 hour Urine",
+  "retrieved_at": "2026-11-10T05:12:35Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "19080-1": {
+  "name": "Choriogonadotropin [Units/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:34Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "19123-9": {
+  "name": "Magnesium [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:35Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "1920-8": {
+  "name": "Aspartate aminotransferase [Enzymatic activity/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:36Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "1959-6": {
+  "name": "Bicarbonate [Moles/volume] in Blood",
+  "retrieved_at": "2026-11-10T05:10:36Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "1963-8": {
+  "name": "Bicarbonate [Moles/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:37Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "1975-2": {
+  "name": "Bilirubin.total [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:38Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "1988-5": {
+  "name": "C reactive protein [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:38Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "1989-3": {
+  "name": "25-hydroxyvitamin D3 [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:39Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "1994-3": {
+  "name": "Calcium.ionized [Moles/volume] in Blood",
+  "retrieved_at": "2026-11-10T05:10:40Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2019-8": {
+  "name": "Carbon dioxide [Partial pressure] in Arterial blood",
+  "retrieved_at": "2026-11-10T05:10:40Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2028-9": {
+  "name": "Carbon dioxide, total [Moles/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:41Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "20575-7": {
+  "name": "Hepatitis A virus Ab [Presence] in Serum",
+  "retrieved_at": "2026-11-10T05:10:42Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2085-9": {
+  "name": "Cholesterol in HDL [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:42Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2089-1": {
+  "name": "Cholesterol in LDL [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:43Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2093-3": {
+  "name": "Cholesterol [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T23:39:36Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "21198-7": {
+  "name": "Choriogonadotropin.beta subunit [Units/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:44Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2132-9": {
+  "name": "Cobalamin (Vitamin B12) [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:44Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2142-8": {
+  "name": "Cortisol [Mass/volume] in Saliva (oral fluid)",
+  "retrieved_at": "2026-11-10T05:10:45Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2143-6": {
+  "name": "Cortisol [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:46Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2147-7": {
+  "name": "Cortisol Free [Mass/time] in 24 hour Urine",
+  "retrieved_at": "2026-11-10T05:10:47Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2157-6": {
+  "name": "Creatine kinase [Enzymatic activity/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:47Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "21582-2": {
+  "name": "Tryptase [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:48Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2160-0": {
+  "name": "Creatinine [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:49Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "22314-9": {
+  "name": "Hepatitis A virus IgM Ab [Presence] in Serum",
+  "retrieved_at": "2026-11-10T05:10:49Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2276-4": {
+  "name": "Ferritin [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:50Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2284-8": {
+  "name": "Folate [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:51Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2324-2": {
+  "name": "Gamma glutamyl transferase [Enzymatic activity/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:51Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2335-8": {
+  "name": "Hemoglobin [Presence] in Stool from gastrointestinal",
+  "retrieved_at": "2026-11-10T05:10:52Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2345-7": {
+  "name": "Glucose [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:53Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "24325-3": {
+  "name": "Hepatic function 2000 panel - Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:53Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "24356-8": {
+  "name": "Urinalysis complete panel - Urine",
+  "retrieved_at": "2026-11-10T05:10:54Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2458-8": {
+  "name": "IgA [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:55Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2465-3": {
+  "name": "IgG [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:55Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2472-9": {
+  "name": "IgM [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:56Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2484-4": {
+  "name": "Insulin-like growth factor-I [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:57Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2502-3": {
+  "name": "Iron saturation [Mass Fraction] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:57Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2514-8": {
+  "name": "Ketones [Presence] in Urine by Test strip",
+  "retrieved_at": "2026-11-10T05:10:58Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2524-7": {
+  "name": "Lactate [Moles/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:10:59Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2571-8": {
+  "name": "Triglyceride [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:00Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "26502-5": {
+  "name": "Neutrophils [#/volume] in Peritoneal fluid",
+  "retrieved_at": "2026-11-10T05:12:37Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2671-6": {
+  "name": "Normetanephrine [Mass/time] in 24 hour Urine",
+  "retrieved_at": "2026-11-10T05:11:00Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2692-2": {
+  "name": "Osmolality of Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:01Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2695-5": {
+  "name": "Osmolality of Urine",
+  "retrieved_at": "2026-11-10T05:11:02Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2731-8": {
+  "name": "Parathyrin.intact [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:02Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2744-1": {
+  "name": "pH of Arterial blood",
+  "retrieved_at": "2026-11-10T05:11:03Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2777-1": {
+  "name": "Phosphate [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:04Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2823-3": {
+  "name": "Potassium [Moles/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:04Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2842-3": {
+  "name": "Prolactin [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:05Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2883-7": {
+  "name": "Protein [Mass/volume] in Peritoneal fluid",
+  "retrieved_at": "2026-11-10T05:12:38Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2890-2": {
+  "name": "Protein/Creatinine [Mass Ratio] in Urine",
+  "retrieved_at": "2026-11-10T05:11:06Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "29463-7": {
+  "name": "Body weight",
+  "retrieved_at": "2026-11-10T05:11:07Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2951-2": {
+  "name": "Sodium [Moles/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:08Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2955-3": {
+  "name": "Sodium [Moles/volume] in Urine",
+  "retrieved_at": "2026-11-10T05:11:09Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "29615-2": {
+  "name": "Hepatitis B virus DNA [#/volume] (viral load) in Serum or Plasma by NAA with probe detection",
+  "retrieved_at": "2026-11-10T05:11:09Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2963-7": {
+  "name": "Somatotropin [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:12:39Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "29771-3": {
+  "name": "Hemoglobin [Presence] in Stool from gastrointestinal lower by Immunoassay",
+  "retrieved_at": "2026-11-10T05:11:10Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "2986-8": {
+  "name": "Testosterone [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:11Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "3016-3": {
+  "name": "Thyrotropin [Units/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:11Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "3024-7": {
+  "name": "Thyroxine (T4) free [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:12Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "30341-2": {
+  "name": "Erythrocyte [Sedimentation Rate] in Blood",
+  "retrieved_at": "2026-11-10T05:11:13Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "3040-3": {
+  "name": "Lipase [Enzymatic activity/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:14Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "3048-6": {
+  "name": "Triglyceride [Mass/volume] in Serum or Plasma --fasting",
+  "retrieved_at": "2026-11-10T05:12:39Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "30522-7": {
+  "name": "C reactive protein [Mass/volume] in Serum or Plasma by High sensitivity method",
+  "retrieved_at": "2026-11-10T05:11:15Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "3084-1": {
+  "name": "Urate [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:16Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "30894-0": {
+  "name": "Aldosterone/Renin [Ratio] in Plasma",
+  "retrieved_at": "2026-11-10T05:11:17Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "3094-0": {
+  "name": "Urea nitrogen [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:17Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "31017-7": {
+  "name": "Tissue transglutaminase IgA Ab [Units/volume] in Serum",
+  "retrieved_at": "2026-11-10T05:11:18Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "31204-1": {
+  "name": "Hepatitis B virus core IgM Ab [Presence] in Serum",
+  "retrieved_at": "2026-11-10T05:11:19Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "3173-2": {
+  "name": "aPTT in Blood by Coagulation assay",
+  "retrieved_at": "2026-11-10T05:11:19Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "3255-7": {
+  "name": "Fibrinogen [Mass/volume] in Platelet poor plasma by Coagulation assay",
+  "retrieved_at": "2026-11-10T05:11:20Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "32693-4": {
+  "name": "Lactate [Moles/volume] in Blood",
+  "retrieved_at": "2026-11-10T05:11:21Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "33762-6": {
+  "name": "Natriuretic peptide.B prohormone N-Terminal [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T23:18:18Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "33914-3": {
+  "name": "Glomerular filtration rate [Volume Rate/Area] in Serum or Plasma by Creatinine-based formula (MDRD)/1.73 sq M",
+  "retrieved_at": "2026-11-10T05:11:22Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "34519-9": {
+  "name": "HFE gene targeted mutation analysis in Blood or Tissue by Molecular genetics method",
+  "retrieved_at": "2026-11-10T05:12:40Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "34714-6": {
+  "name": "INR in Blood by Coagulation assay",
+  "retrieved_at": "2026-11-10T05:11:23Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "38445-3": {
+  "name": "Calprotectin [Mass/mass] in Stool",
+  "retrieved_at": "2026-11-10T05:11:23Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "38494-1": {
+  "name": "Metanephrine Free [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:24Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "39156-5": {
+  "name": "Body mass index (BMI) [Ratio]",
+  "retrieved_at": "2026-11-10T05:11:25Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "40851-8": {
+  "name": "Normetanephrine Free [Moles/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:12:41Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "42315-2": {
+  "name": "APOE gene alleles e2 and e3 and e4 [Identifier] in Blood or Tissue by Molecular genetics method Nominal",
+  "retrieved_at": "2026-11-10T05:12:41Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "42595-9": {
+  "name": "Hepatitis B virus DNA [Units/volume] (viral load) in Serum or Plasma by NAA with probe detection",
+  "retrieved_at": "2026-11-10T05:11:25Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "43583-4": {
+  "name": "Lipoprotein a [Moles/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:26Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "44261-6": {
+  "name": "Patient Health Questionnaire 9 item (PHQ-9) total score [Reported]",
+  "retrieved_at": "2026-11-10T05:11:27Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "4477-6": {
+  "name": "Complement C1 esterase inhibitor [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:27Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "4485-9": {
+  "name": "Complement C3 [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:28Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "4498-2": {
+  "name": "Complement C4 [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:29Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "4532-8": {
+  "name": "Complement total hemolytic CH50 [Units/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:30Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "45323-3": {
+  "name": "Mycobacterium tuberculosis tuberculin stimulated gamma interferon [Presence] in Blood",
+  "retrieved_at": "2026-11-10T05:11:30Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "4537-7": {
+  "name": "Erythrocyte [Sedimentation Rate] in Blood by Westergren method",
+  "retrieved_at": "2026-11-10T05:11:31Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "4544-3": {
+  "name": "Hematocrit [Volume Fraction] of Blood by Automated count",
+  "retrieved_at": "2026-11-10T05:11:32Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "4548-4": {
+  "name": "Hemoglobin A1c/Hemoglobin.total in Blood",
+  "retrieved_at": "2026-11-10T05:11:32Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "46099-8": {
+  "name": "Calcium [Mass/volume] corrected for albumin in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:12:42Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "49700-8": {
+  "name": "Metanephrine Free [Moles/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:33Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "5048-4": {
+  "name": "Nuclear Ab [Titer] in Serum by Immunofluorescence",
+  "retrieved_at": "2026-11-10T05:11:34Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "5130-0": {
+  "name": "DNA double strand Ab [Units/volume] in Serum",
+  "retrieved_at": "2026-11-10T05:11:34Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "5193-8": {
+  "name": "Hepatitis B virus surface Ab [Units/volume] in Serum or Plasma by Immunoassay",
+  "retrieved_at": "2026-11-10T05:11:35Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "5196-1": {
+  "name": "Hepatitis B virus surface Ag [Presence] in Serum or Plasma by Immunoassay",
+  "retrieved_at": "2026-11-10T05:11:36Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "55138-2": {
+  "name": "Cortisol [Mass/volume] in Serum or Plasma --post dose dexamethasone PO overnight",
+  "retrieved_at": "2026-11-10T05:11:37Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "56888-1": {
+  "name": "HIV 1+2 Ab+HIV1 p24 Ag [Presence] in Serum or Plasma by Immunoassay",
+  "retrieved_at": "2026-11-10T05:11:37Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "57021-8": {
+  "name": "CBC W Auto Differential panel - Blood",
+  "retrieved_at": "2026-11-10T23:18:19Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "57462-4": {
+  "name": "Normetanephrine Free [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:12:43Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "58410-2": {
+  "name": "CBC panel - Blood by Automated count",
+  "retrieved_at": "2026-11-10T05:11:38Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "5902-2": {
+  "name": "Prothrombin time (PT)",
+  "retrieved_at": "2026-11-10T05:11:39Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "59408-5": {
+  "name": "Oxygen saturation in Arterial blood by Pulse oximetry",
+  "retrieved_at": "2026-11-10T23:18:19Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "619-7": {
+  "name": "Bacteria identified in Peritoneal fluid by Culture",
+  "retrieved_at": "2026-11-10T05:12:43Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "62238-1": {
+  "name": "Glomerular filtration rate [Volume Rate/Area] in Serum, Plasma or Blood by Creatinine-based formula (CKD-EPI)/1.73 sq M",
+  "retrieved_at": "2026-11-10T05:11:39Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "62292-8": {
+  "name": "25-Hydroxyvitamin D3+25-Hydroxyvitamin D2 [Mass/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:40Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "630-4": {
+  "name": "Bacteria identified in Urine by Culture",
+  "retrieved_at": "2026-11-10T05:11:41Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "6301-6": {
+  "name": "INR in Platelet poor plasma by Coagulation assay",
+  "retrieved_at": "2026-11-10T05:11:41Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "63328-9": {
+  "name": "RNA polymerase III Ab [Presence] in Serum by Immunoassay",
+  "retrieved_at": "2026-11-10T05:12:44Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "63549-0": {
+  "name": "Albumin in serum - albumin in peritoneal fluid [Mass concentration difference]",
+  "retrieved_at": "2026-11-10T05:12:45Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "6690-2": {
+  "name": "Leukocytes [#/volume] in Blood by Automated count",
+  "retrieved_at": "2026-11-10T05:11:42Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "6768-6": {
+  "name": "Alkaline phosphatase [Enzymatic activity/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:11:43Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "6873-4": {
+  "name": "Beta hydroxybutyrate [Moles/volume] in Serum or Plasma",
+  "retrieved_at": "2026-11-10T05:12:45Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "6874-2": {
+  "name": "Calcium [Mass/time] in 24 hour Urine",
+  "retrieved_at": "2026-11-10T05:11:44Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "71773-6": {
+  "name": "Mycobacterium tuberculosis stimulated gamma interferon [Interpretation] in Blood Qualitative",
+  "retrieved_at": "2026-11-10T05:11:44Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "718-7": {
+  "name": "Hemoglobin [Mass/volume] in Blood",
+  "retrieved_at": "2026-11-10T05:11:45Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "777-3": {
+  "name": "Platelets [#/volume] in Blood by Automated count",
+  "retrieved_at": "2026-11-10T05:11:46Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "8061-4": {
+  "name": "Nuclear Ab [Presence] in Serum",
+  "retrieved_at": "2026-11-10T05:11:47Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "8092-9": {
+  "name": "SCL-70 extractable nuclear Ab [Presence] in Serum",
+  "retrieved_at": "2026-11-10T05:11:48Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "8093-7": {
+  "name": "Sjogrens syndrome-A extractable nuclear Ab [Presence] in Serum",
+  "retrieved_at": "2026-11-10T05:11:49Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "8094-5": {
+  "name": "Sjogrens syndrome-B extractable nuclear Ab [Presence] in Serum",
+  "retrieved_at": "2026-11-10T05:11:49Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "8280-0": {
+  "name": "Waist Circumference at umbilicus by Tape measure",
+  "retrieved_at": "2026-11-10T23:39:36Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "8462-4": {
+  "name": "Diastolic blood pressure",
+  "retrieved_at": "2026-11-10T23:18:20Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "8480-6": {
+  "name": "Systolic blood pressure",
+  "retrieved_at": "2026-11-10T23:18:21Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "85354-9": {
+  "name": "Blood pressure panel with all children optional",
+  "retrieved_at": "2026-11-10T05:11:50Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "9318-7": {
+  "name": "Albumin/Creatinine [Mass Ratio] in Urine",
+  "retrieved_at": "2026-11-10T05:11:51Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "93194-9": {
+  "name": "NUDT15 gene mutations found [Identifier] in Blood or Tissue by Targeted gene mutation analysis Nominal",
+  "retrieved_at": "2026-11-10T05:12:46Z",
+  "source": "NLM Clinical Tables loinc_items"
+ },
+ "98979-8": {
+  "name": "Glomerular filtration rate [Volume Rate/Area] in Serum, Plasma or Blood by Creatinine-based formula (CKD-EPI 2021)/1.73 sq M",
+  "retrieved_at": "2026-11-10T05:11:52Z",
+  "source": "NLM Clinical Tables loinc_items"
+ }
+}

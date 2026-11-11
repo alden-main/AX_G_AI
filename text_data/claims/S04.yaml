@@ -1,0 +1,151 @@
+# S04 암 검진 보충(대장·폐·유방·자궁경부) — 19판 원문 범위 밖 보충 장
+# 스키마: text_data/claims/README.md (보충 장: original 없음, status 보완만, A등급 current 필수)
+# CDC 페이지는 USPSTF 권고를 재수록한다. USPSTF 원문(C등급)은 인용하지 않고 CDC 문장·사실만 쓴다.
+
+chapter: "S04"
+title: 암 검진 보충 — 대장암·폐암·유방암·자궁경부암
+original_source: SUPPLEMENT
+updated_at: "2026-11-11"
+
+claims:
+  - id: S04-C01
+    topic: 대장암 검진 대상과 검사 주기
+    type: workup
+    status: 보완
+    current:
+      text: >
+        45–75세 성인은 대장암 검진을 받는다. 76–85세는 개인별로 결정한다.
+        검사와 주기: 구아이악 분변잠혈검사(gFOBT) 매년, 분변면역화학검사(FIT) 매년, 대변 DNA 검사(FIT-DNA) 3년마다,
+        구불결장경 5년마다(또는 10년마다 + FIT 매년), 대장내시경 10년마다(위험이 높지 않은 경우), CT 대장조영 5년마다.
+        대변 검사·구불결장경·CT 대장조영이 양성이면 대장내시경으로 검진을 마무리한다.
+        염증성 장질환, 대장암·용종의 개인력 또는 가족력, 가족성 선종성 용종증·린치증후군 같은 유전 증후군이 있으면 45세 전에 시작하거나 더 자주 받아야 할 수 있다.
+      sources:
+        - {id: CDC-CRC-SCREENING, locator: "Who should be screened; Screening test types and intervals"}
+    verification: primary
+    conflicts:
+      - "미국 권고(45–75세). 국내 국가암검진의 대상 연령·검사·주기와 다를 수 있음 — 서비스 기준은 검수자가 정함(국내 기준은 출처 라이선스 미확인으로 미수록)."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {var: age, op: ">=", value: 45}
+            - {var: age, op: "<=", value: 75}
+            - {not: {finding: colorectal_screening_up_to_date}}
+        tests:
+          - {lab: FIT, reason: "매년(분변면역화학검사)"}
+          - {lab: FIT_DNA, reason: "3년마다"}
+          - {exam: Colonoscopy, reason: "10년마다(평균 위험)"}
+          - {exam: Flexible_sigmoidoscopy, reason: "5년마다 또는 10년마다+FIT 매년"}
+          - {exam: CT_colonography, reason: "5년마다"}
+        notes: ["검사 중 하나를 선택 — 대변 검사·구불결장경·CT 대장조영 양성 시 대장내시경"]
+      - kind: workup
+        trigger:
+          all:
+            - {var: age, op: "<", value: 45}
+            - {not: {finding: colorectal_screening_up_to_date}}
+            - any:
+                - {dx: K50}
+                - {dx: K51}
+                - {finding: family_history_colorectal_cancer}
+                - {finding: personal_history_colorectal_polyps}
+                - {finding: hereditary_crc_syndrome}
+        tests:
+          - {exam: Colonoscopy, reason: "위험 증가 — 45세 전 시작 또는 더 잦은 검진 검토"}
+
+  - id: S04-C02
+    topic: 폐암 검진 대상과 저선량 흉부 CT
+    type: workup
+    status: 보완
+    current:
+      text: >
+        흡연력 20갑년 이상이면서 현재 흡연 중이거나 금연한 지 15년 이내인 50–80세는 매년 저선량 흉부 CT(LDCT)로 폐암 검진을 받는다.
+        81세가 되거나, 금연한 지 15년 이상이 되거나, 폐암이 발견돼도 수술을 원하지 않거나 받을 수 없는 건강 문제가 생기면 검진을 멈춘다.
+        근거: 무작위 대조시험 두 건(NLST, NELSON)에서 LDCT 검진이 폐암 사망률을 유의하게 낮췄다(NELSON 사망률비 0.76, 95% CI 0.61–0.94).
+        NLST 참여 기준은 55–74세, 30갑년 이상, 과거 흡연자는 15년 이내 금연이었다. 위해: 위양성률이 높고, 일부는 과잉진단이며, 방사선 노출은 평균적으로 낮다.
+      sources:
+        - {id: CDC-LUNG-SCREENING, locator: "Who should be screened; Recommended screening test; When screening stops"}
+        - {id: NCI-LUNG-SCREENING-HP, locator: "Evidence of Benefit (NLST, NELSON); Harms"}
+    verification: primary
+    conflicts:
+      - "미국 권고(50–80세, 20갑년). 국내 국가 폐암검진의 대상 기준과 다를 수 있음 — 서비스 기준은 검수자가 정함."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {var: age, op: ">=", value: 50}
+            - {var: age, op: "<=", value: 80}
+            - any:
+                - all:
+                    - {var: pack_years, op: ">=", value: 20}
+                    - {any: [{finding: current_smoker}, {var: years_since_quit_smoking, op: "<", value: 15}]}
+                - {finding: smoking_20_pack_years_current_or_quit_within_15y}
+            - {not: {finding: unfit_for_lung_surgery}}
+        notes: ["흡연량(갑년)·금연 연수는 의료진 입력 값 — 수치가 없으면 '20갑년 이상 + 현재 흡연 또는 15년 이내 금연' 소견으로 대신 판정"]
+        tests:
+          - {exam: LDCT_chest, reason: "매년 폐암 검진"}
+
+  - id: S04-C03
+    topic: 유방암 검진 대상과 주기
+    type: workup
+    status: 보완
+    current:
+      text: >
+        평균 위험인 40–74세 여성은 2년마다 유방촬영술을 받는다. 평균보다 위험이 높은 여성에게는 다른 검진 권고가 쓰일 수 있으며,
+        고위험 여성에게는 유방촬영술과 함께 유방 MRI를 쓰기도 한다.
+      sources:
+        - {id: CDC-BREAST-SCREENING, locator: "Screening recommendations (average risk); Higher risk"}
+    verification: primary
+    conflicts:
+      - "미국 권고(40–74세, 2년마다). 국내 국가암검진 기준과 다를 수 있음 — 서비스 기준은 검수자가 정함."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {not: {finding: male}}
+            - {var: age, op: ">=", value: 40}
+            - {var: age, op: "<=", value: 74}
+            - {not: {finding: breast_screening_up_to_date}}
+        tests:
+          - {exam: Mammography, reason: "평균 위험 40–74세 여성 2년마다"}
+
+  - id: S04-C04
+    topic: 자궁경부암 검진 대상과 검사 주기
+    type: workup
+    status: 보완
+    current:
+      text: >
+        21세부터 자궁경부 세포검사(Pap)를 시작하고, 결과가 정상이면 3년 뒤 다음 검사를 받을 수 있다.
+        30–65세는 HPV 단독 검사(정상이면 5년), HPV+Pap 동시 검사(둘 다 정상이면 5년), Pap 단독 검사(정상이면 3년) 중에서 의사와 상의해 고른다.
+        65세 넘으면 최근 10년간 Pap 3회 또는 HPV 2회 이상 정상이고 자궁경부 전암 병력이 없거나, 양성 질환으로 자궁 전절제를 받았으면 검진을 멈출 수 있다.
+      sources:
+        - {id: CDC-CERVICAL-SCREENING, locator: "Screening by age (21–29, 30–65, over 65)"}
+    verification: primary
+    conflicts:
+      - "미국 권고(21–65세). 국내 국가암검진 기준과 다를 수 있음 — 서비스 기준은 검수자가 정함."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {not: {finding: male}}
+            - {var: age, op: ">=", value: 21}
+            - {var: age, op: "<", value: 30}
+            - {not: {finding: cervical_screening_up_to_date}}
+            - {not: {finding: total_hysterectomy_benign}}
+        tests:
+          - {lab: Cervical_cytology, reason: "21–29세 Pap 3년마다"}
+      - kind: workup
+        trigger:
+          all:
+            - {not: {finding: male}}
+            - {var: age, op: ">=", value: 30}
+            - {var: age, op: "<=", value: 65}
+            - {not: {finding: cervical_screening_up_to_date}}
+            - {not: {finding: total_hysterectomy_benign}}
+        tests:
+          - {lab: HPV_test, reason: "30–65세 HPV 단독 5년마다(또는 HPV+Pap 5년)"}
+          - {lab: Cervical_cytology, reason: "Pap 단독 3년마다 또는 HPV와 동시 검사"}
+        notes: ["HPV 단독·동시 검사·Pap 단독 중 하나를 의사와 상의해 선택"]

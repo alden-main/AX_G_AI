@@ -1,0 +1,162 @@
+# 364장 비알콜 지방간질환과 비알콜 지방간염 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: EASL–EASD–EASO MASLD 지침 2024(Diabetologia 게재본, CC BY), VA/DoD 당뇨·지질, openFDA(CC0).
+
+chapter: "364"
+title: 비알콜 지방간질환과 비알콜 지방간염
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 364-C01
+    topic: 용어와 원인 평가(MASLD)
+    type: diagnosis
+    original:
+      text: "NAFLD: 과도한 음주 없이 간 지방 축적. 지방간의 다른 원인(표 364-1)과 지방간 유발 약물(표 364-2) 배제."
+      location: {file: by_chapter/364장.md, line: 41}
+    status: 개정
+    current:
+      text: >
+        명칭은 지방간질환(SLD) 안의 대사이상 지방간질환(MASLD)·대사이상 지방간염(MASH)으로 바뀌었고, 음주가 함께 있으면 MetALD로 구분한다.
+        우연히 발견된 지방간은 원인(MASLD, 알코올성, MetALD, 약물성, 단일유전자성 등) 평가와 진행된 섬유화 여부 검사로 이어져야 한다. 일반 인구 대상 선별은 권고하지 않는다.
+        모든 지방간 환자의 음주량·양상·이력을 기록하고, 진행된 섬유화·간경변이면 금주를 권고한다. 가벼운–중등도 음주의 이로운 효과는 뒷받침되지 않는다.
+      sources:
+        - {id: PAPER-EASL-EASD-EASO-MASLD-2024, locator: "Definition, prevalence and natural course"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: incidental_hepatic_steatosis}
+        tests:
+          - {review: alcohol_intake_history, reason: "MASLD·ALD·MetALD 구분"}
+          - {review: steatogenic_drugs, reason: 약물성 지방간 감별}
+          - {lab: FIB4, reason: 진행된 섬유화 평가}
+
+  - id: 364-C02
+    topic: 섬유화 평가 대상과 방법
+    type: workup
+    original:
+      text: "간생검이 NASH 진단의 표준. 영상으로 지방 확인, 비침습적 섬유화 표지자 연구 중."
+      location: {file: by_chapter/364장.md, line: 43}
+    status: 개정
+    current:
+      text: >
+        제2형 당뇨, 복부비만+대사 위험인자 1개 이상, 간기능 이상이 있으면 섬유화를 동반한 MASLD를 찾도록 권고한다(강한 권고).
+        단계적 접근: 먼저 FIB-4 같은 비특허 혈액 점수, 이어서 섬유화가 의심되거나 고위험이면 간 탄성검사(진동 제어 일시 탄성초음파·MR 탄성영상)로 확인한다(강한 권고). ELF는 영상 대안이 될 수 있다.
+        혈액 점수와 탄성검사는 진행된 섬유화 배제에, 탄성검사는 예측에 더 적합하다. 대부분 간생검은 필요 없지만 지방간염 확진과 다른 원인 배제에는 필요하다.
+      sources:
+        - {id: PAPER-EASL-EASD-EASO-MASLD-2024, locator: "Screening, case-finding, diagnosis and monitoring (Fig. 2)"}
+        - {id: VADOD-DM-2023, locator: "Recommendation 5 (FIB-4)"}
+    verification: primary
+    note: "FIB-4 절단값(1.3·2.67 등)은 지침 그림에 있어 본문 추출로 확인하지 못함 — 계산식·절단값은 검수 후 구현."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {any: [{dx: E11}, {all: [{finding: abdominal_obesity}, {finding: metabolic_risk_factor_1plus}]}, {finding: abnormal_liver_enzymes}]}
+        tests:
+          - {lab: FIB4, step: 1, reason: "섬유화 동반 MASLD 찾기"}
+          - {exam: Liver_elastography, step: 2, when: "FIB-4로 섬유화 배제 안 됨 또는 고위험", reason: 섬유화 병기 확인}
+        strength: "EASL–EASD–EASO 2024 (strong)"
+
+  - id: 364-C03
+    topic: 동반질환 평가와 간세포암 감시
+    type: workup
+    original:
+      text: "NAFLD 환자는 대사증후군·심혈관질환 위험이 높음. 간경변으로 진행 시 간세포암 위험."
+      location: {file: by_chapter/364장.md, line: 61}
+    status: 보완
+    current:
+      text: >
+        MASLD 성인에서 제2형 당뇨, 이상지질혈증, 고혈압, 신장질환, 수면무호흡, 다낭성 난소증후군과 심혈관 위험을 평가하고, 진단 시와 정기 추적 때 관련 검사·진찰을 권고한다(강한 권고).
+        비만·당뇨에 따른 간외 암 선별 참여를 권장한다. 간세포암 감시: F3 미만 비간경변은 권고하지 않고, F3는 개별 위험에 따라 고려하며, MASLD 간경변에는 감시 프로그램을 적용한다.
+        비만 동반 간경변처럼 초음파 민감도가 낮은 고위험군은 AFP를 함께 쓸 수 있고, 시야가 계속 나쁘면 MRI를 고려한다.
+      sources:
+        - {id: PAPER-EASL-EASD-EASO-MASLD-2024, locator: "Screening, case-finding, diagnosis and monitoring"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{dx: K75.81}, {dx: K74}]}
+        tests:
+          - {exam: Liver_ultrasound, reason: 간세포암 감시}
+          - {lab: AFP, when: "초음파 민감도 낮은 고위험", reason: 간세포암 감시}
+
+  - id: 364-C04
+    topic: 생활습관 치료(체중 감량·식이·운동)
+    type: treatment
+    original:
+      text: "식이와 운동으로 체중 감량이 일차 치료 — 체중 감량은 간 지방·염증 개선."
+      location: {file: by_chapter/364장.md, line: 77}
+    status: 유지
+    current:
+      text: >
+        식이·행동요법으로 체중을 줄이도록 권고한다(강한 권고). 과체중이면 간 지방 감소에 ≥5%, 간 염증 개선에 7–10%, 섬유화 개선에 ≥10%의 지속 감량을 목표로 한다.
+        지중해식에 가까운 식단, 초가공식품 제한, 가당음료 회피를 권고한다. 신체활동은 주 150분 넘는 중강도 또는 75분 고강도를 선호한다. 정상 체중 MASLD도 식이·운동을 권고한다.
+        건강기능식품은 권고하지 않는다. 커피 섭취는 관찰 연구에서 간 손상 개선과 관련됐다.
+      sources:
+        - {id: PAPER-EASL-EASD-EASO-MASLD-2024, locator: "Treatment of MASLD: non-pharmacological therapy"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K75.81, K76.0]}
+        recommendations:
+          - when: {all: [{finding: masld}, {var: BMI, op: ">=", value: 25}]}
+            recommend: {weight_loss_targets_pct: {steatosis: 5, inflammation: "7–10", fibrosis: 10}, activity: ">150분/주 중강도 또는 75분/주 고강도"}
+            strength: "EASL–EASD–EASO 2024 (strong)"
+
+  - id: 364-C05
+    topic: MASH 약물치료
+    type: dose
+    original:
+      text: >
+        FDA 승인 약제 없음. 피오글리타존·비타민 E(800 IU/일, PIVENS)가 조직소견 일부 개선, 메트포르민은 효과 없음. 우르소데옥시콜산·오메가-3 이득 없음. 스타틴은 안전하게 사용 가능.
+      location: {file: by_chapter/364장.md, line: 83}
+    status: 개정
+    current:
+      text: >
+        현지 승인·라벨에 따라 F2 이상의 유의한 섬유화를 동반한 비간경변 MASH는 레스메티롬 치료를 고려하도록 권고한다(강한 권고). 간경변 단계 MASH에 권고할 표적 약물은 없다.
+        비타민 E는 MASH 표적치료로 권고하지 않는다. 피오글리타존은 비간경변 MASH에 안전하나 표적치료로 권고하지 않는다. GLP-1 RA는 MASH 표적치료로 권고되지 않지만 MASH(대상성 간경변 포함)에서 안전하며
+        당뇨·비만 적응증에 쓴다. SGLT2i·메트포르민도 표적치료 근거는 부족하나 안전하므로 당뇨·심부전·CKD 적응증에 쓴다. 비인크레틴 체중감량제는 MASH 표적치료로 권고하지 않는다.
+        레스메티롬(REZDIFFRA, 미국 허가·가속 승인): F2–F3 섬유화를 동반한 비간경변 성인 MASH, 식이·운동과 함께. 실제 체중 <100 kg 80 mg, ≥100 kg 100 mg 1일 1회. 중등도 CYP2C8 억제제 병용 시 용량 조정.
+      sources:
+        - {id: PAPER-EASL-EASD-EASO-MASLD-2024, locator: "Treatment of MASLD: pharmacological therapy"}
+        - {id: OPENFDA-RESMETIROM, locator: "1 Indications; 2.1–2.2"}
+    verification: primary
+    conflicts:
+      - "원문(2015) '승인 약제 없음'과 비타민 E·피오글리타존 서술 → 현재는 레스메티롬 승인(미국 2024), 비타민 E·피오글리타존은 표적치료로 권고하지 않음. 세마글루타이드의 MASH 적응증(미국 2025)은 openFDA 라벨 판에서 확인하지 못함."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-RESMETIROM
+        ingredient: resmetirom
+        indication: 비간경변 MASH(F2–F3)
+        source_priority: [OPENFDA-RESMETIROM]
+        rules:
+          - {when: {var: weight_kg, op: "<", value: 100}, action: "80 mg 1일 1회"}
+          - {when: {var: weight_kg, op: ">=", value: 100}, action: "100 mg 1일 1회"}
+          - {when: {dx: K74}, action: "간경변 단계에는 적응증 없음", alert: high}
+        interactions: ["중등도 CYP2C8 억제제 병용 시 감량(라벨 2.2)"]
+      - kind: treatment
+        condition: {kcd: [K75.81]}
+        recommendations:
+          - when: {all: [{finding: mash}, {med: vitamin_e}, {finding: indication_mash_only}]}
+            recommend: {action: avoid, detail: "MASH 표적치료로 비타민 E 비권장"}
+            strength: "EASL–EASD–EASO 2024 (weak)"
+
+  - id: 364-C06
+    topic: 비만대사 수술과 스타틴
+    type: treatment
+    original:
+      text: "비만대사 수술은 NAFLD 호전. 스타틴은 NAFLD에서 간부전을 일으킨다는 근거가 없어 이상지질혈증 치료에 좋은 선택."
+      location: {file: by_chapter/364장.md, line: 97}
+    status: 유지
+    current:
+      text: >
+        적응증이 있는 비간경변 MASLD 성인에게 비만대사 수술을 고려하도록 권고한다(강한 권고). 대상성 간경변은 경험 있는 다학제 팀이 문맥고혈압 등을 평가한 뒤 고려할 수 있다. 내시경 비만 시술은 아직 권고하지 않는다.
+        스타틴 적응증이 있고 기저 AST·ALT가 정상 상한의 3배 미만이면 스타틴을 적응증대로 쓴다(VA/DoD 지질 Rec 11).
+      sources:
+        - {id: PAPER-EASL-EASD-EASO-MASLD-2024, locator: "Treatment of MASLD: surgical and endoscopic therapy"}
+        - {id: VADOD-LIPIDS-2025, locator: "Recommendation 11"}
+    verification: primary
+    review: {status: draft}

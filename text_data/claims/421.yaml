@@ -1,0 +1,234 @@
+# 421장 지질단백질 대사 이상 질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+
+chapter: "421"
+title: 지질단백질 대사 이상 질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 421-C01
+    topic: 심혈관 위험도 평가
+    type: workup
+    original:
+      text: "추가 검사와 치료는 AHA/ACC 가이드라인의 위험도 계산 등 전반적인 심혈관질환 위험성에 따라 결정."
+      location: {file: by_chapter/421장.md, line: 322}
+    status: 개정
+    current:
+      text: >
+        일차예방의 심혈관 위험 평가는 PREVENT 위험 도구를 제안한다(Rec 1, Weak for — PCE보다 정확, 30–79세 10년·30년 위험, 인종 중립).
+        중간–고위험이면 임상 결정에 영향을 줄 때 관상동맥 칼슘(CAC) 검사로 위험도를 보정하도록 제안하고(Rec 3), 저위험에는 일상적 CAC를 하지 않는다(Rec 4).
+        위험 증가군 식별을 위해 Lp(a) 측정을 제안한다(Rec 5). ABI, ApoB, 다유전자 위험점수, 경동맥 플라크, hs-CRP의 일상적 사용은 근거 불충분(Rec 6).
+      sources:
+        - {id: VADOD-LIPIDS-2025, locator: "Recommendations 1–6; Sidebar 7"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{not: {finding: established_ascvd}}, {var: age, op: ">=", value: 30}, {var: age, op: "<=", value: 79}]}
+        tests:
+          - {calc: PREVENT_10y_risk, reason: 일차예방 심혈관 위험 평가}
+          - {lab: Lpa, reason: "위험 증가군 식별(Rec 5)"}
+        strength: "VA/DoD Rec 1, 5 (Weak for)"
+
+  - id: 421-C02
+    topic: 일차예방 스타틴
+    type: treatment
+    original:
+      text: "(원문은 AHA/ACC 위험도 기반 치료를 언급하며 구체 기준 없음)"
+      location: {file: by_chapter/421장.md, line: 322}
+    status: 보완
+    current:
+      text: >
+        일차예방에서 당뇨, 10년 심혈관 위험 ≥10%(PREVENT), 또는 LDL-C ≥190 mg/dL이면 최소 중강도 스타틴을 권고한다(Rec 7, Strong for).
+        당뇨가 없고 LDL-C <190, 10년 위험 약 5% 이상 10% 미만이면 중강도 스타틴을 제안한다(Rec 8, Weak for).
+        HIV 환자는 10년 위험이 <5%로 낮아도 항레트로바이러스제와 상호작용이 적은 중강도 스타틴을 제안한다(Rec 10).
+        기저 AST·ALT가 정상 상한 3배 미만이면 적응증대로 스타틴을 쓴다(Rec 11).
+      sources:
+        - {id: VADOD-LIPIDS-2025, locator: "Recommendations 7, 8, 10, 11"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E78]}
+        recommendations:
+          - when: {all: [{not: {finding: established_ascvd}}, {any: [{dx: E11}, {var: PREVENT_10y_risk_pct, op: ">=", value: 10}, {var: LDL, op: ">=", value: 190}]}]}
+            recommend: {drug_class: statin, intensity: "moderate 이상"}
+            strength: "VA/DoD Rec 7 (Strong for)"
+          - when: {all: [{not: {finding: established_ascvd}}, {not: {dx: E11}}, {var: LDL, op: "<", value: 190}, {var: PREVENT_10y_risk_pct, op: ">=", value: 5}, {var: PREVENT_10y_risk_pct, op: "<", value: 10}]}
+            recommend: {drug_class: statin, intensity: moderate}
+            strength: "VA/DoD Rec 8 (Weak for)"
+          - when: {all: [{dx: B20}, {not: {finding: established_ascvd}}]}
+            recommend: {drug_class: statin, intensity: moderate, note: "항레트로바이러스제 상호작용이 적은 약제"}
+            strength: "VA/DoD Rec 10 (Weak for)"
+          - when: {all: [{var: ALT_xULN, op: "<", value: 3}, {var: AST_xULN, op: "<", value: 3}]}
+            recommend: {action: statin_not_withheld_for_mild_transaminase_elevation}
+            strength: "VA/DoD Rec 11 (Weak for)"
+
+  - id: 421-C03
+    topic: 이차예방 지질 치료
+    type: treatment
+    original:
+      text: "(원문은 관상동맥질환 환자 치료를 개별 약제 설명으로만 다룸)"
+      location: {file: by_chapter/421장.md, line: 342}
+    status: 보완
+    current:
+      text: >
+        이차예방은 고강도 스타틴, 또는 중강도 스타틴+에제티미브, 또는 중강도 스타틴+PCSK9 억제제 중 하나를 제안한다(Rec 13).
+        초고위험(지질강하 치료 중 최근 12개월 내 MI·ACS, 치료 중 재발한 ACS·MI·동맥경화성 뇌졸중, 또는 치료 중 ASCVD+LDL-C ≥70)은
+        고강도·최대 내약 스타틴에 에제티미브 및/또는 PCSK9 억제제 병합을 제안한다(Rec 14).
+        치료로 LDL-C <30 mg/dL가 되어도 지속을 제안한다(Rec 15). 고정 용량 고강도 스타틴 대비 목표치 치료(예: LDL-C <70)를 권고할 근거는 불충분하다(Rec 17).
+        최근 관상동맥질환(MI, CAD 진단, CABG, PCI)에는 구조화된 운동 기반 심장재활을 권고한다(Rec 24, Strong for).
+      sources:
+        - {id: VADOD-LIPIDS-2025, locator: "Recommendations 13–15, 17, 24; Sidebar 4"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [I25, I63, I70]}
+        recommendations:
+          - when: {finding: established_ascvd}
+            recommend: {options: ["고강도 스타틴", "중강도 스타틴+에제티미브", "중강도 스타틴+PCSK9 억제제"]}
+            strength: "VA/DoD Rec 13 (Weak for)"
+          - when: {all: [{finding: established_ascvd}, {med_class: lipid_lowering}, {any: [{event: mi_or_acs_within_12mo}, {event: recurrent_ascvd_event}, {var: LDL, op: ">=", value: 70}]}]}
+            recommend: {options: ["고강도·최대 내약 스타틴+에제티미브", "+PCSK9 억제제", "+에제티미브+PCSK9 억제제"]}
+            strength: "VA/DoD Rec 14 (Weak for)"
+          - when: {all: [{med_class: lipid_lowering}, {var: LDL, op: "<", value: 30}]}
+            recommend: {action: continue}
+            strength: "VA/DoD Rec 15 (Weak for)"
+
+  - id: 421-C04
+    topic: 스타틴 강도별 용량
+    type: dose
+    original:
+      text: "표 421-5 고지혈증 치료 약제 요약(스타틴, 담즙산 결합수지, 에제티미브, 니코틴산, 피브레이트, 오메가-3)."
+      location: {file: by_chapter/421장.md, line: 364}
+    status: 개정
+    current:
+      text: >
+        중강도: 로수바스타틴 5–10 mg, 아토르바스타틴 10–20 mg, 플루바스타틴 80 mg(XL) 또는 40 mg 1일 2회, 로바스타틴 40–80 mg, 피타바스타틴 1–4 mg,
+        프라바스타틴 40–80 mg, 심바스타틴 20–40 mg. 고강도: 로수바스타틴 20–40 mg, 아토르바스타틴 40–80 mg(그 외는 고강도 해당 없음).
+      sources:
+        - {id: VADOD-LIPIDS-2025, locator: "Sidebar 5: Statin Intensity"}
+    verification: primary
+    note: "신기능·간기능·상호작용에 따른 개별 스타틴 용량 제한은 openFDA 허가사항으로 추가 보강 필요."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-STATIN-INTENSITY
+        ingredient_class: statin
+        source_priority: [VADOD-LIPIDS-2025]
+        intensity_table:
+          rosuvastatin: {moderate: "5–10 mg", high: "20–40 mg"}
+          atorvastatin: {moderate: "10–20 mg", high: "40–80 mg"}
+          fluvastatin: {moderate: "80 mg XL 또는 40 mg 1일 2회", high: null}
+          lovastatin: {moderate: "40–80 mg", high: null}
+          pitavastatin: {moderate: "1–4 mg", high: null}
+          pravastatin: {moderate: "40–80 mg", high: null}
+          simvastatin: {moderate: "20–40 mg", high: null}
+        alert_note: "처방 스타틴 용량이 권고 강도에 맞는지 검토용"
+
+  - id: 421-C05
+    topic: 스타틴 불내성
+    type: treatment
+    original:
+      text: "(원문은 스타틴 근육 부작용을 약제 설명에서 언급)"
+      location: {file: by_chapter/421장.md, line: 364}
+    status: 보완
+    current:
+      text: >
+        스타틴을 견디지 못하면 휴약기(예: 1개월) 후 같은 또는 다른 스타틴이나 더 낮은 용량으로 재투여하고, 실패하면 간헐(비매일) 투여를 시도한다(Rec 18).
+        스타틴을 쓸 수 없으면 벰페도산, 에제티미브, 피브레이트, PCSK9 단클론항체 중 하나를 제안한다(Rec 19).
+      sources:
+        - {id: VADOD-LIPIDS-2025, locator: "Recommendations 18, 19; Sidebar 6"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E78]}
+        recommendations:
+          - when: {finding: statin_intolerance}
+            recommend: {steps: ["휴약기 후 같은/다른 스타틴 또는 저용량 재투여", "간헐 투여", "벰페도산·에제티미브·피브레이트·PCSK9 mAb"]}
+            strength: "VA/DoD Rec 18, 19 (Weak for)"
+
+  - id: 421-C06
+    topic: 중성지방·피브레이트·오메가-3
+    type: treatment
+    original:
+      text: >
+        공복 중성지방 >1,000 mg/dL이면 킬로미크론혈증 — 급성 췌장염 위험으로 중성지방을 낮춰야 함. 고중성지방이면 공복혈당, 소변단백·크레아티닌,
+        간기능, TSH로 이차 원인 배제.
+      location: {file: by_chapter/421장.md, line: 330}
+    status: 개정
+    current:
+      text: >
+        중성지방 상승의 이차 원인(동반질환, 음주, 호르몬제·면역 관련 약·베타차단제·티아지드/루프 이뇨제·담즙산 결합수지·비정형 항정신병약·이소트레티노인 등)을 고려한다.
+        이차예방에서 최대 내약 스타틴에도 공복 중성지방 ≥150 mg/dL가 지속되면 이코사펜트 에틸 2 g 1일 2회를 제안한다(Rec 16). 일차예방에서는 근거 불충분(Rec 9).
+        스타틴에 피브레이트 추가는 제안하지 않는다(Rec 12). 이코사펜트 에틸 외의 오메가-3 보충제는 제안하지 않는다(Rec 21).
+      sources:
+        - {id: VADOD-LIPIDS-2025, locator: "Recommendations 9, 12, 16, 21; Sidebar 8"}
+    verification: primary
+    note: "중성지방 >1,000 mg/dL 췌장염 위험·킬로미크론혈증 기준은 A등급 근거 미확보(원문 대조용)."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E78.1]}
+        recommendations:
+          - when: {all: [{finding: established_ascvd}, {med_class: statin}, {var: TG_fasting, op: ">=", value: 150}]}
+            recommend: {ingredient: icosapent_ethyl, dose: "2 g 1일 2회"}
+            strength: "VA/DoD Rec 16 (Weak for)"
+          - when: {all: [{med_class: statin}, {med_class: fibrate}]}
+            recommend: {action: avoid_combination, detail: "스타틴+피브레이트 추가 비권장"}
+            strength: "VA/DoD Rec 12 (Weak against)"
+            alert_level: low
+          - when: {med_class: omega3_supplement}
+            recommend: {action: avoid, detail: "이코사펜트 에틸 외 오메가-3 보충제"}
+            strength: "VA/DoD Rec 21 (Weak against)"
+      - kind: workup
+        trigger: {var: TG, op: ">=", value: 150}
+        tests:
+          - {review: medications, reason: "중성지방 상승 유발 약물(호르몬, 베타차단제, 티아지드/루프 이뇨제, 담즙산 결합수지, 비정형 항정신병약, 이소트레티노인 등)"}
+          - {review: alcohol_intake, reason: 이차 원인}
+
+  - id: 421-C07
+    topic: 생활습관 중재
+    type: treatment
+    original:
+      text: "(원문은 식이·체중 조절을 일반적으로 언급)"
+      location: {file: by_chapter/421장.md, line: 342}
+    status: 보완
+    current:
+      text: >
+        일차·이차예방 모두 지중해식 식단을 제안하고(Rec 22), 환자가 가능한 최대한 규칙적 유산소 신체활동을 늘리도록 제안한다(Rec 23).
+        섬유질, 마늘, 생강, 녹차, 홍국 보충제는 근거 불충분(Rec 20).
+      sources:
+        - {id: VADOD-LIPIDS-2025, locator: "Recommendations 20, 22, 23"}
+    verification: primary
+    review: {status: draft}
+
+  - id: 421-C08
+    topic: LDL 콜레스테롤 계산식(Friedewald)
+    type: formula
+    original:
+      text: "LDL-C = 총콜레스테롤 − 중성지방/5 − HDL-C. 공복 중성지방 ≤200에서 적용, ≥400이면 사용 불가."
+      location: {file: by_chapter/421장.md, line: 322}
+    status: 개정
+    current:
+      text: >
+        LDL 콜레스테롤은 공복 상태에서 측정한 총콜레스테롤, 중성지방, HDL 콜레스테롤로 추정한다. 중성지방이 400 mg/dL 미만이면 중성지방을 5로 나눠 VLDL 콜레스테롤을 추정하고,
+        LDL-C = 총콜레스테롤 − HDL-C − 중성지방/5(모두 mg/dL)로 계산한다. 중성지방이 400 mg/dL를 넘으면 이 방법은 정확하지 않다.
+        국가건강검진도 LDL 콜레스테롤을 총콜레스테롤·HDL 콜레스테롤·중성지방으로 계산하되, 중성지방이 400 mg/dL 이상이면 직접 측정한다.
+      sources:
+        - {id: KR-HEALTH-SCREENING-NOTICE-2026, locator: "별표 1 4. 혈액검사 — 저밀도(LDL) 콜레스테롤 검사방법"}
+        - {id: NHLBI-ATP3-2002, locator: "Section II.3 — LDL cholesterol estimation (p. II-2, ref. 617)"}
+    verification: primary
+    conflicts:
+      - "19판 원문은 '중성지방 ≤200에서 적용'으로 요약했으나 ATP III·국가검진 기준은 400 mg/dL 미만(이상이면 직접 측정)."
+    review: {status: draft}
+    corpus:
+      - kind: formula
+        name: Friedewald LDL-C
+        output: {var: LDL, unit: mg/dL}
+        expression: "TC − HDL − TG/5"
+        variables: {TC: "총콜레스테롤 mg/dL(공복)", HDL: "HDL 콜레스테롤 mg/dL", TG: "중성지방 mg/dL"}
+        constraints: ["중성지방 400 mg/dL 이상이면 사용하지 않고 직접 측정", "공복 검체"]

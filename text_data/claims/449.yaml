@@ -1,0 +1,170 @@
+# 449장 파킨슨병과 기타 이상운동질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 독일신경과학회(DGN) 파킨슨병 진단·치료 지침(Neurol Res Pract 2024, CC BY — 독일 허가·보험 환경 반영).
+
+chapter: "449"
+title: 파킨슨병과 기타 이상운동질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 449-C01
+    topic: 파킨슨병 진단과 영상검사
+    type: diagnosis
+    original:
+      text: "임상 진단(서동+안정떨림·경직), 레보도파 반응. 표 449-3 다른 진단을 시사하는 증상. PET·DAT 영상."
+      location: {file: by_chapter/449장.md, line: 36}
+    status: 개정
+    current:
+      text: >
+        진단에는 MDS 2015 기준을 쓴다. 레보도파 반응은 진단 정확도를 높이지만, 5년 이상 경과 관찰이 초기 반응보다 정확하다.
+        파킨슨증 감별을 위해 질병 초기에 표준 서열(T1·T2, 가능하면 고해상 3D, 철 민감·확산 강조 포함)의 뇌 MRI를 시행한다.
+        숙련자의 경두개 뇌실질 초음파, 비전형 파킨슨증이 의심되고 임상적 의미가 있을 때 FDG-PET, 초기 DAT-SPECT를 고려할 수 있다.
+      sources:
+        - {id: PAPER-DGN-PARKINSON-2024, locator: "Diagnosis — Clinical diagnostic criteria; Imaging diagnostics"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: suspected_parkinsonism}
+        tests:
+          - {exam: Brain_MRI, timing: "질병 초기", reason: "파킨슨증 감별(MDS 2015 기준 적용)"}
+
+  - id: 449-C02
+    topic: 초기 단독요법과 병용요법
+    type: treatment
+    original:
+      text: "레보도파(카르비도파 병용)가 가장 효과적, 운동합병증(이상운동증·변동) 발생. 도파민 작용제·MAO-B 억제제는 초기 단독 가능, 젊은 환자에서 운동합병증 지연."
+      location: {file: by_chapter/449장.md, line: 160}
+    status: 유지
+    current:
+      text: >
+        초기 단독요법은 약물군별 효과·부작용, 나이, 동반질환, 정신사회 상태를 고려해 고른다. 레보도파 단독(특히 고용량·박동성 투여)은 MAO-B 억제제·도파민 작용제보다 운동 변동·이상운동증이 일찍 생기므로,
+        생물학적으로 젊은 환자는 도파민 작용제나 MAO-B 억제제를 우선 고려한다. 다만 증상이 심하거나 빠른 효과가 필요하거나 다중 동반질환이 있으면 레보도파를 쓴다.
+        중간 유지 용량에서 효과가 부족하거나 부작용으로 증량이 어려우면 레보도파·도파민 작용제·MAO-B 억제제를 병용한다.
+      sources:
+        - {id: PAPER-DGN-PARKINSON-2024, locator: "Initial monotherapy; Combination therapy"}
+    verification: primary
+    review: {status: draft}
+
+  - id: 449-C03
+    topic: 약물군별 권고와 사용 제한
+    type: treatment
+    original:
+      text: "표 449-5: 레보도파, 도파민 작용제(프라미펙솔·로피니롤·로티고틴·아포모르핀), MAO-B 억제제(셀레질린·라사길린), COMT 억제제(엔타카폰·톨카폰), 아만타딘, 항콜린제."
+      location: {file: by_chapter/449장.md, line: 216}
+    status: 개정
+    current:
+      text: >
+        레보도파는 탈탄산효소 억제제(카르비도파·벤세라지드)에 따른 우선순위 없이 쓸 수 있고, 서방형은 주간이 아니라 야간 증상에만 권한다. 속용해·흡입 레보도파는 급성 증상 조절용이다.
+        맥각 도파민 작용제(브로모크립틴, 카베르골린, 퍼골라이드)는 쓰지 않는다. 비맥각 작용제(프라미펙솔, 로피니롤, 피리베딜, 로티고틴, 제한적으로 아포모르핀)는 쓸 수 있다.
+        COMT 억제제 오피카폰·엔타카폰은 레보도파 반응 변동에 쓸 수 있고, 톨카폰은 간독성으로 엄격한 감시하 2차 약이다. MAO-B 억제제(셀레질린·라사길린)는 초기 단독 또는 변동 시 레보도파 병용, 사피나미드는 병용만.
+        아만타딘은 레보도파 유발 이상운동증 감소에 쓰며 항콜린·환각 부작용을 고려한다. 항콜린제는 위험-이득이 나빠 항파킨슨제로 더 이상 쓰지 않으며 드문 떨림 조절에만 제한한다.
+      sources:
+        - {id: PAPER-DGN-PARKINSON-2024, locator: "Pharmacotherapeutic options; Therapy of dyskinesias; Therapy of tremor"}
+    verification: primary
+    conflicts:
+      - "원문은 항콜린제를 떨림 우세 젊은 환자에 쓸 수 있다고 서술 — DGN 2024는 원칙적으로 사용하지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G20]}
+        recommendations:
+          - when: {all: [{dx: G20}, {any: [{med: bromocriptine}, {med: cabergoline}, {med: pergolide}]}]}
+            recommend: {action: avoid, detail: "맥각 도파민 작용제"}
+            alert_level: medium
+          - when: {all: [{dx: G20}, {med_class: anticholinergic}]}
+            recommend: {action: review, detail: "항콜린제 — 드문 떨림 조절 외 사용하지 않음"}
+            alert_level: medium
+          - when: {all: [{dx: G20}, {med: tolcapone}]}
+            recommend: {action: monitor, detail: "간독성 — 임상·검사 감시"}
+            alert_level: medium
+
+  - id: 449-C04
+    topic: 기립성 저혈압
+    type: treatment
+    original:
+      text: "자율신경 증상(기립성 저혈압): 염분·수분, 플루드로코르티손, 미도드린."
+      location: {file: by_chapter/449장.md, line: 275}
+    status: 유지
+    current:
+      text: >
+        진단에는 Schellong 검사(가능하면 기울기 검사)를 한다. 단계적 치료: 감염·탈수 등 악화 요인 교정, 병용약 검토(혈압약 감량·중단), 비약물 조치(금기가 없으면 충분한 수분·염분, 과식·과음·열 노출 회피,
+        취침 시 상체 10–20° 거상, 낮에는 압박 스타킹보다 복부 압박대). 약물은 미도드린을 권고하고 플루드로코르티손을 권할 수 있으며, 드록시도파를 고려할 수 있다.
+        야간 누운 자세 고혈압에는 저녁 클로니딘, 에플레레논, 로사르탄, 네비볼롤, 경피 니트로글리세린, 실데나필을 고려할 수 있다.
+      sources:
+        - {id: PAPER-DGN-PARKINSON-2024, locator: "Orthostatic hypotension"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G20, I95.1]}
+        recommendations:
+          - when: {all: [{dx: G20}, {finding: orthostatic_hypotension}]}
+            recommend: {steps: ["악화 요인 교정", "혈압약 감량·중단 검토", "비약물 조치", "미도드린 → 플루드로코르티손"]}
+
+  - id: 449-C05
+    topic: 인지장애·정신병 증상
+    type: treatment
+    original:
+      text: "파킨슨병 치매에 콜린분해효소억제제(리바스티그민), 정신병에 쿠에티아핀·클로자핀(전형 항정신병약 금지)."
+      location: {file: by_chapter/449장.md, line: 275}
+    status: 유지
+    current:
+      text: >
+        파킨슨병 경도인지장애: 인지 훈련과 주 2–3회 45–60분 유산소 운동을 제공하고, 리바스티그민·도네페질·갈란타민은 쓰지 않는다.
+        파킨슨병 치매: 인지 자극 치료를 제공하고, 리바스티그민을 쓰며 도네페질은 허가 외로 쓸 수 있고 갈란타민은 쓰지 않는다.
+        정신병 증상: 비약물 조치와 탈수·감염 교정 → 유발 약물(항콜린·항글루탐산·진정제) 조정 → 파킨슨 약(특히 아만타딘, MAO-B 억제제, 도파민 작용제, COMT 억제제) 조정 →
+        실패하면 위험·이득 평가 후 클로자핀 등 특정 항정신병약. 인지장애가 있으면 콜린분해효소억제제로 전환을 고려한다.
+      sources:
+        - {id: PAPER-DGN-PARKINSON-2024, locator: "Cognitive disorders; Psychosis"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G20, F02.3]}
+        recommendations:
+          - when: {all: [{dx: G20}, {finding: pd_mci}, {med_class: cholinesterase_inhibitor}]}
+            recommend: {action: avoid, detail: "파킨슨병 경도인지장애에 콜린분해효소억제제"}
+          - when: {all: [{dx: G20}, {finding: pd_dementia}]}
+            recommend: {ingredient: rivastigmine}
+          - when: {all: [{dx: G20}, {finding: psychosis}]}
+            recommend: {steps: ["비약물·탈수·감염 교정", "유발 약 조정", "파킨슨 약 조정", "클로자핀 등"]}
+
+  - id: 449-C06
+    topic: 무운동 위기와 금단 증후군
+    type: treatment
+    original:
+      text: "(원문 해당 범위에 무운동 위기 별도 권고 없음 — 신경이완제 악성증후군 유사 상태)"
+      location: {file: by_chapter/449장.md, line: 301}
+    status: 보완
+    current:
+      text: >
+        무운동 위기는 가능하면 중간·집중치료실에서 일찍 충분히 치료한다. 감염 등 유발 요인을 즉시 치료하고, 수분, 혈전 예방, 해열, 활력징후 감시를 한다.
+        비위관 속용해 레보도파, 피하·설하 아포모르핀 또는 경피 로티고틴으로 도파민 치료를 유지하고, 정주 아만타딘 황산염을 고려한다.
+        도파민 작용제는 금단 증후군을 조기에 알아차리도록 천천히 중단한다. 뇌심부자극 환자는 3–6개월마다 배터리를 점검한다.
+      sources:
+        - {id: PAPER-DGN-PARKINSON-2024, locator: "Akinetic crisis and withdrawal syndromes"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G20]}
+        recommendations:
+          - when: {all: [{med_class: dopamine_agonist}, {event: abrupt_discontinuation}]}
+            recommend: {action: taper_slowly, detail: "도파민 작용제 금단 증후군 위험"}
+            alert_level: medium
+          - when: {all: [{dx: G20}, {event: npo_or_surgery}]}
+            recommend: {action: maintain_dopaminergic_therapy, options: ["비위관 레보도파", "로티고틴 패치", "아포모르핀"]}
+            alert_level: high
+
+  - id: 449-C07
+    topic: 기타 이상운동질환(본태떨림·무도병·근긴장이상 등)
+    type: treatment
+    original:
+      text: "본태떨림, 근긴장이상, 헌팅턴병, 투렛, 하지불안증후군 등 기타 이상운동질환."
+      location: {file: by_chapter/449장.md, line: 12}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 출처 미확보."

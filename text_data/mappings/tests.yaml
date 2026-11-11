@@ -1,0 +1,338 @@
+# 검사·변수 개념 사전 — 말뭉치(corpus/*.jsonl)의 검사·변수 식별자를 표준 개념으로 묶는다.
+# 스키마·사용법: text_data/mappings/README.md
+#
+# 구역
+#   labs         검체 검사(결과값이 있는 단일 항목). unit = 말뭉치 기준 단위, convert = 다른 단위 → 기준 단위 배수
+#   panels       묶음 검사(CBC, LFT 등). members = labs 개념 id
+#   exams        영상·내시경·생검·기능검사(결과는 판독문). 수치 결과는 measurements 로 분리
+#   measurements 검사 판독·간호 기록에서 나오는 수치(폐기능, 골밀도, 결석 크기 등)
+#   vitals       활력 징후·신체 계측
+#   scores       임상 척도(임상의 입력)
+#   derived      다른 값으로 계산하는 변수(inputs = 개념 id)
+#   med_derived  처방 이력으로 계산하는 변수
+#   clinical     병력·경과 기간 등 임상의 입력
+#   tasks        검사가 아닌 감시 행위
+#
+# corpus_ids : 말뭉치에서 이 개념을 가리키는 식별자(동의어 포함). 개념 id 는 자동 포함.
+# aliases    : EMR itemName/examCode 자동 제안용 이름(대소문자·공백·기호 무시). 제안일 뿐 값은 쓰지 않는다.
+# loinc      : LOINC 코드. tools/verify_codes.py 로 NLM Clinical Tables 에서 이름을 확인한 코드만 둔다.
+
+labs:
+  - {id: ASMA, name_ko: 항평활근항체, name_en: Smooth muscle antibody, unit: text, loinc: [], aliases: [ASMA, SMA Ab, Anti-smooth muscle]}
+  - {id: Anti_LKM1, name_ko: 항LKM-1 항체, name_en: Liver kidney microsomal-1 antibody, unit: text, loinc: [], aliases: [Anti-LKM1, LKM-1]}
+  - {id: Total_cholesterol, name_ko: 총콜레스테롤, name_en: Cholesterol total, unit: mg/dL, convert: {mmol/L: 38.67}, range: [20, 2000], loinc: [2093-3], aliases: [T-chol, Total cholesterol, 총콜레스테롤, TC]}
+  # ── 보충 장(S01~S04) — 순환기·감염·암 검진
+  - {id: NT_proBNP, name_ko: NT-proBNP, name_en: NT-proBNP, unit: ng/L, convert: {pg/mL: 1}, range: [1, 100000], loinc: [33762-6], aliases: [NT-proBNP, NTproBNP, NT pro BNP]}
+  - {id: Syphilis_serology, name_ko: 매독 혈청검사, name_en: Syphilis serology, unit: text, loinc: [], aliases: [RPR, VDRL, TPHA, Syphilis]}
+  - {id: CT_NG_NAAT, name_ko: 클라미디아·임질 핵산증폭검사, name_en: Chlamydia/Gonorrhea NAAT, unit: text, loinc: [], aliases: [CT/NG PCR, Chlamydia NAAT, Gonorrhea NAAT]}
+  - {id: Cervical_cytology, name_ko: 자궁경부 세포검사(Pap), name_en: Cervical cytology, unit: text, loinc: [], aliases: [Pap smear, Pap test, 자궁경부세포검사]}
+  - {id: HPV_test, name_ko: 고위험 HPV 검사, name_en: High-risk HPV test, unit: text, loinc: [], aliases: [HPV DNA, HR-HPV]}
+  - {id: FIT_DNA, name_ko: 대변 DNA 검사(FIT-DNA), name_en: Multitarget stool DNA, unit: text, loinc: [], aliases: [FIT-DNA, Cologuard]}
+  - {id: TST, name_ko: 투베르쿨린 피부반응검사, name_en: Tuberculin skin test, unit: mm, loinc: [], aliases: [PPD, Tuberculin skin test, 투베르쿨린]}
+  - {id: TB_sputum_tests, name_ko: 객담 항산균 도말·핵산증폭·배양, name_en: Sputum AFB smear/NAAT/culture, unit: text, loinc: [], aliases: [AFB smear, TB PCR, AFB culture]}
+  # ── 신장·전해질
+  - {id: SCr, name_ko: 혈청 크레아티닌, name_en: Creatinine, unit: mg/dL, convert: {umol/L: 0.01131}, range: [0.05, 30], loinc: [2160-0], aliases: [Cr, Creatinine, Creat, S-Cr, 크레아티닌]}
+  - {id: BUN, name_ko: 혈액요소질소, name_en: Urea nitrogen, unit: mg/dL, convert: {mmol/L: 2.801}, range: [1, 300], loinc: [3094-0], aliases: [BUN, Urea nitrogen, 요소질소]}
+  - {id: eGFR, name_ko: 추정 사구체여과율, name_en: eGFR, unit: mL/min/1.73m2, range: [1, 200], loinc: [98979-8, 62238-1, 33914-3], aliases: [eGFR, GFR, 사구체여과율], note: "CKD-EPI 2021(98979-8)을 기준으로 한다. MDRD·2009 CKD-EPI 결과는 사이트 매핑에서 method 를 밝혀야 한다."}
+  - {id: Na, name_ko: 나트륨, name_en: Sodium, unit: mmol/L, convert: {mEq/L: 1}, range: [90, 200], loinc: [2951-2], aliases: [Na, Sodium, 나트륨, Na+]}
+  - {id: K, name_ko: 칼륨, name_en: Potassium, unit: mmol/L, convert: {mEq/L: 1}, range: [1, 10], loinc: [2823-3], aliases: [K, Potassium, 칼륨, K+]}
+  - {id: Bicarbonate, corpus_ids: [HCO3], name_ko: 중탄산염, name_en: Bicarbonate, unit: mmol/L, convert: {mEq/L: 1}, range: [2, 60], loinc: [1963-8, 2028-9, 1959-6], aliases: [HCO3, Bicarbonate, tCO2, Total CO2, 중탄산]}
+  - {id: Calcium, name_ko: 칼슘, name_en: Calcium, unit: mg/dL, convert: {mmol/L: 4.008}, range: [3, 20], loinc: [17861-6], aliases: [Ca, Calcium, 칼슘]}
+  - {id: Calcium_ionized, name_ko: 이온화 칼슘, name_en: Calcium ionized, unit: mmol/L, convert: {mg/dL: 0.2495}, range: [0.3, 3], loinc: [1994-3], aliases: [iCa, Ionized calcium, 이온화칼슘]}
+  - {id: Phosphate, name_ko: 인, name_en: Phosphate, unit: mg/dL, convert: {mmol/L: 3.097}, range: [0.3, 20], loinc: [2777-1], aliases: [P, Phosphorus, Phosphate, 인]}
+  - {id: Mg, name_ko: 마그네슘, name_en: Magnesium, unit: mg/dL, convert: {mmol/L: 2.431, mEq/L: 1.2155}, range: [0.3, 10], loinc: [19123-9], aliases: [Mg, Magnesium, 마그네슘]}
+  - {id: Uric_acid, name_ko: 요산, name_en: Uric acid, unit: mg/dL, convert: {umol/L: 0.01681}, range: [0.3, 30], loinc: [3084-1], aliases: [Uric acid, UA(serum), 요산]}
+  - {id: Serum_osmolality, name_ko: 혈청 삼투질농도, name_en: Osmolality serum, unit: mOsm/kg, loinc: [2692-2], aliases: [S-Osmolality, Serum osmolality, 혈청삼투압]}
+  # ── 당·지질
+  - {id: Glucose, name_ko: 혈당, name_en: Glucose, unit: mg/dL, convert: {mmol/L: 18.016}, range: [10, 2000], loinc: [2345-7], aliases: [Glucose, Glu, 혈당, 포도당]}
+  - {id: FPG, name_ko: 공복 혈당, name_en: Glucose fasting, unit: mg/dL, convert: {mmol/L: 18.016}, range: [10, 2000], loinc: [1558-6], aliases: [FBS, FPG, Fasting glucose, 공복혈당]}
+  - {id: OGTT_2h, name_ko: 75 g 경구 당부하 2시간 혈당, name_en: Glucose 2h post 75 g, unit: mg/dL, convert: {mmol/L: 18.016}, range: [10, 2000], loinc: [1518-0], aliases: [OGTT 2hr, 2hr glucose, 당부하2시간]}
+  - {id: HbA1c, name_ko: 당화혈색소, name_en: Hemoglobin A1c, unit: "%", convert: {mmol/mol: {factor: 0.09148, offset: 2.152}}, range: [3, 20], loinc: [4548-4, 17856-6], aliases: [HbA1c, A1c, Glycated hemoglobin, 당화혈색소]}
+  - {id: Triglycerides, corpus_ids: [TG], name_ko: 중성지방, name_en: Triglyceride, unit: mg/dL, convert: {mmol/L: 88.57}, range: [5, 10000], loinc: [2571-8], aliases: [TG, Triglyceride, 중성지방]}
+  - {id: TG_fasting, name_ko: 공복 중성지방, name_en: Triglyceride fasting, unit: mg/dL, convert: {mmol/L: 88.57}, range: [5, 10000], loinc: [3048-6], aliases: [Fasting TG], note: "공복 검체임이 확인된 결과만 매핑한다."}
+  - {id: LDL, name_ko: LDL 콜레스테롤, name_en: LDL cholesterol, unit: mg/dL, convert: {mmol/L: 38.67}, range: [1, 1000], loinc: [13457-7, 18262-6, 2089-1], aliases: [LDL, LDL-C, LDL cholesterol]}
+  - {id: HDL, name_ko: HDL 콜레스테롤, name_en: HDL cholesterol, unit: mg/dL, convert: {mmol/L: 38.67}, range: [1, 300], loinc: [2085-9], aliases: [HDL, HDL-C, HDL cholesterol]}
+  - {id: Lpa, name_ko: 지단백(a), name_en: Lipoprotein(a), unit: mg/dL, loinc: [10835-7, 43583-4], aliases: ["Lp(a)", Lipoprotein a], note: "mg/dL 과 nmol/L 은 환산할 수 없다(분자량 이질성)."}
+  # ── 간·췌장
+  - {id: Albumin, corpus_ids: [Serum_albumin], name_ko: 알부민, name_en: Albumin, unit: g/dL, convert: {g/L: 0.1}, range: [0.5, 7], loinc: [1751-7], aliases: [Albumin, Alb, 알부민]}
+  - {id: Bilirubin_total, name_ko: 총빌리루빈, name_en: Bilirubin total, unit: mg/dL, convert: {umol/L: 0.05847}, range: [0, 60], loinc: [1975-2], aliases: [T-bil, Total bilirubin, TB, 총빌리루빈]}
+  - {id: ALT, name_ko: ALT, name_en: Alanine aminotransferase, unit: U/L, convert: {IU/L: 1}, range: [0, 20000], loinc: [1742-6], aliases: [ALT, GPT, SGPT]}
+  - {id: AST, name_ko: AST, name_en: Aspartate aminotransferase, unit: U/L, convert: {IU/L: 1}, range: [0, 20000], loinc: [1920-8], aliases: [AST, GOT, SGOT]}
+  - {id: ALP, name_ko: 알칼리인산분해효소, name_en: Alkaline phosphatase, unit: U/L, convert: {IU/L: 1}, range: [0, 5000], loinc: [6768-6], aliases: [ALP, Alk phos, 알칼리포스파타제]}
+  - {id: GGT, name_ko: 감마글루타밀전이효소, name_en: Gamma glutamyl transferase, unit: U/L, convert: {IU/L: 1}, range: [0, 10000], loinc: [2324-2], aliases: [GGT, r-GTP, GGTP]}
+  - {id: Lipase, name_ko: 리파아제, name_en: Lipase, unit: U/L, convert: {IU/L: 1}, range: [0, 100000], loinc: [3040-3], aliases: [Lipase, 리파제]}
+  - {id: AFP, name_ko: 알파태아단백, name_en: Alpha-1-fetoprotein, unit: ng/mL, convert: {ug/L: 1}, loinc: [1834-1], aliases: [AFP, 알파태아단백]}
+  - {id: Acetaminophen_level, name_ko: 혈중 아세트아미노펜 농도, name_en: Acetaminophen level, unit: ug/mL, convert: {mg/L: 1}, loinc: [], aliases: [Acetaminophen level, APAP level]}
+  # ── 혈액·응고
+  - {id: Hb, corpus_ids: [Hemoglobin], name_ko: 혈색소, name_en: Hemoglobin, unit: g/dL, convert: {g/L: 0.1}, range: [2, 25], loinc: [718-7], aliases: [Hb, Hgb, Hemoglobin, 혈색소]}
+  - {id: Hematocrit, name_ko: 적혈구용적률, name_en: Hematocrit, unit: "%", loinc: [4544-3], aliases: [Hct, Hematocrit, 헤마토크릿]}
+  - {id: WBC, name_ko: 백혈구, name_en: Leukocytes, unit: 10^3/uL, convert: {10^9/L: 1}, range: [0.01, 500], loinc: [6690-2], aliases: [WBC, Leukocyte, 백혈구]}
+  - {id: Platelets, name_ko: 혈소판, name_en: Platelets, unit: 10^3/uL, convert: {10^9/L: 1}, range: [1, 2000], loinc: [777-3], aliases: [PLT, Platelet, 혈소판]}
+  - {id: INR, name_ko: 프로트롬빈 시간 INR, name_en: INR, unit: ratio, range: [0.5, 15], loinc: [6301-6, 34714-6], aliases: [INR, PT INR, PT(INR)]}
+  - {id: PT_sec, name_ko: 프로트롬빈 시간(초), name_en: Prothrombin time, unit: s, loinc: [5902-2], aliases: [PT, PT sec, Prothrombin time]}
+  - {id: aPTT, name_ko: 활성화 부분 트롬보플라스틴 시간, name_en: aPTT, unit: s, loinc: [3173-2], aliases: [aPTT, PTT]}
+  - {id: Fibrinogen, name_ko: 섬유소원, name_en: Fibrinogen, unit: mg/dL, convert: {g/L: 100}, loinc: [3255-7], aliases: [Fibrinogen, 섬유소원]}
+  - {id: Ferritin, name_ko: 페리틴, name_en: Ferritin, unit: ug/L, convert: {ng/mL: 1}, range: [0.5, 100000], loinc: [2276-4], aliases: [Ferritin, 페리틴]}
+  - {id: Transferrin_saturation, corpus_ids: [TSAT], name_ko: 트랜스페린 포화도, name_en: Transferrin saturation, unit: "%", range: [0, 100], loinc: [2502-3], aliases: [TSAT, Transferrin saturation, 트랜스페린포화도]}
+  - {id: VitB12, name_ko: 비타민 B12, name_en: Cobalamin, unit: pg/mL, convert: {pmol/L: 1.355}, loinc: [2132-9], aliases: [Vitamin B12, B12, Cobalamin]}
+  - {id: Folate, name_ko: 엽산, name_en: Folate, unit: ng/mL, convert: {nmol/L: 0.4413}, loinc: [2284-8], aliases: [Folate, Folic acid, 엽산]}
+  - {id: CRP, name_ko: C 반응 단백, name_en: C reactive protein, unit: mg/L, convert: {mg/dL: 10}, range: [0, 1000], loinc: [1988-5, 30522-7], aliases: [CRP, hs-CRP, C-reactive protein], note: "국내 검사실은 mg/dL 로 보고하는 곳이 많다 — 사이트 매핑에서 단위를 반드시 밝힌다."}
+  - {id: ESR, name_ko: 적혈구 침강 속도, name_en: ESR, unit: mm/h, loinc: [30341-2, 4537-7], aliases: [ESR, 적혈구침강속도]}
+  - {id: Lactate, name_ko: 젖산, name_en: Lactate, unit: mmol/L, convert: {mg/dL: 0.111}, loinc: [2524-7, 32693-4], aliases: [Lactate, Lactic acid, 젖산]}
+  - {id: CK, name_ko: 크레아틴 키나아제, name_en: Creatine kinase, unit: U/L, convert: {IU/L: 1}, loinc: [2157-6], aliases: [CK, CPK]}
+  - {id: Tryptase, name_ko: 트립타아제, name_en: Tryptase, unit: ug/L, convert: {ng/mL: 1}, loinc: [21582-2], aliases: [Tryptase]}
+  # ── 내분비
+  - {id: TSH, name_ko: 갑상선자극호르몬, name_en: Thyrotropin, unit: mIU/L, convert: {uIU/mL: 1}, range: [0, 500], loinc: [3016-3], aliases: [TSH, 갑상선자극호르몬]}
+  - {id: FT4, name_ko: 유리 T4, name_en: Thyroxine free, unit: ng/dL, convert: {pmol/L: 0.0777}, range: [0, 10], loinc: [3024-7], aliases: [Free T4, FT4, fT4]}
+  - {id: PTH_intact, corpus_ids: [iPTH], name_ko: 부갑상선호르몬(intact), name_en: Parathyrin intact, unit: pg/mL, convert: {pmol/L: 9.43, ng/L: 1}, range: [0, 5000], loinc: [2731-8], aliases: [iPTH, Intact PTH, PTH]}
+  - {id: Vitamin_D_25OH, name_ko: 25-수산화비타민 D, name_en: 25-hydroxyvitamin D, unit: ng/mL, convert: {nmol/L: 0.4006}, loinc: [62292-8, 1989-3], aliases: [25-OH Vit D, 25OHD, Vitamin D, 비타민D]}
+  - {id: Cortisol_AM, name_ko: 아침 혈청 코르티솔, name_en: Cortisol AM, unit: ug/dL, convert: {nmol/L: 0.03625}, range: [0, 100], loinc: [2143-6], aliases: [AM cortisol, Morning cortisol, Cortisol], note: "아침 8시 전후 검체만 매핑한다(LOINC 2143-6 은 채혈 시각을 구분하지 않는다)."}
+  - {id: DST_1mg_cortisol, name_ko: 1 mg 덱사메타손 억제 후 코르티솔, name_en: Cortisol post 1 mg dexamethasone overnight, unit: ug/dL, convert: {nmol/L: 0.03625}, range: [0, 100], loinc: [55138-2], aliases: [DST cortisol, Overnight DST]}
+  - {id: Late_night_salivary_cortisol, name_ko: 심야 타액 코르티솔, name_en: Cortisol saliva late night, unit: ug/dL, loinc: [2142-8], aliases: [Salivary cortisol, LNSC]}
+  - {id: UFC_24h, name_ko: 24시간 소변 유리 코르티솔, name_en: Cortisol free 24h urine, unit: ug/24h, loinc: [2147-7], aliases: [24hr UFC, Urine free cortisol]}
+  - {id: Aldosterone_renin_ratio, name_ko: 알도스테론/레닌 비, name_en: Aldosterone/Renin ratio, unit: ratio, loinc: [30894-0, 103560-9], aliases: [ARR, Aldosterone renin ratio], note: "레닌 활성도(ng/mL/h)와 직접 레닌 농도에 따라 기준값이 다르다 — 사이트 매핑에서 방법을 밝힌다."}
+  - {id: Metanephrines_plasma_free, name_ko: 혈장 유리 메타네프린, name_en: Metanephrine free plasma, unit: pg/mL, loinc: [38494-1, 49700-8], aliases: [Plasma free metanephrine]}
+  - {id: Normetanephrine_plasma_free, name_ko: 혈장 유리 노르메타네프린, name_en: Normetanephrine free plasma, unit: pg/mL, loinc: [57462-4, 40851-8], aliases: [Plasma free normetanephrine]}
+  - {id: Metanephrine_urine_24h, name_ko: 24시간 소변 메타네프린, name_en: Metanephrine 24h urine, unit: ug/24h, loinc: [19049-6], aliases: [Urine metanephrine]}
+  - {id: Normetanephrine_urine_24h, name_ko: 24시간 소변 노르메타네프린, name_en: Normetanephrine 24h urine, unit: ug/24h, loinc: [2671-6], aliases: [Urine normetanephrine]}
+  - {id: IGF1, name_ko: 인슐린유사성장인자-1, name_en: IGF-1, unit: ng/mL, loinc: [2484-4], aliases: [IGF-1, IGF1, Somatomedin C]}
+  - {id: Growth_hormone, name_ko: 성장호르몬, name_en: Somatotropin, unit: ng/mL, convert: {ug/L: 1}, loinc: [2963-7], aliases: [GH, Growth hormone]}
+  - {id: Prolactin, name_ko: 프로락틴, name_en: Prolactin, unit: ng/mL, convert: {ug/L: 1}, loinc: [2842-3], aliases: [Prolactin, PRL]}
+  - {id: LH, name_ko: 황체형성호르몬, name_en: Lutropin, unit: IU/L, convert: {mIU/mL: 1}, loinc: [10501-5], aliases: [LH]}
+  - {id: FSH, name_ko: 난포자극호르몬, name_en: Follitropin, unit: IU/L, convert: {mIU/mL: 1}, loinc: [15067-2], aliases: [FSH]}
+  - {id: Testosterone_total, name_ko: 총 테스토스테론, name_en: Testosterone total, unit: ng/dL, convert: {nmol/L: 28.84}, loinc: [2986-8], aliases: [Testosterone, Total testosterone]}
+  - {id: beta_hCG, name_ko: 사람 융모성 생식샘자극호르몬, name_en: hCG, unit: IU/L, convert: {mIU/mL: 1}, loinc: [21198-7, 19080-1], aliases: [beta-hCG, hCG, b-hCG]}
+  - {id: BHB, name_ko: 베타-하이드록시부티르산, name_en: Beta hydroxybutyrate, unit: mmol/L, range: [0, 30], loinc: [6873-4], aliases: [BHB, Beta-hydroxybutyrate, 케톤(혈중)]}
+  - {id: pH_blood, corpus_ids: [pH], name_ko: 혈액 pH, name_en: pH blood, unit: pH, range: [6.5, 8.0], loinc: [2744-1, 11558-4], aliases: [pH, ABGA pH, VBGA pH]}
+  - {id: pCO2, name_ko: 이산화탄소 분압, name_en: pCO2, unit: mmHg, convert: {kPa: 7.501}, range: [5, 200], loinc: [2019-8, 11557-6], aliases: [pCO2, PaCO2]}
+  # ── 면역·보체
+  - {id: C3, name_ko: 보체 C3, name_en: Complement C3, unit: mg/dL, convert: {g/L: 100}, loinc: [4485-9], aliases: [C3]}
+  - {id: C4, name_ko: 보체 C4, name_en: Complement C4, unit: mg/dL, convert: {g/L: 100}, loinc: [4498-2], aliases: [C4]}
+  - {id: CH50, name_ko: 총 보체 용혈 활성(CH50), name_en: Complement total hemolytic CH50, unit: U/mL, loinc: [4532-8], aliases: [CH50]}
+  - {id: AH50, name_ko: 대체 경로 보체 활성(AH50), name_en: Complement alternate pathway AH50, unit: U/mL, loinc: [13087-2], aliases: [AH50]}
+  - {id: C1_inhibitor_level_function, name_ko: C1 억제제 농도·기능, name_en: C1 esterase inhibitor, unit: mg/dL, loinc: [4477-6], aliases: [C1-INH, C1 esterase inhibitor]}
+  - {id: IgG, name_ko: 면역글로불린 G, name_en: IgG, unit: mg/dL, convert: {g/L: 100}, loinc: [2465-3], aliases: [IgG]}
+  - {id: IgA, name_ko: 면역글로불린 A, name_en: IgA, unit: mg/dL, convert: {g/L: 100}, loinc: [2458-8], aliases: [IgA]}
+  - {id: IgM, name_ko: 면역글로불린 M, name_en: IgM, unit: mg/dL, convert: {g/L: 100}, loinc: [2472-9], aliases: [IgM]}
+  - {id: SPEP, name_ko: 혈청 단백 전기영동, name_en: Protein electrophoresis serum, unit: text, loinc: [], aliases: [SPEP, Serum protein electrophoresis]}
+  - {id: ANA, name_ko: 항핵항체, name_en: Antinuclear antibody, unit: text, loinc: [8061-4, 5048-4], aliases: [ANA, FANA, 항핵항체]}
+  - {id: Anti_dsDNA, name_ko: 항 dsDNA 항체, name_en: dsDNA Ab, unit: IU/mL, loinc: [5130-0], aliases: [Anti-dsDNA, dsDNA Ab]}
+  - {id: Anti_Ro_SSA, name_ko: 항 Ro/SSA 항체, name_en: SSA Ab, unit: text, loinc: [8093-7], aliases: [Anti-Ro, Anti-SSA, SSA Ab]}
+  - {id: Anti_La_SSB, name_ko: 항 La/SSB 항체, name_en: SSB Ab, unit: text, loinc: [8094-5], aliases: [Anti-La, Anti-SSB, SSB Ab]}
+  - {id: Anti_Scl70, name_ko: 항 Scl-70 항체, name_en: SCL-70 Ab, unit: text, loinc: [8092-9], aliases: [Anti-Scl-70, Scl-70 Ab]}
+  - {id: Anti_centromere, name_ko: 항중심절 항체, name_en: Centromere Ab, unit: text, loinc: [16137-2], aliases: [Anti-centromere, ACA]}
+  - {id: Anti_RNA_polymerase_III, name_ko: 항 RNA 중합효소 III 항체, name_en: RNA polymerase III Ab, unit: text, loinc: [63328-9], aliases: [Anti-RNA polymerase III]}
+  - {id: Antiphospholipid_antibodies, name_ko: 항인지질 항체, name_en: Antiphospholipid antibodies, unit: text, loinc: [], aliases: [APL Ab, Lupus anticoagulant, Anticardiolipin Ab, Anti-beta2 glycoprotein I]}
+  - {id: tTG_IgA, name_ko: 조직 트랜스글루타미나제 IgA, name_en: Tissue transglutaminase IgA, unit: U/mL, loinc: [31017-7], aliases: [tTG IgA, Anti-tTG IgA]}
+  # ── 감염·간염 표지자
+  - {id: HBsAg, name_ko: B형간염 표면항원, name_en: HBsAg, unit: text, loinc: [5196-1], aliases: [HBsAg, HBs Ag]}
+  - {id: Anti_HBs, name_ko: B형간염 표면항체, name_en: Anti-HBs, unit: mIU/mL, loinc: [16935-9, 5193-8], aliases: [Anti-HBs, HBsAb]}
+  - {id: Anti_HBc_total, name_ko: B형간염 핵심항체(총), name_en: Anti-HBc total, unit: text, loinc: [16933-4], aliases: [Anti-HBc, HBcAb total]}
+  - {id: Anti_HBc_IgM, name_ko: B형간염 핵심항체 IgM, name_en: Anti-HBc IgM, unit: text, loinc: [31204-1], aliases: [Anti-HBc IgM, HBcAb IgM]}
+  - {id: HBeAg, name_ko: B형간염 e항원, name_en: HBeAg, unit: text, loinc: [13954-3], aliases: [HBeAg]}
+  - {id: Anti_HBe, name_ko: B형간염 e항체, name_en: Anti-HBe, unit: text, loinc: [13953-5], aliases: [Anti-HBe, HBeAb]}
+  - {id: HBV_DNA, name_ko: B형간염 바이러스 DNA, name_en: HBV DNA, unit: IU/mL, loinc: [42595-9, 29615-2], aliases: [HBV DNA, HBV viral load]}
+  - {id: Anti_HCV, name_ko: C형간염 항체, name_en: Anti-HCV, unit: text, loinc: [16128-1], aliases: [Anti-HCV, HCV Ab]}
+  - {id: HCV_RNA, name_ko: C형간염 바이러스 RNA, name_en: HCV RNA, unit: IU/mL, loinc: [11011-4], aliases: [HCV RNA, HCV viral load]}
+  - {id: Anti_HAV_IgM, name_ko: A형간염 IgM 항체, name_en: Anti-HAV IgM, unit: text, loinc: [22314-9], aliases: [Anti-HAV IgM, HAV IgM]}
+  - {id: Anti_HAV_total, name_ko: A형간염 항체(총), name_en: Anti-HAV total, unit: text, loinc: [20575-7], aliases: [Anti-HAV, HAV Ab total, HAV IgG]}
+  - {id: Anti_HDV, name_ko: D형간염 항체, name_en: Anti-HDV, unit: text, loinc: [13248-0], aliases: [Anti-HDV, HDV Ab]}
+  - {id: Anti_HIV, name_ko: HIV 항원·항체, name_en: HIV 1+2 Ab + p24 Ag, unit: text, loinc: [56888-1], aliases: [Anti-HIV, HIV Ag/Ab]}
+  - {id: Latent_TB_screen, name_ko: 잠복결핵 검사(IGRA), name_en: IGRA, unit: text, loinc: [71773-6, 45323-3], aliases: [IGRA, QuantiFERON, T-SPOT, TST]}
+  - {id: H_pylori_test_of_cure, name_ko: 헬리코박터 제균 확인 검사, name_en: H. pylori test of cure, unit: text, loinc: [], aliases: [UBT, Urea breath test, H. pylori stool antigen]}
+  # ── 소변·대변·체액
+  - {id: UACR, name_ko: 소변 알부민/크레아티닌 비, name_en: Albumin/Creatinine ratio urine, unit: mg/g, convert: {mg/mmol: 8.84, mg/gCr: 1}, range: [0, 50000], loinc: [9318-7, 14959-1], aliases: [UACR, ACR, Microalbumin/Cr ratio]}
+  - {id: UPCR, name_ko: 소변 단백/크레아티닌 비, name_en: Protein/Creatinine ratio urine, unit: mg/g, convert: {mg/mmol: 8.84, g/g: 1000}, loinc: [2890-2], aliases: [UPCR, PCR, Protein/Cr ratio]}
+  - {id: Urine_osmolality, name_ko: 소변 삼투질농도, name_en: Osmolality urine, unit: mOsm/kg, loinc: [2695-5], aliases: [U-Osmolality, Urine osmolality]}
+  - {id: Urine_sodium, name_ko: 소변 나트륨, name_en: Sodium urine, unit: mmol/L, convert: {mEq/L: 1}, loinc: [2955-3], aliases: [U-Na, Urine sodium]}
+  - {id: Urine_calcium_24h, name_ko: 24시간 소변 칼슘, name_en: Calcium 24h urine, unit: mg/24h, convert: {mmol/24h: 40.08}, range: [0, 2000], loinc: [6874-2], aliases: [24hr urine calcium]}
+  - {id: Urine_ketone_grade, name_ko: 소변 케톤(시험지 등급), name_en: Ketones urine test strip, unit: grade, range: [0, 4], loinc: [2514-8], aliases: [U-Ketone, Urine ketone], note: "음성=0, 1+=1, 2+=2 … 로 사이트 매핑에서 등급을 수치화한다."}
+  - {id: Urine_culture, name_ko: 소변 배양, name_en: Urine culture, unit: text, loinc: [630-4], aliases: [Urine culture, U/C]}
+  - {id: Stone_analysis, name_ko: 결석 성분 분석, name_en: Stone analysis, unit: text, loinc: [], aliases: [Stone analysis, Calculus analysis]}
+  - {id: FOBT, corpus_ids: [FIT], name_ko: 분변 잠혈, name_en: Fecal occult blood, unit: text, loinc: [2335-8, 29771-3], aliases: [FOBT, FIT, Stool OB, 분변잠혈]}
+  - {id: Fecal_calprotectin, name_ko: 분변 칼프로텍틴, name_en: Calprotectin stool, unit: ug/g, convert: {mg/kg: 1}, loinc: [38445-3], aliases: [Fecal calprotectin, Calprotectin]}
+  - {id: Ascitic_albumin, name_ko: 복수 알부민, name_en: Albumin peritoneal fluid, unit: g/dL, convert: {g/L: 0.1}, loinc: [1749-1], aliases: [Ascitic albumin]}
+  - {id: Ascitic_total_protein, name_ko: 복수 총단백, name_en: Protein peritoneal fluid, unit: g/dL, convert: {g/L: 0.1}, loinc: [2883-7], aliases: [Ascitic protein]}
+  - {id: Ascitic_PMN, name_ko: 복수 다형핵백혈구 수, name_en: Neutrophils peritoneal fluid, unit: /uL, convert: {/mm3: 1, 10^6/L: 1}, loinc: [26502-5], aliases: [Ascitic PMN, Ascites neutrophil]}
+  - {id: Ascitic_culture, name_ko: 복수 배양, name_en: Peritoneal fluid culture, unit: text, loinc: [619-7], aliases: [Ascitic culture, Ascites culture]}
+  # ── 유전자형
+  - {id: HFE_genotype, name_ko: HFE 유전자형, name_en: HFE genotype, unit: text, loinc: [34519-9], aliases: [HFE]}
+  - {id: HLA_B5801, name_ko: HLA-B*58:01, name_en: HLA-B*58:01, unit: text, loinc: [], aliases: [HLA-B*5801, HLA-B5801]}
+  - {id: NUDT15_genotype, name_ko: NUDT15 유전자형, name_en: NUDT15 genotype, unit: text, loinc: [93194-9], aliases: [NUDT15]}
+  - {id: APOE_genotype, name_ko: APOE 유전자형, name_en: APOE genotype, unit: text, loinc: [42315-2], aliases: [APOE]}
+  - {id: Germline_genetic_testing_PPGL, name_ko: 갈색세포종·부신경절종 생식세포 유전자 검사, name_en: Germline genetic testing PPGL, unit: text, loinc: [], aliases: []}
+  - {id: ALS_genetic_panel, name_ko: ALS 유전자 검사, name_en: ALS genetic panel, unit: text, loinc: [], aliases: [SOD1, C9orf72]}
+
+panels:
+  - {id: CBC_diff, name_ko: 일반혈액검사(백혈구 감별 포함), members: [Hb, WBC, Platelets], loinc: [57021-8], aliases: [CBC with diff, CBC diff], note: "호산구 수 확인(천식·COPD)"}
+  - {id: CBC, name_ko: 일반혈액검사, members: [Hb, Hematocrit, WBC, Platelets], loinc: [58410-2], aliases: [CBC, Complete blood count, 일반혈액]}
+  - {id: LFT, name_ko: 간기능 검사, members: [ALT, AST, Bilirubin_total, ALP, GGT, Albumin], loinc: [24325-3], aliases: [LFT, Liver function test, 간기능]}
+  - {id: Electrolytes, name_ko: 전해질, members: [Na, K, Bicarbonate], loinc: [], aliases: [Electrolyte, 전해질]}
+  - {id: Coagulation, name_ko: 응고 검사, members: [PT_sec, INR, aPTT, Fibrinogen], loinc: [], aliases: [Coagulation, PT/aPTT]}
+  - {id: Immunoglobulins, name_ko: 면역글로불린, members: [IgG, IgA, IgM], loinc: [], aliases: [Immunoglobulin]}
+  - {id: Urinalysis, name_ko: 소변 검사, members: [Urine_ketone_grade], loinc: [24356-8], aliases: [UA, Urinalysis, 요검사, 소변검사]}
+  - {id: Calcium_albumin_corrected_or_ionized, name_ko: 보정 칼슘 또는 이온화 칼슘, members: [Calcium, Albumin, Calcium_ionized], loinc: []}
+  - {id: Metanephrines_plasma_or_urine, name_ko: 혈장 또는 소변 메타네프린, members: [Metanephrines_plasma_free, Normetanephrine_plasma_free, Metanephrine_urine_24h, Normetanephrine_urine_24h], loinc: []}
+  - {id: Metanephrines_urine_fractionated, name_ko: 24시간 소변 분획 메타네프린, members: [Metanephrine_urine_24h, Normetanephrine_urine_24h], loinc: []}
+  - {id: Urine_24h_stone_panel, name_ko: 24시간 소변 결석 대사 검사, members: [Urine_calcium_24h], loinc: [], note: "pH·양·요산·나트륨·시트르산·옥살산·칼륨·크레아티닌은 개념 미등록 — 필요 시 labs 에 추가."}
+  - {id: Ascitic_cell_count_differential, name_ko: 복수 세포수·감별, members: [Ascitic_PMN], loinc: []}
+  - {id: Stool_infection_workup, name_ko: 대변 감염 검사, members: [], loinc: [], note: "기관별 대변 배양·독소·PCR 패널을 사이트 매핑에서 묶는다."}
+  - {id: ACTH_stimulation_test_250ug, name_ko: 250 µg ACTH 자극 검사, members: [Cortisol_AM], loinc: [], note: "자극 후 30·60분 코르티솔 — 기관 검사 코드로 매핑."}
+  - {id: OGTT_GH_nadir, name_ko: 경구 당부하 성장호르몬 억제 검사, members: [Growth_hormone], loinc: []}
+  - {id: Macroprolactin_PEG, name_ko: PEG 침전 후 프로락틴(거대프로락틴), members: [Prolactin], loinc: []}
+
+exams:
+  - {id: Neck_ultrasound, name_ko: 경부(갑상선) 초음파, kind: imaging, aliases: [Thyroid US, Neck US, 갑상선초음파]}
+  - {id: Thyroid_scintigraphy, name_ko: 갑상선 스캔(신티그래피), kind: imaging, aliases: [Thyroid scan, 갑상선스캔]}
+  - {id: Thyroid_FNA, name_ko: 갑상선 결절 세침흡인검사, kind: biopsy, aliases: [Thyroid FNA, 세침흡인]}
+  - {id: Spirometry_basic, name_ko: 기본 폐기능 검사, kind: function, aliases: [기본폐기능검사, 간이호흡기능검사]}
+  - {id: Elderly_fall_test, name_ko: 노인 신체기능 검사(일어나 걷기·한발 서기), kind: function, aliases: [낙상검사, TUG]}
+  - {id: Upper_GI_series, name_ko: 위장조영검사, kind: imaging, aliases: [UGI series, 위장조영]}
+  # ── 보충 장(S01~S04)
+  - {id: ECG, name_ko: 심전도, kind: function, aliases: [ECG, EKG, 심전도]}
+  - {id: AOBP, name_ko: 자동 진료실 혈압 측정(AOBP), kind: function, aliases: [AOBP]}
+  - {id: HBPM, name_ko: 가정혈압 측정, kind: function, aliases: [HBPM, Home BP]}
+  - {id: ABPM, name_ko: 24시간 활동혈압 측정, kind: function, aliases: [ABPM, 24hr BP]}
+  - {id: Spirometry_BD, name_ko: 기관지확장제 전후 폐활량 검사, kind: function, aliases: [Post-BD spirometry, BDR test]}
+  - {id: Methacholine_challenge, name_ko: 메타콜린 기관지유발검사, kind: function, aliases: [Methacholine challenge, MCT]}
+  - {id: LDCT_chest, name_ko: 저선량 흉부 CT, kind: imaging, aliases: [LDCT, Low-dose chest CT]}
+  - {id: Mammography, name_ko: 유방촬영술, kind: imaging, aliases: [Mammography, MMG, 유방촬영]}
+  - {id: Flexible_sigmoidoscopy, name_ko: 구불결장경, kind: endoscopy, aliases: [Sigmoidoscopy, 구불결장경]}
+  - {id: CT_colonography, name_ko: CT 대장조영, kind: imaging, aliases: [CT colonography, Virtual colonoscopy]}
+  - {id: Abdominal_US, name_ko: 복부 초음파, kind: imaging, aliases: [Abdomen US, 복부초음파]}
+  - {id: Liver_ultrasound, name_ko: 간 초음파, kind: imaging, aliases: [Liver US, 간초음파]}
+  - {id: Renal_ultrasound, name_ko: 신장 초음파, kind: imaging, aliases: [Kidney US, 신장초음파]}
+  - {id: POCUS_abdomen, name_ko: 현장 복부 초음파, kind: imaging, aliases: [POCUS]}
+  - {id: Salivary_gland_US, name_ko: 침샘 초음파, kind: imaging, aliases: [Salivary gland US]}
+  - {id: Temporal_axillary_artery_US, name_ko: 측두·액와동맥 초음파, kind: imaging, aliases: [Temporal artery US]}
+  - {id: Echocardiography, name_ko: 심초음파, kind: imaging, aliases: [Echo, TTE, 심초음파]}
+  - {id: Chest_xray, name_ko: 흉부 X선, kind: imaging, aliases: [CXR, Chest PA, 흉부X선]}
+  - {id: CT_abdomen_contrast, name_ko: 조영 증강 복부 CT, kind: imaging, aliases: [Abdomen CT enhanced, APCT]}
+  - {id: CT_abdomen_low_dose_contrast, name_ko: 저선량 조영 증강 복부 CT, kind: imaging, aliases: [Low dose abdomen CT]}
+  - {id: CT_abdomen_noncontrast, name_ko: 비조영 복부 CT, kind: imaging, aliases: [Abdomen CT non-enhanced, KUB CT, Stone CT]}
+  - {id: Adrenal_CT_unenhanced, corpus_ids: [Adrenal_CT_unenhanced_or_MRI], name_ko: 비조영 부신 CT(또는 MRI), kind: imaging, aliases: [Adrenal CT]}
+  - {id: CT_or_MRI_whole_body, name_ko: 전신 CT 또는 MRI, kind: imaging, aliases: [Whole body MRI]}
+  - {id: Liver_imaging, name_ko: 간 영상(초음파·CT·MRI), kind: imaging, aliases: []}
+  - {id: Liver_MRI_iron_quantification, name_ko: MRI 간 철 정량, kind: imaging, aliases: [Liver iron MRI, R2* MRI]}
+  - {id: Liver_elastography, name_ko: 간 탄성도 검사, kind: imaging, aliases: [FibroScan, Transient elastography, 간섬유화스캔]}
+  - {id: MRCP_or_EUS, name_ko: MRCP 또는 내시경 초음파, kind: imaging, aliases: [MRCP, EUS]}
+  - {id: HIDA_scan, name_ko: 간담도 신티그래피, kind: imaging, aliases: [HIDA, Hepatobiliary scan]}
+  - {id: Brain_MRI, corpus_ids: [Brain_MRI_baseline], name_ko: 뇌 MRI, kind: imaging, aliases: [Brain MRI]}
+  - {id: MRI_brain_spine, name_ko: 뇌·척수 MRI, kind: imaging, aliases: [Spine MRI]}
+  - {id: Structural_brain_imaging, name_ko: 뇌 구조 영상(CT·MRI), kind: imaging, aliases: [Brain CT]}
+  - {id: DXA, name_ko: 이중에너지 X선 골밀도 검사, kind: imaging, aliases: [BMD, DEXA, 골밀도]}
+  - {id: Amyloid_confirmation, name_ko: 아밀로이드 확인(PET·뇌척수액), kind: imaging, aliases: [Amyloid PET, CSF amyloid]}
+  - {id: Colonoscopy, name_ko: 대장내시경, kind: endoscopy, aliases: [CFS, Colonoscopy, 대장내시경]}
+  - {id: Surveillance_colonoscopy, name_ko: 감시 대장내시경, kind: endoscopy, aliases: []}
+  - {id: Upper_endoscopy, name_ko: 상부 위장관 내시경, kind: endoscopy, aliases: [EGD, Gastroscopy, 위내시경]}
+  - {id: EGD_with_esophageal_biopsy, name_ko: 식도 생검을 포함한 상부 내시경, kind: endoscopy, aliases: []}
+  - {id: Surveillance_endoscopy, name_ko: 감시 내시경, kind: endoscopy, aliases: []}
+  - {id: ERCP, name_ko: 내시경 역행 담췌관 조영술, kind: endoscopy, aliases: [ERCP]}
+  - {id: Liver_biopsy, name_ko: 간 생검, kind: biopsy, aliases: [Liver biopsy]}
+  - {id: Minor_salivary_gland_biopsy, name_ko: 소타액선 생검, kind: biopsy, aliases: [Lip biopsy]}
+  - {id: Temporal_artery_biopsy, name_ko: 측두동맥 생검, kind: biopsy, aliases: [TAB]}
+  - {id: Esophageal_manometry, name_ko: 식도 내압 검사, kind: function, aliases: [HRM, Esophageal manometry]}
+  - {id: Impedance_pH_monitoring, name_ko: 식도 임피던스-pH 검사, kind: function, aliases: [MII-pH, 24hr pH monitoring]}
+  - {id: EMG_NCS, name_ko: 근전도·신경전도 검사, kind: function, aliases: [EMG, NCS, 근전도]}
+  - {id: PFT_with_DLCO, name_ko: 폐기능 검사(DLCO 포함), kind: function, aliases: [PFT, Spirometry, 폐기능]}
+  - {id: Retinal_exam, name_ko: 망막 검사, kind: function, aliases: [Fundus exam, 안저검사]}
+  - {id: Monofilament_foot_exam, name_ko: 단섬유 발 검사, kind: function, aliases: [Monofilament]}
+  - {id: Post_void_residual, name_ko: 배뇨 후 잔뇨량, kind: function, aliases: [PVR, 잔뇨]}
+  - {id: Cognitive_screen, corpus_ids: [MMSE, MoCA, Mini_Cog, AD8, ACE_III], name_ko: 인지 선별 검사, kind: function, aliases: [MMSE, MoCA, K-MMSE]}
+
+measurements:
+  - {id: BMD_T_score, name_ko: 골밀도 T 점수, unit: SD, from_exam: DXA}
+  - {id: DLCO_pct, name_ko: 일산화탄소 확산능(예측치 %), unit: "%", from_exam: PFT_with_DLCO}
+  - {id: FVC_pct, corpus_ids: [FVC], name_ko: 노력성 폐활량(예측치 %), unit: "%", from_exam: PFT_with_DLCO}
+  - {id: SNIP_cmH2O, corpus_ids: [SNIP], name_ko: 비강 흡기압, unit: cmH2O, from_exam: PFT_with_DLCO}
+  - {id: Liver_stiffness_kPa, name_ko: 간 탄성도, unit: kPa, from_exam: Liver_elastography}
+  - {id: CBD_diameter_mm, name_ko: 총담관 직경, unit: mm, from_exam: Abdominal_US}
+  - {id: CT_severity_index, name_ko: CT 중증도 지수, unit: score, from_exam: CT_abdomen_contrast}
+  - {id: abscess_size_cm, name_ko: 농양 크기, unit: cm, from_exam: CT_abdomen_contrast}
+  - {id: stone_size_mm, name_ko: 결석 크기, unit: mm, from_exam: CT_abdomen_noncontrast}
+  - {id: tumor_size_cm, name_ko: 종양 크기, unit: cm, from_exam: CT_or_MRI_whole_body}
+  - {id: adrenal_growth_mm, name_ko: 부신 종괴 증가(mm), unit: mm, from_exam: Adrenal_CT_unenhanced}
+  - {id: adrenal_growth_pct, name_ko: 부신 종괴 증가(%), unit: "%", from_exam: Adrenal_CT_unenhanced}
+  - {id: urine_output_ml_kg_h_6h, name_ko: 6시간 평균 소변량, unit: mL/kg/h, from_exam: null, note: "간호 섭취·배설 기록"}
+
+vitals:
+  - {id: Waist_circumference, name_ko: 허리둘레, unit: cm, range: [30, 250], loinc: [], note: "국가검진은 늑골 하단과 장골능 사이 중간(측면) 측정 — LOINC 8280-0(배꼽 높이)과 측정 부위가 달라 코드 매핑하지 않음"}
+  - {id: SBP, name_ko: 수축기 혈압, unit: mmHg, range: [40, 300], loinc: [8480-6], note: "EMR bloodPressureList.sbp(가장 최근 값)"}
+  - {id: DBP, name_ko: 이완기 혈압, unit: mmHg, range: [20, 200], loinc: [8462-4], note: "EMR bloodPressureList.dbp(가장 최근 값)"}
+  - {id: SpO2, name_ko: 산소포화도, unit: "%", range: [40, 100], loinc: [59408-5], note: "EMR oxygenSaturationList.spo2Value(가장 최근 값)"}
+  - {id: weight_kg, corpus_ids: [Weight], name_ko: 체중, unit: kg, convert: {lb: 0.4536}, range: [0.3, 500], loinc: [29463-7]}
+  - {id: BMI, name_ko: 체질량지수, unit: kg/m2, range: [8, 100], loinc: [39156-5]}
+  - {id: BP, name_ko: 혈압, unit: mmHg, loinc: [85354-9], note: "EMR bloodPressureList(sbp·dbp)"}
+
+scores:
+  - {id: KDSQ_C, name_ko: 인지기능장애 평가(KDSQ-C)}
+  - {id: CAPE15, name_ko: 조기정신증 평가(CAPE-15)}
+  - {id: CHA2DS2_VA, name_ko: CHA2DS2-VA 뇌졸중 위험 점수}
+  - {id: CIWA_Ar, name_ko: 알코올 금단 척도(CIWA-Ar)}
+  - {id: PHQ9, name_ko: 우울 척도(PHQ-9), loinc: [44261-6]}
+  - {id: ASDAS, name_ko: 강직척추염 질병활성도(ASDAS)}
+  - {id: DAS28_or_SDAI_or_CDAI, name_ko: 류마티스관절염 질병활성도}
+  - {id: ALSFRS_R, name_ko: ALS 기능 평가 척도}
+  - {id: EDSS_increase_after_2wk, name_ko: 2주 후 EDSS 증가}
+
+derived:
+  - {id: CrCl, name_ko: 크레아티닌 청소율(Cockcroft-Gault), unit: mL/min, inputs: [SCr, age, weight_kg, sex]}
+  - {id: FIB4, name_ko: FIB-4 지수, unit: index, inputs: [age, AST, ALT, Platelets]}
+  - {id: APRI, name_ko: APRI, unit: index, inputs: [AST, Platelets], note: "AST 정상 상한 필요"}
+  - {id: Calcium_corrected, corpus_ids: [Calcium_albumin_corrected], name_ko: 알부민 보정 칼슘, unit: mg/dL, inputs: [Calcium, Albumin], loinc: [46099-8]}
+  - {id: CaxP_product, name_ko: 칼슘×인 곱, unit: mg2/dL2, inputs: [Calcium, Phosphate]}
+  - {id: SAAG, name_ko: 혈청-복수 알부민 차, unit: g/dL, inputs: [Albumin, Ascitic_albumin], loinc: [63549-0]}
+  - {id: ALT_xULN, name_ko: ALT(정상 상한 배수), unit: xULN, inputs: [ALT], note: "검사실 정상 상한 필요"}
+  - {id: AST_xULN, name_ko: AST(정상 상한 배수), unit: xULN, inputs: [AST], note: "검사실 정상 상한 필요"}
+  - {id: DILI_R_ratio, name_ko: 약물 간손상 R 비, unit: ratio, inputs: [ALT, ALP], note: "(ALT/ULN)/(ALP/ULN)"}
+  - {id: Maddrey_DF, name_ko: Maddrey 판별함수, unit: score, inputs: [PT_sec, Bilirubin_total], note: "대조 PT 필요 — 구현 보류(363-C01)"}
+  - {id: KFRE_5y_pct, name_ko: 신부전 위험 방정식 5년 위험, unit: "%", inputs: [age, sex, eGFR, UACR]}
+  - {id: PREVENT_10y_risk_pct, name_ko: PREVENT 10년 심혈관 위험, unit: "%", inputs: [age, sex, HDL, BP, eGFR]}
+  - {id: eGFR_change_pct, name_ko: eGFR 변화율, unit: "%", inputs: [eGFR], series: true}
+  - {id: eGFR_decline_per_year, name_ko: 연간 eGFR 감소, unit: mL/min/1.73m2/yr, inputs: [eGFR], series: true}
+  - {id: SCr_rise_mg_dl_48h, name_ko: 48시간 크레아티닌 상승, unit: mg/dL, inputs: [SCr], series: true}
+  - {id: SCr_rise_pct, name_ko: 기저 대비 크레아티닌 상승률, unit: "%", inputs: [SCr], series: true}
+  - {id: SCr_rise_pct_4wk, name_ko: 4주 크레아티닌 상승률, unit: "%", inputs: [SCr], series: true}
+  - {id: SCr_rise_pct_7d, name_ko: 7일 크레아티닌 상승률, unit: "%", inputs: [SCr], series: true}
+  - {id: Na_rise_24h, name_ko: 24시간 나트륨 상승, unit: mmol/L, inputs: [Na], series: true}
+  - {id: UACR_ratio_to_prior, name_ko: 이전 대비 UACR 배수, unit: ratio, inputs: [UACR], series: true}
+  - {id: FPG_confirmed_count_ge126, name_ko: 공복 혈당 126 이상 횟수, unit: count, inputs: [FPG], series: true}
+  - {id: HBsAg_positive_months, name_ko: HBsAg 양성 지속 기간, unit: months, inputs: [HBsAg], series: true}
+  - {id: weight_loss_pct, name_ko: 체중 감소율, unit: "%", inputs: [weight_kg], series: true}
+  - {id: Urine_calcium_creatinine_clearance_ratio, name_ko: 소변 칼슘/크레아티닌 청소율 비, unit: ratio, inputs: [Calcium, SCr], note: "24시간 소변 칼슘·크레아티닌 필요"}
+
+med_derived:
+  - {id: MME_per_day, name_ko: 1일 모르핀 환산량, unit: MME/day}
+  - {id: prednisolone_mg_day, name_ko: 프레드니솔론 환산 1일 용량, unit: mg/day}
+  - {id: hydrocortisone_equiv_mg_day, name_ko: 히드로코르티손 환산 1일 용량, unit: mg/day}
+  - {id: steroid_months, name_ko: 스테로이드 사용 기간, unit: months}
+  - {id: clozapine_weeks, name_ko: 클로자핀 사용 기간, unit: weeks}
+  - {id: cyclophosphamide_months, name_ko: 시클로포스파미드 사용 기간, unit: months}
+  - {id: ppi_duration_months, name_ko: PPI 사용 기간, unit: months}
+  - {id: pyridostigmine_single_dose_mg, name_ko: 피리도스티그민 1회 용량, unit: mg}
+  - {id: lifetime_use_years, name_ko: 평생 누적 사용 기간(테리파라타이드), unit: years}
+  - {id: treatment_days, name_ko: 치료 일수(톨밥탄), unit: days}
+  - {id: postop_antibiotic_days, name_ko: 수술 후 항생제 일수, unit: days}
+
+clinical:
+  - {id: pack_years, name_ko: 흡연량(갑년), unit: pack-years}
+  - {id: years_since_quit_smoking, name_ko: 금연 후 경과 연수, unit: years}
+  - {id: age, name_ko: 나이, unit: years}
+  - {id: cigarettes_per_day, name_ko: 하루 흡연량, unit: cigarettes/day}
+  - {id: days_since_exposure, name_ko: 노출 후 경과일, unit: days}
+  - {id: days_since_injury, name_ko: 손상 후 경과일, unit: days}
+  - {id: duration_months, name_ko: 경과 기간, unit: months}
+  - {id: failed_adequate_asm_trials, name_ko: 실패한 적절 항경련제 시도 수, unit: count}
+  - {id: headache_days_per_month, name_ko: 월 두통 일수, unit: days/month}
+  - {id: hours_since_admission, name_ko: 입원 후 경과 시간, unit: h}
+  - {id: hours_since_ingestion, name_ko: 복용 후 경과 시간, unit: h}
+  - {id: hours_since_symptom_onset, name_ko: 증상 시작 후 경과 시간, unit: h}
+  - {id: years_since_menopause, name_ko: 폐경 후 경과 연수, unit: years}
+  - {id: years_since_mg_onset, name_ko: 중증근무력증 발병 후 연수, unit: years}
+  - {id: years_since_uc_onset, name_ko: 궤양성 대장염 발병 후 연수, unit: years}
+
+tasks:
+  - {id: Influenza_vaccination, name_ko: 인플루엔자 예방접종, kind: vaccination}
+  - {id: PPSV23_vaccination, name_ko: 폐렴구균 다당질 백신(PPSV23) 접종, kind: vaccination}
+  - {id: HPV_vaccination, name_ko: 사람유두종바이러스(HPV) 예방접종, kind: vaccination}
+  - {id: benefit_risk_review, name_ko: 이득·위험 재평가}

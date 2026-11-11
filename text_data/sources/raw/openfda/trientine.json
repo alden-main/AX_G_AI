@@ -1,0 +1,43 @@
+{
+ "key": "trientine",
+ "retrieved_at": "2026-11-10",
+ "license": "CC0 1.0 (openFDA, https://open.fda.gov/license)",
+ "query": "openfda.generic_name:\"trientine\"",
+ "set_id": "f33c1322-f7c0-4684-afc8-8caa3f4023dc",
+ "id": "96619f61-e1f2-4ed3-9a81-c05077c8cbcb",
+ "version": "6",
+ "effective_time": "20251031",
+ "brand_name": [
+  "Trientine Hydrochloride"
+ ],
+ "generic_name": [
+  "TRIENTINE HYDROCHLORIDE"
+ ],
+ "manufacturer_name": [
+  "Rising Pharma Holdings, Inc."
+ ],
+ "dailymed_url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=f33c1322-f7c0-4684-afc8-8caa3f4023dc",
+ "sections": {
+  "indications_and_usage": [
+   "INDICATIONS AND USAGE Trientine hydrochloride is indicated in the treatment of patients with Wilson's disease who are intolerant of penicillamine. Clinical experience with trientine hydrochloride is limited and alternate dosing regimens have not been well-characterized; all endpoints in determining an individual patient's dose have not been well defined. Trientine hydrochloride and penicillamine cannot be considered interchangeable. Trientine hydrochloride should be used when continued treatment with penicillamine is no longer possible because of intolerable or life endangering side effects. Unlike penicillamine, trientine hydrochloride is not recommended in cystinuria or rheumatoid arthritis. The absence of a sulfhydryl moiety renders it incapable of binding cystine and, therefore, it is of no use in cystinuria. In 15 patients with rheumatoid arthritis, trientine hydrochloride was reported not to be effective in improving any clinical or biochemical parameter after 12 weeks of treatment. Trientine hydrochloride is not indicated for treatment of biliary cirrhosis."
+  ],
+  "contraindications": [
+   "CONTRAINDICATIONS Hypersensitivity to this product."
+  ],
+  "pregnancy": [
+   "Pregnancy Trientine hydrochloride was teratogenic in rats at doses similar to the human dose. The frequencies of both resorptions and fetal abnormalities, including hemorrhage and edema, increased while fetal copper levels decreased when trientine hydrochloride was given in the maternal diets of rats. There are no adequate and well-controlled studies in pregnant women. Trientine hydrochloride should be used during pregnancy only if the potential benefit justifies the potential risk to the fetus."
+  ],
+  "pediatric_use": [
+   "Pediatric Use Controlled studies of the safety and effectiveness of trientine hydrochloride in pediatric patients have not been conducted. It has been used clinically in pediatric patients as young as 6 years with no reported adverse experiences."
+  ],
+  "geriatric_use": [
+   "Geriatric Use Clinical studies of trientine hydrochloride did not include sufficient numbers of subjects aged 65 and over to determine whether they respond differently from younger subjects. Other reported clinical experience is insufficient to determine differences in responses between the elderly and younger patients. In general, dose selection should be cautious, usually starting at the low end of the dosing range, reflecting the greater frequency of decreased hepatic, renal or cardiac function, and of concomitant disease or other drug therapy."
+  ],
+  "drug_interactions": [
+   "Drug Interactions In general, mineral supplements should not be given since they may block the absorption of trientine hydrochloride. However, iron deficiency may develop, especially in children and menstruating or pregnant women, or as a result of the low copper diet recommended for Wilson's disease. If necessary, iron may be given in short courses, but since iron and trientine hydrochloride each inhibit absorption of the other, two hours should elapse between administration of trientine hydrochloride capsules and iron. It is important that trientine hydrochloride capsules be taken on an empty stomach, at least one hour before meals or two hours after meals and at least one hour apart from any other drug, food, or milk. This permits maximum absorption and reduces the likelihood of inactivation of the drug by metal binding in the gastrointestinal tract."
+  ],
+  "adverse_reactions": [
+   "ADVERSE REACTIONS Clinical experience with trientine hydrochloride has been limited. The following adverse reactions have been reported in a clinical study in patients with Wilson's disease who were on therapy with trientine hydrochloride: iron deficiency, systemic lupus erythematosus (see CLINICAL PHARMACOLOGY ). In addition, the following adverse reactions have been reported in marketed use: dystonia, muscular spasm, myasthenia gravis. Trientine hydrochloride is not indicated for treatment of biliary cirrhosis, but in one study of 4 patients treated with trientine hydrochloride for primary biliary cirrhosis, the following adverse reactions were reported: heartburn; epigastric pain and tenderness; thickening, fissuring and flaking of the skin; hypochromic microcytic anemia; acute gastritis; aphthoid ulcers; abdominal pain; melena; anorexia; malaise; cramps; muscle pain; weakness; rhabdomyolysis. A causal relationship of these reactions to drug therapy could not be rejected or established. To report SUSPECTED ADVERSE EVENTS, contact Rising Pharma Holdings, Inc. at 1-844-874-7464 or FDA at 1-800-FDA-1088 or http://www.fda.gov/ for voluntary reporting of adverse reactions."
+  ]
+ }
+}

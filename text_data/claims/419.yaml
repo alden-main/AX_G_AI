@@ -1,0 +1,168 @@
+# 419장 당뇨병: 합병증 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+
+chapter: "419"
+title: "당뇨병: 합병증"
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 419-C01
+    topic: 당뇨망막병증 선별과 관리
+    type: workup
+    original:
+      text: >
+        혈당·혈압 조절로 예방. 정기적 종합 안과 검진이 필요하며 산동 없는 일차진료 검사는 부적절. 증식성 망막병은 범망막 레이저, 황반부종은 국소 레이저 또는 항VEGF 주사.
+      location: {file: by_chapter/419장.md, line: 68}
+    status: 개정
+    current:
+      text: >
+        혈압·혈당·지질을 관리한다. 안과 전문가의 산동 안저검사 또는 숙련 판독자가 판독하는 망막 촬영으로 선별한다.
+        제2형 당뇨 진단 후 6개월 이내 첫 검사, 이전 검사에서 망막병증이 없었으면 2년마다 선별하고, 위험인자·기존 망막병증·진행 위험이 있으면 더 자주 검사한다.
+      sources:
+        - {id: VADOD-DM-2023, locator: "Sidebar 2: Retinopathy and Eye Care"}
+    verification: primary
+    note: "레이저·항VEGF 등 안과 치료 세부는 A등급 근거 미확보(안과 협진 영역)."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {dx: E11}
+        tests:
+          - {exam: Retinal_exam, frequency: "진단 후 6개월 이내, 망막병증 없으면 2년마다(위험 시 더 자주)", reason: 당뇨망막병증 선별}
+
+  - id: 419-C02
+    topic: 당뇨병성 신질환 관리
+    type: treatment
+    original:
+      text: "예방은 혈당조절. 미세알부민뇨 진행 억제: 혈당조절, 철저한 혈압조절, ACEi/ARB, 이상지질혈증 치료."
+      location: {file: by_chapter/419장.md, line: 94}
+    status: 보완
+    current:
+      text: >
+        소변 알부민/크레아티닌비를 최소 연 1회 확인한다. 고혈압, 중등도 알부민뇨(미세알부민뇨), CKD가 있으면 ACEi/ARB를 고려하고,
+        당뇨병성 신증에는 SGLT2 억제제 또는 GLP-1 RA를 고려한다. NSAID 등 신독성 약물을 피한다. 세부 목표·치료는 VA/DoD CKD 지침(335장)을 따른다.
+      sources:
+        - {id: VADOD-DM-2023, locator: "Sidebar 3: Nephropathy and Kidney Care"}
+        - {id: VADOD-CKD-2025, locator: "Recommendations 12, 15, 16, 18"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {dx: E11}
+        tests:
+          - {lab: UACR, frequency: "최소 연 1회", reason: 당뇨병성 신질환 감시}
+      - kind: treatment
+        condition: {kcd: [E11.2]}
+        recommendations:
+          - when: {any: [{dx: I10}, {var: UACR, op: ">=", value: 30}, {dx: N18}]}
+            recommend: {drug_class: RASi, action: consider}
+          - when: {dx: E11.2}
+            recommend: {drug_class_any: [SGLT2i, GLP1RA], action: consider}
+          - when: {med_class: NSAID}
+            recommend: {action: avoid, drug_class: NSAID, reason: 신독성}
+            alert_level: medium
+
+  - id: 419-C03
+    topic: 당뇨신경병증 선별과 발 관리
+    type: workup
+    original:
+      text: >
+        신경병 증상·징후가 있으면 매일 발 검사, 신발·양말 관리. 모노필라멘트 등 이상이면 보호감각 소실. 50세 이상+위험인자는 ABI 고려.
+        고위험 환자는 발관리 전문가 의뢰. 비타민 B12·엽산 결핍 보충, 알코올·흡연 회피.
+      location: {file: by_chapter/419장.md, line: 194}
+    status: 유지
+    current:
+      text: >
+        모노필라멘트 검사를 포함한 종합적인 하지 위험 평가를 매년, 그리고 필요할 때 시행한다. 사지를 위협하는 상태는 의뢰하고, 필요하면 통증을 관리한다.
+        메트포르민 복용자는 비타민 B12 결핍 가능성을 함께 고려한다(418-C09).
+      sources:
+        - {id: VADOD-DM-2023, locator: "Sidebar 1: Neuropathy and Foot Care; Appendix C Table C-1"}
+    verification: primary
+    note: "ABI 선별 기준(50세 이상+위험인자)은 A등급 근거 미확보."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {dx: E11}
+        tests:
+          - {exam: Monofilament_foot_exam, frequency: "매년 및 필요 시", reason: 하지 위험 평가(신경병증·족부궤양)}
+      - kind: referral
+        to: 족부·혈관 전문 진료
+        criteria:
+          - {finding: limb_threatening_condition}
+
+  - id: 419-C04
+    topic: 당뇨병성 말초신경병증 통증 약물
+    type: dose
+    original:
+      text: >
+        둘록세틴, 아미트립틸린, 가바펜틴, 발프로에이트, 프레가발린, 오피오이드에 반응할 수 있음. 둘록세틴과 프레가발린은 FDA 승인.
+        직접 비교 연구 없음 — 효과 없거나 부작용 시 교체.
+      location: {file: by_chapter/419장.md, line: 131}
+    status: 유지
+    current:
+      text: >
+        프레가발린(미국 허가, 속방형): 당뇨병성 말초신경병증 통증에 50 mg 1일 3회(150 mg/일)로 시작해 1주 안에 300 mg/일까지 증량 가능, 300 mg/일 초과는 권장하지 않는다(CrCl ≥60 기준).
+        신장으로 주로 배설되므로 Cockcroft–Gault CrCl로 용량을 조절한다: CrCl 30–60은 정상 용량의 약 절반, 15–30과 <15는 더 감량(Table 2), 혈액투석 후 보충 용량.
+        둘록세틴(미국 허가): 당뇨병성 말초신경병성 통증에 60 mg 1일 1회. 더 높은 용량은 추가 이득 근거가 없고 내약성이 나쁘다.
+        신장 질환이 흔하므로 신기능 저하 시 낮은 용량으로 시작해 서서히 증량하고, GFR <30이면 사용을 피한다. 만성 간질환·간경변에서도 피한다. 중단 시 서서히 감량한다.
+      sources:
+        - {id: OPENFDA-PREGABALIN, locator: "2.2 Diabetic Peripheral Neuropathy; 2.5 Renal Impairment Table 2"}
+        - {id: OPENFDA-DULOXETINE, locator: "2.4 Diabetic Peripheral Neuropathic Pain; 2.7 Hepatic/Renal Impairment; 2.8"}
+    verification: primary
+    note: "아미트립틸린·가바펜틴 등 다른 약제는 이 장에서 A등급 대조를 하지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-PREGABALIN-DPN
+        ingredient: pregabalin
+        indication: 당뇨병성 말초신경병증 통증
+        renal_param: CrCl
+        renal_method: Cockcroft-Gault
+        source_priority: [OPENFDA-PREGABALIN]
+        standard_dose: "50 mg 1일 3회(150 mg/일) 시작, 1주 안에 최대 300 mg/일"
+        bands:
+          - range: {min: 60}
+            daily_mg: {start: 150, max: 300}
+            regimen: "1일 2–3회 분할"
+          - range: {min: 30, max: 59.999}
+            daily_mg: {start: 75, max: 150}
+            regimen: "1일 2–3회 분할"
+          - range: {min: 15, max: 29.999}
+            daily_mg: {start: "25–50", max: 75}
+            regimen: "1일 1–2회"
+          - range: {max: 14.999}
+            daily_mg: {start: 25, max: "25–50"}
+            regimen: "1일 1회"
+        other: ["혈액투석 시 투석 후 보충 용량(라벨 Table 2)"]
+        alert_note: "미국 허가 기준 참고 범위 — 처방 용량으로 표시하지 않음"
+      - kind: dose_rule
+        id: DR-DULOXETINE-DPNP
+        ingredient: duloxetine
+        indication: 당뇨병성 말초신경병성 통증
+        renal_param: eGFR
+        source_priority: [OPENFDA-DULOXETINE]
+        standard_dose: "60 mg 1일 1회(내약성 우려 시 낮은 용량 시작)"
+        rules:
+          - {when: {var: eGFR, op: "<", value: 30}, action: "사용 회피", alert: contraindicated}
+          - {when: {any: [{dx: K74}, {dx: K70.3}, {finding: chronic_liver_disease}]}, action: "사용 회피(만성 간질환·간경변)", alert: contraindicated}
+          - {when: {all: [{var: eGFR, op: ">=", value: 30}, {var: eGFR, op: "<", value: 60}]}, action: "낮은 용량으로 시작해 서서히 증량", alert: caution}
+        alert_note: "미국 허가 기준 참고 범위"
+
+  - id: 419-C05
+    topic: 당뇨 동반 심혈관질환 약물치료
+    type: treatment
+    original:
+      text: >
+        관상동맥질환이 있으면 ACEi(또는 ARB), 스타틴, 아스피린. 심근경색 후 베타차단제. 울혈성심부전에는 TZD 금지, 메트포르민은 신기능 정상이면 안정 심부전에 사용 가능.
+        일차예방 아스피린은 10년 심혈관 위험 >10%로 제한(ADA).
+      location: {file: by_chapter/419장.md, line: 165}
+    status: 개정
+    current:
+      text: >
+        ASCVD가 있으면 심혈관 이득이 입증된 GLP-1 RA 또는 SGLT2i를 권고하고, 심부전이면 SGLT2i를 권고한다(418-C07). 심부전 또는 체액 과다 시 TZD를 피한다(418-C13).
+        메트포르민은 급성 심부전에서 유산산증 위험이 커진다(418-C08).
+      sources:
+        - {id: VADOD-DM-2023, locator: "Recommendations 19–21; Appendix C Table C-1"}
+    verification: primary
+    note: "아스피린 일차예방·스타틴 기준은 421장(지질) 작업 때 A등급 근거로 보강. 원문의 ADA 아스피린 기준은 말뭉치에서 제외."
+    review: {status: draft}

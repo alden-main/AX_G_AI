@@ -1,0 +1,154 @@
+# 417장 당뇨병(진단·분류·선별) — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+
+chapter: "417"
+title: 당뇨병
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 417-C01
+    topic: 당뇨병 진단 기준
+    type: diagnosis
+    original:
+      text: >
+        증상+무작위 혈당 ≥200 mg/dL, 공복혈당 ≥126 mg/dL, HbA1c ≥6.5%, 또는 OGTT 2시간 ≥200 mg/dL(ADA 2014).
+        급성 대사 이상이 없으면 확진 전 반복 검사.
+      location: {file: by_chapter/417장.md, line: 79}
+    status: 개정
+    current:
+      text: >
+        VA/DoD 진단 기준: 공복혈당 ≥126 mg/dL 2회, 또는 HbA1c ≥6.5%이면서 공복혈당 ≥126으로 확인, 또는 HbA1c ≥7.0%, 또는 75 g OGTT 2시간 >200 mg/dL.
+        공복은 최소 8시간 열량 섭취가 없는 상태이며 공복혈당이 선호 검사다. 급성 대사 이상을 동반한 명백한 고혈당이 아니면 검사는 다른 날 반복한다.
+        HbA1c는 NGSP 표준화된 검사실 방법(현장검사 기기 아님)으로 측정한다. HbA1c 6.5–7.0%는 인종 간 HbA1c 차이 때문에 공복혈당으로 확인한다.
+        OGTT는 번거로워 진단에 흔히 쓰지 않는다.
+      sources:
+        - {id: VADOD-DM-2023, locator: "Table 1 (Criteria for the Diagnosis of DM and Prediabetes) 및 각주 a–d"}
+    verification: primary
+    conflicts:
+      - "원문·ADA 기준은 HbA1c ≥6.5% 단독(반복 확인)으로 진단 가능. VA/DoD는 6.5–7.0%에서 공복혈당 확인을 요구하고 ≥7.0%는 단독 진단 — 서비스 기본 기준을 검수자가 정해야 함."
+    review: {status: draft}
+    corpus:
+      - kind: diagnosis
+        condition: {name: 제2형 당뇨병, kcd: [E11]}
+        logic:
+          any:
+            - {var: FPG_confirmed_count_ge126, op: ">=", value: 2}
+            - {all: [{var: HbA1c, op: ">=", value: 6.5}, {var: FPG, op: ">=", value: 126}]}
+            - {var: HbA1c, op: ">=", value: 7.0}
+            - {var: OGTT_2h, op: ">", value: 200}
+        notes:
+          - "HbA1c는 NGSP 표준화 검사실 값만 사용(현장검사 제외)"
+          - "급성 대사 이상이 없으면 다른 날 반복 검사로 확인"
+
+  - id: 417-C02
+    topic: 당뇨병 전단계와 정상 기준
+    type: threshold
+    original:
+      text: "당뇨병 전기: 공복혈당 100–125, OGTT 2시간 140–199 mg/dL, HbA1c 5.7–6.4%. 정상 HbA1c <5.6%(원문 표기)."
+      location: {file: by_chapter/417장.md, line: 22}
+    status: 유지
+    current:
+      text: >
+        당뇨병 전단계: 공복혈당 100 이상 126 미만 2회, 또는 HbA1c 5.7–6.4%이면서 공복혈당 100 이상 126 미만, 또는 OGTT 2시간 140–199 mg/dL(내당능장애).
+        정상: 공복혈당 <100 mg/dL, HbA1c <5.7%.
+      sources:
+        - {id: VADOD-DM-2023, locator: "Table 1"}
+    verification: primary
+    note: "원문 표의 정상 HbA1c '<5.6%'는 전단계 하한(5.7%)과 맞지 않는 표기 — VA/DoD 기준 <5.7%로 정리."
+    review: {status: draft}
+    corpus:
+      - kind: lab_threshold
+        lab: FPG
+        unit: mg/dL
+        context: 공복혈당 분류(확인 검사 필요)
+        bands:
+          - {label: 정상, max: 99.999}
+          - {label: 당뇨병 전단계, min: 100, max: 125.999}
+          - {label: 당뇨병 범위, min: 126}
+      - kind: lab_threshold
+        lab: HbA1c
+        unit: "%"
+        context: 진단 분류(VA/DoD — 6.5–7.0%는 공복혈당 확인)
+        bands:
+          - {label: 정상, max: 5.699}
+          - {label: 당뇨병 전단계 범위, min: 5.7, max: 6.499}
+          - {label: "당뇨병 의심(공복혈당 확인)", min: 6.5, max: 6.999}
+          - {label: 당뇨병 범위, min: 7.0}
+
+  - id: 417-C03
+    topic: 제2형 당뇨 선별검사 대상
+    type: workup
+    original:
+      text: "45세 넘으면 3년마다, 과체중(BMI >25)+위험인자 1개 이상이면 선별(ADA). 위험인자: 가족력, 비만, 인종, 이전 IFG/IGT, GDM, 고혈압, 이상지질, PCOS, 심혈관질환."
+      location: {file: by_chapter/417장.md, line: 100}
+    status: 개정
+    current:
+      text: >
+        과체중·비만(BMI ≥25, 아시아계 ≥23 kg/m²)이면서 위험인자(1촌 가족력, 고위험 인종, 고혈압 ≥140/90 또는 치료 중, HDL <35 mg/dL 또는 TG >250 mg/dL,
+        심혈관질환 병력, 다낭성 난소증후군, 임신성 당뇨·4 kg 초과 출산력, 인슐린 저항 관련 질환, 신체 비활동, HIV)가 있는 성인과 45세 넘는 모든 성인에서 선별을 고려한다.
+        항정신병약, 글루코코르티코이드, 스타틴 등 위험을 높이는 약을 쓰는 환자도 선별을 고려한다.
+      sources:
+        - {id: VADOD-DM-2023, locator: "Introduction — screening considerations"}
+    verification: primary
+    note: "VA/DoD 본문은 USPSTF·ADA가 35세부터 선별을 제안한다고 언급하지만, USPSTF(C)·ADA(C) 원문은 인용하지 않는다."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          any:
+            - {var: age, op: ">", value: 45}
+            - {all: [{var: BMI, op: ">=", value: 23}, {any: [{dx: I10}, {dx: I25}, {dx: E28.2}, {dx: B20}, {finding: family_history_t2dm}, {finding: history_gdm}, {var: HDL, op: "<", value: 35}, {var: TG, op: ">", value: 250}]}]}
+            - {any: [{med_class: antipsychotic}, {med_class: systemic_glucocorticoid}, {med_class: statin}]}
+        tests:
+          - {lab: FPG, reason: 제2형 당뇨 선별(선호 검사)}
+          - {lab: HbA1c, reason: 제2형 당뇨 선별}
+        notes: ["BMI 기준은 아시아계 ≥23 kg/m², 그 외 ≥25 kg/m²"]
+
+  - id: 417-C04
+    topic: 당뇨병 전단계 관리
+    type: treatment
+    original:
+      text: "당뇨병 전기로 진단되면 당뇨병 예방을 위한 노력(생활습관 중재)."
+      location: {file: by_chapter/417장.md, line: 100}
+    status: 보완
+    current:
+      text: >
+        당뇨병 전단계 성인에게 체지방·체중·공복혈당 개선을 위해 유산소 운동(예: 주 8–9마일 걷기)과 건강한 식사(체중 3% 넘게 감량 목표)를 제안한다(Rec 1, Weak for).
+        생활습관 교정 후에도 진행 위험이 높으면 나이·기대여명·동반질환·BMI 등을 평가해 메트포르민 등 일부 약제를 제안한다(Rec 2, Weak for).
+      sources:
+        - {id: VADOD-DM-2023, locator: "Recommendations 1, 2"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [R73.03]}
+        recommendations:
+          - when: {always: true}
+            recommend: {lifestyle: ["유산소 운동(주 8–9마일 걷기 수준)", "건강한 식사, 체중 3% 초과 감량 목표"]}
+            strength: "VA/DoD Rec 1 (Weak for)"
+          - when: {finding: high_risk_progression_after_lifestyle}
+            recommend: {drug: metformin, purpose: "당뇨 진행 위험 감소", note: "환자 특성 평가 후"}
+            strength: "VA/DoD Rec 2 (Weak for)"
+
+  - id: 417-C05
+    topic: 당뇨 자가관리 교육과 원격의료
+    type: treatment
+    original:
+      text: "(417장 범위 외 — 418장 환자 교육 관련)"
+      location: {file: by_chapter/417장.md, line: 209}
+    status: 보완
+    current:
+      text: >
+        제2형 당뇨 성인에게 당뇨 자가관리 교육·지원을 권고한다(Rec 7, Strong for). 원격의료 기반 진료 제공을 제안한다(Rec 3, Weak for).
+        비알코올 지방간질환이 동반되면 FIB-4 같은 비침습 도구로 섬유화를 평가하도록 제안한다(Rec 5, Weak for).
+      sources:
+        - {id: VADOD-DM-2023, locator: "Recommendations 3, 5, 7"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{dx: E11}, {dx: K76.0}]}
+        tests:
+          - {lab: FIB4, reason: "간 섬유화 평가(비침습)"}
+        strength: "VA/DoD Rec 5 (Weak for)"

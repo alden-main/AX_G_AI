@@ -1,0 +1,182 @@
+# 404장 신경뇌하수체 질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 요붕증 병명 변경 입장문(JCEM 2022, CC BY — 국제 내분비학회 실무그룹), 오스트리아 신장학회 등 저나트륨혈증 진단·치료 합의
+#            (Wien Klin Wochenschr 2024, CC BY, 독일어 — 유럽 지침(2014) 기반), openFDA(CC0) 톨밥탄·데스모프레신.
+
+chapter: "404"
+title: 신경뇌하수체 질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 404-C01
+    topic: 요붕증 병명 변경(AVP 결핍·AVP 저항)
+    type: diagnosis
+    original:
+      text: "요붕증(diabetes insipidus): 뇌하수체 요붕증, 콩팥기원 요붕증, 원발 다음증."
+      location: {file: by_chapter/404장.md, line: 53}
+    status: 개정
+    current:
+      text: >
+        국제 내분비·소아내분비 학회 실무그룹은 중추성 요붕증을 아르지닌 바소프레신 결핍(AVP-D), 콩팥성 요붕증을 아르지닌 바소프레신 저항(AVP-R)으로 바꾸자고 제안했다.
+        '당뇨(diabetes)'라는 공통 용어 때문에 비내분비 진료 중 당뇨병과 혼동되어 데스모프레신이 누락되거나 잘못 투여되는 위해 사례가 있었기 때문이다. 전환기 몇 년간은 기존 병명을 괄호로 병기한다.
+      sources:
+        - {id: PAPER-AVP-DEFICIENCY-NAME-2022, locator: "Position statement"}
+    verification: primary
+    note: "EMR 표시명: 'AVP 결핍(중추성 요붕증)'처럼 병기 권장. KCD 코드(E23.2, N25.1)는 바뀌지 않음."
+    review: {status: draft}
+
+  - id: 404-C02
+    topic: 중추성 요붕증의 데스모프레신
+    type: dose
+    original:
+      text: "성인 주사 1~2 μg 1일 1~2회, 코흡입 10~20 μg 1일 2~3회, 경구 100~400 μg 1일 2~3회. 갈증을 느낄 때만 마시도록 교육. 원발 다음증은 데스모프레신으로 안전하게 치료할 수 없음."
+      location: {file: by_chapter/404장.md, line: 111}
+    status: 유지
+    current:
+      text: >
+        데스모프레신 정제(미국 허가)는 중추성 요붕증과 뇌하수체 부위 외상·수술 후 일시적 다뇨에 쓰며 콩팥성 요붕증에는 효과가 없다. 성인·소아 모두 0.05 mg 1일 2회로 시작해 수면 시간과 수분 출입이 적절하도록 개별 조절한다.
+        코 투여에서 바꿀 때는 마지막 코 투여 12시간 뒤 시작한다. 수분 제한을 지키고 소변량·삼투압으로 반응을 감시한다.
+        저나트륨혈증 또는 그 병력, 중등도–중증 신장애(크레아티닌 청소율 50 mL/분 미만)에서는 금기다.
+      sources:
+        - {id: OPENFDA-DESMOPRESSIN-ORAL, locator: "Indications; Dosage and Administration; Contraindications"}
+    verification: primary
+    note: "허가사항 판(2021-02)이 오래됨 — 제조사 최신판과 대조 필요."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-DESMOPRESSIN-AVPD
+        ingredient: desmopressin
+        indication: 중추성 요붕증(AVP 결핍)
+        source_priority: [OPENFDA-DESMOPRESSIN-ORAL]
+        starting_dose: "경구 0.05 mg 1일 2회, 개별 조절"
+        rules:
+          - {when: {any: [{var: Na, op: "<", value: 135}, {finding: hyponatremia_history}]}, action: "데스모프레신 금기(저나트륨혈증·병력)", alert: contraindicated}
+          - {when: {var: CrCl, op: "<", value: 50}, action: "중등도–중증 신장애 금기", alert: contraindicated}
+          - {when: {finding: primary_polydipsia}, action: "원발 다음증에는 저나트륨혈증 위험 — 사용하지 않음", alert: high}
+          - {when: {any: [{med_class: thiazide}, {med: carbamazepine}]}, action: "유리수 배설 저해 약 — 저나트륨혈증 주의", alert: caution}
+
+  - id: 404-C03
+    topic: 저나트륨혈증 분류와 감별 알고리즘
+    type: workup
+    original:
+      text: "표 404-3 세포바깥액량 추정에 따른 저나트륨혈증 감별 진단(저혈량·정상혈량·고혈량)."
+      location: {file: by_chapter/404장.md, line: 209}
+    status: 개정
+    current:
+      text: >
+        생화학적 중증도: 경도 130–134, 중등도 125–129, 고도 125 mmol/L 미만. 임상 중증도: 중등도(구역, 새로운 혼돈, 두통, 어지럼, 근육 경련), 중증(졸림, 경련 발작, 두개내압 상승 징후, 다른 중증 증상과 동반된 구토).
+        시간 경과: 48시간 안에 135 초과였음이 확인되면 급성, 그 외는 만성으로 분류한다.
+        감별: ① 중증 증상이면 다른 검사를 기다리지 않고 즉시 3% 식염수. ② 측정 혈청 삼투압 275 초과이면 가성·전위성(고혈당 등) 저나트륨혈증, 275 미만이면 진성(저장성). ③ 소변 삼투압 100 미만이면 원발 다음증·저용질 섭취·일시적 ADH(고령은 150까지).
+        ④ 소변 삼투압 100 초과이면 소변 나트륨을 본다: 30 미만이면 유효 순환혈량 감소(고혈량이면 심부전·간경변·신증후군, 저혈량이면 설사 등). 30 초과이면 먼저 최근 이뇨제·신부전을 배제하고, 정상혈량이면 SIAD를 의심한다.
+        SIAD 진단 전 부신기능부전(코티솔)과 갑상선저하증(TSH)을 확인한다.
+      sources:
+        - {id: PAPER-AUSTRIA-HYPONATREMIA-2024, locator: "Klassifikation; Algorithmus zur Differenzialdiagnose (Frage 1–5); Endokrinologisches Labor"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: lab_threshold
+        lab: Na
+        unit: mmol/L
+        context: "저나트륨혈증 생화학적 중증도"
+        bands:
+          - {label: 고도, max: 124.999}
+          - {label: 중등도, min: 125, max: 129.999}
+          - {label: 경도, min: 130, max: 134.999}
+      - kind: workup
+        trigger: {var: Na, op: "<", value: 135}
+        tests:
+          - {lab: Serum_osmolality, reason: "275 초과면 가성·전위성"}
+          - {lab: Urine_osmolality, reason: "100 미만이면 다음증·저용질"}
+          - {lab: Urine_sodium, reason: "30 기준 — 이뇨제·신부전 먼저 배제"}
+          - {lab: Glucose, reason: "고혈당 전위성 저나트륨혈증"}
+          - {lab: Cortisol_AM, reason: "SIAD 진단 전 부신기능부전 배제"}
+          - {lab: TSH, reason: "갑상선저하증 배제"}
+
+  - id: 404-C04
+    topic: 증상성 저나트륨혈증 응급 치료와 교정 속도
+    type: dose
+    original:
+      text: "급성 증상 SIADH: 혈장 나트륨 130 meq/L까지 시간당 1% 정도 증가. 3% 식염수 분당 0.05 mL/kg 정주. 2시간마다 혈청 나트륨. 너무 빠른 교정은 중심다리뇌말이집용해."
+      location: {file: by_chapter/404장.md, line: 197}
+    status: 개정
+    current:
+      text: >
+        중등도–중증 증상이 저나트륨혈증 때문이면 3% 식염수 2 mL/kg(최대 150 mL, 체중 모르면 100 mL)을 10분에 걸쳐 볼루스로 정주하고(말초 정맥 가능) 10–20분 뒤 나트륨과 증상을 재평가한다. 지속 주입보다 볼루스를 선호한다.
+        중증 증상이면 상승이 4–6 mmol/L 미만이거나 증상이 남을 때 같은 용량을 반복하며 총 3회까지. 단기 목표는 4–6 mmol/L 상승(중증은 1시간 안).
+        만성 저나트륨혈증 교정은 24시간마다 6–8 mmol/L를 목표로 하고 최대 8 mmol/L/24시간(48시간 16)을 넘지 않는다. 삼투성 탈수초 위험 인자가 있으면 4–6 mmol/L/24시간. 급성은 최대 속도 제한이 없다.
+        교정 공식은 개인 예측이 부정확해 권하지 않으며 잦은 측정으로 대체할 수 없다. 130 미만 증상 환자는 첫 24시간 약 6시간마다(과교정 위험이면 2–4시간마다) 135 초과까지 측정한다.
+        과교정(8 초과/24시간, 고위험은 6 초과)이면 교정을 멈추고 5% 포도당(약 3 mL/kg당 1 mmol/L 감소, 시작 500 mL/시간 또는 5 mL/kg/시간)을 주고 1–2시간마다 나트륨을 잰다. 다뇨면 데스모프레신 2 µg 정주(6–8시간마다)를 포도당과 함께 쓴다. 고위험군은 티아민을 함께 준다.
+      sources:
+        - {id: PAPER-AUSTRIA-HYPONATREMIA-2024, locator: "Akuttherapie; Korrekturrate; Kontrollabstände; Überkorrektur"}
+    verification: primary
+    conflicts:
+      - "원문 3% 식염수 지속 주입(0.05 mL/kg/분)·시간당 1% 상승 vs 현재 2 mL/kg(최대 150 mL) 볼루스·24시간 최대 8 mmol/L."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-HYPERTONIC-SALINE-HYPONATREMIA
+        ingredient: sodium_chloride_3pct
+        indication: 중등도–중증 증상성 저나트륨혈증
+        source_priority: [PAPER-AUSTRIA-HYPONATREMIA-2024]
+        bolus: "2 mL/kg(최대 150 mL; 체중 미상 100 mL) 10분 정주, 최대 3회"
+        target: "4–6 mmol/L 상승"
+        limit: "만성: 최대 8 mmol/L/24시간(ODS 위험 4–6)"
+        rules:
+          - {when: {var: Na_rise_24h, op: ">", value: 8}, action: "과교정 — 교정 중단, 5% 포도당 ± 데스모프레신 2 µg 정주", alert: high}
+          - {when: {all: [{var: Na_rise_24h, op: ">", value: 6}, {finding: ods_risk_factor}]}, action: "ODS 고위험 과교정 — 재저하 고려", alert: high}
+      - kind: monitoring
+        after: {event: hypertonic_saline_bolus}
+        check: [Na]
+        interval_minutes: [10, 20]
+        rules:
+          - {when: {all: [{var: Na, op: "<", value: 130}, {finding: symptomatic_hyponatremia}]}, action: "첫 24시간 약 6시간마다(고위험 2–4시간마다) 나트륨 >135까지"}
+
+  - id: 404-C05
+    topic: SIAD 만성 치료와 톨밥탄
+    type: dose
+    original:
+      text: "만성 SIADH: 수분 섭취를 소변량보다 적게 제한. 바프탄(코니밥탄 정주) 승인. 2시간마다 혈청 나트륨 측정."
+      location: {file: by_chapter/404장.md, line: 199}
+    status: 개정
+    current:
+      text: >
+        SIAD는 원인(유발 약 중단, 악성종양 치료 등)을 찾아 치료한다. 등장성 수액은 SIAD에서 나트륨을 더 떨어뜨릴 수 있다. 수분 제한(최대 1,000 mL/일)이 기본이나 반응은 약 50%이며 Furst 비 1.0 초과나 소변 삼투압 500 초과는 무반응을 예측한다.
+        보조 치료로 경구 요소 0.25–0.5 g/kg/일(최대 90 g/일, 최대 2회 분할), 엠파글리플로진 25 mg과 수분 제한 병용(장기 자료 부족)이 있다. 퓨로세미드는 장기 치료로 권하지 않는다.
+        톨밥탄(미국 허가): 혈청 나트륨 125 미만 또는 수분 제한에 반응하지 않는 증상성 정상·고혈량 저나트륨혈증. 반드시 병원에서 시작·재시작하며 15 mg 1일 1회, 24시간 이상 간격 30 → 최대 60 mg. 간손상 위험으로 30일을 넘기지 않고 기저 간질환에서는 피한다.
+        첫 24시간 수분 제한을 피하고 갈증에 따라 마시게 한다. 신경학적 응급 교정이 필요한 환자, 저혈량 저나트륨혈증, 갈증을 느끼거나 반응하지 못하는 환자, 강력한 CYP3A 억제제 병용, 무뇨에는 금기다.
+        오스트리아 합의는 과교정 위험 때문에 나트륨 125 초과에서 3.75–7.5 mg/일 입원 시작과 천천히 증량을 권한다.
+      sources:
+        - {id: PAPER-AUSTRIA-HYPONATREMIA-2024, locator: "SIAD; Flüssigkeitsrestriktion; Osmotherapie; Vasopressin-2-Rezeptor-Antagonisten; SGLT2-Hemmer; Furosemid"}
+        - {id: OPENFDA-TOLVAPTAN, locator: "Boxed Warning; 1; 2.1; 4; 5.1–5.2"}
+    verification: primary
+    conflicts:
+      - "톨밥탄 시작 용량: 미국 허가 15 mg vs 오스트리아 합의 3.75–7.5 mg(나트륨 125 초과에서). 허가는 125 미만을 적응증에 포함 — 기본값은 검수자가 결정."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-TOLVAPTAN-HYPONATREMIA
+        ingredient: tolvaptan
+        indication: 정상·고혈량 저나트륨혈증(SIAD·심부전)
+        source_priority: [OPENFDA-TOLVAPTAN, PAPER-AUSTRIA-HYPONATREMIA-2024]
+        starting_dose: "15 mg 1일 1회(허가) — 합의는 3.75–7.5 mg"
+        titration: "24시간 이상 간격 30 mg → 최대 60 mg"
+        max_duration: "30일"
+        setting: "병원에서 시작·재시작"
+        rules:
+          - {when: {finding: hypovolemic_hyponatremia}, action: "톨밥탄 금기", alert: contraindicated}
+          - {when: {med_class: strong_CYP3A_inhibitor}, action: "강력한 CYP3A 억제제 병용 금기", alert: contraindicated}
+          - {when: {any: [{dx: K70}, {dx: K74}, {finding: liver_disease}]}, action: "기저 간질환 회피(간손상)", alert: high}
+          - {when: {finding: fluid_restriction_first_24h}, action: "첫 24시간 수분 제한 피함", alert: caution}
+          - {when: {var: treatment_days, op: ">", value: 30}, action: "30일 초과 사용 금지(간손상)", alert: high}
+
+  - id: 404-C06
+    topic: 갈증저하 고나트륨혈증·콩팥성 요붕증
+    type: treatment
+    original:
+      text: "갈증저하 고나트륨혈증: 수분 섭취 처방. 콩팥기원 요붕증: 저염식과 티아지드·아밀로리드, 인도메타신."
+      location: {file: by_chapter/404장.md, line: 139}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "이번 묶음에서 A등급 출처 미확보."

@@ -1,0 +1,194 @@
+# 405장 갑상선질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: openFDA(CC0) 허가사항. 갑상선 학회 지침(ATA 등)은 C등급이라 사용하지 않음.
+
+chapter: "405"
+title: 갑상선질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 405-C01
+    topic: 갑상선기능저하증 레보티록신 용량과 감시
+    type: dose
+    original:
+      text: >
+        잔여 기능이 없으면 1.6 μg/kg/일(보통 100–150 μg), 아침식사 30분 전. 60세 이하·심장질환 없으면 50–100 μg로 시작, TSH에 따라 12.5–25 μg 조정,
+        용량 변경 약 2개월 후 TSH 측정. 안정 후 매년 검사.
+      location: {file: by_chapter/405장.md, line: 304}
+    status: 유지
+    current:
+      text: >
+        성인 갑상선기능저하증의 완전 대체 용량은 1.6 mcg/kg/일이며, 일부는 더 낮은 시작 용량이 필요하다. 혈청 TSH 또는 유리 T4에 따라 4–6주마다 12.5–25 mcg씩 조정한다.
+        심방세동 위험·심장질환이 있거나 고령이면 1.6 mcg/kg/일보다 낮게 시작해 6–8주마다 조정한다. 최대 효과는 4–6주 후에 나타날 수 있다.
+        공복에 아침식사 30–60분 전 물 한 컵과 함께 1일 1회 복용하고, 흡수를 방해하는 약과는 최소 4시간 간격을 둔다. TSH·T4 측정 최소 2일 전에 비오틴을 중단한다.
+        2차·3차(중추성) 갑상선기능저하증은 유리 T4를 정상 범위 상반부로 유지한다.
+      sources:
+        - {id: OPENFDA-LEVOTHYROXINE, locator: "2.1–2.3 Dosage and Administration (Table 1)"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-LEVOTHYROXINE
+        ingredient: levothyroxine
+        indication: 성인 갑상선기능저하증
+        source_priority: [OPENFDA-LEVOTHYROXINE]
+        calculation:
+          full_replacement_mcg_day: {formula: "weight_kg × 1.6", unit: "mcg/day"}
+        rules:
+          - {when: {not: {any: [{var: age, op: ">=", value: 65}, {finding: cardiac_disease}, {finding: af_risk}]}}, action: "완전 대체 1.6 mcg/kg/일(일부는 낮게 시작), 4–6주마다 12.5–25 mcg 조정"}
+          - {when: {any: [{var: age, op: ">=", value: 65}, {finding: cardiac_disease}, {finding: af_risk}]}, action: "1.6 mcg/kg/일보다 낮게 시작, 6–8주마다 조정", alert: caution}
+          - {when: {finding: central_hypothyroidism}, action: "TSH 대신 유리 T4를 정상 상반부로 유지"}
+        administration: ["공복, 아침식사 30–60분 전", "흡수 방해 약과 4시간 간격", "검사 2일 전 비오틴 중단"]
+      - kind: monitoring
+        after: {event: levothyroxine_start_or_dose_change}
+        check: [TSH]
+        timing_weeks: [4, 8]
+        rules:
+          - {when: {not: {finding: cardiac_disease}}, action: "4–6주 후 TSH·유리 T4로 재평가"}
+          - {when: {finding: cardiac_disease}, action: "6–8주 간격 재평가"}
+
+  - id: 405-C02
+    topic: 임신 중 갑상선기능저하증
+    type: dose
+    original:
+      text: "임신 확인 즉시 갑상선기능 평가, 임신 전반기 동안 감시. 산모의 갑상선기능저하증은 태아 신경발달에 악영향, 조산."
+      location: {file: by_chapter/405장.md, line: 324}
+    status: 유지
+    current:
+      text: >
+        기존 갑상선기능저하증이 있는 임신부는 임신이 확인되면 바로, 그리고 최소 매 삼분기마다 TSH와 유리 T4를 측정하고 TSH를 삼분기별 참고 범위로 유지한다.
+        TSH가 삼분기별 정상보다 높으면 1일 12.5–25 mcg 증량하고, 안정 용량과 정상 TSH가 될 때까지 4주마다 TSH를 확인한다. 분만 직후 임신 전 용량으로 줄이고 분만 4–8주 후 TSH를 확인한다.
+        임신 중 새로 생긴 갑상선기능저하증(TSH ≥10 mIU/L)은 1.6 mcg/kg/일로 시작해 4주마다 TSH를 확인하며 조정한다.
+      sources:
+        - {id: OPENFDA-LEVOTHYROXINE, locator: "2.3 Pregnancy (Table 3)"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-LEVOTHYROXINE-PREGNANCY
+        ingredient: levothyroxine
+        indication: 임신 중 갑상선기능저하증
+        source_priority: [OPENFDA-LEVOTHYROXINE]
+        rules:
+          - {when: {all: [{finding: pregnancy}, {finding: preexisting_hypothyroidism}, {finding: tsh_above_trimester_range}]}, action: "1일 12.5–25 mcg 증량, 4주마다 TSH"}
+          - {when: {all: [{finding: pregnancy}, {var: TSH, op: ">=", value: 10}, {finding: new_onset_hypothyroidism}]}, action: "1.6 mcg/kg/일 시작, 4주마다 TSH"}
+          - {when: {event: delivery}, action: "임신 전 용량으로 즉시 감량, 분만 4–8주 후 TSH"}
+      - kind: workup
+        trigger: {all: [{finding: pregnancy}, {dx: E03}]}
+        tests:
+          - {lab: TSH, frequency: "임신 확인 즉시, 최소 매 삼분기", reason: 갑상선기능저하증 임신 관리}
+          - {lab: FT4, frequency: "임신 확인 즉시, 최소 매 삼분기", reason: 갑상선기능저하증 임신 관리}
+
+  - id: 405-C03
+    topic: 레보티록신의 부적절 사용(결절·갑상선종 억제)
+    type: treatment
+    original:
+      text: "비중독 갑상선종·결절에 TSH 억제 목적 레보티록신은 효과가 제한적."
+      location: {file: by_chapter/405장.md, line: 572}
+    status: 개정
+    current:
+      text: >
+        요오드가 충분한 지역의 양성 갑상선 결절과 비중독 미만성 갑상선종 억제 목적으로는 레보티록신을 쓰지 않는다 — 임상 이득이 없고 과치료로 갑상선중독증을 일으킬 수 있다(미국 허가 사용 제한).
+      sources:
+        - {id: OPENFDA-LEVOTHYROXINE, locator: "1 Indications and Usage — Limitations of Use"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E04]}
+        recommendations:
+          - when: {all: [{med: levothyroxine}, {finding: indication_benign_nodule_or_goiter_suppression}, {not: {dx: E03}}]}
+            recommend: {action: avoid, detail: "양성 결절·비중독 갑상선종 억제 목적 레보티록신"}
+            alert_level: medium
+
+  - id: 405-C04
+    topic: 갑상선중독증 항갑상선제
+    type: dose
+    original:
+      text: "그레이브스병: 메티마졸·카비마졸·PTU, 방사성 요오드, 수술. PTU는 간독성. 임신 1분기에는 PTU."
+      location: {file: by_chapter/405장.md, line: 354}
+    status: 유지
+    current:
+      text: >
+        메티마졸(미국 허가): 성인 시작 1일 15 mg(경증), 30–40 mg(중등도–중증), 60 mg(중증)을 8시간 간격 3회 분할, 유지 1일 5–15 mg.
+        프로필티오우라실(PTU): 치명적 사례를 포함한 중증 간손상·급성 간부전 박스 경고. 메티마졸을 견디지 못하고 방사성 요오드·수술이 적절하지 않은 환자에게만 쓰며,
+        임신 1분기 또는 직전에 항갑상선제가 필요하면 PTU가 선택 약일 수 있다.
+      sources:
+        - {id: OPENFDA-METHIMAZOLE, locator: "Dosage and Administration"}
+        - {id: OPENFDA-PTU, locator: "Boxed Warning; Indications and Usage"}
+    verification: primary
+    note: "메티마졸 무과립구증 경고는 이번 라벨 추출 섹션에 없어 대조하지 못함 — 원문·허가 경고 섹션 확인 필요."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-METHIMAZOLE
+        ingredient: methimazole
+        indication: 갑상선기능항진증
+        source_priority: [OPENFDA-METHIMAZOLE]
+        rules:
+          - {when: {finding: mild_hyperthyroidism}, action: "1일 15 mg, 3회 분할"}
+          - {when: {finding: moderately_severe_hyperthyroidism}, action: "1일 30–40 mg, 3회 분할"}
+          - {when: {finding: severe_hyperthyroidism}, action: "1일 60 mg, 3회 분할"}
+        maintenance: "1일 5–15 mg"
+      - kind: treatment
+        condition: {kcd: [E05]}
+        recommendations:
+          - when: {all: [{med: propylthiouracil}, {not: {finding: pregnancy_first_trimester}}, {not: {finding: methimazole_intolerant}}]}
+            recommend: {action: review, detail: "PTU 박스 경고(중증 간손상) — 메티마졸 불내·RAI/수술 부적합 또는 임신 1분기에만"}
+            alert_level: high
+
+  - id: 405-C05
+    topic: 무증상 갑상선기능저하증 치료 기준
+    type: treatment
+    original:
+      text: >
+        임신(희망) 또는 TSH >10 mIU/L이면 레보티록신 권장, TSH <10이면 증상·TPO 항체 양성·심장질환 시 고려. 3개월 이상 지속 확인 후 시작, 저용량(25–50 μg/일; 원문 'mg/일' 표기 오류).
+      location: {file: by_chapter/405장.md, line: 316}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 출처 미확보(학회 지침 C등급). 원문 시작 용량 단위 'mg/일'은 μg/일의 오기."
+
+  - id: 405-C06
+    topic: 갑상선 기능검사 해석·결절·갑상선암
+    type: workup
+    original:
+      text: "TSH·유리 T4 검사, 초음파 소견(표 405-4), 세침흡인, 분화갑상선암 치료(수술, TSH 억제, 방사성 요오드)."
+      location: {file: by_chapter/405장.md, line: 157}
+    status: 개정
+    current:
+      text: >
+        갑상선 결절 초기 평가는 개인·가족력, 진찰, 갑상선 기능검사, 경부 초음파다. 검사실 평가는 최소 TSH를 포함하고, TSH가 낮으면 유리 T4를, 유리 T4가 정상이면 유리 T3를 측정한다.
+        결절이 의심되면 갑상선과 중앙·외측 경부를 포함한 경부 초음파를 시행하고 EU-TIRADS로 크기·위치·소견·악성 위험을 기술한다.
+        혈청 TSH가 정상보다 낮으면 기능성 결절·다결절 진단, 세침흡인 회피, 방사성 요오드 치료 적합성 판단을 위해 갑상선 스캔을 한다(기능항진 결절은 악성이 강하게 의심되지 않으면 세침흡인하지 않는다).
+        세침흡인은 초음파 유도하에 하며, 대상 크기는 EU-TIRADS 5 >10 mm, EU-TIRADS 4 >15 mm, EU-TIRADS 3 >20 mm다. 의심 림프절도 세침흡인한다. 중심부 바늘생검은 1차 검사로 쓰지 않는다.
+        세침흡인을 하지 않는 무증상 결절은 EU-TIRADS 4(<15 mm)는 1년 뒤, EU-TIRADS 5(<10 mm)는 6–12개월마다 재평가한다. TSH가 높지 않은데 결절 크기를 줄이려고 갑상선호르몬을 쓰지 않는다.
+      sources:
+        - {id: PAPER-ETA-THYROID-NODULE-2023, locator: "Table 1 Summary of recommendations (Initial evaluation, Thyroid ultrasound, Scintigraphy, FNA indications, Surveillance); Laboratory assessment"}
+    verification: primary
+    note: "결절 평가 범위만 대체 — 분화갑상선암 치료(수술·TSH 억제·방사성 요오드)는 A등급 출처 미확보."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: thyroid_nodule}
+        tests:
+          - {lab: TSH, reason: "결절 초기 평가(최소 검사)"}
+          - {lab: FT4, reason: "TSH가 낮을 때"}
+          - {exam: Neck_ultrasound, reason: "갑상선·경부 림프절, EU-TIRADS 기술"}
+      - kind: workup
+        trigger:
+          all:
+            - {finding: thyroid_nodule}
+            - {finding: tsh_subnormal}
+        tests:
+          - {exam: Thyroid_scintigraphy, reason: "TSH 저하 — 기능성 결절 확인(세침흡인 회피)"}
+      - kind: workup
+        trigger:
+          any:
+            - {finding: eu_tirads5_nodule_over_10mm}
+            - {finding: eu_tirads4_nodule_over_15mm}
+            - {finding: eu_tirads3_nodule_over_20mm}
+            - {finding: suspicious_cervical_lymph_node}
+        tests:
+          - {exam: Thyroid_FNA, reason: "EU-TIRADS 크기 기준 충족 또는 의심 림프절 — 초음파 유도 세침흡인"}

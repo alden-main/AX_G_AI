@@ -1,0 +1,97 @@
+# 384장 척추관절병증 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 대만류마티스학회 축성 척추관절염 관리 합의 권고 2020(Int J Rheum Dis 2020, CC BY — ASAS-EULAR 2016 기반, 대만 보험 기준 반영).
+# 주의: ASAS-EULAR 2022 개정·ACR 2019 원문은 C·B등급이라 미반영.
+
+chapter: "384"
+title: 척추관절병증
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 384-C01
+    topic: 축성 척추관절염 목표와 비약물 치료
+    type: treatment
+    original:
+      text: "모든 치료는 자세와 운동범위를 유지하는 프로그램을 포함."
+      location: {file: by_chapter/384장.md, line: 129}
+    status: 유지
+    current:
+      text: >
+        치료는 증상·징후, 환자 특성, 목표에 따라 개별화한다. 진단과 활성도 감시는 임상 증상·징후, 검사, 영상에 근거한다(진단은 2009 ASAS 분류 기준). 임상 관해 또는 최소 질병 활성을 목표로 치료하며(T2T) ASDAS 2.1 미만, 가능하면 1.3 미만을 권한다.
+        가능한 한 빨리 금연과 개별화된 규칙적 운동(특히 척추 가동성 유연성 운동, 유산소·근력·호흡 운동, 물리치료)을 시작하게 한다(근거 IIa, B). 포도막염·건선·염증성 장질환 같은 관절 외 증상을 적극 평가·관리한다.
+      sources:
+        - {id: PAPER-TAIWAN-AXSPA-2020, locator: "Recommendations 1–5 (Table 1)"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: monitoring
+        after: {dx: M45}
+        check: [ASDAS, CRP]
+        rules:
+          - {when: {var: ASDAS, op: ">=", value: 2.1}, action: "목표(ASDAS <2.1, 가능하면 <1.3) 미달 — 치료 조정 검토"}
+
+  - id: 384-C02
+    topic: NSAID·스테로이드·csDMARD
+    type: treatment
+    original:
+      text: "NSAIDs가 가장 중요한 치료약물, 지속적 고용량 NSAIDs는 방사선학적 진행을 늦춤. 말초 관절염에 설파살라진 2~3 g/일."
+      location: {file: by_chapter/384장.md, line: 129}
+    status: 유지
+    current:
+      text: >
+        NSAID가 증상성 축성 척추관절염의 1차 치료이며 최적 용량을 쓰고, 신기능·위장관·심혈관 부작용 감시는 개별적으로 정한다(근거 Ia, A). 잔여 통증에는 진통제를 고려한다. CRP가 높거나 활성도가 높은 환자는 지속 NSAID 사용의 이득이 더 클 수 있다.
+        염증 부위 국소 스테로이드 주사와 단기 전신 스테로이드는 도움이 될 수 있으나 장기 전신 스테로이드는 피한다. csDMARD 단독은 축성 질환에 권하지 않으며, 설파살라진·레플루노마이드는 말초 관절염에 도움이 될 수 있다.
+      sources:
+        - {id: PAPER-TAIWAN-AXSPA-2020, locator: "Recommendations 6–8"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [M45, M46.8]}
+        recommendations:
+          - when: {dx: M45}
+            recommend: {first_line: nsaid_optimal_dose, monitor: [SCr, GI_bleeding_risk, CV_risk]}
+          - when: {all: [{dx: M45}, {med_class: csDMARD}, {not: {finding: peripheral_arthritis}}]}
+            recommend: {action: review, detail: "축성 질환에 csDMARD 단독 비권장"}
+            alert_level: medium
+          - when: {all: [{dx: M45}, {med_class: systemic_glucocorticoid}, {var: steroid_months, op: ">=", value: 3}]}
+            recommend: {action: review, detail: "장기 전신 스테로이드 회피"}
+            alert_level: medium
+
+  - id: 384-C03
+    topic: 생물학적 제제와 전환·감량
+    type: treatment
+    original:
+      text: "TNF 길항제(인플릭시맙, 에타너셉트, 아달리무맙, 골리무맙, 세르톨리주맙)는 2가지 이상 NSAID 실패한 활동성 환자(BASDAI 4 이상)에 사용. 결핵 선별. 우스테키누맙·세쿠키누맙은 아직 승인되지 않음."
+      location: {file: by_chapter/384장.md, line: 135}
+    status: 개정
+    current:
+      text: >
+        기존 치료에 실패하면 다른 원인(골다공증, 척추 골절, 악성종양, 섬유근통, 결핵·척추 결핵)을 먼저 평가하고 생물학적 제제를 고려한다(근거 Ia, A). 주요 약군은 TNF 억제제와 IL-17 억제제(세쿠키누맙 승인)다.
+        효과 부족이나 불내성이면 같은 계열 내 또는 계열 간 전환을 고려할 수 있다(Ia, A). 안정 관해 환자의 감량은 시도할 수 있으나 완전 중단 후에는 재발이 많다.
+        결핵·B형간염 유병률이 높은 지역에서는 TNF 억제제가 결핵(약 2.5배)과 HBV 재활성화 위험을 높이므로 시작 전 결핵·HBV 선별을 한다. 구조 손상이 있는 고관절 통증·장애는 인공관절 치환을 고려한다.
+      sources:
+        - {id: PAPER-TAIWAN-AXSPA-2020, locator: "Overarching principles (TB, HBV); Recommendations 9–11"}
+    verification: primary
+    conflicts:
+      - "원문 'IL-17 억제제 미승인' vs 현재 세쿠키누맙(이후 익세키주맙) 승인. JAK 억제제(토파시티닙·우파다시티닙)는 이 합의 이후 승인 — A등급 출처로 대조하지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{dx: M45}, {event: bdmard_initiation_planned}]}
+        tests:
+          - {lab: Latent_TB_screen, reason: "TNF 억제제 결핵 위험"}
+          - {lab: HBsAg, reason: "HBV 재활성화"}
+          - {lab: Anti_HBc_total, reason: "HBV 재활성화"}
+
+  - id: 384-C04
+    topic: 반응관절염·건선관절염·장병관절염
+    type: treatment
+    original:
+      text: "반응관절염 치료, 건선관절염 치료(메토트렉세이트, TNF 억제제), 장병관절염."
+      location: {file: by_chapter/384장.md, line: 219}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "이번 묶음에서 A등급 출처 미확보(건선관절염 Saudi 2023·ILAR 2020 CC BY 후보 미대조)."

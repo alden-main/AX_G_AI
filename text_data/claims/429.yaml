@@ -1,0 +1,63 @@
+# 429장 윌슨병 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: d-페니실라민 vs 아연염 체계적 고찰·메타분석(Front Pharmacol 2022, CC BY), 윌슨병 병태생리·치료 종설(Front Cell Dev Biol 2022, CC BY),
+#            openFDA(CC0) 트리엔틴 허가사항.
+# 주의: AASLD 2022·EASL 2025 윌슨병 지침 원문은 C·B등급 — 진단 절단값·용량은 A등급으로 대조하지 못함.
+
+chapter: "429"
+title: 윌슨병
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 429-C01
+    topic: 항구리 치료 선택(킬레이트제·아연)
+    type: treatment
+    original:
+      text: "표 429-2: 간질환 발현(간부전 없음) 1차 아연·2차 트리엔틴, 간부전 트리엔틴+아연, 신경 발현 테트라사이오몰립데이트+아연, 유지 아연. 페니실라민은 부작용·신경 악화로 역할이 작음."
+      location: {file: by_chapter/429장.md, line: 55}
+    status: 유지
+    current:
+      text: >
+        치료는 구리 킬레이트제(d-페니실라민, 트리엔틴), 아연염, 간이식이며 평생 치료한다. 킬레이트가 표준 치료로 대부분 큰 이득이 있고, 급성 간부전에서는 간이식이 유일한 치료다.
+        16개 연구 메타분석: 증상성 간형에서 d-페니실라민과 아연의 치료 효과에 차이가 없었고(RR 0.98), 신경형 호전율은 d-페니실라민 56% vs 아연 80%였다. d-페니실라민은 아연보다 이상반응(RR 2.42)과 신경학적 악화(RR 1.96)가 많았다.
+        트리엔틴(미국 허가)은 페니실라민을 견디지 못하는 환자에 적응이 있으며 페니실라민과 상호 대체 가능한 약으로 보지 않는다.
+      sources:
+        - {id: PAPER-WILSON-REVIEW-2022, locator: "Current treatments"}
+        - {id: PAPER-WILSON-DPEN-ZINC-SR-2022, locator: "Results; Conclusion"}
+        - {id: OPENFDA-TRIENTINE, locator: "Indications and Usage"}
+    verification: primary
+    note: "테트라사이오몰립데이트는 승인되지 않음(개발 중단). 트리엔틴 사수화물(Cuvrior, 2022 미국 승인)·용량은 미대조."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E83.0]}
+        recommendations:
+          - when: {all: [{dx: E83.0}, {finding: neurologic_wilson}, {med: penicillamine}]}
+            recommend: {action: alert, detail: "d-페니실라민 — 신경학적 악화 위험(아연 대비 RR 1.96)"}
+            alert_level: high
+          - when: {all: [{dx: E83.0}, {finding: acute_liver_failure}]}
+            recommend: {action: urgent_transplant_referral, detail: "급성 간부전 — 간이식 평가"}
+            alert_level: high
+
+  - id: 429-C02
+    topic: 윌슨병 진단 검사
+    type: workup
+    original:
+      text: "세룰로플라스민, 카이저-플라이셔 고리(세극등), 24시간 소변 구리(증상 환자 100 μg 이상), 간 구리 정량(건중량 200 μg/g 이상)."
+      location: {file: by_chapter/429장.md, line: 31}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "진단 절단값(Leipzig 점수 등)은 A등급 출처 미확보."
+
+  - id: 429-C03
+    topic: 항구리 치료 감시
+    type: monitoring
+    original:
+      text: "트리엔틴·페니실라민 초기 혈구·생화학·소변 검사(첫 달 매주 …). 유리 구리 25 μg/dL 미만 목표. 아연은 24시간 소변 구리로 감시."
+      location: {file: by_chapter/429장.md, line: 99}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "감시 간격·목표치는 A등급 출처 미확보."

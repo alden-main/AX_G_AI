@@ -1,0 +1,97 @@
+# S02 호흡기 보충(COPD·천식) — 19판 원문 범위 밖 보충 장
+# 스키마: text_data/claims/README.md (보충 장: original 없음, status 보완만, A등급 current 필수)
+
+chapter: "S02"
+title: 호흡기 보충 — COPD·천식
+original_source: SUPPLEMENT
+updated_at: "2026-11-11"
+
+claims:
+  - id: S02-C01
+    topic: COPD 의심 시 기관지확장제 후 폐활량 검사
+    type: workup
+    status: 보완
+    current:
+      text: >
+        COPD는 담배 연기·바이오매스 연료 같은 유해 물질 장기 노출(또는 알파-1 항트립신 결핍 같은 유전 소인)로 생기며, 호기 기류 제한이 완전히 가역적이지 않다.
+        증상은 진행하는 호흡곤란, 만성 기침, 만성 객담, 만성 천명, 피로, 급성 악화 중 하나 이상이며, 비슷하게 나타나는 다른 질환을 함께 고려한다.
+        COPD 임상 진단 확인에는 기관지확장제 후(post-BD) 폐활량 검사를 제안한다(Rec 1, Weak for) — 기관지확장제 전 검사만 쓰면 위양성과 누락이 생긴다.
+        평가 단계에서 표적 병력·진찰, 가능하면 기관지확장제 후 폐활량 검사, 기저 일반혈액검사(백혈구 감별 포함)를 시행한다. 진단 검사를 기다리는 동안에도 치료는 시작할 수 있다.
+      sources:
+        - {id: VADOD-COPD-2026, locator: "Recommendation 1; Sidebar 1 (Definition of COPD); Algorithm Module A, Box 4"}
+    verification: primary
+    conflicts:
+      - "VA/DoD 2026 본문은 폐쇄 판정 기준으로 고정 비율(fixed ratio)을 언급하지만 수치 기준(FEV1/FVC <0.70 또는 LLN)을 권고문에 명시하지 않음 — 판정 기준은 검수 시 확정."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {not: {dx: J44}}
+            - any:
+                - {finding: suspected_copd}
+                - all:
+                    - {any: [{finding: current_smoker}, {var: pack_years, op: ">", value: 0}, {finding: biomass_exposure}]}
+                    - {any: [{finding: chronic_cough}, {finding: chronic_sputum}, {finding: progressive_dyspnea}, {finding: chronic_wheezing}]}
+        tests:
+          - {exam: Spirometry_BD, reason: "COPD 임상 진단 확인(기관지확장제 후 폐활량)"}
+          - {lab: CBC_diff, reason: "기저 일반혈액검사(백혈구 감별)"}
+        notes: ["노출+증상 조합은 Sidebar 1의 정의를 규칙으로 옮긴 운영 가정 — 검수 시 확정"]
+
+  - id: S02-C02
+    topic: COPD 저산소증과 장기 산소치료 평가
+    type: referral
+    status: 보완
+    current:
+      text: >
+        COPD 외래 환자 중 만성 중증 안정 시 저산소증(PaO2 <55 mmHg 또는 SaO2 ≤88%), 또는 중등도 저산소증(PaO2 56–59 mmHg 또는 SaO2 >88–≤90%)이면서
+        만성 저산소 관련 심폐·혈액 합병증(적혈구용적률 >55%, 폐고혈압, 폐성심)이 있으면 장기 산소치료를 권고한다(Rec 15, Strong for).
+        만성 안정 저산소증은 최소 6주 간격의 적격 측정 2회로, 급성 질환 회복 후 최소 6주 뒤에 확인한다. 급성 호흡기 질환 후 시작한 산소는 30–90일 안에 필요성을 다시 평가한다.
+        평가 단계에서 안정 시 산소포화도가 낮으면 정식 가정 산소 평가로 의뢰한다.
+      sources:
+        - {id: VADOD-COPD-2026, locator: "Recommendation 15 Discussion; Algorithm Module A, Box 7–8"}
+    verification: primary
+    conflicts:
+      - "알고리즘 Box 7 각주는 '산소포화도 ≤80%'로 표기돼 Rec 15 본문(SaO2 ≤88%)과 다름 — 본문 기준(≤88%)을 쓰고 각주는 오기 가능성으로 검수 시 확인."
+    review: {status: draft}
+    corpus:
+      - kind: referral
+        to: 가정 산소 평가(호흡기내과)
+        purpose: "장기 산소치료 적격 평가 — 6주 이상 간격 2회 측정으로 만성 저산소증 확인"
+        criteria:
+          - {all: [{dx: J44}, {var: SpO2, op: "<=", value: 88}]}
+          - {all: [{dx: J44}, {var: SpO2, op: "<=", value: 90}, {any: [{var: Hematocrit, op: ">", value: 55}, {dx: I27}, {finding: cor_pulmonale}]}]}
+
+  - id: S02-C03
+    topic: 천식 진단 평가와 폐기능 검사
+    type: workup
+    status: 보완
+    current:
+      text: >
+        천식은 임상 진단이며 진단 검사와 치료 반응이 진단을 뒷받침한다. 평가에는 증상 양상(운동, 주야간), 유발 요인, 악화 요인(비만, 아토피, 흡연, 직업 노출, 우울),
+        병력(알레르기 비염·습진)과 진찰, 동반질환, 다른 진단을 고려할 때의 흉부 X선, 일반혈액검사의 호산구 수 확인, 천식 조절 검사(ACT)가 포함된다.
+        폐활량 검사는 폐쇄성·제한성 환기 장애가 의심될 때의 첫 검사이며, 폐쇄가 있으면 기관지확장제 검사로 가역성을 본다.
+        기본 폐활량이 진단에 맞지 않는데 천식이 의심되면 기관지확장제 검사(이전에 안 했으면), 기관지유발검사(메타콜린이 1차 약제, 전문의 의뢰), 치료 시험, 호흡기·알레르기 전문의 의뢰 중에서 고른다.
+        소아에게는 기관지유발검사를 처방하지 않고 전문의에게 의뢰한다. 운동 시에만 증상이 있으면 운동 유발 검사를 고려한다.
+      sources:
+        - {id: VADOD-ASTHMA-2025, locator: "Sidebar B (Assessment), Sidebar C (Alternative Evaluation for Asthma), Sidebar D (Lung Function Testing)"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {not: {dx: J45}}
+            - any:
+                - {finding: suspected_asthma}
+                - {all: [{finding: recurrent_wheeze}, {any: [{finding: chronic_cough}, {finding: chest_tightness}, {finding: progressive_dyspnea}]}]}
+        tests:
+          - {exam: Spirometry_BD, reason: "폐쇄 확인과 기관지확장제 가역성 평가"}
+          - {lab: CBC_diff, reason: "호산구 수 확인"}
+          - {exam: Chest_xray, reason: "다른 진단을 고려할 때(이전에 안 했으면)"}
+        notes: ["증상 조합은 Sidebar A·B를 규칙으로 옮긴 운영 가정 — 검수 시 확정"]
+      - kind: referral
+        to: 호흡기내과 또는 알레르기내과
+        purpose: "기관지유발검사(메타콜린) — 기본 폐활량이 정상인데 천식이 의심될 때"
+        criteria:
+          - {all: [{finding: suspected_asthma}, {finding: spirometry_not_obstructive}]}

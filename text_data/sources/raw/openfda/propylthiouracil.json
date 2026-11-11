@@ -1,0 +1,50 @@
+{
+ "key": "propylthiouracil",
+ "retrieved_at": "2026-11-10",
+ "license": "CC0 1.0 (openFDA, https://open.fda.gov/license)",
+ "query": "openfda.generic_name:\"PROPYLTHIOURACIL\"",
+ "set_id": "d819e532-09ac-434a-84a6-636c4204c7aa",
+ "id": "5a08b89c-d38c-ccd7-e063-6394a90aaba1",
+ "version": "7",
+ "effective_time": "20260827",
+ "brand_name": [
+  "Propylthiouracil"
+ ],
+ "generic_name": [
+  "PROPYLTHIOURACIL"
+ ],
+ "manufacturer_name": [
+  "American Health Packaging"
+ ],
+ "dailymed_url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=d819e532-09ac-434a-84a6-636c4204c7aa",
+ "sections": {
+  "indications_and_usage": [
+   "INDICATIONS AND USAGE Propylthiouracil is indicated: in patients with Graves’ disease with hyperthyroidism or toxic multinodular goiter who are intolerant of methimazole and for whom surgery or radioactive iodine therapy is not an appropriate treatment option to ameliorate symptoms of hyperthyroidism in preparation for thyroidectomy or radioactive iodine therapy in patients who are intolerant of methimazole"
+  ],
+  "dosage_and_administration": [
+   "DOSAGE AND ADMINISTRATION Propylthiouracil is administered orally. The total daily dosage is usually given in 3 equal doses at approximately 8-hour intervals. Adults The initial dose is 300 mg daily. In patients with severe hyperthyroidism, very large goiters, or both, the initial dose may be increased to 400 mg daily; an occasional patient will require 600 to 900 mg daily initially. The usual maintenance dose is 100 to 150 mg daily. Pediatric Patients Propylthiouracil is generally not recommended for use in the pediatric patient population except in rare instances in which other alternative therapies are not appropriate options. Studies evaluating appropriate dosing regimen have not been conducted in the pediatric population although general practice would suggest initiation of therapy in patients 6 years or older at a dosage of 50 mg daily with careful upward titration based on clinical response and evaluation of TSH and free T4 levels. Although cases of severe liver injury have been reported with doses as low as 50 mg/day, most cases were associated with doses of 300 mg/day and higher. Geriatric Patients Clinical studies of propylthiouracil did not include sufficient numbers of subjects aged 65 or over to determine whether they respond differently from younger subjects. Other reported clinical experience has not identified differences in responses between the elderly and younger patients. In general, dose selection for an elderly patient should be cautious reflecting the greater frequency of decreased hepatic, renal, or cardiac function, and of concomitant disease or other drug therapy."
+  ],
+  "contraindications": [
+   "CONTRAINDICATIONS Propylthiouracil is contraindicated in patients who have demonstrated hypersensitivity to the drug or any of the other product components."
+  ],
+  "boxed_warning": [
+   "WARNING Severe liver injury and acute liver failure, in some cases fatal, have been reported in patients treated with propylthiouracil. These reports of hepatic reactions include cases requiring liver transplantation in adult and pediatric patients. Propylthiouracil should be reserved for patients who cannot tolerate methimazole and in whom radioactive iodine therapy or surgery are not appropriate treatments for the management of hyperthyroidism. Propylthiouracil may be the treatment of choice when an antithyroid drug is indicated during or just prior to the first trimester of pregnancy (see Warnings and Precautions )."
+  ],
+  "pregnancy": [
+   "Pregnancy Pregnancy Category D. See WARNINGS . In pregnant women with untreated or inadequately treated Graves' disease, there is an increased risk of adverse events of maternal heart failure, spontaneous abortion, preterm birth, stillbirth, and fetal or neonatal hyperthyroidism. If propylthiouracil is used during pregnancy, or if the patient becomes pregnant while taking propylthiouracil, the patient should be warned of the rare potential hazard to the mother and fetus of liver damage. Because propylthiouracil crosses placental membranes and can induce goiter and cretinism in the developing fetus, it is important that a sufficient, but not excessive, dose be given during pregnancy. In many pregnant women, the thyroid dysfunction diminishes as the pregnancy proceeds; consequently a reduction of dosage may be possible. In some instances, antithyroid therapy can be discontinued several weeks or months prior to delivery. Since methimazole may be associated with the rare development of fetal abnormalities propylthiouracil may be the preferred agent during the first trimester of pregnancy. Given the potential for maternal hepatotoxicity from propylthiouracil, it may be preferable to switch from propylthiouracil to methimazole for the second and third trimesters during pregnancy."
+  ],
+  "pediatric_use": [
+   "Pediatric Use Postmarketing reports of severe liver injury including hepatic failure requiring liver transplantation or resulting in death have been reported in the pediatric population (see WARNINGS ). No such reports have been observed with methimazole. As such, propylthiouracil is not recommended for use in the pediatric population except in rare instances in which methimazole is not well-tolerated and surgery or radioactive iodine therapy are not appropriate. When used in children, parents and patients should be informed of the risk of liver failure. If patients taking propylthiouracil develop tiredness, nausea, anorexia, fever, pharyngitis, or malaise, propylthiouracil should be discontinued immediately by the patient, a physician should be contacted, and a white blood cell count, liver function tests, and transaminase levels obtained.",
+   "Pediatric Patients Propylthiouracil is generally not recommended for use in the pediatric patient population except in rare instances in which other alternative therapies are not appropriate options. Studies evaluating appropriate dosing regimen have not been conducted in the pediatric population although general practice would suggest initiation of therapy in patients 6 years or older at a dosage of 50 mg daily with careful upward titration based on clinical response and evaluation of TSH and free T4 levels. Although cases of severe liver injury have been reported with doses as low as 50 mg/day, most cases were associated with doses of 300 mg/day and higher."
+  ],
+  "geriatric_use": [
+   "Geriatric Patients Clinical studies of propylthiouracil did not include sufficient numbers of subjects aged 65 or over to determine whether they respond differently from younger subjects. Other reported clinical experience has not identified differences in responses between the elderly and younger patients. In general, dose selection for an elderly patient should be cautious reflecting the greater frequency of decreased hepatic, renal, or cardiac function, and of concomitant disease or other drug therapy."
+  ],
+  "drug_interactions": [
+   "Drug Interactions Anticoagulants (oral): Due to the potential inhibition of vitamin K activity by propylthiouracil, the activity of oral anticoagulants (e.g., warfarin) may be increased; additional monitoring of PT/INR should be considered, especially before surgical procedures. Beta-adrenergic blocking agents: Hyperthyroidism may cause an increased clearance of beta blockers with a high extraction ratio. A reduced dose of beta-adrenergic blockers may be needed when a hyperthyroid patient becomes euthyroid. Digitalis glycosides: Serum digitalis levels may be increased when hyperthyroid patients on a stable digitalis glycoside regimen become euthyroid; a reduced dose of digitalis glycosides may be needed. Theophylline: Theophylline clearance may decrease when hyperthyroid patients on a stable theophylline regimen become euthyroid; a reduced dose of theophylline may be needed."
+  ],
+  "adverse_reactions": [
+   "ADVERSE REACTIONS The following adverse reactions have been reported with the use of propylthiouracil. Because these events generally come from voluntary reporting from a population of uncertain size, it is not possible to reliably estimate their frequency or establish a causal relationship to drug exposure. Severe adverse reactions include liver injury presenting as hepatitis, liver failure necessitating liver transplantation or resulting in death (see WARNINGS ). Inhibition of myelopoiesis (agranulocytosis, granulopenia, aplastic anemia, and thrombocytopenia), drug fever, a lupus-like syndrome (including splenomegaly and vasculitis), periarteritis, hypoprothrombinemia, and bleeding have been reported. Nephritis, glomerulonephritis, interstitial pneumonitis, exfoliative dermatitis, and erythema nodosum have also been reported. There are reports of a vasculitis associated with the presence of anti-neutrophilic cytoplasmic antibodies (ANCA), resulting in severe complications and death (see WARNINGS ). There have been rare reports of serious hypersensitivity reactions (e.g., Stevens Johnson syndrome and toxic epidermal necrolysis) in patients treated with propylthiouracil. Other adverse reactions include skin rash, uticaria, nausea, vomiting, epigastric distress, arthralgia, paresthesias, loss of taste, taste perversion, abnormal loss of hair, myalgia, headache, pruritus, drowsiness, neuritis, edema, vertigo, skin pigmentation, jaundice, sialadenopathy, and lymphadenopathy."
+  ]
+ }
+}

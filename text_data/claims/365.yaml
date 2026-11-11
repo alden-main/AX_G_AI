@@ -1,0 +1,217 @@
+# 365장 간경변과 그 합병증 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: JSGE/JSH 간경변 지침 2020(J Gastroenterol 2021, CC BY), openFDA(CC0).
+# 주의: JSGE 지침은 일본 진료 환경(약제 승인·보험)을 반영 — 용량·약제 선택이 서구·국내와 다를 수 있다.
+
+chapter: "365"
+title: 간경변과 그 합병증
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 365-C01
+    topic: 정맥류 출혈 예방과 급성 출혈
+    type: treatment
+    original:
+      text: "모든 간경변 환자에서 내시경. 고위험 정맥류면 비선택적 베타차단제 또는 정맥류 결찰술로 초출혈 예방. 재출혈 예방."
+      location: {file: by_chapter/365장.md, line: 244}
+    status: 유지
+    current:
+      text: >
+        식도·위 정맥류 출혈 예방에 비선택적 베타차단제(프로프라놀롤·나돌롤, 카르베딜롤은 HVPG를 더 강하게 낮춤), 질산이소소르비드 또는 병용을 제안한다(약한 권고, 근거 B).
+        내시경의 적색 징후는 출혈 위험인자다. 급성 정맥류 출혈에는 테를리프레신, 옥트레오타이드 같은 혈관작용제를 제안한다(약한 권고, 근거 B).
+        정맥류 재발 예방에 내시경 결찰술(EVL)과 경화요법(EIS) 모두 제안한다. 문맥압항진성 위병증에는 비선택적 베타차단제를 제안한다.
+        정맥류 결찰 후 궤양 출혈 예방에 단기간 위산억제를 제안하지만, 장기 위산억제는 자발성 세균성 복막염·간성뇌증·CKD 증가와 관련된다.
+      sources:
+        - {id: PAPER-JSGE-CIRRHOSIS-2020, locator: "BQ4-1, CQ4-1–CQ4-5"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K74, I85]}
+        recommendations:
+          - when: {finding: high_risk_varices}
+            recommend: {options: [propranolol, nadolol, carvedilol, isosorbide_mononitrate, EVL]}
+            strength: "JSGE 2020 CQ4-1 (weak, B)"
+          - when: {finding: acute_variceal_bleeding}
+            recommend: {drug_class: vasoactive, examples: [terlipressin, octreotide]}
+            strength: "JSGE 2020 CQ4-2 (weak, B)"
+          - when: {all: [{dx: K74}, {med_class: PPI}, {var: ppi_duration_months, op: ">", value: 6}]}
+            recommend: {action: review_long_term_acid_suppression, reason: "SBP·간성뇌증·CKD 위험 증가"}
+            alert_level: medium
+
+  - id: 365-C02
+    topic: 복수 진단과 자발성 세균성 복막염 진단
+    type: diagnosis
+    original:
+      text: >
+        첫 복수는 천자로 단백·알부민·세포수·배양. SAAG ≥1.1 g/dL은 문맥고혈압성 복수. 복수 호중구 >250/μL면 SBP, 배양은 천자 즉시. 원문은 cefotaxime을 2세대로 잘못 표기(3세대).
+      location: {file: by_chapter/365장.md, line: 294}
+    status: 유지
+    current:
+      text: >
+        진단적 천자로 복수의 총단백, 알부민, 세포수·감별계수를 검사한다. 혈청-복수 알부민 차(SAAG) ≥1.1 g/dL이면 문맥고혈압이 관여하는 복수일 가능성이 높고 <1.1이면 삼출성이다(예외가 있어 종합 판단).
+        자발성 세균성 복막염은 배양 양성이거나, 배양 음성이어도 복수 호중구 ≥250/mm³이면 진단한다. SBP 발생 후 1년 생존율은 약 40%로 예후가 나쁘다.
+      sources:
+        - {id: PAPER-JSGE-CIRRHOSIS-2020, locator: "BQ4-3 (Fig. 3), BQ4-10"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{dx: K74}, {any: [{finding: new_ascites}, {finding: ascites_with_fever_or_encephalopathy}]}]}
+        tests:
+          - {lab: Ascitic_total_protein, reason: 복수 성상}
+          - {lab: Ascitic_albumin, reason: SAAG 계산}
+          - {lab: Serum_albumin, reason: SAAG 계산}
+          - {lab: Ascitic_cell_count_differential, reason: SBP 진단}
+          - {lab: Ascitic_culture, reason: SBP 진단}
+      - kind: formula
+        name: SAAG
+        output: {var: SAAG, unit: g/dL}
+        expression: "serum_albumin − ascitic_albumin"
+        implement_in: src/ax_g_ai/services/clinical_calculations.py
+      - kind: diagnosis
+        condition: {name: 자발성 세균성 복막염, kcd: [K65.2]}
+        logic: {any: [{var: Ascitic_PMN, op: ">=", value: 250}, {finding: ascitic_culture_positive}]}
+
+  - id: 365-C03
+    topic: 복수 치료(염분·이뇨제·알부민·천자)
+    type: dose
+    original:
+      text: >
+        나트륨 2 g/일 미만. 스피로놀락톤 100–200 mg + 푸로세미드 40–80 mg로 시작, 반응 없으면 스피로놀락톤 400–600 mg·푸로세미드 120–160 mg까지 증량. 불응성 복수는 반복 대량 천자 또는 TIPS. 복수 발생 시 간이식 고려.
+      location: {file: by_chapter/365장.md, line: 302}
+    status: 개정
+    current:
+      text: >
+        식욕을 해치지 않는 수준의 염분 제한(5–7 g/일)이 효과적이다. 첫 단독요법은 스피로놀락톤이며, 부족하면 고용량 스피로놀락톤의 부작용을 피하기 위해 루프 이뇨제를 병용한다.
+        일본 지침이 제시한 용량은 스피로놀락톤 25–50 mg/일±푸로세미드 20–40 mg/일이다. 기존 이뇨제(스피로놀락톤±푸로세미드)에 바소프레신 V2 수용체 길항제(톨밥탄) 병용이 유용하다.
+        저알부민혈증이면 이뇨제와 알부민 병용이 복수 소실·재발 감소·예후 개선에 도움이 된다. 이뇨제 저항성 복수는 대량 천자를 1차로 권고하며, 천자 유발 순환장애 예방을 위해 알부민을 함께 준다.
+        SBP·HRS-AKI에서도 알부민 투여가 예후를 개선한다.
+      sources:
+        - {id: PAPER-JSGE-CIRRHOSIS-2020, locator: "BQ4-4–BQ4-8, CQ4-10"}
+    verification: primary
+    conflicts:
+      - "용량 차이: 원문(서구 기준) 스피로놀락톤 100–400 mg·푸로세미드 40–160 mg vs 일본 지침 25–50 mg·20–40 mg. 염분 제한: 원문 나트륨 2 g/일(소금 약 5 g) vs 일본 소금 5–7 g/일. 국내 기본값은 검수자가 결정."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K74, R18]}
+        recommendations:
+          - when: {finding: cirrhotic_ascites}
+            recommend: {first_line: spironolactone, add_if_inadequate: loop_diuretic, salt: "5–7 g/일(일본 지침)"}
+          - when: {finding: diuretic_resistant_ascites}
+            recommend: {procedure: large_volume_paracentesis, with: albumin}
+
+  - id: 365-C04
+    topic: 자발성 세균성 복막염 예방
+    type: treatment
+    original:
+      text: "정맥류 출혈 환자는 SBP 예방 항생제, SBP 회복 환자는 재발 예방 항생제."
+      location: {file: by_chapter/365장.md, line: 310}
+    status: 유지
+    current:
+      text: >
+        감염 위험에 따라 예방 항생제를 권고한다(약한 권고, 근거 B): 복수가 있는 간경변, 상부위장관 출혈, SBP 병력. 내성균 출현을 엄격히 감시해야 한다(노르플록사신 투여군에서 그람음성균 내성 다수).
+      sources:
+        - {id: PAPER-JSGE-CIRRHOSIS-2020, locator: "CQ4-8"}
+    verification: primary
+    note: "일본에서는 예방 항생제가 보험 적용되지 않음(지침 명시). 구체 약제·용량은 A등급 근거로 대조하지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K74]}
+        recommendations:
+          - when: {any: [{finding: upper_gi_bleeding}, {finding: history_sbp}]}
+            recommend: {action: consider_antibiotic_prophylaxis, monitor: resistant_organisms}
+            strength: "JSGE 2020 CQ4-8 (weak, B)"
+
+  - id: 365-C05
+    topic: 간신증후군
+    type: treatment
+    original:
+      text: "간신증후군: 기능적 신부전. 1형은 1–2주 내 급속 진행, 2형은 완만. 미도드린·옥트레오타이드, 테를리프레신, 간이식."
+      location: {file: by_chapter/365장.md, line: 314}
+    status: 개정
+    current:
+      text: >
+        간경변에서 신기능 장애는 예후를 악화시키며, 간이식은 간신증후군의 예후를 개선한다. 치료의 기본은 알부민으로 순환 혈장량을 확보하면서 혈관수축제를 쓰는 것이다.
+        일본 지침은 비용과 약제 사용 여건을 고려해 노르아드레날린+알부민 병용을 제안한다(약한 권고, 근거 B). 알부민 병용 시 노르아드레날린의 효과는 테를리프레신과 비슷하다고 보고됐다.
+      sources:
+        - {id: PAPER-JSGE-CIRRHOSIS-2020, locator: "BQ4-11, BQ4-12, CQ4-11"}
+    verification: primary
+    conflicts:
+      - "혈관수축제 선택은 국가별 약제 승인에 따라 다름(일본: 노르아드레날린, 미국: 테를리프레신 2022 승인 — 미국 허가사항은 이번에 대조하지 않음)."
+    review: {status: draft}
+
+  - id: 365-C06
+    topic: 간성뇌증
+    type: dose
+    original:
+      text: >
+        유발인자 교정, 단백질 제한은 권장하지 않음. 락툴로오스로 하루 2–3회 무른 변. 네오마이신·메트로니다졸 교대, 리팍시민 550 mg 1일 2회, 아연 보충.
+      location: {file: by_chapter/365장.md, line: 336}
+    status: 유지
+    current:
+      text: >
+        비흡수성 합성 이당류(락툴로오스 등)를 간성뇌증의 기본 치료로 투여한다. 비흡수성 항생제는 첫 발작과 재발 모두에서 효과가 있어 기본 치료다(강한 권고, 근거 A).
+        리팍시민(미국 허가) 간성뇌증 용량은 550 mg 1일 2회다. 잠재성 간성뇌증 치료, 아연·카르니틴·프로바이오틱스는 지침에서 별도로 검토된다(CQ4-12, 14–16).
+      sources:
+        - {id: PAPER-JSGE-CIRRHOSIS-2020, locator: "BQ4-13, CQ4-13"}
+        - {id: OPENFDA-RIFAXIMIN, locator: "2.2 Hepatic Encephalopathy"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-RIFAXIMIN-HE
+        ingredient: rifaximin
+        indication: 간성뇌증
+        source_priority: [OPENFDA-RIFAXIMIN]
+        standard_dose: "550 mg 1일 2회"
+      - kind: treatment
+        condition: {kcd: [K72.9, K76.82]}
+        recommendations:
+          - when: {finding: hepatic_encephalopathy}
+            recommend: {options: [nonabsorbable_disaccharide, rifaximin]}
+            strength: "JSGE 2020 BQ4-13, CQ4-13 (strong, A)"
+
+  - id: 365-C07
+    topic: 간세포암 감시와 예후 평가
+    type: workup
+    original:
+      text: "간경변 환자의 간세포암 감시, Child-Pugh·MELD로 예후 평가와 간이식 결정."
+      location: {file: by_chapter/365장.md, line: 195}
+    status: 유지
+    current:
+      text: >
+        C형간염 간경변에서 SVR을 달성한 후에도 영상검사와 혈청 종양표지자(AFP 등)로 간세포암 감시를 권고한다(강한 권고, 근거 A).
+        Child-Pugh 분류는 간경변 예후 예측에 유용하고, MELD(MELD-Na) 점수는 비대상성 간경변의 단기 예후 예측에 유용하다. 간이식은 비대상성 간경변의 생존을 개선한다.
+      sources:
+        - {id: PAPER-JSGE-CIRRHOSIS-2020, locator: "CQ3-4, BQ5-1, BQ6-01"}
+    verification: primary
+    note: "Child-Pugh·MELD 계산식은 이 지침에 없어 구현하지 않음. 감시 간격은 대조하지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{dx: K74}, {finding: hcv_svr_achieved}]}
+        tests:
+          - {exam: Liver_imaging, reason: 간세포암 감시}
+          - {lab: AFP, reason: 간세포암 감시}
+        strength: "JSGE 2020 CQ3-4 (strong, A)"
+
+  - id: 365-C08
+    topic: 원인별 간경변 치료(알코올·바이러스·담즙성)
+    type: treatment
+    original:
+      text: "알코올성: 금주. B·C형: 항바이러스. 원발성 담즙성 간경변: 우르소데옥시콜산. 원발성 경화성 담관염: 효과적 약물 없음."
+      location: {file: by_chapter/365장.md, line: 67}
+    status: 유지
+    current:
+      text: >
+        금주는 알코올성 간경변의 섬유화와 예후를 개선한다. B형간염 간경변에 뉴클레오(티)드 유사체 치료가 효과적이며, C형간염 간경변은 DAA 치료 대상을 지침에서 제시한다(CQ3-3, CQ3-5).
+        자가면역간염 간경변의 스테로이드, 원발성 담즙성 담관염 간경변의 약물치료, 원발성 경화성 담관염의 약물치료 효과는 각각 지침에서 검토한다(CQ3-7–3-9).
+      sources:
+        - {id: PAPER-JSGE-CIRRHOSIS-2020, locator: "BQ3-7, CQ3-3, CQ3-5, CQ3-7–CQ3-9"}
+    verification: primary
+    note: "CQ3-7–3-9의 권고 강도·결론은 이번에 세부 대조하지 않음 — 검수 시 확인."
+    review: {status: draft}

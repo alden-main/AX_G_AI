@@ -1,0 +1,223 @@
+# 424장 부갑상샘 및 칼슘 항상성 관련 질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 원발 부갑상선기능항진증 진단·내과 치료 서술 종설(J Clin Med 2021, CC BY), 성인 부갑상선기능저하증 진료 표준 — 캐나다·국제 합의
+#            (Eur J Endocrinol 2019, CC BY), DACH 지역 부갑상선기능저하증 델파이 합의(Calcif Tissue Int 2025, CC BY), openFDA(CC0) 시나칼세트·졸레드론산.
+# 주의: 무증상 원발 부갑상선기능항진증 수술 기준(제5차 국제 워크숍 2022, JBMR)은 A등급 원문을 확보하지 못함.
+
+chapter: "424"
+title: 부갑상샘 및 칼슘 항상성 관련 질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 424-C01
+    topic: 원발 부갑상선기능항진증 진단
+    type: workup
+    original:
+      text: "원발성 부갑상샘 기능항진증 진단: 고칼슘혈증과 상승된 부갑상샘 호르몬. 가족성 저칼슘뇨 고칼슘혈증 감별."
+      location: {file: by_chapter/424장.md, line: 219}
+    status: 유지
+    current:
+      text: >
+        고칼슘혈증과 높거나 부적절하게 정상인 PTH로 진단한다. 거짓 상승을 배제하려 알부민 보정 칼슘이나 이온화 칼슘을 쓴다. 리튬과 하이드로클로로티아지드는 칼슘·PTH를 올릴 수 있어 3개월 중단 후 재검해 확진한다.
+        수술 적응이 없는 가족성 저칼슘뇨 고칼슘혈증(FHH)을 반드시 배제하며, 칼슘/크레아티닌 청소율 비(CCCR)가 0.01 미만이면 FHH(80%), 0.02 초과이면 FHH 가능성이 낮다.
+        MEN·HPT-JT 특징이나 가족력, 젊은 나이, 다샘 질환, 부갑상선암·비정형 선종이면 유전 검사를 고려한다.
+      sources:
+        - {id: PAPER-PHPT-REVIEW-2021, locator: "3. Diagnosis"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: hypercalcemia}
+        tests:
+          - {lab: Calcium_albumin_corrected_or_ionized, reason: "거짓 상승 배제"}
+          - {lab: PTH_intact, reason: "높거나 부적절하게 정상이면 원발 부갑상선기능항진증"}
+          - {lab: Urine_calcium_creatinine_clearance_ratio, reason: "FHH 감별(<0.01)"}
+          - {review: medication_list, reason: "리튬·티아지드 — 3개월 중단 후 재검"}
+
+  - id: 424-C02
+    topic: 원발 부갑상선기능항진증 비수술·약물 관리
+    type: dose
+    original:
+      text: "수술이 근본 치료. 표 424-2 무증상 질환 수술 권고, 표 424-3 비수술 추적. 비스포스포네이트는 혈청 칼슘 변화 없이 골밀도 증가, 칼슘 유사 작용제는 칼슘을 낮추나 골밀도 영향 없음."
+      location: {file: by_chapter/424장.md, line: 265}
+    status: 유지
+    current:
+      text: >
+        부갑상선 절제술이 유일한 완치 치료이며 골밀도·골절 위험을 개선하고 신결석을 줄이며 신기능을 보존한다. 수술 기준에 맞지 않거나 수술이 불가능·바람직하지 않으면 표적 약물치료를 한다.
+        충분한 수분을 유지하고 티아지드는 피하며 리튬은 가능하면 중단한다. 칼슘 섭취는 일반 인구 권장량과 같게 하고(섭취 제한 불필요), 비타민 D 결핍은 교정한다(교정이 고칼슘혈증을 악화시킨다는 우려는 입증되지 않음).
+        골다공증이 있는데 수술하지 않으면 골 보호를 위해 비스포스포네이트(알렌드로네이트)나 데노수맙을 쓸 수 있으나 혈청 칼슘은 낮추지 않는다. 시나칼세트는 칼슘·PTH를 낮추지만 골 보호 효과는 없다.
+        시나칼세트(미국 허가): 혈청 칼슘 기준으로 수술 적응이지만 수술할 수 없는 원발 부갑상선기능항진증의 고칼슘혈증. 30 mg 1일 2회 시작, 2–4주마다 60 mg 1일 2회, 90 mg 1일 2회, 90 mg 1일 3–4회로 올리며, 유지 후 약 2개월마다 칼슘을 잰다. 혈청 칼슘이 정상 하한 미만이면 시작하지 않는다.
+      sources:
+        - {id: PAPER-PHPT-REVIEW-2021, locator: "5. General Measures; 6.3–6.5; 7. Conclusions"}
+        - {id: OPENFDA-CINACALCET, locator: "1.3; 2.3–2.4; 4; 5.1"}
+    verification: primary
+    note: "표 424-2 수술 기준(칼슘 상한+1 mg/dL, T점수 −2.5, eGFR <60, 50세 미만 등)은 A등급 원문 미확보 — 2022 국제 워크숍 개정 대조 필요."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-CINACALCET-PHPT
+        ingredient: cinacalcet
+        indication: 수술 불가 원발 부갑상선기능항진증·부갑상선암의 고칼슘혈증
+        source_priority: [OPENFDA-CINACALCET]
+        starting_dose: "30 mg 1일 2회(음식과 함께, 쪼개지 않음)"
+        titration: "2–4주마다 30 → 60 → 90 mg 1일 2회 → 90 mg 1일 3–4회"
+        monitoring: ["유지 후 약 2개월마다 혈청 칼슘"]
+        rules:
+          - {when: {finding: calcium_below_lower_limit}, action: "시작 금기(칼슘 정상 하한 미만)", alert: contraindicated}
+      - kind: treatment
+        condition: {kcd: [E21.0]}
+        recommendations:
+          - when: {all: [{dx: E21.0}, {med_class: thiazide}]}
+            recommend: {action: avoid, detail: "티아지드 — 요칼슘 재흡수 증가"}
+            alert_level: medium
+          - when: {all: [{dx: E21.0}, {med: lithium}]}
+            recommend: {action: review, detail: "리튬 — 가능하면 중단"}
+            alert_level: medium
+
+  - id: 424-C03
+    topic: 악성종양 고칼슘혈증과 보정 칼슘
+    type: dose
+    original:
+      text: "표 424-4 고칼슘혈증 응급치료: 식염수 수분공급, 파미드로네이트, 졸레드로네이트(1~2일 발현, >3주 지속), 칼시토닌, 당질코르티코이드, 투석. 12.0 mg/dL 미만은 수분공급, 13~15는 적극 조절."
+      location: {file: by_chapter/424장.md, line: 405}
+    status: 보완
+    current:
+      text: >
+        졸레드론산 주사(미국 허가)는 알부민 보정 칼슘(cCa) 12 mg/dL(3 mmol/L) 이상의 악성종양 고칼슘혈증에 쓴다. cCa(mg/dL) = 칼슘 + 0.8 × (4 − 알부민[g/dL]).
+        최대 권장 용량은 4 mg 1회 정주(15분 이상)이며 재치료는 최소 7일 뒤 4 mg. 투여 전 충분히 수액을 공급하고 매 투여 전 혈청 크레아티닌을 잰다.
+        치료 전 경증–중등도 신장애(크레아티닌 4.5 mg/dL 미만)는 용량 조절이 필요 없고, 중증 신장애에서는 권하지 않는다. 턱뼈 괴사(예방 치과 검진, 침습적 치과 시술 회피), 비정형 대퇴골절, 저칼슘혈증에 주의한다.
+        부갑상선기능항진증이나 종양 이외 원인의 고칼슘혈증에는 안전성·효과가 확립되지 않았다.
+      sources:
+        - {id: OPENFDA-ZOLEDRONIC-HCM, locator: "1.1; 2.1; 5.2–5.9"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: formula
+        name: 알부민 보정 칼슘
+        output: {var: Calcium_corrected, unit: mg/dL}
+        expression: "Ca + 0.8 × (4 − albumin)"
+        variables:
+          Ca: "혈청 총칼슘 mg/dL"
+          albumin: "혈청 알부민 g/dL"
+        constraints: ["이온화 칼슘이 있으면 우선", "졸레드론산 허가사항 공식"]
+        implement_in: null
+      - kind: dose_rule
+        id: DR-ZOLEDRONIC-HCM
+        ingredient: zoledronic_acid
+        indication: 악성종양 고칼슘혈증(cCa ≥12 mg/dL)
+        source_priority: [OPENFDA-ZOLEDRONIC-HCM]
+        standard_dose: "4 mg 1회 정주 15분 이상, 재치료는 7일 이상 뒤"
+        rules:
+          - {when: {var: SCr, op: ">=", value: 4.5}, action: "중증 신장애 — 권장하지 않음", alert: high}
+          - {when: {not: {finding: adequately_hydrated}}, action: "투여 전 수액 공급", alert: caution}
+          - {when: {event: invasive_dental_procedure_planned}, action: "턱뼈 괴사 — 침습 치과 시술 회피", alert: caution}
+
+  - id: 424-C04
+    topic: 만성 부갑상선기능저하증 치료와 감시
+    type: dose
+    original:
+      text: "고용량 경구 칼슘과 비타민 D(1~3 mg/d, 40,000~120,000 U/d), 칼시트리올 0.5~1.0 μg. 티아자이드와 저염식으로 요칼슘 감소. 부갑상샘 호르몬 치료는 아직 승인되지 않음."
+      location: {file: by_chapter/424장.md, line: 518}
+    status: 개정
+    current:
+      text: >
+        목 수술 후 6개월 이내면 급성·일시적, 6개월 넘으면 만성·영구 부갑상선기능저하증이다. 알부민 보정 칼슘 8 mg/dL(2.0 mmol/L) 미만이면서 PTH 15 pg/mL 미만이면 영구화 위험이 높아 보충과 추적이 필요하다. 진단에는 알부민 보정 칼슘, 알부민, PTH를 함께 잰다.
+        활성 비타민 D: 칼시트리올 0.25 µg 1일 2회로 시작해 48–72시간 간격으로 필요 시 2.0 µg 1일 2회까지, 또는 알파칼시돌 0.5–4 µg 1일 1회. 고칼슘뇨·고칼슘혈증을 피하도록 세밀히 조절한다.
+        단기 목표는 정상 하한 범위의 알부민 보정 칼슘, 무증상, 연령·성별 대조군 수준의 삶의 질이다. 인과 칼슘-인 곱은 정상 범위(55 mg²/dL² 미만)로 유지하며 인이 높으면 칼슘제를 식사와 함께 늘린다.
+        고칼슘뇨에는 저염식과 하이드로클로로티아지드·클로르탈리돈·인다파미드를 고려한다. 칼슘·인·마그네슘·크레아티닌은 3–6개월(최소 6개월)마다, 24시간 요칼슘·크레아티닌과 25(OH)D는 매년, 용량 변경 후 1–2주에 재검한다. 지속 고칼슘뇨나 신결석 병력이면 신장 초음파.
+        칼슘·활성 비타민 D로 조절되지 않으면(약 10%: 증상 지속·입원, 목표 밖 칼슘·요칼슘, 불내성) PTH 대체요법을 평가하며, 첫해에는 안정 후 분기마다 감시한다.
+      sources:
+        - {id: PAPER-HYPOPARA-CONSENSUS-2019, locator: "1. Confirming a diagnosis; 2. Management; 4. rhPTH(1–84) replacement therapy"}
+        - {id: PAPER-HYPOPARA-CONSENSUS-2025, locator: "Treatment (Statements 6–8); Monitoring (Statements 11–12)"}
+    verification: primary
+    conflicts:
+      - "원문 'PTH 치료는 미승인' — 현재 rhPTH(1–84)(미국·유럽)와 팔로페그테리파라타이드(유럽·미국 2024)가 승인됨. 팔로페그테리파라타이드 미국 허가사항은 openFDA에서 찾지 못해 미대조."
+      - "원문 비타민 D 1–3 mg/일(4만–12만 U) 중심 vs 현재 활성 비타민 D(칼시트리올·알파칼시돌) 중심."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-ACTIVE-VITD-HYPOPARA
+        ingredient: calcitriol
+        indication: 만성 부갑상선기능저하증
+        source_priority: [PAPER-HYPOPARA-CONSENSUS-2019]
+        starting_dose: "칼시트리올 0.25 µg 1일 2회(48–72시간 간격 증량, 최대 대개 2.0 µg 1일 2회) 또는 알파칼시돌 0.5–4 µg 1일 1회"
+        target: "알부민 보정 칼슘 정상 하한 범위, 인·칼슘-인 곱 정상(<55 mg²/dL²)"
+        rules:
+          - {when: {var: Urine_calcium_24h, op: ">", value: 300}, action: "고칼슘뇨 — 저염식·티아지드 고려, 칼슘 목표 재검토", alert: caution}
+          - {when: {var: CaxP_product, op: ">=", value: 55}, action: "칼슘-인 곱 상승 — 활성 비타민 D·인 섭취 재평가", alert: caution}
+      - kind: monitoring
+        after: {dx: E20}
+        check: [Calcium_albumin_corrected, Phosphate, Mg, SCr]
+        interval_months: [3, 6]
+        rules:
+          - {when: {always: true}, action: "24시간 요칼슘·크레아티닌과 25(OH)D는 매년"}
+          - {when: {event: calcium_or_active_vitd_dose_change}, action: "1–2주 뒤 재검"}
+
+  - id: 424-C05
+    topic: 급성 저칼슘혈증 정주 치료
+    type: dose
+    original:
+      text: "(원문 해당 범위에 정주 칼슘 용량 별도 서술 없음) 중증 저마그네슘혈증은 저칼슘혈증과 동반되며 마그네슘 보충 시 빠르게 회복."
+      location: {file: by_chapter/424장.md, line: 528}
+    status: 보완
+    current:
+      text: >
+        발생 속도, 생화학적 중증도, 증상에 따라 급성 저칼슘혈증은 입원해 정주 칼슘으로 치료한다. 정맥 자극이 덜한 칼슘 글루코네이트를 선호하며, 10% 칼슘 글루코네이트 1–2 g(원소 칼슘 90–180 mg)을 5% 포도당 50 mL에 섞어 20분에 걸쳐 주고,
+        이어서 원소 칼슘 1–3 mg/kg/시간을 칼슘 글루코네이트로 지속 정주한다. 볼루스·주입 중 지속 심장 감시를 하고, 경구 칼슘과 활성 비타민 D를 함께 시작한다. 저마그네슘혈증은 반드시 교정한다.
+      sources:
+        - {id: PAPER-HYPOPARA-CONSENSUS-2019, locator: "2(b) How should acute hypocalcemia be managed?"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-CALCIUM-GLUCONATE-ACUTE
+        ingredient: calcium_gluconate
+        indication: 급성 중증 저칼슘혈증
+        source_priority: [PAPER-HYPOPARA-CONSENSUS-2019]
+        bolus: "10% 칼슘 글루코네이트 1–2 g(원소 칼슘 90–180 mg) + 5% 포도당 50 mL, 20분"
+        infusion: "원소 칼슘 1–3 mg/kg/시간"
+        monitoring: ["지속 심장 감시", "마그네슘 교정"]
+        rules:
+          - {when: {var: Mg, op: "<", value: 1.7}, action: "저마그네슘혈증 교정(교정 없이는 저칼슘혈증 지속)", alert: high}
+
+  - id: 424-C06
+    topic: 투석 환자 이차성 부갑상선기능항진증 시나칼세트
+    type: dose
+    original:
+      text: "만성 신부전의 이차성 부갑상샘 기능항진증: 인 제한, 인 결합제, 칼시트리올, 칼슘 유사 작용제."
+      location: {file: by_chapter/424장.md, line: 552}
+    status: 유지
+    current:
+      text: >
+        시나칼세트(미국 허가)는 투석 중인 성인 CKD의 이차성 부갑상선기능항진증에 쓰며, 투석하지 않는 CKD에는 저칼슘혈증 위험 증가로 적응증이 아니다.
+        30 mg 1일 1회로 시작해 2–4주보다 자주 올리지 않으며 30, 60, 90, 120, 180 mg 1일 1회 순으로 목표 iPTH에 맞춘다. 시작·용량 변경 후 1주 내 칼슘·인, 1–4주에 iPTH(복용 12시간 이후)를 재고, 유지 후 칼슘을 약 매달 잰다.
+        생명을 위협하는 저칼슘혈증(QT 연장, 경련 역치 저하, 부정맥), 상부 위장관 출혈, 심기능 저하 환자의 저혈압·심부전 악화, iPTH 100 pg/mL 미만 억제 시 무력성 골질환에 주의한다.
+      sources:
+        - {id: OPENFDA-CINACALCET, locator: "1.1; 2.2; 2.4; 5.1–5.4"}
+    verification: primary
+    note: "KDIGO CKD-MBD 목표 iPTH 범위는 C등급이라 미반영."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-CINACALCET-SHPT
+        ingredient: cinacalcet
+        indication: 투석 성인 CKD 이차성 부갑상선기능항진증
+        source_priority: [OPENFDA-CINACALCET]
+        starting_dose: "30 mg 1일 1회"
+        titration: "2–4주 이상 간격 30 → 60 → 90 → 120 → 180 mg 1일 1회"
+        monitoring: ["1주 내 칼슘·인", "1–4주 iPTH(복용 12시간 이후)", "유지 후 매달 칼슘"]
+        rules:
+          - {when: {all: [{dx: N18}, {not: {finding: on_dialysis}}]}, action: "투석하지 않는 CKD에는 적응증 아님(저칼슘혈증)", alert: high}
+          - {when: {var: iPTH, op: "<", value: 100}, action: "무력성 골질환 위험 — 감량 검토", alert: caution}
+
+  - id: 424-C07
+    topic: 무증상 원발 부갑상선기능항진증 수술 기준
+    type: referral
+    original:
+      text: "표 424-2 무증상 일차성 부갑상샘 기능항진증에서 부갑상샘 수술에 대한 권고안, 표 424-3 비수술 처치 권고안."
+      location: {file: by_chapter/424장.md, line: 195}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "제5차 국제 워크숍(2022) 수술 기준 A등급 원문 미확보."

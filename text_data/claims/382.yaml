@@ -1,0 +1,97 @@
+# 382장 전신경화증(피부경화증)과 연관 질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 프랑스 전신경화증 국가 진료 프로토콜(Orphanet J Rare Dis 2021, CC BY — 프랑스 HAS PNDS).
+
+chapter: "382"
+title: 전신경화증(피부경화증)과 연관 질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 382-C01
+    topic: 진단·초기 평가와 정기 장기 선별
+    type: monitoring
+    original:
+      text: "표 382-3 자가항체 특징. 간질폐질환·폐동맥고혈압 평가."
+      location: {file: by_chapter/382장.md, line: 219}
+    status: 개정
+    current:
+      text: >
+        진단은 ACR–EULAR 분류 기준의 여러 항목 조합으로 한다(레이노 현상은 95% 이상). 자가항체(항센트로미어, 항토포이소머라제 I, 항RNA 중합효소 III 등)를 확인하며, 항RNA 중합효소 III는 신장 위기 고위험과 관련된다.
+        폐동맥고혈압·간질폐질환은 조기 치료가 생존을 좌우하므로 증상이 없어도 체계적으로 반복 선별한다. 폐동맥고혈압은 매년 심초음파와 DLCO 포함 폐기능 검사로 선별하고, 간질폐질환이 없거나 경미한데 DLCO 60% 미만이면 특히 주의한다. 폐기능 검사는 FVC, 총폐용량, FEV1/VC, 보정 DLCO를 잰다.
+        장기 손상 평가는 최소 매년(최근 진단된 미만형은 더 자주) 하고, 미만 피부형은 첫 비레이노 증상 후 첫 3년간 분기마다 진료한다. 레이노 악화·손가락 궤양, 호흡곤란, 고혈압, 신부전, 빈혈, 실신, 심한 소화기 장애를 경고 신호로 교육한다.
+      sources:
+        - {id: PAPER-FRENCH-SSC-2021, locator: "Fig. 1 initial evaluation and follow-up; PH screening; PFT"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: monitoring
+        after: {dx: M34}
+        check: [Echocardiography, PFT_with_DLCO]
+        interval_months: [12]
+        rules:
+          - {when: {var: DLCO_pct, op: "<", value: 60}, action: "폐동맥고혈압 고위험 — 선별 강화"}
+          - {when: {finding: diffuse_cutaneous_ssc_early}, action: "첫 3년 분기마다 진료"}
+      - kind: workup
+        trigger: {dx: M34}
+        tests:
+          - {lab: ANA, reason: "진단"}
+          - {lab: Anti_centromere, reason: "제한형"}
+          - {lab: Anti_Scl70, reason: "미만형·간질폐질환"}
+          - {lab: Anti_RNA_polymerase_III, reason: "신장 위기 고위험"}
+          - {lab: SCr, reason: "신장 위기"}
+          - {lab: Urinalysis, reason: "단백뇨"}
+
+  - id: 382-C02
+    topic: 피부경화 신장 위기 예방·치료
+    type: treatment
+    original:
+      text: "콩팥 위기 고위험군(초기, 광범위 피부경화 진행, 인대 마찰음, 항RNA 중합효소 III) 정기 혈압 감시. 글루코코르티코이드는 최소 용량. 단시간 작용 ACE 억제제로 빠르게 혈압 정상화."
+      location: {file: by_chapter/382장.md, line: 321}
+    status: 유지
+    current:
+      text: >
+        신장 위기 예측 인자: 미만 피부 손상, 빠른 피부 진행, 3–5년 미만 질병 기간, 최근 심장 사건(심낭염·좌심실 부전), 최근 발생한 빈혈, 항RNA 중합효소 III 항체, 지난 3개월 내 프레드니손 15 mg/일 초과.
+        징후는 고혈압(정상 혈압형도 있음, 때로 악성 고혈압), 핍뇨, 단백뇨, 신부전, 혈전미세혈관병증이다. 의심 시 망상적혈구, 분열적혈구, 합토글로빈, LDH를 보고, 혈전미세혈관병증이면 ADAMTS13로 TTP를 배제한다. 진단에 신생검이 필요 없으며 하더라도 혈압 정상화 후에 한다.
+        치료는 ACE 억제제(필요 시 정주 칼슘통로차단제), 투석, 신장이식이다.
+      sources:
+        - {id: PAPER-FRENCH-SSC-2021, locator: "Scleroderma renal crisis; Table 2 predictive factors; Table 4; Table 5"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [M34]}
+        recommendations:
+          - when: {all: [{dx: M34}, {any: [{finding: diffuse_cutaneous_ssc_early}, {finding: anti_rna_pol3_positive}]}, {var: prednisolone_mg_day, op: ">", value: 15}]}
+            recommend: {action: alert, detail: "프레드니손 >15 mg/일 — 신장 위기 위험 인자, 감량·혈압 감시"}
+            alert_level: high
+          - when: {all: [{dx: M34}, {finding: new_hypertension_or_aki}]}
+            recommend: {action: suspect_renal_crisis, first_line: ace_inhibitor}
+            alert_level: high
+
+  - id: 382-C03
+    topic: 장기별 치료
+    type: treatment
+    original:
+      text: "혈관병변(칼슘통로차단제, 보온), 폐동맥고혈압 치료, 면역억제제(메토트렉세이트, 마이코페놀레이트, 사이클로포스파마이드), 위장관 합병증, 피부·근골격 관리."
+      location: {file: by_chapter/382장.md, line: 291}
+    status: 개정
+    current:
+      text: >
+        프랑스 국가 프로토콜의 장기별 치료: 말초 혈관(레이노·손가락 궤양) — 칼슘통로차단제, 프로스타사이클린 유사체, 보센탄(새 궤양 예방), 실데나필(궤양 치유), 대혈관병증 시 항혈소판제. 칼슘통로차단제는 잇몸 비대를 일으킬 수 있어 정기 치주 검진을 권한다.
+        피부 — 메토트렉세이트, 마이코페놀레이트, 사이클로포스파마이드, 중증 진행성 미만형은 다학제 검토 후 자가 조혈모세포이식. 관절 — 상부 소화관 손상이 없으면 NSAID, 저용량 스테로이드(10 mg/일 이하), 메토트렉세이트, 레플루노마이드, 불응 시 아바타셉트·리툭시맙·토실리주맙.
+        간질폐질환 — 마이코페놀레이트, 정주 사이클로포스파마이드 후 아자티오프린 또는 마이코페놀레이트, 리툭시맙, 닌테다닙, 산소, 폐이식. 폐동맥고혈압 — 엔도텔린 수용체 길항제(보센탄·암브리센탄), PDE5 억제제(실데나필·타다라필), 셀렉시팍, 에포프로스테놀·트레프로스티닐. 식도 — PPI와 운동촉진제.
+      sources:
+        - {id: PAPER-FRENCH-SSC-2021, locator: "Table 5 treatments by affected organ"}
+    verification: primary
+    conflicts:
+      - "원문(2015) 이후 닌테다닙(간질폐질환)·토실리주맙·리툭시맙 등 추가."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [M34]}
+        recommendations:
+          - when: {all: [{dx: M34}, {finding: interstitial_lung_disease}]}
+            recommend: {options: [mycophenolate, cyclophosphamide_iv, rituximab, nintedanib]}
+          - when: {all: [{dx: M34}, {finding: raynaud_digital_ulcer}]}
+            recommend: {options: [ccb, prostacyclin_analog, sildenafil, bosentan_prevention]}

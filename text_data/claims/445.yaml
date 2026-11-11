@@ -1,0 +1,152 @@
+# 445장 발작과 뇌전증 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 벨기에 성인·소아 뇌전증 치료 권고 2020 개정(Acta Neurol Belg 2021, CC BY — 여러 국제 지침·근거 검토 종합,
+#            일부 약제는 벨기에 보험 기준으로 서술). VA/DoD 양극성 지침(가임기 발프로에이트).
+
+chapter: "445"
+title: 발작과 뇌전증
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 445-C01
+    topic: 초기 단독요법 선택
+    type: treatment
+    original:
+      text: "표 445-9: 국소발작은 카르바마제핀·옥스카르바제핀·라모트리진·레베티라세탐 등, 전신발작은 발프로에이트·라모트리진·토피라메이트, 결신발작은 에토숙시미드·발프로에이트."
+      location: {file: by_chapter/445장.md, line: 325}
+    status: 유지
+    current:
+      text: >
+        국소 발작(국소-양측 진행 포함)의 1차 단독요법은 카르바마제핀, 라모트리진, 레베티라세탐, 옥스카르바제핀이고, 토피라메이트·발프로에이트(가임기 여성 제외)는 대체 1차 약이다.
+        약 50%가 첫 단독요법에 반응하므로 내약성, 향후 임신 위험, 상호작용을 고려해 고른다. 전신 강직간대 발작은 발프로에이트가 1차(가임기 여성 제외)이고 라모트리진·토피라메이트가 대안이며,
+        라모트리진은 근간대 발작(예: 청소년 근간대 뇌전증)을 악화시킬 수 있다. 레베티라세탐도 효과적이다. 결신 발작은 에토숙시미드·발프로에이트가 1차(가임기 제외), 라모트리진이 대체 1차.
+        근간대·강직/무긴장 발작은 발프로에이트가 1차(가임기 제외), 레베티라세탐은 근간대의 대안. 카르바마제핀, 가바펜틴, 옥스카르바제핀, 페노바르비탈, 페니토인, 프레가발린, 티아가빈, 비가바트린은
+        근간대·결신 발작을 유발·악화시킬 수 있다. 발작 유형이 불분명하면 광범위 약(발프로에이트, 라모트리진, 레베티라세탐, 토피라메이트)을 쓸 수 있다.
+      sources:
+        - {id: PAPER-BELGIUM-EPILEPSY-2020, locator: "Recommendations for treatment — Initial monotherapy; Table 2"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G40]}
+        recommendations:
+          - when: {finding: focal_onset_seizures}
+            recommend: {first_choice: [carbamazepine, lamotrigine, levetiracetam, oxcarbazepine], alternative: [topiramate, valproate_except_childbearing]}
+          - when: {finding: generalized_tonic_clonic_seizures}
+            recommend: {first_choice: [valproate_except_childbearing], alternative: [lamotrigine, topiramate, levetiracetam]}
+          - when: {finding: absence_seizures}
+            recommend: {first_choice: [ethosuximide, valproate_except_childbearing], alternative: [lamotrigine]}
+          - when: {all: [{any: [{finding: myoclonic_seizures}, {finding: absence_seizures}]}, {any: [{med: carbamazepine}, {med: oxcarbazepine}, {med: phenytoin}, {med: gabapentin}, {med: pregabalin}, {med: phenobarbital}, {med: tiagabine}, {med: vigabatrin}]}]}
+            recommend: {action: alert, detail: "근간대·결신 발작 유발·악화 가능 약물"}
+            alert_level: medium
+
+  - id: 445-C02
+    topic: 가임기·임신 중 항경련제(발프로에이트)
+    type: treatment
+    original:
+      text: "여성과 뇌전증: 항경련제의 기형 유발, 임신 중 약물 농도 변화, 엽산 보충."
+      location: {file: by_chapter/445장.md, line: 476}
+    status: 개정
+    current:
+      text: >
+        발프로에이트는 산전 노출 시 주요 선천기형, 초기 인지 지연, 자폐스펙트럼 등 신경발달장애 위험이 가장 높다. 유럽은 2018년 법적 조치로 다른 효과적 치료가 없는 경우를 제외하고 임신부 사용을 금기로 했다.
+        임신부·가임기 여성의 1차 약은 주요 기형 위험이 가장 낮은 라모트리진과 레베티라세탐이고, 카르바마제핀은 대체 1차, 옥스카르바제핀도 고려할 수 있다.
+        임신은 약동학을 크게 바꾸므로(특히 라모트리진·레베티라세탐·옥스카르바제핀 농도 감소) 혈중 농도를 감시하고 임신·산후에 용량을 조정한다.
+        양극성장애에서도 가임기에는 발프로에이트·카르바마제핀·토피라메이트를 쓰지 않도록 권고한다(VA/DoD BD Rec 30).
+      sources:
+        - {id: PAPER-BELGIUM-EPILEPSY-2020, locator: "Specific considerations — Pregnancy"}
+        - {id: VADOD-BD-2023, locator: "Recommendation 30"}
+    verification: primary
+    note: "엽산 보충 용량은 A등급 근거로 대조하지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G40]}
+        recommendations:
+          - when: {all: [{med: valproate}, {any: [{finding: pregnancy}, {finding: childbearing_potential}]}]}
+            recommend: {action: avoid_unless_no_alternative, prefer: [lamotrigine, levetiracetam]}
+            alert_level: high
+          - when: {all: [{finding: pregnancy}, {any: [{med: lamotrigine}, {med: levetiracetam}, {med: oxcarbazepine}]}]}
+            recommend: {action: monitor_drug_levels, detail: "임신·산후 농도 감소 — 용량 조정"}
+            alert_level: medium
+
+  - id: 445-C03
+    topic: 고령자 뇌전증
+    type: treatment
+    original:
+      text: "(원문 해당 범위에 고령자 약제 선택 별도 권고 없음)"
+      location: {file: by_chapter/445장.md, line: 325}
+    status: 보완
+    current:
+      text: >
+        60세 넘어 새로 생긴 발작의 원인은 뇌혈관질환, 고혈압, 당뇨, 치매 등이다. 가장 흔한 의식장애 국소 발작에 고령자 단독요법 1차는 라모트리진과 레베티라세탐이며, 가바펜틴·라코사미드가 대안이다.
+        카르바마제핀은 고령자 내약성이 나쁘다. 장기 사용(특히 효소 유도제)은 골밀도 감소·골다공증과 관련되므로 골밀도·골대사 검사와 식이·생활 조언을 고려한다.
+      sources:
+        - {id: PAPER-BELGIUM-EPILEPSY-2020, locator: "Specific considerations — Elderly; Tolerability"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G40]}
+        recommendations:
+          - when: {all: [{var: age, op: ">", value: 60}, {finding: focal_onset_seizures}]}
+            recommend: {first_choice: [lamotrigine, levetiracetam], alternative: [gabapentin, lacosamide], avoid_preference: carbamazepine}
+          - when: {any: [{med: carbamazepine}, {med: phenytoin}, {med: phenobarbital}, {med: primidone}]}
+            recommend: {action: consider_bone_health_assessment}
+
+  - id: 445-C04
+    topic: 약물 상호작용과 2차 약제
+    type: treatment
+    original:
+      text: "첫 약에 실패하면 다른 약으로 교체 또는 추가. 효소 유도제(카르바마제핀·페니토인·페노바르비탈) 상호작용."
+      location: {file: by_chapter/445장.md, line: 400}
+    status: 유지
+    current:
+      text: >
+        첫 단독요법이 효과 없으면 다른 약으로 교체(선호) 또는 추가한다. 간효소 유도제(카르바마제핀, 페노바르비탈, 페니토인, 프리미돈)와 억제제(발프로에이트)는 상호작용이 많고,
+        브리바라세탐, 가바펜틴, 라코사미드, 레베티라세탐은 간효소를 유도·억제하지 않아 상호작용이 적다. 피임약 등 병용약을 고려해 선택한다.
+      sources:
+        - {id: PAPER-BELGIUM-EPILEPSY-2020, locator: "Add-on treatment; Pharmacokinetic properties"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G40]}
+        recommendations:
+          - when: {all: [{any: [{med: carbamazepine}, {med: phenytoin}, {med: phenobarbital}, {med: primidone}]}, {med_class: hormonal_contraceptive}]}
+            recommend: {action: alert, detail: "효소 유도 항경련제 — 호르몬 피임 효과 감소 가능"}
+            alert_level: medium
+
+  - id: 445-C05
+    topic: 약물 저항성 뇌전증과 의뢰
+    type: referral
+    original:
+      text: "불응성 뇌전증: 2–3개 약물 실패 시 수술 평가(측두엽 절제 등), 미주신경자극, 케톤 식이."
+      location: {file: by_chapter/445장.md, line: 412}
+    status: 유지
+    current:
+      text: >
+        약 30%는 약물에 불응한다. ILAE 정의: 적절히 선택·사용된 내약 가능한 두 가지 항경련제 요법(단독·병용)으로 지속적 무발작을 얻지 못한 경우. 이런 환자는 3차 기관에 조기 의뢰해 전문 평가·수술을 검토한다.
+        비약물 치료로 미주신경자극(절제술 부적합·실패 시), 뇌심부자극, 케톤·변형 앳킨스 식이(마지막 수단이 아니라 더 일찍)를 고려한다. 칸나비디올은 드라벳·레녹스-가스토 증후군 소아에서 효과가 있다.
+      sources:
+        - {id: PAPER-BELGIUM-EPILEPSY-2020, locator: "Drug-resistant epilepsy and the importance of early referral"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: referral
+        to: 뇌전증 전문 센터
+        criteria:
+          - {all: [{dx: G40}, {var: failed_adequate_asm_trials, op: ">=", value: 2}]}
+        purpose: ["약물 저항성 평가", "수술 검토"]
+
+  - id: 445-C06
+    topic: 뇌전증 중첩증·첫 발작 평가·치료 중단
+    type: treatment
+    original:
+      text: "전신 경련성 뇌전증중첩증 5분 이상이면 즉시 치료(로라제팜, 포스페니토인 등). 첫 발작 평가(검사실·뇌파·MRI). 2년 무발작 후 중단 고려."
+      location: {file: by_chapter/445장.md, line: 430}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "이번 묶음에서 A등급 출처 미확보."

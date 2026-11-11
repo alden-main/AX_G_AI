@@ -1,0 +1,88 @@
+# 338장 사구체 질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: ERA 면역신장학 실무그룹의 ACR/VF 2021·EULAR 2022·KDIGO 2021 ANCA 연관 혈관염 사구체신염 권고 비교(Nephrol Dial Transplant 2023, CC BY).
+# 원 지침(ACR·EULAR·KDIGO)은 C·B등급이라 직접 인용하지 않는다. 다른 사구체질환은 A등급 출처 미확보.
+
+chapter: "338"
+title: 사구체 질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 338-C01
+    topic: ANCA 연관 사구체신염 관해 유도
+    type: treatment
+    original:
+      text: "유도 치료로 혈장교환술, 메틸프레드니솔론, 사이클로포스파마이드 병합. 혈장교환술 장점 불명확. 마이코페놀레이트나 리툭시맙의 이득은 증명되지 않음."
+      location: {file: by_chapter/338장.md, line: 327}
+    status: 개정
+    current:
+      text: >
+        세 지침 모두 리툭시맙을 관해 유도 1차(ACR/VF) 또는 사이클로포스파마이드와 함께 1차 선택지(EULAR·KDIGO)로 둔다. 혈청 크레아티닌 4 mg/dL 초과의 중증 신기능 저하에서는 리툭시맙 근거가 제한적이어서 KDIGO는 사이클로포스파마이드 + 글루코코르티코이드(3–6개월)를 선호한다.
+        리툭시맙 + 사이클로포스파마이드 병용은 추가 이득이 입증되기 전에 광범위하게 쓰지 않는다. 혈장교환은 일상적으로 추가하지 않되(ACR/VF), 중증 신질환(KDIGO: 크레아티닌 300 µmol/L 초과)이나 치료 불응 중증 환자에서 고려할 수 있고, 항GBM 항체가 동반되면 적응이 된다.
+        글루코코르티코이드는 PEXIVAS 감량 요법(체중에 따라 프레드니솔론 50–75 mg/일로 시작, 4–5개월에 5 mg/일)을 권하며 정주 메틸프레드니솔론 펄스의 확실한 근거는 없다. 아바코판(C5a 수용체 억제제, 30 mg 1일 2회)은 글루코코르티코이드 노출을 줄이는 보조제로, 특히 중증 신침범에서 신기능 회복에 유망하다.
+        장기·생명을 위협하지 않는 신침범에서는 마이코페놀레이트를 고려할 수 있다(KDIGO).
+      sources:
+        - {id: PAPER-ANCA-GN-NDT-2023, locator: "General principles; Remission-induction (RTX vs CYC; PLEX); Glucocorticoids; Avacopan; Table 3"}
+    verification: primary
+    conflicts:
+      - "원문 '리툭시맙 이득 미증명'·혈장교환 병합 vs 현재 리툭시맙 1차 선택지, 혈장교환은 일상적 추가하지 않음, 감량 스테로이드."
+      - "지침 간 차이: 리툭시맙 단독 1차(ACR/VF) vs 리툭시맙 또는 사이클로포스파마이드(EULAR·KDIGO). 혈장교환 적응 미국·유럽 차이."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [M31.3, M31.7, N05]}
+        recommendations:
+          - when: {all: [{finding: anca_glomerulonephritis}, {not: {finding: anti_gbm_positive}}]}
+            recommend: {induction: [rituximab, cyclophosphamide], glucocorticoid: "PEXIVAS 감량 요법", adjunct_option: avacopan}
+          - when: {all: [{finding: anca_glomerulonephritis}, {finding: anti_gbm_positive}]}
+            recommend: {add: plasma_exchange, detail: "항GBM 동반 — 혈장교환 적응"}
+            alert_level: high
+      - kind: dose_rule
+        id: DR-GC-PEXIVAS-REDUCED
+        ingredient: prednisolone
+        indication: ANCA 연관 혈관염 관해 유도
+        source_priority: [PAPER-ANCA-GN-NDT-2023]
+        standard_dose: "체중에 따라 50–75 mg/일로 시작, 4–5개월에 5 mg/일(PEXIVAS 감량 요법)"
+        rules:
+          - {when: {var: prednisolone_mg_day, op: ">", value: 75}, action: "감량 스테로이드 요법 권고 — 표준 고용량 재검토", alert: caution}
+
+  - id: 338-C02
+    topic: ANCA 연관 혈관염 관해 유지
+    type: dose
+    original:
+      text: "스테로이드는 급성 염증 감소 시 가능한 곧 끊고 사이클로포스파마이드나 아자티오프린으로 유지요법."
+      location: {file: by_chapter/338장.md, line: 327}
+    status: 개정
+    current:
+      text: >
+        관해 유도 후에는 모두 유지 치료를 한다. 리툭시맙이 1차 유지 치료이며(500 mg 6개월마다 FDA 승인, 1,000 mg 4개월마다 또는 6개월마다), CD19 B세포 회복이 아닌 고정 간격 재투여를 선호한다. 아자티오프린(완전 관해 시 1.5–2 mg/kg/일), 메토트렉세이트(eGFR 60 초과), 마이코페놀레이트가 대안이다. 유지 목적의 TMP/SMX는 쓰지 않는다.
+        유지 기간은 최소 18개월이며(KDIGO 리툭시맙 18개월, 아자티오프린 18–48개월; EULAR 24–48개월) 재발 위험이 높으면 더 길게 한다. ANCA 수치로 치료를 결정하지 않는다.
+        유도 후 투석 의존이 지속되거나 리툭시맙으로 관해된 MPO-ANCA 환자는 재발률이 낮아 유지 치료가 필요 없을 수 있다는 의견이 있다(합의 없음).
+      sources:
+        - {id: PAPER-ANCA-GN-NDT-2023, locator: "Remission-maintenance treatment; Table 3; Monitoring"}
+    verification: primary
+    conflicts:
+      - "원문 사이클로포스파마이드·아자티오프린 유지 vs 현재 리툭시맙 1차 유지(장기 사이클로포스파마이드 유지는 쓰지 않음)."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-RITUXIMAB-AAV-MAINTENANCE
+        ingredient: rituximab
+        indication: ANCA 연관 혈관염 관해 유지
+        source_priority: [PAPER-ANCA-GN-NDT-2023]
+        standard_dose: "500 mg 6개월마다(FDA 승인) 또는 1,000 mg 4–6개월마다, 고정 간격"
+        duration: "최소 18개월(재발 위험 높으면 24–48개월)"
+        rules:
+          - {when: {all: [{finding: aav_remission}, {med: cyclophosphamide}, {var: cyclophosphamide_months, op: ">", value: 6}]}, action: "유지 치료로 사이클로포스파마이드 장기 사용 재검토 — 리툭시맙·아자티오프린", alert: high}
+
+  - id: 338-C03
+    topic: IgA 신증·막신증·미세변화병·초점분절사구체경화증·루푸스 신염
+    type: treatment
+    original:
+      text: "IgA 신증, 막사구체신염, 미세변화병, FSGS, 루푸스 신염의 진단과 치료."
+      location: {file: by_chapter/338장.md, line: 295}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "성인 사구체질환 A등급 출처 미확보(KDIGO GN 2021·2025 IgAN은 C등급). 루푸스 신염 일부는 378장 참조."

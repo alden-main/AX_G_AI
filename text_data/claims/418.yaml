@@ -1,0 +1,559 @@
+# 418장 당뇨: 관리와 치료 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# ADA Standards of Care는 TDM·ML 사용 금지 조항(C등급)이라 reference에만 권고 번호와 요지를 둔다.
+
+chapter: "418"
+title: "당뇨: 관리와 치료"
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 418-C01
+    topic: HbA1c 목표
+    type: threshold
+    original:
+      text: "HbA1c <7.0%, 식전 혈당 80–130 mg/dL, 식후 혈당 <180 mg/dL(ADA 2015). 일부는 6.5%, 동반질환이 많으면 8.0–8.5%."
+      location: {file: by_chapter/418장.md, line: 46}
+    status: 개정
+    current:
+      text: >
+        HbA1c 목표 범위는 위험·이득, 환자 특성, 합병증·동반질환 유무, 기대여명을 따져 개별화한다(Rec 9, Weak for).
+        안전하게 달성 가능하면 대부분의 환자에서 HbA1c 7.0–8.5% 범위를 제안한다(Rec 10, Weak for).
+        HbA1c·공복혈당의 큰 변동은 저혈당·이환·사망 위험의 예후 지표로 쓴다(Rec 8, Weak for).
+      sources:
+        - {id: VADOD-DM-2023, locator: "Recommendations 8–10"}
+    reference:
+      text: >
+        ADA 2026: 대다수 성인 <7%(6.3a), 저위험이면 <6.5%(6.4), 노쇠·중증 동반질환은 완화(6.5), 식전 80–130·식후 최고 <180 mg/dL,
+        CGM TIR >70%(6.3b).
+      sources:
+        - {id: ADA-SOC-2026-S6, locator: "Rec 6.3a, 6.3b, 6.4, 6.5; Table 6.3"}
+    verification: primary
+    conflicts:
+      - "일반 목표: VA/DoD 7.0–8.5% vs ADA <7%. 국내 대한당뇨병학회 기준(원문 미확보)도 다를 수 있음 — 검수자가 서비스 기본값을 정해야 함."
+    review: {status: draft}
+    corpus:
+      - kind: lab_threshold
+        lab: HbA1c
+        unit: "%"
+        context: "제2형 당뇨 치료 목표(VA/DoD 2023, 개별화 전제)"
+        bands:
+          - {label: "목표 범위 미만(저혈당 위험 확인)", max: 6.999}
+          - {label: 목표 범위, min: 7.0, max: 8.5}
+          - {label: 목표 범위 초과, min: 8.501}
+    reference_corpus:
+      - kind: lab_threshold
+        lab: HbA1c
+        unit: "%"
+        context: "ADA 2026 목표(허가 필요)"
+        bands:
+          - {label: 일반 목표 달성, max: 6.999}
+          - {label: 목표 초과, min: 7.0}
+
+  - id: 418-C02
+    topic: 혈당 감시(HbA1c·CGM)
+    type: monitoring
+    original:
+      text: "목표 도달 시 최소 연 2회, 조절 부적절·치료 변경 시 3개월마다(표 418-1은 연 2–4회). CGM은 보조적."
+      location: {file: by_chapter/418장.md, line: 110}
+    status: 개정
+    current:
+      text: "인슐린을 쓰는데도 혈당 목표에 도달하지 못한 제2형 당뇨 성인에게 실시간 연속혈당측정(CGM)을 제안한다 — 저혈당 감소와 HbA1c 개선 목적(Rec 11, Weak for)."
+      sources:
+        - {id: VADOD-DM-2023, locator: "Recommendation 11"}
+    reference:
+      text: "ADA 2026: HbA1c/CGM으로 최소 연 2회, 목표 미달·치료 변경 시 3개월마다(6.1–6.2)."
+      sources:
+        - {id: ADA-SOC-2026-S6, locator: "Rec 6.1, 6.2"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E11]}
+        recommendations:
+          - when: {all: [{med_class: insulin}, {var: HbA1c, op: ">", value: 8.5}]}
+            recommend: {device: realtime_CGM}
+            strength: "VA/DoD Rec 11 (Weak for)"
+    reference_corpus:
+      - kind: workup
+        trigger: {dx: E11}
+        tests:
+          - {lab: HbA1c, frequency: "최소 연 2회, 목표 미달·치료 변경 시 3개월마다"}
+
+  - id: 418-C03
+    topic: HbA1c 해석 시 주의
+    type: workup
+    original:
+      text: "이상혈색소증, 빈혈, 망상적혈구증가증, 수혈, 요독증은 HbA1c에 영향. 대안으로 프럭토사민(최근 2주 반영)."
+      location: {file: by_chapter/418장.md, line: 110}
+    status: 유지
+    current:
+      text: "검사실 간 HbA1c 정확도·정밀도 차이와 인종·민족에 따른 HbA1c–혈당 불일치가 있을 수 있어, HbA1c 6.5–7.0% 구간의 진단이나 HbA1c 소폭 변화에 근거한 치료 결정 시 이를 고려한다."
+      sources:
+        - {id: VADOD-DM-2023, locator: "Introduction — HbA1c in diagnosis"}
+    verification: primary
+    review: {status: draft}
+    note: "빈혈·수혈·요독증 등 원문의 간섭 요인 목록은 A등급 근거로 아직 대조하지 않음."
+
+  - id: 418-C04
+    topic: HbA1c–평균 혈당 환산
+    type: formula
+    original:
+      text: "HbA1c 6%→126, 7%→154, 8%→183, 9%→212, 10%→240, 11%→269, 12%→298 mg/dL."
+      location: {file: by_chapter/418장.md, line: 110}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "원문 수치는 ADAG 식 eAG = 28.7×HbA1c−46.7과 일치하나 A등급 출처 미확보. 구현 보류."
+
+  - id: 418-C05
+    topic: 합병증 선별(안저·신장)
+    type: workup
+    original:
+      text: >
+        당뇨병성 신증 선별 매년, 지질·크레아티닌(eGFR) 매년, 발 검진 연 1–2회, 눈 검진 매년 또는 2년마다.
+        제1형은 진단 5년 내, 제2형은 진단 시 첫 안과 검사, 정상이면 2–3년마다.
+      location: {file: by_chapter/418장.md, line: 27}
+    status: 개정
+    current:
+      text: >
+        안저: 제2형 당뇨 진단 후 6개월 이내 망막 검사(산동 안저검사 또는 판독자가 있는 망막 촬영), 이전 검사에서 망막병증이 없었으면 최소 2년마다 선별을 제안한다.
+        진행 위험인자가 있으면 더 자주, 망막병증이 있으면 안과와 함께 관리한다(VA/DoD 2023 Sidebar 2, 2017판 Rec 23 유지).
+        신장: 당뇨 환자는 UACR과 eGFR로 CKD를 검사한다(VA/DoD CKD Rec 1).
+      sources:
+        - {id: VADOD-DM-2023, locator: "Sidebar 2; Appendix (2017 Rec 23)"}
+        - {id: VADOD-CKD-2025, locator: "Recommendation 1"}
+    reference:
+      text: "ADA 2026 12장(본문 미확인)의 안과 검진 주기."
+      sources:
+        - {id: ADA-SOC-2026-S12, locator: "본문 미확인"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {dx: E11}
+        tests:
+          - {exam: Retinal_exam, frequency: "진단 후 6개월 이내, 망막병증 없으면 최소 2년마다", reason: 망막병증 선별}
+          - {lab: UACR, reason: CKD 검사}
+          - {lab: eGFR, reason: CKD 검사}
+
+  - id: 418-C06
+    topic: 혈압·지질 목표(당뇨)
+    type: threshold
+    original:
+      text: "혈압 <140/90(젊은 환자 <130/80), LDL <100 mg/dL(심혈관질환 있으면 <80), HDL·중성지방 목표 제시."
+      location: {file: by_chapter/418장.md, line: 46}
+    status: 개정
+    current:
+      text: >
+        지질: 일차예방에서 당뇨가 있으면 최소 중강도 스타틴을 권고한다(VA/DoD 지질 Rec 7, Strong for). 이차예방은 목표치(LDL <70 등) 치료를
+        고정 용량 고강도 스타틴보다 권고할 근거가 불충분하다(Rec 17) — 원문의 LDL 목표치 방식과 다르다. 세부는 421장.
+      sources:
+        - {id: VADOD-LIPIDS-2025, locator: "Recommendations 7, 17"}
+    reference:
+      text: "ADA 2026 10장(본문 미확인)의 혈압·LDL 목표. CKD 동반 시 VA/DoD는 강화 혈압 관리 제안(335-C12)."
+      sources:
+        - {id: ADA-SOC-2026-S10, locator: "본문 미확인"}
+    verification: primary
+    review: {status: draft}
+    note: "혈압 목표는 VA/DoD 고혈압(2026) 지침으로 보강 예정. 원문 수치(<140/90, LDL <100, HDL·TG 목표)는 말뭉치에서 제외."
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E11]}
+        recommendations:
+          - when: {all: [{dx: E11}, {not: {finding: established_ascvd}}]}
+            recommend: {drug_class: statin, intensity: "moderate 이상"}
+            strength: "VA/DoD 지질 Rec 7 (Strong for)"
+
+  - id: 418-C07
+    topic: 제2형 당뇨 약제 선택(심신 보호 우선)
+    type: treatment
+    original:
+      text: >
+        ADA/EASD 등 알고리즘에서 메트포르민을 초치료로 권고, 최대 용량까지 증량. 불내성이면 인슐린 분비촉진제나 DPP-4 억제제.
+        공복혈당 <200–250은 단일 경구제, >250은 병합, 250–300 또는 증상 있으면 인슐린.
+      location: {file: by_chapter/418장.md, line: 260}
+    status: 개정
+    current:
+      text: >
+        ASCVD가 있으면 심혈관 이득이 입증된 GLP-1 RA 또는 SGLT2i를 권고(Rec 19, Strong for), ASCVD 고위험(CKD, 좌심실비대, 심부전)이면 제안(Rec 20, Weak for).
+        심부전이면 심부전 입원 예방을 위해 SGLT2i 권고(Rec 21, Strong for). CKD면 신장 보호가 입증된 SGLT2i 권고(Rec 22, Strong for),
+        SGLT2i가 부적합하면 신장 보호가 입증된 GLP-1 RA 권고(Rec 23, Strong for).
+        심혈관·신장질환이 있으면 혈당 목표에 이미 도달했어도 SGLT2i 또는 GLP-1 RA 추가를 고려(Rec 24, Weak for).
+        특히 65세 이상에서는 다른 약으로 조절 가능하면 인슐린·설폰요소제·메글리티나이드보다 다른 계열을 우선(Rec 25, Weak for).
+      sources:
+        - {id: VADOD-DM-2023, locator: "Recommendations 19–25"}
+    reference:
+      text: >
+        ADA 2026: 초기 병용 고려(9.6), ASCVD·심부전·CKD에서 HbA1c와 무관하게 GLP-1 RA/SGLT2i(9.7, 9.8, 9.10), 메트포르민은 '역사적 1차 약제'.
+        대한당뇨병학회 9판(2025): 메트포르민 우선 사용 권고 삭제·초기 병용 허용(보도 기준).
+      sources:
+        - {id: ADA-SOC-2026-S9, locator: "Rec 9.5–9.8, 9.10"}
+        - {id: KDA-GUIDE-2025, locator: "6장 약물치료 — 보도 기준"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E11]}
+        recommendations:
+          - when: {any: [{dx: I25}, {dx: I63}, {dx: I70}]}
+            recommend: {drug_class_any: [GLP1RA, SGLT2i], requirement: "심혈관 이득 입증 약제"}
+            strength: "VA/DoD Rec 19 (Strong for)"
+          - when: {any: [{dx: N18}, {dx: I51.7}, {dx: I50}]}
+            recommend: {drug_class_any: [GLP1RA, SGLT2i], requirement: "심혈관 이득 입증 약제"}
+            strength: "VA/DoD Rec 20 (Weak for)"
+          - when: {dx: I50}
+            recommend: {drug_class: SGLT2i, purpose: "심부전 입원 예방"}
+            strength: "VA/DoD Rec 21 (Strong for)"
+          - when: {dx: N18}
+            recommend: {drug_class: SGLT2i, requirement: "신장 보호 입증 약제"}
+            strength: "VA/DoD Rec 22 (Strong for)"
+          - when: {all: [{dx: N18}, {finding: sglt2i_not_suitable}]}
+            recommend: {drug_class: GLP1RA, requirement: "신장 보호 입증 약제"}
+            strength: "VA/DoD Rec 23 (Strong for)"
+          - when: {var: age, op: ">=", value: 65}
+            recommend: {action: deprioritize, drug_classes: [insulin, sulfonylurea, meglitinide], unless: "다른 약으로 조절 불가"}
+            strength: "VA/DoD Rec 25 (Weak for)"
+
+  - id: 418-C08
+    topic: 메트포르민 신기능 기준과 용량
+    type: dose
+    original:
+      text: >
+        금기: 크레아티닌 >1.5(남)/>1.4(여) mg/dL, GFR <60, 심부전, 조영제, 위중·산증. NICE는 GFR >30 사용, <45 감량.
+        2–3주 간격 증량.
+      location: {file: by_chapter/418장.md, line: 214}
+    status: 개정
+    current:
+      text: >
+        미국 허가사항(정제): 시작 500 mg 1일 2회 또는 850 mg 1일 1회 식사와 함께, 매주 500 mg 또는 2주마다 850 mg씩 증량, 최대 1일 2,550 mg(분할).
+        시작 전 eGFR 평가. eGFR <30 금기, 30–45 신규 시작 비권장, 복용 중 45 미만으로 떨어지면 지속의 위험·이득 평가, 30 미만이면 중단.
+        요오드 조영 검사 시점이나 그 전에 중단이 필요할 수 있다. VA/DoD도 eGFR <30 금기, 45 미만 신규 시작 금지, 감량 지속 가능으로 같다.
+        유산산증 위험은 급성 심부전, 탈수, 과음, 신기능 저하, 패혈증에서 커진다.
+      sources:
+        - {id: OPENFDA-METFORMIN, locator: "2 Dosage and Administration; 4 Contraindications"}
+        - {id: VADOD-DM-2023, locator: "Appendix C Table C-1 (Biguanide)"}
+        - {id: FDA-METFORMIN-DSC-2016, locator: "eGFR <30 금기, 30–45 시작 비권장"}
+    reference:
+      text: >
+        ADA/KDIGO 2022: eGFR 30–44는 1일 1,000 mg으로 감량, 45–59도 위험 동반 시 감량 고려, eGFR <60이면 3–6개월마다 확인.
+        국내 허가(로컬 DB, 출처 미상): eGFR 45–59에서 500/850 mg 1일 1회 시작·최대 1,000 mg, 45 미만이면 즉시 중단.
+      sources:
+        - {id: ADA-KDIGO-DM-CKD-2022, locator: "Metformin"}
+        - {id: MFDS-LABEL-METFORMIN-IR-LOCAL, locator: "용법·용량 신장애"}
+    verification: primary
+    conflicts:
+      - "eGFR 30–44: 미국 라벨·VA/DoD는 '신규 시작 비권장, 복용 중이면 위험·이득 평가 후 지속 가능', 국내 허가(로컬 DB 버전)는 '45 미만 즉시 중단'. 국내 허가 출처를 확인해 A등급으로 올린 뒤 국내 기준을 우선 적용할지 결정 필요."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-METFORMIN
+        ingredient: metformin
+        indication: 제2형 당뇨병
+        renal_param: eGFR
+        source_priority: [OPENFDA-METFORMIN, VADOD-DM-2023]
+        standard_dose: "시작 500 mg 1일 2회 또는 850 mg 1일 1회(식사와 함께), 매주 500 mg 또는 2주마다 850 mg 증량, 최대 1일 2,550 mg"
+        bands:
+          - range: {min: 45}
+            action: "표준 용량"
+            alert: none
+          - range: {min: 30, max: 44.999}
+            action: "신규 시작 비권장. 복용 중이면 지속의 위험·이득 평가(감량 지속 가능)"
+            alert: caution
+          - range: {max: 29.999}
+            action: "금기 — 중단"
+            alert: contraindicated
+        other_holds:
+          - "요오드 조영 검사 시점 또는 그 전에 중단이 필요할 수 있음"
+          - "급성 질환·탈수(아픈 날 수칙, 335-C18)"
+        alert_note: "미국 허가 기준 참고 범위 — 국내 허가와 다를 수 있음(conflicts 참조)"
+
+  - id: 418-C09
+    topic: 메트포르민과 비타민 B12
+    type: monitoring
+    original:
+      text: "메트포르민 치료 시 비타민 B12 수치가 약 30% 감소할 수 있다."
+      location: {file: by_chapter/418장.md, line: 214}
+    status: 유지
+    current:
+      text: "메트포르민은 비타민 B12 결핍을 일으킬 수 있고 드물게 빈혈과 관련된다."
+      sources:
+        - {id: VADOD-DM-2023, locator: "Appendix C Table C-1 (Biguanide adverse effects)"}
+    reference:
+      text: "ADA 2026: 장기 복용자 주기적 B12 검사(본문·Table 9.2). ADA/KDIGO 2022: 4년 넘게 복용 시 결핍 감시."
+      sources:
+        - {id: ADA-SOC-2026-S9, locator: "Table 9.2"}
+        - {id: ADA-KDIGO-DM-CKD-2022, locator: "monitoring table"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{med: metformin}, {any: [{finding: anemia}, {finding: neuropathy}]}]}
+        tests:
+          - {lab: VitB12, reason: 메트포르민 관련 B12 결핍 가능성}
+
+  - id: 418-C10
+    topic: 메트포르민과 조영제
+    type: treatment
+    original:
+      text: "방사선 조영제를 처방받는 환자는 메트포르민을 중지, 다시 시작할 때까지 인슐린 사용 가능."
+      location: {file: by_chapter/418장.md, line: 214}
+    status: 개정
+    current:
+      text: >
+        요오드 조영 검사 시점이나 그 전에 메트포르민 중단이 필요할 수 있다(미국 허가사항). FDA(2016): eGFR 30–60, 간질환·알코올중독·심부전, 동맥내 조영이면
+        검사 시점에 중단하고 48시간 후 eGFR을 재평가해 안정적이면 재개. VA/DoD: 조영제 검사·기타 시술 시 일시 중단.
+      sources:
+        - {id: OPENFDA-METFORMIN, locator: "2.4 Discontinuation for Iodinated Contrast Imaging Procedures"}
+        - {id: FDA-METFORMIN-DSC-2016, locator: "iodinated contrast"}
+        - {id: VADOD-DM-2023, locator: "Appendix C Table C-1"}
+    verification: primary
+    review: {status: draft}
+    note: "FDA 2016 공지는 2차 요약으로 확인 — 수치 세부는 라벨 2.4절 원문으로 검수할 것."
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E11]}
+        recommendations:
+          - when: {all: [{med: metformin}, {event: iodinated_contrast_planned}, {any: [{var: eGFR, op: "<", value: 60}, {event: intra_arterial_contrast}]}]}
+            recommend: {action: hold_metformin, detail: "검사 시점 중단, 48시간 후 eGFR 재평가 후 재개"}
+            alert_level: medium
+
+  - id: 418-C11
+    topic: SGLT2 억제제 용량과 주의
+    type: dose
+    original:
+      text: "임상 경험 부족, 중증 신부전 금기. 요로·생식기 감염, 탈수."
+      location: {file: by_chapter/418장.md, line: 238}
+    status: 개정
+    current:
+      text: >
+        다파글리플로진(미국 허가): 혈당 목적 5 mg 시작·10 mg까지, 그 외 적응증 10 mg 1일 1회. 혈당 목적은 eGFR <45에서 비권장(효과 없음).
+        엠파글리플로진(미국 허가): 10 mg 1일 1회, 혈당 목적은 내약 시 25 mg까지. 혈당 목적은 eGFR <30에서 비권장.
+        두 약 모두 시작 전 신기능·체액 상태 평가, 수술·장기 금식 시술 최소 3일 전 중단.
+        VA/DoD: eGFR 20–30 미만 기준은 라벨 확인, DKA(정상혈당일 수 있음)·생식기 감염·체액 감소 위험, 낮은 eGFR에서 혈당 효과는 줄지만 다른 이득은 유지.
+      sources:
+        - {id: OPENFDA-DAPAGLIFLOZIN, locator: "2 Dosage and Administration"}
+        - {id: OPENFDA-EMPAGLIFLOZIN, locator: "2 Dosage and Administration"}
+        - {id: VADOD-DM-2023, locator: "Appendix C Table C-1 (SGLT-2 inhibitor)"}
+    reference:
+      text: >
+        국내 허가(로컬 DB, 출처 미상): 다파글리플로진 혈당 목적 10 mg(초기 병용 5 또는 10 mg), 혈당 목적 eGFR <45 비권장, CKD·심부전 eGFR <25 시작 비권장, 투석 금지.
+        엠파글리플로진 혈당 목적 eGFR <45 비권장, CKD eGFR <20 시작 비권장, 심부전 eGFR <20 금지, 투석 금지.
+      sources:
+        - {id: MFDS-LABEL-DAPAGLIFLOZIN-LOCAL, locator: "용법·용량"}
+        - {id: MFDS-LABEL-EMPAGLIFLOZIN-LOCAL, locator: "용법·용량"}
+    verification: primary
+    conflicts:
+      - "엠파글리플로진 혈당 목적 하한: 미국 라벨 eGFR 30, 국내 허가(로컬 DB) 45. 다파글리플로진 혈당 목적 시작 용량: 미국 5 mg, 국내 10 mg."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-DAPAGLIFLOZIN
+        ingredient: dapagliflozin
+        renal_param: eGFR
+        source_priority: [OPENFDA-DAPAGLIFLOZIN]
+        standard_dose: "혈당 목적 5 mg 1일 1회 시작(10 mg까지), 그 외 적응증 10 mg 1일 1회"
+        rules:
+          - {when: {all: [{indication: glycemic_only}, {var: eGFR, op: "<", value: 45}]}, action: "혈당 조절 목적 비권장", alert: caution}
+          - {when: {event: surgery_or_prolonged_fasting_within_3d}, action: "최소 3일 전 중단", alert: medium}
+        alert_note: "미국 허가 기준 — 국내 허가와 다름(conflicts 참조)"
+      - kind: dose_rule
+        id: DR-EMPAGLIFLOZIN
+        ingredient: empagliflozin
+        renal_param: eGFR
+        source_priority: [OPENFDA-EMPAGLIFLOZIN]
+        standard_dose: "10 mg 1일 1회(혈당 목적은 내약 시 25 mg까지)"
+        rules:
+          - {when: {all: [{indication: glycemic_only}, {var: eGFR, op: "<", value: 30}]}, action: "혈당 조절 목적 비권장", alert: caution}
+          - {when: {event: surgery_or_prolonged_fasting_within_3d}, action: "최소 3일 전 중단", alert: medium}
+        alert_note: "미국 허가 기준 — 국내 허가와 다름(conflicts 참조)"
+
+  - id: 418-C12
+    topic: GLP-1 수용체 작용제·GIP/GLP-1 작용제
+    type: treatment
+    original:
+      text: "금기: 신질환, 위장관 운동 저하 약물 병용, 갑상선 수질암. 최소 용량으로 시작."
+      location: {file: by_chapter/418장.md, line: 220}
+    status: 개정
+    current:
+      text: >
+        '신질환 금기'는 현행과 다르다. CKD에서 신장 보호가 입증된 GLP-1 RA를 권고한다(418-C07, Rec 23). 금기·주의: 본인·가족의 갑상선 수질암, MEN2, 위마비,
+        췌장염 고위험, 현재 담낭질환, 임신, 릭시세나타이드 CrCl <15·엑세나타이드 CrCl <30. 세마글루타이드는 증식성 망막병증 악화 위험을 지속 고혈당 위험과 함께 저울질한다.
+        위장관 부작용에 따른 탈수로 신기능 저하 가능. DPP-4 억제제나 GIP/GLP-1 작용제(터제파타이드)와 병용하지 않는다.
+        터제파타이드는 경구피임약 효과를 떨어뜨릴 수 있다(시작·증량 후 4주간 다른 피임법 권장).
+      sources:
+        - {id: VADOD-DM-2023, locator: "Appendix C Table C-1 (GLP-1 RA, GIP/GLP-1 agonist)"}
+    reference:
+      text: "ADA 2026: eGFR <30에서 혈당 조절에 GLP-1 RA 우선(9.11), 투석 환자 시작·지속 가능, DPP-4i+GLP-1 RA 병용 비권장(9.18)."
+      sources:
+        - {id: ADA-SOC-2026-S9, locator: "Rec 9.11, 9.18, 9.21"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E11]}
+        recommendations:
+          - when: {all: [{med_class: DPP4i}, {med_class: GLP1RA}]}
+            recommend: {action: avoid_combination, detail: "DPP-4i + GLP-1 RA 병용 회피"}
+            alert_level: medium
+          - when: {all: [{med_class: GLP1RA}, {med_class: GIP_GLP1RA}]}
+            recommend: {action: avoid_combination, detail: "GLP-1 RA + GIP/GLP-1 작용제 병용 회피"}
+            alert_level: medium
+          - when: {all: [{med_class: GLP1RA}, {any: [{finding: mtc_history}, {finding: men2}, {finding: pregnancy}, {finding: gastroparesis}]}]}
+            recommend: {action: avoid, drug_class: GLP1RA}
+            alert_level: high
+      - kind: dose_rule
+        id: DR-GLP1RA-RENAL
+        ingredient_class: GLP1RA
+        renal_param: CrCl
+        source_priority: [VADOD-DM-2023]
+        rules:
+          - {when: {all: [{med: lixisenatide}, {var: CrCl, op: "<", value: 15}]}, action: "금기", alert: contraindicated}
+          - {when: {all: [{med: exenatide}, {var: CrCl, op: "<", value: 30}]}, action: "금기", alert: contraindicated}
+
+  - id: 418-C13
+    topic: DPP-4 억제제·설폰요소제·TZD
+    type: treatment
+    original:
+      text: >
+        DPP-4 억제제는 신기능 저하 시 감량. 설폰요소제는 저혈당·체중 증가, 고령은 glyburide보다 glimepiride·glipizide 선호,
+        중증 간·신장 기능 이상에서 비권장. TZD는 울혈성 심부전(III·IV)·간질환 금기, 부종·골절·황반부종.
+      location: {file: by_chapter/418장.md, line: 216}
+    status: 유지
+    current:
+      text: >
+        DPP-4 억제제: 리나글립틴을 제외하고 신기능에 따라 용량 조절, 삭사글립틴은 심부전 입원 증가 보고, 췌장염 고위험·임신 주의, GLP-1 계열과 병용 회피.
+        설폰요소제: 저혈당 위험(고령, 신·간기능 저하, 섭취 불량, 플루오로퀴놀론·설파메톡사졸-트리메토프림 등 병용), 체중 증가, 메글리티나이드·식사 인슐린과 병용하지 않음.
+        TZD: 심부전 또는 체액 과다 시 피함(피오글리타존은 심혈관 이득 가능성과 심부전 위험), 체중 증가.
+      sources:
+        - {id: VADOD-DM-2023, locator: "Appendix C Table C-1 (DPP4i, SU, TZD)"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E11]}
+        recommendations:
+          - when: {all: [{med_class: sulfonylurea}, {any: [{med_class: meglitinide}, {med_class: prandial_insulin}]}]}
+            recommend: {action: avoid_combination}
+            alert_level: medium
+          - when: {all: [{med_class: TZD}, {any: [{dx: I50}, {finding: fluid_overload}]}]}
+            recommend: {action: avoid, drug_class: TZD}
+            alert_level: high
+          - when: {all: [{med_class: sulfonylurea}, {any: [{var: age, op: ">=", value: 65}, {var: eGFR, op: "<", value: 60}, {med: ciprofloxacin}, {med: levofloxacin}, {med: sulfamethoxazole_trimethoprim}]}]}
+            recommend: {action: hypoglycemia_risk_alert}
+            alert_level: medium
+
+  - id: 418-C14
+    topic: 제2형 당뇨 인슐린 시작과 적정
+    type: dose
+    original:
+      text: >
+        지속형 인슐린 1일 0.3–0.4 U/kg로 시작(취침 전), 또는 고정 5–15단위, 체중 기반 0.2 U/kg. 자가혈당에 따라 10% 내외 조정.
+        공복혈당 250–300 이상 또는 증상 있으면 초회 인슐린.
+      location: {file: by_chapter/418장.md, line: 252}
+    status: 개정
+    reference:
+      text: >
+        ADA 2026: 증상성 고혈당·HbA1c >10%·혈당 ≥300이면 인슐린 고려(9.20), 중증 고혈당이 아니면 GLP-1 기반 치료 우선(9.21),
+        기저 인슐린 시작 0.1–0.2 U/kg/일, 식사 인슐린 4단위 또는 기저의 10%로 시작, 과기저화 감시(9.26).
+      sources:
+        - {id: ADA-SOC-2026-S9, locator: "Rec 9.20–9.22, 9.26; insulin text"}
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 근거 미확보 — 기저 인슐린 미국 허가사항(openFDA, 예: insulin glargine)의 시작 용량으로 보강 예정. 원문 0.3–0.4 U/kg는 말뭉치에서 제외."
+    reference_corpus:
+      - kind: dose_rule
+        id: DR-BASAL-INSULIN-T2D
+        ingredient_class: basal_insulin
+        source_priority: [ADA-SOC-2026-S9]
+        calculation:
+          start_dose_u_per_day: {formula: "weight_kg × [0.1, 0.2]", unit: "U/day", output: range}
+
+  - id: 418-C15
+    topic: 저혈당 정의·처치
+    type: threshold
+    original:
+      text: "(418장에는 저혈당 단계 정의 없음 — 420장 관련)"
+      location: {file: by_chapter/418장.md, line: 116}
+    status: 보완
+    current:
+      text: >
+        당뇨병 환자의 저혈당은 많은 경우 혈당 70 mg/dL 미만이다. 스스로 처치할 수 없을 만큼 떨어지면 중증 저혈당이며 즉시 치료해야 한다.
+        저혈당이면 포도당 또는 탄수화물 15–20 g을 바로 먹고 15분 뒤 혈당을 다시 재며, 여전히 낮으면 목표 범위에 들 때까지 반복한다. 중증 저혈당에는 글루카곤(주사·비강 분무)이 가장 좋은 치료다.
+      sources:
+        - {id: NIDDK-HYPOGLYCEMIA, locator: "What is hypoglycemia; How do I treat hypoglycemia; glucagon"}
+    reference:
+      text: "ADA 2026: 1단계 54–69, 2단계 <54 mg/dL, 3단계 타인 도움 필요. 의식 있으면 포도당 15 g, 15분 후 재측정(6.15)."
+      sources:
+        - {id: ADA-SOC-2026-S6, locator: "Table 6.4; Rec 6.15"}
+    verification: primary
+    note: "54 mg/dL 단계 구분(ADA)은 C등급이라 AI 사용 내용에서 제외. 420장 주장과 같은 출처."
+    review: {status: draft}
+    corpus:
+      - kind: lab_threshold
+        lab: Glucose
+        unit: mg/dL
+        context: "당뇨병 환자 저혈당(NIDDK — 많은 경우 70 미만)"
+        bands:
+          - {label: "저혈당(70 미만)", max: 69.999}
+
+  - id: 418-C16
+    topic: DKA·HHS 진단 기준
+    type: diagnosis
+    original:
+      text: "표 418-6: DKA 혈당 250–600 mg/dL, pH 6.8–7.3, HCO3 <15, 케톤 ++++. HHS 혈당 600–1200, 삼투압 330–380, pH >7.3."
+      location: {file: by_chapter/418장.md, line: 286}
+    status: 개정
+    reference:
+      text: >
+        2024 합의문: DKA = 혈당 ≥200 또는 당뇨 병력 + BHB ≥3.0(요케톤 ≥2+) + pH <7.3 및/또는 HCO3 <18. HHS = 혈당 ≥600 + 유효 삼투압 >300
+        + BHB <3.0 + pH ≥7.3·HCO3 ≥15. SGLT2i로 정상혈당 DKA 증가.
+      sources:
+        - {id: HG-CRISES-2024, locator: "Table 1 (원문 미대조)"}
+        - {id: CCJM-HG-CRISES-2025, locator: "diagnostic criteria"}
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 근거 미확보. 원문(19판) 기준은 구버전이라 말뭉치에서 제외."
+    reference_corpus:
+      - kind: diagnosis
+        condition: {name: 당뇨병성 케톤산증, kcd: [E11.1, E10.1]}
+        logic:
+          all:
+            - {any: [{var: Glucose, op: ">=", value: 200}, {dx_history: diabetes}]}
+            - {any: [{var: BHB, op: ">=", value: 3.0}, {var: Urine_ketone_grade, op: ">=", value: 2}]}
+            - {any: [{var: pH, op: "<", value: 7.3}, {var: HCO3, op: "<", value: 18}]}
+
+  - id: 418-C17
+    topic: DKA·HHS 치료
+    type: dose
+    original:
+      text: >
+        수액: 0.9% 식염수 2–3 L 첫 1–3시간. 인슐린: 0.1 U/kg 정주 후 0.1 U/kg/h. K <3.3이면 인슐린 금지. 혈당 250 도달 시 5% 포도당.
+        중탄산염 pH <6.9. HHS도 0.1 U/kg 일시 투여 후 0.1 U/kg/h.
+      location: {file: by_chapter/418장.md, line: 354}
+    status: 개정
+    reference:
+      text: >
+        2024 합의문: 등장성 또는 균형 정질액 500–1,000 mL/h 첫 2–4시간, 중증 DKA 고정속도 0.1 U/kg/h(일시 투여 언급 없음), HHS 0.05 U/kg/h,
+        혈당 <250이면 5–10% 포도당, K <3.5면 인슐린 연기, K <5.0이면 보충, pH <7.0에서만 중탄산염 고려, 피하 전환 0.3–0.6 U/kg/일.
+      sources:
+        - {id: HG-CRISES-2024, locator: "Treatment (원문 미대조)"}
+        - {id: CCJM-HG-CRISES-2025, locator: "treatment"}
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 근거 미확보. 인산 보충 기준은 자료 간 단위 불일치로 제외."
+
+  - id: 418-C18
+    topic: 입원 환자 혈당 목표
+    type: treatment
+    original:
+      text: "중환자 140–180 mg/dL, 비중환자 공복 <140·무작위 <180 mg/dL. 슬라이딩 스케일 단독은 부적절. 경구혈당강하제는 입원과 동시에 중단."
+      location: {file: by_chapter/418장.md, line: 403}
+    status: 개정
+    reference:
+      text: "ADA(2025판 16.5a/b, 2026 보도): 비중환자 100–180 mg/dL(유의한 저혈당 없이), 중환자 140–180 mg/dL."
+      sources:
+        - {id: ADA-SOC-2026-S16, locator: "본문 미확인 — 2025판 16.5a/b와 2026 보도"}
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 근거 미확보(VA/DoD 당뇨 지침은 일차의료 범위)."

@@ -1,0 +1,142 @@
+# S03 감염 보충(성매개감염·HIV 선별, 결핵 감염 검사) — 19판 원문 범위 밖 보충 장
+# 스키마: text_data/claims/README.md (보충 장: original 없음, status 보완만, A등급 current 필수)
+
+chapter: "S03"
+title: 감염 보충 — 성매개감염·HIV 선별과 결핵 감염 검사
+original_source: SUPPLEMENT
+updated_at: "2026-11-11"
+
+claims:
+  - id: S03-C01
+    topic: HIV 선별검사 대상
+    type: workup
+    status: 보완
+    current:
+      text: >
+        13–64세 모든 여성과 남성에게 HIV 선별검사를 거부 의사가 없으면 시행하는 방식(opt-out)으로 권고한다.
+        임신부는 첫 산전 방문 때 선별한다(opt-out). 성적으로 활발한 남성 간 성접촉자(MSM)는 HIV 상태가 모르거나 음성이면 최소 매년 검사한다.
+      sources:
+        - {id: CDC-STI-SCREENING-2021, locator: "Screening recommendations — HIV rows (Women, Pregnant Women, MSW, MSM)"}
+    verification: primary
+    conflicts:
+      - "미국 권고(CDC)의 대상 연령·방식이며 국내 검사 정책과 다를 수 있음 — 서비스 기준은 검수자가 정함."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {var: age, op: ">=", value: 13}
+            - {var: age, op: "<=", value: 64}
+            - {not: {dx: B20}}
+            - {not: {finding: prior_hiv_test}}
+        tests:
+          - {lab: Anti_HIV, reason: "13–64세 선별(opt-out)"}
+      - kind: workup
+        trigger:
+          all:
+            - {finding: msm}
+            - {finding: sexually_active}
+            - {not: {dx: B20}}
+        tests:
+          - {lab: Anti_HIV, reason: "MSM 최소 매년"}
+          - {lab: Syphilis_serology, reason: "MSM 최소 매년"}
+          - {lab: CT_NG_NAAT, reason: "MSM 최소 매년 — 접촉 부위(요도·직장·인두)"}
+
+  - id: S03-C02
+    topic: 클라미디아·임질 선별검사 대상
+    type: workup
+    status: 보완
+    current:
+      text: >
+        성적으로 활발한 25세 미만 여성은 클라미디아·임질 선별검사를 한다. 25세 이상 여성은 위험이 높으면 선별한다.
+        위험이 낮은 이성애 남성의 선별은 근거가 부족하다. 성적으로 활발한 MSM은 콘돔 사용과 관계없이 접촉 부위(요도·직장, 임질은 인두 포함)에서 최소 매년 검사한다.
+        HIV 감염인은 성적으로 활발하면 첫 HIV 평가 때와 이후 최소 매년 매독·임질·클라미디아를 선별한다.
+      sources:
+        - {id: CDC-STI-SCREENING-2021, locator: "Screening recommendations — Chlamydia, Gonorrhea, Syphilis rows (Women, MSW, MSM, Persons with HIV)"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {not: {finding: male}}
+            - {var: age, op: "<", value: 25}
+            - {finding: sexually_active}
+        tests:
+          - {lab: CT_NG_NAAT, reason: "성적으로 활발한 25세 미만 여성 선별"}
+      - kind: workup
+        trigger:
+          all:
+            - {dx: B20}
+            - {finding: sexually_active}
+        tests:
+          - {lab: Syphilis_serology, reason: "HIV 감염인 — 첫 평가와 이후 최소 매년"}
+          - {lab: CT_NG_NAAT, reason: "HIV 감염인 — 첫 평가와 이후 최소 매년"}
+
+  - id: S03-C03
+    topic: 임신부 첫 산전 방문 감염 선별
+    type: workup
+    status: 보완
+    current:
+      text: >
+        모든 임신부는 첫 산전 방문 때 매독과 HIV(opt-out)를 선별하고, 이전 검사 여부와 관계없이 매 임신마다 HBsAg를 검사하며, C형간염도 선별한다.
+        25세 미만 임신부는 클라미디아와 임질을 선별하고, 25세 이상은 위험이 높으면 임질을 선별한다.
+      sources:
+        - {id: CDC-STI-SCREENING-2021, locator: "Screening recommendations — Pregnant Women rows"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: pregnancy}
+        tests:
+          - {lab: Syphilis_serology, reason: "첫 산전 방문"}
+          - {lab: Anti_HIV, reason: "첫 산전 방문(opt-out)"}
+          - {lab: HBsAg, reason: "매 임신마다(이전 검사와 무관)"}
+          - {lab: Anti_HCV, reason: "임신 중 선별"}
+      - kind: workup
+        trigger:
+          all:
+            - {finding: pregnancy}
+            - {var: age, op: "<", value: 25}
+        tests:
+          - {lab: CT_NG_NAAT, reason: "25세 미만 임신부 클라미디아·임질 선별"}
+
+  - id: S03-C04
+    topic: 결핵 감염 검사 대상과 검사 선택
+    type: workup
+    status: 보완
+    current:
+      text: >
+        결핵 감염 위험이 높은 사람을 검사한다 — 감염성 결핵 환자의 접촉자, 결핵이 흔한 나라에서 태어났거나 그곳을 자주 여행하는 사람(노출 위험),
+        HIV 감염인과 5세 미만 소아(발병 위험). 5세 이상 BCG 접종자는 혈액검사(IGRA)가 선호 검사이고, 5세 미만은 피부반응검사(TST)를 쓴다.
+        IGRA·TST 양성은 대개 결핵 감염을 뜻하며, 결핵 질환을 배제하려면 흉부 X선 등 추가 검사가 필요하다.
+        양성이거나 증상이 있으면 병력, 진찰, 흉부 X선, 세균학 검사(객담 도말, 핵산증폭검사, 배양 — 배양이 표준, 약제 감수성 검사)로 결핵 질환을 평가한다.
+      sources:
+        - {id: CDC-TB-TESTING-2025, locator: "Who should be tested; Choosing a TB test; Next steps after a positive test; Evaluation for TB disease"}
+    verification: primary
+    conflicts:
+      - "국내는 BCG 접종이 보편적이라 5세 이상에서는 IGRA가 우선 고려 대상 — 국내 결핵 진료지침과의 차이는 검수 시 확인(국내 지침은 출처 라이선스 미확인으로 미수록)."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {var: age, op: ">=", value: 5}
+            - {any: [{finding: tb_contact}, {finding: born_or_frequent_travel_high_tb_country}, {dx: B20}]}
+        tests:
+          - {lab: Latent_TB_screen, reason: "결핵 감염 검사 — 5세 이상(BCG 접종자 포함) IGRA 선호"}
+      - kind: workup
+        trigger:
+          all:
+            - {var: age, op: "<", value: 5}
+            - {any: [{finding: tb_contact}, {finding: born_or_frequent_travel_high_tb_country}, {dx: B20}]}
+        tests:
+          - {lab: TST, reason: "5세 미만은 피부반응검사"}
+      - kind: workup
+        trigger:
+          any:
+            - {finding: tb_infection_test_positive}
+            - {finding: tb_symptoms}
+        tests:
+          - {exam: Chest_xray, reason: "결핵 질환 배제"}
+          - {lab: TB_sputum_tests, reason: "증상·영상 이상 시 세균학 검사(배양이 표준)"}

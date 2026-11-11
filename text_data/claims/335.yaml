@@ -1,0 +1,762 @@
+# 335장 만성 콩팥병 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# current   = AI 사용 가능 내용(A등급 출처만). reference = 허가 필요 근거(B·C·U, AI 사용 불가).
+# corpus    = current 근거 구조화 항목. reference_corpus = reference 근거만 있는 구조화 항목.
+
+chapter: "335"
+title: 만성 콩팥병
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 335-C01
+    topic: CKD 정의와 GFR·알부민뇨 범주
+    type: diagnosis
+    original:
+      text: "신장 구조·기능 이상이 지속되는 상태. KDIGO 분류에 따라 GFR 범주(G1–G5)와 알부민뇨 범주(A1–A3)로 분류."
+      location: {file: by_chapter/335장.md, line: 39}
+    status: 유지
+    current:
+      text: >
+        CKD는 신장 손상 표지(알부민뇨 UACR ≥30 mg/g, 요침사 이상, 조직·영상 이상, 신장이식 과거력 등) 또는
+        GFR <60 mL/min/1.73m²(G3a–G5)가 3개월 이상 지속되는 상태다. 병기의 ICD-10 코드는 G1 N18.1, G2 N18.2,
+        G3a N18.31, G3b N18.32, G4 N18.4, G5 N18.5, 투석 의존 신부전 N18.6이다.
+        GFR 범주 경계(G1 ≥90, G2 60–89, G3a 45–59, G3b 30–44, G4 15–29, G5 <15)와 알부민뇨 범주(A1 <30, A2 30–300, A3 >300 mg/g)는 원문과 같다.
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Sidebar 6 (CKD 정의), Sidebar 9 (병기·ICD-10)"}
+    reference:
+      text: "KDIGO 2024: 단일 측정으로 만성이라 단정하지 않고 반복 검사로 확인(PP 1.1.1.2, 1.1.3.2)."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "PP 1.1.1.2, 1.1.3.1, 1.1.3.2"}
+    verification: primary
+    conflicts:
+      - "VA/DoD 사이드바의 정의·병기 그림은 KDIGO 자료를 재수록한 것 — 그림 표현은 쓰지 않고 수치 사실만 사용(법무 확인 대상)."
+    review: {status: draft}
+    corpus:
+      - kind: diagnosis
+        condition: {name: 만성 콩팥병, kcd: [N18]}
+        criteria:
+          - "eGFR <60 mL/min/1.73m² 또는 신장 손상 표지(UACR ≥30 mg/g, 요침사 이상, 조직·영상 이상, 신장이식 과거력)"
+          - "위 이상이 3개월 이상 지속"
+      - kind: lab_threshold
+        lab: eGFR
+        unit: mL/min/1.73m²
+        bands:
+          - {label: G1, min: 90, icd10: N18.1}
+          - {label: G2, min: 60, max: 89.999, icd10: N18.2}
+          - {label: G3a, min: 45, max: 59.999, icd10: N18.31}
+          - {label: G3b, min: 30, max: 44.999, icd10: N18.32}
+          - {label: G4, min: 15, max: 29.999, icd10: N18.4}
+          - {label: G5, max: 14.999, icd10: N18.5}
+      - kind: lab_threshold
+        lab: UACR
+        unit: mg/g
+        bands:
+          - {label: A1, max: 29.999}
+          - {label: A2, min: 30, max: 300}
+          - {label: A3, min: 300.001}
+
+  - id: 335-C02
+    topic: eGFR 계산식
+    type: formula
+    original:
+      text: "MDRD 식 또는 CKD-EPI(2009) 식 사용. 여자·아프리카계 미국인 보정계수 포함."
+      location: {file: by_chapter/335장.md, line: 68}
+    status: 개정
+    current:
+      text: >
+        인종 계수를 뺀 CKD-EPI 2021 크레아티닌 식을 쓴다: 142 × min(SCr/κ,1)^α × max(SCr/κ,1)^-1.200 × 0.9938^나이 × 1.012(여성),
+        κ = 0.7(여)·0.9(남), α = -0.241(여)·-0.302(남), 성인(≥18세). VA·DoD 검사실은 이 race-free 식으로 전환했다.
+        eGFR <60에서 위험 예측에는 크레아티닌+시스타틴C 병합 식을 제안한다(VA/DoD Rec 3, Weak for).
+      sources:
+        - {id: NIDDK-GFR-EQUATIONS, locator: "2021 CKD-EPI creatinine equation"}
+        - {id: VADOD-CKD-2025, locator: "Background (race-free eGFR); Recommendation 3"}
+    reference:
+      text: "KDIGO 2024: eGFRcr이 부정확하고 GFR이 결정에 중요하면 eGFRcr-cys(Rec 1.2.2.1), 인종 사용 회피(PP 1.2.4.2), 지역 내 동일 식 사용(PP 1.2.4.1)."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "Rec 1.1.2.1, 1.2.2.1; PP 1.2.4.1, 1.2.4.2"}
+    verification: primary
+    review: {status: draft}
+    note: "구현 완료: src/ax_g_ai/services/clinical_calculations.py ckd_epi_2021_egfr()"
+    corpus:
+      - kind: formula
+        name: CKD-EPI 2021 (creatinine, race-free)
+        output: {var: eGFR, unit: mL/min/1.73m²}
+        expression: "142 × min(SCr/κ,1)^α × max(SCr/κ,1)^-1.200 × 0.9938^age × (1.012 if female)"
+        variables:
+          SCr: "혈청 크레아티닌 mg/dL"
+          κ: {female: 0.7, male: 0.9}
+          α: {female: -0.241, male: -0.302}
+          age: "years, ≥18"
+        constraints: ["크레아티닌이 안정 상태일 때만 유효", "성인만"]
+        implement_in: src/ax_g_ai/services/clinical_calculations.py
+
+  - id: 335-C03
+    topic: CKD 검사 대상과 검사 항목
+    type: workup
+    original:
+      text: "24시간 소변 수집이 기본, 아침 첫 소변 ACR이 실용적. 24시간 단백뇨 >300 mg이면 ACE 억제제/ARB 적응증."
+      location: {file: by_chapter/335장.md, line: 345}
+    status: 개정
+    current:
+      text: >
+        60세 초과, 당뇨, 고혈압, 심부전을 포함한 심혈관질환 중 하나 이상이 있으면 UACR과 eGFR로 CKD를 검사하도록 제안한다(Rec 1, Weak for).
+        CKD 진행 예측에는 UACR과 eGFR을 함께 쓴다(Rec 2, Strong for).
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Recommendations 1, 2"}
+    reference:
+      text: "KDIGO 2024: 초기 알부민뇨 검사는 아침 첫 중간뇨 ACR 우선, 시험지 양성은 정량 ACR/PCR로 확인(PP 1.3.1.1–1.3.1.2)."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "PP 1.3.1.1, 1.3.1.2"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {any: [{var: age, op: ">", value: 60}, {dx: E11}, {dx: I10}, {dx: I50}, {dx: I25}, {dx: I63}]}
+        tests:
+          - {lab: UACR, reason: CKD 검사(위험군)}
+          - {lab: eGFR, reason: CKD 검사(위험군)}
+        strength: "VA/DoD Rec 1 (Weak for)"
+
+  - id: 335-C04
+    topic: CKD 추적 검사와 유의한 변화
+    type: monitoring
+    original:
+      text: "연속적인 신장 기능 측정이 필요. 모든 환자에서 GFR 감소 속도를 측정·도면화."
+      location: {file: by_chapter/335장.md, line: 375}
+    status: 보완
+    current:
+      text: "eGFR이 연간 5 mL/min/1.73m² 넘게 빠르게 감소하면 신장내과 협진을 고려한다."
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Sidebar 8 (Potential Indications for Nephrology Consultation)"}
+    reference:
+      text: >
+        KDIGO 2024: ACR·GFR 최소 연 1회(PP 2.1.1), eGFR 변화 >20%는 평가(PP 2.1.3), 혈역학적 약제 시작 후 >30% 감소는 평가(PP 2.1.4),
+        ACR 2배 이상 증가는 평가(PP 2.1.5).
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "PP 2.1.1–2.1.5"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: monitoring
+        rules:
+          - {when: {var: eGFR_decline_per_year, op: ">", value: 5}, action: "빠른 eGFR 감소 — 신장내과 협진 고려"}
+    reference_corpus:
+      - kind: monitoring
+        rules:
+          - {when: {var: eGFR_change_pct, op: "<=", value: -20}, action: "기대 변동 초과 — 원인 평가"}
+          - {when: {var: UACR_ratio_to_prior, op: ">=", value: 2}, action: "ACR 2배 이상 증가 — 평가"}
+
+  - id: 335-C05
+    topic: 원인 감별 검사(단백 전기영동, 간염·HIV)
+    type: workup
+    original:
+      text: >
+        원인 미상 CKD 환자 '35년 이상'(원문 표기, 오역 의심 — '35세 이상'으로 추정)에서 다발성 골수종 감별을 위해 혈청·요 단백 전기영동.
+        사구체신염이면 B형·C형 간염, HIV 검사.
+      location: {file: by_chapter/335장.md, line: 343}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 근거 미확보. 원문 '35년 이상'은 영문판 확인 필요(번역 오류 가능)."
+
+  - id: 335-C06
+    topic: 빈혈·영양 결핍 평가
+    type: workup
+    original:
+      text: "혈색소, 철, 비타민 B12, 엽산 검사를 시행."
+      location: {file: by_chapter/335장.md, line: 345}
+    status: 유지
+    current:
+      text: "CKD 환자의 빈혈은 원인을 평가하고, 영양 결핍을 확인해 철·비타민 B12·엽산이 낮으면 보충한다."
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Appendix — CKD 합병증 관리 표(Anemia)"}
+    reference:
+      text: >
+        KDIGO 2026 빈혈: Hb <13(남)/<12(여) g/dL로 정의, 검사 주기 G3 연 1회·G4 연 2회·G5 3개월마다, 1차 검사 CBC·망상적혈구·페리틴·TSAT.
+      sources:
+        - {id: KDIGO-ANEMIA-2026, locator: "Executive summary — diagnosis and evaluation"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{dx: N18}, {finding: anemia}]}
+        tests:
+          - {lab: Ferritin, reason: 철 결핍 평가}
+          - {lab: TSAT, reason: 철 결핍 평가}
+          - {lab: VitB12, reason: 영양 결핍 평가}
+          - {lab: Folate, reason: 영양 결핍 평가}
+    reference_corpus:
+      - kind: workup
+        trigger: {dx: N18}
+        tests:
+          - {lab: CBC, frequency_by_stage: {G3: "연 1회 이상", G4: "연 2회", G5: "3개월마다"}, reason: 빈혈 선별}
+
+  - id: 335-C07
+    topic: RAS 억제제(ACEi/ARB) 적응증
+    type: treatment
+    original:
+      text: "24시간 단백뇨 >300 mg이면 ACE 억제제 혹은 ARB의 적응증. 당뇨·비당뇨 CKD 모두에서 진행 억제."
+      location: {file: by_chapter/335장.md, line: 345}
+    status: 개정
+    current:
+      text: >
+        고혈압과 알부민뇨(UACR >30 mg/g)가 있으면 CKD 진행을 늦추기 위해 ACEi 또는 ARB를 권고한다(Rec 12, Strong for).
+        eGFR <30인 진행 CKD에서도 불내성·이상반응이 없으면 ACEi/ARB를 지속하도록 제안한다(Rec 14, Weak for).
+        ACEi·ARB는 기형 유발 위험이 있어 임신 중 피한다.
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Recommendations 12, 14; discussion"}
+    reference:
+      text: "KDIGO 2024: 고혈압 유무와 관계없이 비당뇨 A3 권고·A2 제안, 당뇨 A2–A3 권고, 내약 최고 허가 용량 사용(Rec 3.6.1–3.6.3, PP 3.6.1)."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "Rec 3.6.1–3.6.3; PP 3.6.1, 3.6.6, 3.6.7"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N18]}
+        recommendations:
+          - when: {all: [{dx: I10}, {var: UACR, op: ">", value: 30}]}
+            recommend: {drug_class: RASi, examples: [ACEi, ARB]}
+            strength: "VA/DoD Rec 12 (Strong for)"
+          - when: {all: [{var: eGFR, op: "<", value: 30}, {med_class: RASi}]}
+            recommend: {action: continue, drug_class: RASi, unless: "불내성·이상반응"}
+            strength: "VA/DoD Rec 14 (Weak for)"
+          - when: {all: [{med_class: RASi}, {finding: pregnancy}]}
+            recommend: {action: avoid, drug_class: RASi, reason: 기형 유발}
+            alert_level: high
+
+  - id: 335-C08
+    topic: ACEi·ARB 병합
+    type: treatment
+    original:
+      text: "단독으로 단백뇨 감소가 없으면 ACE 억제제와 ARB 병합요법을 고려할 수 있다(단, 최근 연구에서 AKI 증가)."
+      location: {file: by_chapter/335장.md, line: 387}
+    status: 폐기
+    reference:
+      text: "KDIGO 2024: 당뇨 여부와 관계없이 ACEi, ARB, 직접 레닌 억제제의 어떤 병합도 피한다(Rec 3.6.4, 1B)."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "Rec 3.6.4"}
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 출처(VA/DoD CKD 2025)에서 병합 금지 문구를 찾지 못함 — 미국 ACEi/ARB 허가사항(openFDA)의 이중 RAS 차단 경고로 A 근거를 보강할 것."
+    reference_corpus:
+      - kind: treatment
+        condition: {kcd: [N18]}
+        recommendations:
+          - when: {all: [{med_class: ACEi}, {med_class: ARB}]}
+            recommend: {action: avoid_combination, detail: "ACEi+ARB(+DRI) 병합 금지"}
+            alert_level: high
+
+  - id: 335-C09
+    topic: RAS 억제제 사용 중 모니터링
+    type: monitoring
+    original:
+      text: "혈청 크레아티닌의 지속 상승은 신혈관질환을 시사할 수 있으며, 부작용 시 다른 이차 약제로 대체."
+      location: {file: by_chapter/335장.md, line: 389}
+    status: 개정
+    current:
+      text: "RAS 억제제를 쓰는 CKD 환자는 칼륨 등 모니터링이 필요하다. 지속되는 비응급 고칼륨혈증에는 칼륨 결합제 사용을 제안한다(Rec 21, Weak for)."
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Recommendation 21; RAASi 모니터링 discussion"}
+    reference:
+      text: >
+        KDIGO 2024: 시작·증량 후 2–4주 내 혈압·크레아티닌·칼륨 확인(PP 3.6.2), 4주 내 크레아티닌 30% 넘게 오르지 않으면 지속(PP 3.6.4),
+        고칼륨혈증은 감량·중단보다 칼륨 저하 조치 우선(PP 3.6.3).
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "PP 3.6.2–3.6.5"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N18]}
+        recommendations:
+          - when: {all: [{finding: persistent_nonemergent_hyperkalemia}]}
+            recommend: {drug_class: potassium_binder}
+            strength: "VA/DoD Rec 21 (Weak for)"
+    reference_corpus:
+      - kind: monitoring
+        after: {event: start_or_uptitrate, med_class: RASi}
+        check: [BP, SCr, K]
+        within_days: [14, 28]
+        rules:
+          - {when: {var: SCr_rise_pct_4wk, op: ">", value: 30}, action: "원인 평가, 감량·중단 검토"}
+
+  - id: 335-C10
+    topic: SGLT2 억제제
+    type: treatment
+    original:
+      text: "(원문에 CKD 치료제로서 SGLT2 억제제 언급 없음 — 19판 출간 이후 근거)"
+      location: {file: by_chapter/335장.md, line: 377}
+    status: 보완
+    current:
+      text: >
+        최대 내약 ACEi/ARB에 더해, 제2형 당뇨·알부민뇨(UACR >200 mg/g)·심부전 중 하나 이상이 있는 CKD 환자에게 SGLT2 억제제 추가를 권고하고
+        투석 시작 전까지 지속한다(Rec 15, Strong for).
+        미국 허가사항: 다파글리플로진 10 mg, 엠파글리플로진 10 mg 1일 1회(CKD 적응증). 시작 전 신기능·체액 상태를 평가하고, 수술·장기 금식 시술 최소 3일 전 중단.
+        혈당 강하 효과는 낮은 eGFR에서 줄지만 심신 보호 효과는 유지된다.
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Recommendation 15"}
+        - {id: VADOD-DM-2023, locator: "Appendix C Table C-1 (SGLT-2 inhibitor)"}
+        - {id: OPENFDA-DAPAGLIFLOZIN, locator: "2 Dosage and Administration"}
+        - {id: OPENFDA-EMPAGLIFLOZIN, locator: "2 Dosage and Administration"}
+    reference:
+      text: >
+        KDIGO 2024: T2D+CKD+eGFR ≥20 권고(1A), eGFR 20–45·ACR <200 제안(2B), 시작 후 eGFR <20이어도 지속(PP 3.7.1).
+        국내 허가(로컬 DB, 출처 미상): 포시가 CKD·심부전 eGFR <25 시작 비권장, 자디앙 CKD eGFR <20 시작 비권장, 투석 금지.
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "Rec 3.7.1–3.7.3; PP 3.7.1–3.7.3"}
+        - {id: MFDS-LABEL-DAPAGLIFLOZIN-LOCAL, locator: "용법·용량 신장애"}
+        - {id: MFDS-LABEL-EMPAGLIFLOZIN-LOCAL, locator: "용법·용량 신장애"}
+    verification: primary
+    conflicts:
+      - "시작 가능 eGFR 하한: 미국 라벨·KDIGO와 국내 허가(포시가 25, 자디앙 20)가 제품별로 다르다. 국내 허가 출처 확인 후 dose_rule에 반영."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N18]}
+        recommendations:
+          - when: {all: [{med_class: RASi}, {any: [{dx: E11}, {var: UACR, op: ">", value: 200}, {dx: I50}]}]}
+            recommend: {drug_class: SGLT2i, continue_until: dialysis}
+            strength: "VA/DoD Rec 15 (Strong for)"
+          - when: {event: surgery_or_prolonged_fasting_within_3d}
+            recommend: {action: hold, drug_class: SGLT2i, detail: "최소 3일 전 중단(미국 허가사항)"}
+            alert_level: medium
+
+  - id: 335-C11
+    topic: 비스테로이드성 MRA(피네레논)
+    type: treatment
+    original:
+      text: "(원문에 없음)"
+      location: {file: by_chapter/335장.md, line: 377}
+    status: 보완
+    current:
+      text: >
+        최대 내약 ACEi/ARB를 쓰면서 제2형 당뇨, 알부민뇨 >30 mg/g, eGFR ≥25, 칼륨 <4.8 mEq/L를 모두 만족하면 피네레논 추가를 제안한다(Rec 18, Weak for).
+        미국 허가사항: 시작 전 칼륨·eGFR 측정, 칼륨 >5.0이면 시작 금지, 4.8–5.0이면 첫 4주 추가 감시하며 시작 고려.
+        시작 용량 eGFR ≥60은 20 mg, 25 이상 60 미만은 10 mg, 25 미만은 시작 비권장. 4주 후 칼륨에 따라 조정하며 CKD+T2DM의 목표 용량은 20 mg.
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Recommendation 18"}
+        - {id: OPENFDA-FINERENONE, locator: "2.1–2.3 Dosage and Administration"}
+    reference:
+      text: "KDIGO 2024 Rec 3.8.1(2A)과 그림 26의 칼륨 감시 알고리즘. 국내 허가(로컬 DB)도 미국과 같은 시작·조정 기준."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "Rec 3.8.1; Figure 26"}
+        - {id: MFDS-LABEL-FINERENONE-LOCAL, locator: "용법·용량"}
+    verification: primary
+    conflicts:
+      - "미국 허가사항에는 HFpEF(LVEF ≥40%) 적응증과 목표 20–40 mg이 있으나 국내 허가(로컬 DB)에는 없음."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N18, E11]}
+        recommendations:
+          - when: {all: [{dx: E11}, {med_class: RASi_max_tolerated}, {var: UACR, op: ">", value: 30}, {var: eGFR, op: ">=", value: 25}, {var: K, op: "<", value: 4.8}]}
+            recommend: {drug_class: nsMRA, ingredients: [finerenone]}
+            strength: "VA/DoD Rec 18 (Weak for)"
+        dose_rule_ref: DR-FINERENONE
+      - kind: dose_rule
+        id: DR-FINERENONE
+        ingredient: finerenone
+        indication: 제2형 당뇨 동반 CKD
+        renal_param: eGFR
+        source_priority: [OPENFDA-FINERENONE]
+        initiation:
+          - {when: {var: K, op: ">", value: 5.0}, action: "시작 금지", alert: high}
+          - {when: {all: [{var: K, op: ">", value: 4.8}, {var: K, op: "<=", value: 5.0}]}, action: "첫 4주 추가 칼륨 감시하며 시작 고려", alert: caution}
+          - {when: {var: eGFR, op: ">=", value: 60}, dose: "20 mg 1일 1회"}
+          - {when: {all: [{var: eGFR, op: ">=", value: 25}, {var: eGFR, op: "<", value: 60}]}, dose: "10 mg 1일 1회"}
+          - {when: {var: eGFR, op: "<", value: 25}, action: "시작 비권장", alert: high}
+        target_daily_mg: 20
+        monitoring: ["시작·용량 조정 4주 후 칼륨", "이후 주기적으로 칼륨"]
+        alert_note: "미국 허가 기준 참고 범위 — 국내 허가 확인 전 처방 용량으로 표시하지 않음"
+
+  - id: 335-C12
+    topic: CKD 혈압 관리
+    type: treatment
+    original:
+      text: "당뇨 동반 또는 24시간 단백뇨 ≥1 g이면 목표 혈압 130/80 mmHg. 염분 제한이 첫 치료."
+      location: {file: by_chapter/335장.md, line: 243}
+    status: 개정
+    current:
+      text: >
+        eGFR <60 환자에서 사망·주요 심혈관사건을 줄이기 위해 강화 혈압 관리를 제안한다(Rec 11, Weak for). 특정 목표치를 권고할 근거는 불충분하다(<120, <130, <140 목표 모두에서 MACE 감소, 효과 크기 작음).
+        ACEi/ARB로 조절되지 않으면 티아지드 이뇨제 또는 칼슘통로차단제 추가를 제안한다(Rec 13, Weak for).
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Recommendations 11, 13; discussion"}
+    reference:
+      text: "KDIGO 2024: 표준화된 진료실 혈압으로 내약 시 수축기 <120 mmHg 제안(Rec 3.4.1, 2B), 나트륨 <2 g/일(Rec 3.3.2.1)."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "Rec 3.4.1, 3.3.2.1"}
+    verification: primary
+    conflicts:
+      - "목표치: VA/DoD는 특정 목표 근거 불충분, KDIGO는 수축기 <120 제안. 원문(130/80)은 두 지침 모두와 다름."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N18]}
+        recommendations:
+          - when: {all: [{dx: I10}, {var: eGFR, op: "<", value: 60}]}
+            recommend: {action: intensive_bp_management, target: "특정 목표치 근거 불충분"}
+            strength: "VA/DoD Rec 11 (Weak for)"
+          - when: {all: [{dx: I10}, {med_class: RASi}, {finding: bp_uncontrolled}]}
+            recommend: {drug_class_any: [thiazide, CCB], action: add}
+            strength: "VA/DoD Rec 13 (Weak for)"
+
+  - id: 335-C13
+    topic: 대사성 산증
+    type: treatment
+    original:
+      text: "혈청 중탄산염이 20–23 mmol/L 이하로 감소하면 알칼리 보충을 고려."
+      location: {file: by_chapter/335장.md, line: 147}
+    status: 개정
+    current:
+      text: "CKD의 대사성 산증은 중탄산염으로 치료한다. 지속 고칼륨혈증 관리에도 중탄산염·이뇨제 조정·칼륨 결합제를 쓴다."
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Appendix — CKD 합병증 관리 표(Electrolytes)"}
+    reference:
+      text: "KDIGO 2024: 성인 예시 기준 혈청 중탄산염 <18 mmol/L에서 약물 치료 고려(PP 3.10.1), 정상 상한 초과·혈압·칼륨·체액 악영향 감시(PP 3.10.2)."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "PP 3.10.1, 3.10.2"}
+    verification: primary
+    review: {status: draft}
+    note: "A등급 출처에는 치료 시작 중탄산염 수치가 없음 — 수치 기준은 reference_corpus에만 둔다."
+    reference_corpus:
+      - kind: treatment
+        condition: {kcd: [N18]}
+        recommendations:
+          - when: {var: HCO3, op: "<", value: 18}
+            recommend: {action: consider_alkali_therapy}
+
+  - id: 335-C14
+    topic: 고칼륨혈증 관리
+    type: treatment
+    original:
+      text: "칼륨 식이 제한, 칼륨 분비 이뇨제, 칼륨 함유·보존 약물 제한, 칼륨 결합 레진으로 교정."
+      location: {file: by_chapter/335장.md, line: 153}
+    status: 유지
+    current:
+      text: >
+        지속되는 비응급 고칼륨혈증에는 칼륨 결합제를 제안한다(Rec 21). 고칼륨혈증·고인산혈증은 식이 관리(영양치료 의뢰 고려)와
+        중탄산염, 이뇨제 조정, 칼륨 결합제로 관리한다.
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Recommendation 21; Appendix (Electrolytes)"}
+    reference:
+      text: "KDIGO 2024: 칼륨 측정 변동 요인 고려(PP 3.11.1.1), 식이는 개별화(PP 3.11.5.1–3.11.5.2)."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "PP 3.11.1.1, 3.11.5.1, 3.11.5.2"}
+    verification: primary
+    review: {status: draft}
+
+  - id: 335-C15
+    topic: CKD 빈혈 치료(철분·ESA)
+    type: treatment
+    original:
+      text: "ESA 전 골수 철 저장 확보, 비투석 환자는 경구 철분. 목표 혈색소 110–115 g/L. 혈색소 정상화는 추가 이득 없음."
+      location: {file: by_chapter/335장.md, line: 289}
+    status: 개정
+    current:
+      text: >
+        CKD G3b 이상에서 Hb <10 g/dL가 지속되면 ESA 검토를 위해 신장내과로 의뢰한다. 경구 철분을 시도했는데도 철 결핍(TSAT <20%, 페리틴 <100)이
+        지속되거나 경구 철분을 견디지 못하면 정주 철분을 위해 의뢰한다(연령에 맞는 원인 평가 후).
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Appendix — CKD 합병증 관리 표(Anemia)"}
+    reference:
+      text: >
+        KDIGO 2026 빈혈(비투석): 페리틴 <100·TSAT <40% 또는 페리틴 100–300·TSAT <25%면 철분 시작, 페리틴 >700 또는 TSAT ≥40%면 보류,
+        ESA는 대개 Hb ≤8.5–10에서 증상 기반 고려, Hb ≥11.5 유지 목적 ESA 금지, ESA 시작·조정 후 2–4주마다 Hb.
+      sources:
+        - {id: KDIGO-ANEMIA-2026, locator: "Non-dialysis algorithm"}
+    verification: primary
+    conflicts:
+      - "VA/DoD 원문은 페리틴 단위를 'mg/dl'로 표기(오기로 보임, 통상 ng/mL) — 검수 시 확인."
+    review: {status: draft}
+    corpus:
+      - kind: referral
+        to: 신장내과
+        criteria:
+          - {all: [{var: eGFR, op: "<", value: 45}, {var: Hb, op: "<", value: 10}, {finding: hb_low_persistent}]}
+          - {all: [{var: TSAT, op: "<", value: 20}, {var: Ferritin, op: "<", value: 100}, {event: oral_iron_failed_or_intolerant}]}
+        purpose: ["ESA 검토", "정주 철분"]
+    reference_corpus:
+      - kind: treatment
+        condition: {kcd: [N18]}
+        recommendations:
+          - when: {any: [{var: Ferritin, op: ">", value: 700}, {var: TSAT, op: ">=", value: 40}]}
+            recommend: {action: withhold_iron}
+          - when: {all: [{med_class: ESA}, {var: Hb, op: ">=", value: 11.5}]}
+            recommend: {action: avoid_ESA_to_maintain}
+
+  - id: 335-C16
+    topic: 지질 관리(스타틴)
+    type: treatment
+    original:
+      text: "고지혈증은 National guideline에 따라 관리, 식이로 부족하면 스타틴. 진행된 CKD에서는 효과 미증명."
+      location: {file: by_chapter/335장.md, line: 249}
+    status: 개정
+    current:
+      text: "투석 중이 아닌 CKD 환자에게 주요 심혈관사건과 사망을 줄이기 위해 스타틴 시작을 권고한다(Rec 19, Strong for)."
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Recommendation 19"}
+    reference:
+      text: "KDIGO 2024: ≥50세 eGFR <60 스타틴 또는 스타틴/에제티미브(1A), ≥50세 eGFR ≥60 스타틴(1B), 18–49세는 위험인자 시 제안(2A)."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "Rec 3.15.1.1–3.15.1.3"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N18]}
+        recommendations:
+          - when: {all: [{dx: N18}, {not: {event: dialysis}}]}
+            recommend: {drug_class: statin}
+            strength: "VA/DoD Rec 19 (Strong for)"
+
+  - id: 335-C17
+    topic: 항혈소판·항응고
+    type: treatment
+    original:
+      text: "심방세동의 와파린 사용은 출혈 위험 때문에 개인 상태에 따라 결정."
+      location: {file: by_chapter/335장.md, line: 299}
+    status: 개정
+    reference:
+      text: "KDIGO 2024: 확립된 허혈성 심혈관질환에 저용량 아스피린 이차 예방(1C), G1–G4 심방세동에 와파린보다 NOAC(1C), GFR별 용량 조절."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "Rec 3.15.2.1, 3.16.1; PP 3.16.2"}
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 근거 미확보 — NOAC 미국 허가사항(openFDA)의 신기능별 용량으로 보강 예정."
+
+  - id: 335-C18
+    topic: 신기능에 따른 약물 관리와 아픈 날 수칙
+    type: dose
+    original:
+      text: >
+        유지용량 조절이 필요한 약이 많다. 메트포르민, 메페리딘, 일부 경구혈당강하제는 전적으로 금해야 한다. NSAID는 피한다.
+        용량조절 웹사이트(globalrph.com) 참조.
+      location: {file: by_chapter/335장.md, line: 401}
+    status: 개정
+    current:
+      text: >
+        CKD 환자에게 아픈 날(급성 질환·탈수) 계획을 세워 설폰요소제, ACEi, 이뇨제·직접 레닌 억제제, 메트포르민, ARB, NSAID, SGLT2 억제제(SADMANS)를
+        일시 중단하도록 교육한다. 메트포르민은 '전적 금기'가 아니라 eGFR <30에서 금기, 45 미만 신규 시작 금지, 복용 중이면 감량 지속 가능하다(418-C08).
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Appendix — CKD 관리 표(sick day planning, SADMANS)"}
+        - {id: VADOD-DM-2023, locator: "Appendix C Table C-1 (Metformin)"}
+    reference:
+      text: "KDIGO 2024: 신배설 약물은 GFR 고려(PP 4.2.1), 대부분 eGFRcr로 충분(PP 4.2.2), 치료역 좁으면 eGFRcr-cys나 측정 GFR(PP 4.2.3)."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "PP 4.2.1–4.2.5"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N18]}
+        recommendations:
+          - when: {event: acute_illness_or_dehydration}
+            recommend: {action: sick_day_hold, drugs: [sulfonylurea, ACEi, diuretic, DRI, metformin, ARB, NSAID, SGLT2i]}
+
+  - id: 335-C19
+    topic: 조영제 사용
+    type: treatment
+    original:
+      text: "CKD, 특히 당뇨병성 신증에서 조영제 신부전 가능성으로 가능하면 정맥·동맥 조영제를 피한다."
+      location: {file: by_chapter/335장.md, line: 353}
+    status: 개정
+    current:
+      text: >
+        요오드 조영제 관련 AKI 위험이 높은 CKD 환자는 등장성 정질액 정맥 수액을 권고한다(Rec 22, Strong for). N-아세틸시스테인은 권고하지 않는다(Rec 23, Strong against).
+        수액 기준: CT(정맥) eGFR <30 또는 혈관조영(동맥) eGFR <45는 모든 환자, CT 30–44·혈관조영 45–59는 위험인자가 많으면 처방의 판단, 그 이상은 불필요.
+        가능하면 비요오드 대안을 고려하고 조영제는 최소량. eGFR <30 또는 AKI에서는 group 1 가돌리늄 제제를 쓰지 않는다.
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Recommendations 22, 23; Algorithm Module E; Sidebar 10; Appendix (Gadolinium)"}
+    reference:
+      text: "KDIGO 2024: 정맥 조영은 영상의학회 합의문에 따르고(PP 4.4.1.2), GFR <30에서 가돌리늄은 ACR group II·III(PP 4.4.2.1)."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "PP 4.4.1–4.4.2.1"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N18]}
+        recommendations:
+          - when: {all: [{event: iv_contrast_ct}, {var: eGFR, op: "<", value: 30}]}
+            recommend: {action: iv_isotonic_volume_expansion}
+            strength: "VA/DoD Rec 22 (Strong for)"
+          - when: {all: [{event: intra_arterial_contrast}, {var: eGFR, op: "<", value: 45}]}
+            recommend: {action: iv_isotonic_volume_expansion}
+            strength: "VA/DoD Rec 22 (Strong for)"
+          - when: {event: iodinated_contrast_planned}
+            recommend: {action: avoid, ingredient: N-acetylcysteine, purpose: "조영제 AKI 예방"}
+            strength: "VA/DoD Rec 23 (Strong against)"
+          - when: {all: [{event: gadolinium_planned}, {var: eGFR, op: "<", value: 30}]}
+            recommend: {action: avoid, detail: "group 1 가돌리늄 제제"}
+            alert_level: high
+
+  - id: 335-C20
+    topic: 단백질 섭취
+    type: treatment
+    original:
+      text: "단백섭취 제한으로 요독 증상이 일시적으로 개선될 수 있으나 단백질-에너지 영양장애 위험."
+      location: {file: by_chapter/335장.md, line: 405}
+    status: 개정
+    current:
+      text: >
+        VA/DoD 2019판의 'G3–G4 일부 환자에서 단백질 0.6–0.8 g/kg/일 제안' 권고는 2025판에서 삭제됐다.
+        단백질 섭취는 영양사 평가·교육으로 개별화한다.
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Appendix — 2019 권고 대비표(2019 Rec 15: Deleted)"}
+    reference:
+      text: "KDIGO 2024: G3–G5 성인 0.8 g/kg/일 유지 제안(2C), 진행 위험 시 >1.3 g/kg/일 회피(PP 3.3.1.1)."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "Rec 3.3.1.1; PP 3.3.1.1–3.3.1.3"}
+    verification: primary
+    review: {status: draft}
+
+  - id: 335-C21
+    topic: 요산·통풍
+    type: treatment
+    original:
+      text: "(원문 해당 범위에 요산 관리 권고 없음)"
+      location: {file: by_chapter/335장.md, line: 377}
+    status: 보완
+    reference:
+      text: "KDIGO 2024: 증상성 고요산혈증에 요산 저하 치료(1C), 잔틴산화효소 억제제 우선, 무증상 고요산혈증에 CKD 진행 지연 목적 요산 저하제 사용 안 함(2D)."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "Rec 3.14.1, 3.14.2"}
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 근거 미확보 — 395장(통풍) 작업 때 함께 보강."
+
+  - id: 335-C22
+    topic: 신장내과 의뢰 기준
+    type: referral
+    original:
+      text: "사구체 여과율 감소와 조절되지 않는 혈압, 단백뇨가 있을 때 신장내과 의뢰."
+      location: {file: by_chapter/335장.md, line: 66}
+    status: 개정
+    current:
+      text: >
+        신장내과 협진 고려: eGFR <30, eGFR 연 5 초과 감소, 5년 신부전 위험 >3–5%, 비당뇨 환자의 확인된 고도 알부민뇨(UACR >300 mg/g, 24시간 단백 >500 mg, UPCR >0.5 g/g),
+        RAAS 억제제·SGLT2i에도 지속되는 당뇨 환자의 알부민뇨 >1000 mg/g(또는 사용 불가), 알부민뇨 동반 혈뇨·사구체성 혈뇨·비뇨기 검사 음성 혈뇨,
+        다낭신, 신장이식 수혜자, 45세 미만 CKD, 유전 원인 의심, 원인 불명, 결석 대사 관리, 전해질 이상, CKD 합병증(빈혈·산증·고인산혈증·부갑상선기능항진),
+        일차의료진이 감당하기 어려운 경우. 비뇨의학과 의뢰: 육안 혈뇨, 알부민뇨 없는 현미경 혈뇨, 신장 종괴, 증상성·폐쇄성 결석, 수신증, 요폐 등.
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Sidebar 7, Sidebar 8"}
+    reference:
+      text: "KDIGO 2024 그림 48의 의뢰 기준(ACR >700, 4제 이상 저항성 고혈압 등)."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "PP 5.1.1, Figure 48"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: referral
+        to: 신장내과
+        criteria:
+          - {var: eGFR, op: "<", value: 30}
+          - {var: eGFR_decline_per_year, op: ">", value: 5}
+          - {var: KFRE_5y_pct, op: ">", value: 3}
+          - {all: [{not: {dx: E11}}, {var: UACR, op: ">", value: 300}]}
+          - {all: [{dx: E11}, {var: UACR, op: ">", value: 1000}]}
+          - {all: [{finding: hematuria}, {var: UACR, op: ">=", value: 30}]}
+          - {dx: Q61}
+          - {dx: Z94.0}
+          - {all: [{dx: N18}, {var: age, op: "<", value: 45}]}
+          - {finding: cause_unknown}
+      - kind: referral
+        to: 비뇨의학과
+        criteria:
+          - {finding: gross_hematuria}
+          - {all: [{finding: microscopic_hematuria}, {var: UACR, op: "<", value: 30}]}
+          - {finding: renal_mass_or_complex_cyst}
+          - {finding: hydronephrosis}
+          - {finding: urinary_retention}
+
+  - id: 335-C23
+    topic: 신부전 위험 예측(KFRE)
+    type: workup
+    original:
+      text: "(원문에 위험식 사용 권고 없음)"
+      location: {file: by_chapter/335장.md, line: 375}
+    status: 보완
+    current:
+      text: "G3–G5 CKD 관리에는 검증된 말기신부전 위험 예측 모델(예: KFRE) 사용을 제안한다(Rec 4, Weak for). 5년 신부전 위험 >3–5%는 신장내과 협진 고려 기준이다."
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Recommendation 4; Sidebar 8"}
+    reference:
+      text: "KDIGO 2024: 2년 위험 >10% 다학제 진료, >40% 투석 방식 교육·혈관통로 준비(PP 2.2.2–2.2.3)."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "Rec 2.2.1; PP 2.2.1–2.2.3"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: formula
+        name: KFRE (Kidney Failure Risk Equation)
+        output: {var: KFRE_5y_pct}
+        expression: "4-변수/8-변수 KFRE — 계수는 A등급 출처에서 확인 후 구현"
+        implement_in: null
+        status_note: "계수 미확인 — 구현 보류"
+
+  - id: 335-C24
+    topic: 신대체요법 준비와 보존적 치료
+    type: treatment
+    original:
+      text: "절대적 적응증: 심낭염, 뇌병증, 난치성 근육경련, 치료 불가능한 구역·식욕저하, 영양장애, 치료 반응 없는 체액 증가·고칼륨혈증."
+      location: {file: by_chapter/335장.md, line: 407}
+    status: 보완
+    current:
+      text: >
+        신대체요법과 보존적 치료는 공동 의사결정으로 정한다(Rec 8). 동반질환이 많거나 기능 상태가 낮으면 준비 시간이 충분하도록 신장내과에 의뢰한다(Rec 9).
+        eGFR <20이면 투석·혈관통로·이식 등 신대체요법 선택지를 교육한다. 투석 혈관통로를 지키기 위해 신대체요법 고위험군에는 PICC를 피하도록 제안한다(Rec 7).
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Recommendations 7–9; Appendix (KRT education)"}
+    reference:
+      text: "KDIGO 2024 Table 41의 투석 시작 적응증(요독 증상, 체액·혈압 조절 불가 등), GFR <15–20 또는 2년 위험 >40%면 선제 이식·통로 계획."
+      sources:
+        - {id: KDIGO-CKD-2024, locator: "PP 5.4.1–5.4.3; Table 41"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N18]}
+        recommendations:
+          - when: {var: eGFR, op: "<", value: 20}
+            recommend: {action: educate_krt_options}
+          - when: {all: [{finding: high_risk_krt}, {event: long_term_venous_access_needed}]}
+            recommend: {action: avoid, detail: "PICC — 투석 혈관통로 보존"}
+            strength: "VA/DoD Rec 7 (Weak against)"
+
+  - id: 335-C25
+    topic: CKD-MBD(칼슘·인 대사)
+    type: treatment
+    original:
+      text: "인 섭취 제한, 인산염 결합제(칼슘 아세테이트·탄산칼슘, 세벨라머·란타늄), 칼시트리올·파리칼시톨, 칼슘 유사제."
+      location: {file: by_chapter/335장.md, line: 195}
+    status: 유지
+    current:
+      text: "고인산혈증은 식이 조정(식물성 위주, 인 첨가물·보존제 회피)으로 관리하고, 비타민 D·활성형 비타민 D를 고려한다."
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Appendix — CKD 합병증 관리 표(Mineral Bone Disease)"}
+    verification: primary
+    review: {status: draft}
+    note: "인산염 결합제 선택 등 세부는 A등급 근거 미확보."
+
+  - id: 335-C26
+    topic: 다낭신
+    type: referral
+    original:
+      text: "(335장에서는 다낭신 치료 언급 없음 — 339장 관련)"
+      location: {file: by_chapter/335장.md, line: 97}
+    status: 보완
+    current:
+      text: "상염색체 우성 다낭신 환자는 톨밥탄 치료 적합성 평가를 위해 신장내과로 의뢰한다(Rec 20, Strong for)."
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Recommendation 20"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: referral
+        to: 신장내과
+        criteria:
+          - {dx: Q61.2}
+        purpose: ["톨밥탄 적합성 평가"]

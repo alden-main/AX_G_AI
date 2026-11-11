@@ -1,0 +1,159 @@
+# 378장 전신홍반루푸스 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 이집트 SLE 진료 권고 2023(Egypt Rheumatol Rehabil, CC BY — Delphi 합의, EULAR·BSR과 대체로 일치),
+#            SLE 스테로이드 사용 원칙 비판적 리뷰(Rheumatology 2024, CC BY), openFDA(CC0).
+# 주의: 근거 수준(LOE·GOR)이 낮은 권고가 많다 — 검수 시 확인.
+
+chapter: "378"
+title: 전신홍반루푸스
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 378-C01
+    topic: 하이드록시클로로퀸 기본 치료와 망막 검사
+    type: dose
+    original:
+      text: "생명을 위협하지 않는 SLE: 진통제와 항말라리아제(하이드록시클로로퀸)가 기본 약제. 루푸스 피부염에도 항말라리아제."
+      location: {file: by_chapter/378장.md, line: 328}
+    status: 개정
+    current:
+      text: >
+        금기가 없으면 모든 SLE 환자에게 발작 예방과 스테로이드 절감을 위해 하이드록시클로로퀸(HCQ)을 쓴다(LOE 1, GOR A).
+        HCQ(미국 허가): 성인 루푸스 200 mg 1일 1회 또는 400 mg 1일 1회(또는 2회 분할), 음식·우유와 함께, 쪼개거나 부수지 않는다.
+        비가역적 망막 손상은 누적 용량·치료 기간과 관련되므로 기저 망막 검사와 치료 중 정기 검사를 권장한다. 건선·포르피린증에서는 피하고, 골수억제가 생기면 중단한다.
+      sources:
+        - {id: PAPER-EGYPT-SLE-2023, locator: "Management — HCQ (LOE 1, GOR A)"}
+        - {id: OPENFDA-HYDROXYCHLOROQUINE, locator: "2.4–2.5 Dosage; 5.2 Retinal Toxicity"}
+    verification: primary
+    conflicts:
+      - "원문은 HCQ를 경증 SLE 기본 약제로만 서술 — 현재는 금기가 없는 모든 SLE에 권고."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [M32]}
+        recommendations:
+          - when: {all: [{dx: M32}, {not: {med: hydroxychloroquine}}, {not: {finding: hcq_contraindication}}]}
+            recommend: {ingredient: hydroxychloroquine, purpose: "발작 예방·스테로이드 절감"}
+            strength: "Egypt SLE 2023 (LOE 1, GOR A)"
+      - kind: dose_rule
+        id: DR-HYDROXYCHLOROQUINE-SLE
+        ingredient: hydroxychloroquine
+        indication: 루푸스(성인)
+        source_priority: [OPENFDA-HYDROXYCHLOROQUINE]
+        standard_dose: "200 mg 또는 400 mg 1일 1회(또는 2회 분할), 음식과 함께"
+        monitoring: ["기저 망막 검사", "치료 중 정기 망막 검사"]
+        rules:
+          - {when: {any: [{finding: psoriasis}, {finding: porphyria}]}, action: "사용 회피", alert: high}
+
+  - id: 378-C02
+    topic: 스테로이드 사용과 감량
+    type: treatment
+    original:
+      text: "글루코코르티코이드 고용량은 중증 활동기(신장염 등)에, 장기 저용량 유지. 부작용(골다공증, 무혈성 괴사, 감염) 주의."
+      location: {file: by_chapter/378장.md, line: 330}
+    status: 개정
+    current:
+      text: >
+        여러 국제 권고는 스테로이드 감량 원칙에 대체로 일치하지만 구체적 감량 방법 지침은 부족하다. 중증 활동성 SLE는 정주 메틸프레드니솔론 또는 고용량 경구 프레드니솔론(최대 1 mg/kg/일)을 다른 면역억제제와 함께 쓴다.
+        정주 메틸프레드니솔론 펄스는 경구 스테로이드의 빠른 감량을 돕고, 면역억제제·생물학적 제제를 일찍 시작하면 감량·중단이 빨라진다. 활성도가 줄거나 관해에 이르면(대개 고용량 6주 후) 감량을 시작한다.
+        루푸스 신장염 등에서는 펄스 후 경구 프레드니손을 최대 4주 쓰고 3–6개월 안에 7.5 mg/일 이하로 줄이는 권고가 있다. 장기 안정 시 감량·중단을 고려하되 갑작스런 중단은 피한다.
+      sources:
+        - {id: PAPER-SLE-GC-STEWARDSHIP-2024, locator: "Comparison of recommendations (tables)"}
+        - {id: PAPER-EGYPT-SLE-2023, locator: "Management — severe active SLE"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [M32]}
+        recommendations:
+          - when: {all: [{med_class: systemic_glucocorticoid}, {var: steroid_months, op: ">=", value: 6}, {var: prednisolone_mg_day, op: ">", value: 7.5}]}
+            recommend: {action: taper_review, detail: "3–6개월 내 ≤7.5 mg/일 목표 권고 있음, 면역억제제 조기 병용 검토"}
+            alert_level: medium
+
+  - id: 378-C03
+    topic: 면역억제제·생물학적 제제
+    type: treatment
+    original:
+      text: "표 378-5 SLE 치료 약제: 사이클로포스파마이드, 마이코페놀레이트, 아자티오프린, 메토트렉세이트, 리툭시맙, 벨리무맙."
+      location: {file: by_chapter/378장.md, line: 231}
+    status: 개정
+    current:
+      text: >
+        활동성 질환 조절과 스테로이드 절감에 메토트렉세이트, 아자티오프린, 레플루노마이드, 마이코페놀레이트(MMF), 사이클로스포린이 흔히 필요하며 장기 손상 누적을 줄일 수 있다.
+        MMF는 중증 신장·비신장 루푸스(근골격·피부·혈액·혈청학적, 신경정신 제외)에 쓸 수 있다. 리툭시맙은 불응성 신장·비신장, 벨리무맙은 불응성 비신장과 신장 치료 추가, 아니프롤루맙은 중등도–중증 SLE에 승인됐다.
+        보클로스포린은 루푸스 신장염에 승인된 첫 경구 약제다. 불응성 혈구감소·TTP·급속 악화 혼돈·재앙성 항인지질증후군에는 IVIG·혈장교환을 고려한다.
+      sources:
+        - {id: PAPER-EGYPT-SLE-2023, locator: "Management (LOE 1–4, GOR A–C)"}
+    verification: primary
+    note: "원문(2015) 이후 아니프롤루맙·보클로스포린·벨리무맙 신장염 적응증이 추가됨. 개별 용량은 허가사항으로 대조하지 않음."
+    review: {status: draft}
+
+  - id: 378-C04
+    topic: 질병 추적 검사
+    type: monitoring
+    original:
+      text: "질병 경과 추적: 항dsDNA, 보체(C3·C4), 소변검사, 혈구, 크레아티닌."
+      location: {file: by_chapter/378장.md, line: 314}
+    status: 유지
+    current:
+      text: >
+        SLE 검사 감시: 혈구, 간기능, 신기능, 소변검사, 보체 C3·C4, 항dsDNA, CRP, 혈청 알부민. 필요하면 24시간 소변 단백, 소변 단백/크레아티닌비, eGFR(LOE 2, GOR A).
+        감염, 조기 심혈관·말초혈관 질환, 골다공증, 무혈성 괴사, 일부 악성종양 같은 약물 부작용·동반질환 감시가 중요하다. 임신·수술·장기이식·에스트로겐 사용 전과 새 신경·혈관 사건 때 추가 평가하고,
+        항인지질항체는 이전에 음성이었어도 임신·수술 전이나 혈관·혈전 사건 때 재평가한다.
+      sources:
+        - {id: PAPER-EGYPT-SLE-2023, locator: "Overarching principles — monitoring (LOE 2–4)"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {dx: M32}
+        tests:
+          - {lab: CBC, reason: SLE 추적}
+          - {lab: LFT, reason: SLE 추적}
+          - {lab: SCr, reason: SLE 추적}
+          - {lab: Urinalysis, reason: SLE 추적}
+          - {lab: C3, reason: 질병 활성도}
+          - {lab: C4, reason: 질병 활성도}
+          - {lab: Anti_dsDNA, reason: 질병 활성도}
+          - {lab: CRP, reason: SLE 추적}
+          - {lab: Albumin, reason: SLE 추적}
+          - {lab: UPCR, when: "신장 침범 의심", reason: 루푸스 신장염}
+      - kind: workup
+        trigger: {all: [{dx: M32}, {any: [{event: pregnancy_planned}, {event: surgery_planned}, {event: estrogen_planned}, {finding: new_thrombotic_event}]}]}
+        tests:
+          - {lab: Antiphospholipid_antibodies, reason: "재평가(이전 음성이어도)"}
+
+  - id: 378-C05
+    topic: 신경정신 루푸스·항인지질증후군 항응고
+    type: treatment
+    original:
+      text: "항인지질항체 양성 혈전은 장기 항응고(와파린)."
+      location: {file: by_chapter/378장.md, line: 264}
+    status: 유지
+    current:
+      text: >
+        허혈성 신경정신 루푸스이고 항인지질증후군 병력이 있으면 장기 항응고를 권고하며, 고위험 항인지질항체를 가진 혈전성 항인지질증후군에는 직접경구항응고제보다 와파린을 선호한다.
+        항인지질증후군이 없으면 아스피린 100 mg/일을 권고한다(LOE 3, GOR B). 염증성 신경정신 증상은 다른 원인을 배제한 뒤 스테로이드와 면역억제제를 쓴다.
+      sources:
+        - {id: PAPER-EGYPT-SLE-2023, locator: "Neuropsychiatric SLE"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [M32, D68.61]}
+        recommendations:
+          - when: {all: [{dx: D68.61}, {finding: thrombotic_aps_high_risk_profile}, {med_class: DOAC}]}
+            recommend: {action: review, detail: "고위험 혈전성 APS — DOAC보다 와파린 선호"}
+            alert_level: high
+
+  - id: 378-C06
+    topic: 분류기준·자가항체·예방접종
+    type: diagnosis
+    original:
+      text: "SLICC 분류기준(표 378-3), 자가항체(ANA, 항dsDNA, 항Sm, 항인지질). 예방적 치료(예방접종)."
+      location: {file: by_chapter/378장.md, line: 102}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "분류기준(SLICC 2012, EULAR/ACR 2019)은 A등급 출처로 대조하지 않음. 예방접종은 류마티스질환 국제 지침을 따르라는 권고만 있음."

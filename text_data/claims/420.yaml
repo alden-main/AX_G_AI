@@ -1,0 +1,117 @@
+# 420장 저혈당 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+
+chapter: "420"
+title: 저혈당
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 420-C01
+    topic: 당뇨 환자의 저혈당 기준과 증상
+    type: threshold
+    original:
+      text: >
+        Whipple 삼징(저혈당 증상, 정확히 측정된 낮은 혈당, 혈당 상승 후 증상 소실). 신경당결핍 증상(행동변화, 혼돈, 피로, 발작, 의식소실)과
+        자율신경 증상(심계항진, 떨림, 불안, 발한, 배고픔).
+      location: {file: by_chapter/420장.md, line: 40}
+    status: 유지
+    current:
+      text: >
+        당뇨 환자 다수에서 혈당 <70 mg/dL를 저혈당으로 본다(개인 목표는 의료진과 정함). 중증 저혈당은 스스로 처치할 수 없을 만큼 낮은 상태다.
+        경도–중등도 증상: 떨림, 배고픔, 피로, 어지러움·혼돈·과민, 빠르거나 불규칙한 심박, 두통, 시야·언어 장애. 중증: 의식 소실, 발작.
+        수면 중: 소리 지름·악몽, 잠옷이 젖을 정도의 발한, 깰 때 피로·과민·혼돈.
+      sources:
+        - {id: NIDDK-HYPOGLYCEMIA, locator: "What is hypoglycemia; symptoms"}
+    reference:
+      text: "ADA 2026: 1단계 54–69, 2단계 <54 mg/dL, 3단계 타인 도움 필요(Table 6.4)."
+      sources:
+        - {id: ADA-SOC-2026-S6, locator: "Table 6.4"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: lab_threshold
+        lab: Glucose
+        unit: mg/dL
+        context: 당뇨 환자 저혈당(NIDDK)
+        bands:
+          - {label: 저혈당, max: 69.999}
+
+  - id: 420-C02
+    topic: 저혈당 응급 처치
+    type: dose
+    original:
+      text: >
+        경구 가능하면 포도당 정제·용액·사탕·음식, 첫 용량 포도당 20 g. 경구 불가면 정맥 포도당 25 g 후 지속 투여.
+        정맥이 불가하면 글루카곤 성인 1 mg 피하·근육 주사.
+      location: {file: by_chapter/420장.md, line: 165}
+    status: 유지
+    current:
+      text: >
+        혈당이 목표 미만이거나 <70 mg/dL이면 즉시 포도당 또는 탄수화물 15–20 g을 섭취하고 15분 후 재측정, 여전히 낮으면 반복한다.
+        다음 식사까지 1시간 넘게 남으면 간식을 먹는다. 탄수화물 소화를 늦추는 약을 쓰면 포도당 정제·젤을 쓴다.
+        스스로 처치할 수 없는 중증 저혈당에는 글루카곤을 쓴다. 글루카곤 주사(미국 허가): 성인·25 kg 초과(또는 체중 미상 6세 이상) 1 mg 피하·근육·정맥,
+        15분 내 반응이 없으면 새 키트로 1 mg 추가. 25 kg 미만(또는 체중 미상 6세 미만) 0.5 mg. 비강 글루카곤(BAQSIMI): 3 mg 한쪽 콧구멍, 15분 내 무반응 시 3 mg 추가.
+        투여 후 즉시 응급 지원을 부르고, 반응해 삼킬 수 있으면 경구 탄수화물을 준다.
+      sources:
+        - {id: NIDDK-HYPOGLYCEMIA, locator: "How do I treat hypoglycemia; glucagon"}
+        - {id: OPENFDA-GLUCAGON-INJ, locator: "2.2 Dosage in Adults and Pediatric Patients"}
+        - {id: OPENFDA-GLUCAGON-NASAL, locator: "2 Dosage and Administration"}
+    reference:
+      text: "ADA 2026: 의식 있는 <70 mg/dL은 포도당 우선, 대부분 15 g(자동 인슐린 주입기 사용자 5–10 g), 15분 후 재측정(6.15)."
+      sources:
+        - {id: ADA-SOC-2026-S6, locator: "Rec 6.15"}
+    verification: primary
+    conflicts:
+      - "탄수화물 양: NIDDK 15–20 g, ADA 15 g, 원문 20 g."
+      - "정맥 포도당 25 g은 A등급 근거 미확보 — 병원 프로토콜을 따름."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-HYPOGLYCEMIA-TREATMENT
+        indication: 저혈당 처치
+        source_priority: [NIDDK-HYPOGLYCEMIA, OPENFDA-GLUCAGON-INJ, OPENFDA-GLUCAGON-NASAL]
+        rules:
+          - {when: {all: [{var: Glucose, op: "<", value: 70}, {finding: able_to_swallow}]}, action: "포도당·탄수화물 15–20 g, 15분 후 재측정, 낮으면 반복"}
+          - {when: {all: [{finding: severe_hypoglycemia}, {var: weight_kg, op: ">", value: 25}]}, action: "글루카곤 1 mg 피하·근육(의료진은 정맥), 15분 무반응 시 1 mg 추가", alert: high}
+          - {when: {all: [{finding: severe_hypoglycemia}, {var: weight_kg, op: "<", value: 25}]}, action: "글루카곤 0.5 mg, 15분 무반응 시 0.5 mg 추가", alert: high}
+          - {when: {finding: severe_hypoglycemia}, action: "비강 글루카곤 3 mg(15분 무반응 시 3 mg 추가) 대안", alert: high}
+        alert_note: "응급 대응 참고 — 투여 후 즉시 응급 지원 요청"
+
+  - id: 420-C03
+    topic: 당뇨 환자 저혈당 원인
+    type: workup
+    original:
+      text: "인슐린·인슐린 분비촉진제 사용 환자에서 흔함. 식사 지연, 운동, 알코올, 신부전 등이 위험을 높임."
+      location: {file: by_chapter/420장.md, line: 46}
+    status: 유지
+    current:
+      text: >
+        원인: 인슐린, 인슐린 분비를 늘리는 약(설폰요소제·메글리티나이드), 탄수화물 섭취 부족·식사 거르기·지연, 혈당강하제를 쓰면서 금식,
+        신체활동 증가(최대 24시간 혈당 저하), 음식 없이 과음, 질병으로 식사 감소. 65세 이상에서는 다른 약으로 조절 가능하면 인슐린·설폰요소제·메글리티나이드보다
+        다른 계열을 우선하도록 제안한다.
+      sources:
+        - {id: NIDDK-HYPOGLYCEMIA, locator: "What causes hypoglycemia"}
+        - {id: VADOD-DM-2023, locator: "Recommendation 25"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E11, E16.0]}
+        recommendations:
+          - when: {all: [{finding: recurrent_hypoglycemia}, {any: [{med_class: sulfonylurea}, {med_class: meglitinide}, {med_class: insulin}]}]}
+            recommend: {action: review_hypoglycemia_causing_drugs}
+            alert_level: medium
+
+  - id: 420-C04
+    topic: 비당뇨인 저혈당 평가(내인성 고인슐린혈증)
+    type: workup
+    original:
+      text: >
+        약제 치료 중인 당뇨 환자가 아니면 Whipple 삼징이 있을 때만 평가. 저혈당 시 혈당, 인슐린, C-펩타이드, 프로인슐린, β-하이드록시부티레이트 측정과
+        경구혈당강하제 선별검사, 글루카곤 정주 후 반응 평가. 인슐린 주사는 C-펩타이드 낮음, 분비촉진제는 C-펩타이드 높음.
+      location: {file: by_chapter/420장.md, line: 129}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 출처 미확보(Endocrine Society 지침 등은 C등급). 진단 절차는 원문 대조용으로만 유지."

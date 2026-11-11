@@ -1,0 +1,157 @@
+# 467장 알코올과 알코올 중독 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+
+chapter: "467"
+title: 알코올과 알코올 중독
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 467-C01
+    topic: 위험 음주 선별과 단기 개입
+    type: workup
+    original:
+      text: "알코올 중독의 발견과 개입. 표 467-3 한국어판 AUDIT."
+      location: {file: by_chapter/467장.md, line: 156}
+    status: 개정
+    current:
+      text: >
+        일반의료·정신건강 진료에서 3문항 AUDIT-C 또는 단일 문항 알코올 선별 질문(SASQ)으로 위험 음주를 주기적으로 선별하도록 권고한다(Rec 1, Strong for).
+        알코올 사용장애가 기록되지 않았고 선별 양성이면 음주 관련 위험에 대한 1회 단기 개입과 금주 또는 일·주 음주 한도 내 음주 권고를 제안한다(Rec 2).
+        일차진료에서 약물 사용장애 선별의 효과는 근거 불충분(Rec 3).
+      sources:
+        - {id: VADOD-SUD-2021, locator: "Recommendations 1–3"}
+    verification: primary
+    conflicts:
+      - "원문은 10문항 AUDIT(한국어판) 제시 — VA/DoD는 3문항 AUDIT-C 또는 SASQ."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {always: true}
+        tests:
+          - {screen: AUDIT_C, alt: SASQ, frequency: "주기적", reason: "위험 음주 선별"}
+        strength: "VA/DoD SUD Rec 1 (Strong for)"
+
+  - id: 467-C02
+    topic: 알코올 금단 치료와 치료 장소
+    type: treatment
+    original:
+      text: >
+        금단은 5–10시간 내 시작, 2–3일째 최악, 4–5일째 호전. 발작 2%, 진전섬망. 모든 환자에게 티아민 50–100 mg/일 포함 비타민 B군 1주 이상.
+        벤조디아제핀이 가장 안전 — 대개 디아제팜·클로르디아제폭사이드 같은 장시간형을 3–5일 감량.
+      location: {file: by_chapter/467장.md, line: 195}
+    status: 개정
+    current:
+      text: >
+        중등도–중증 알코올 금단은 적절한 감시하에 벤조디아제핀으로 치료하도록 권고한다(Rec 5, Strong for). 감시가 불충분하거나 남용 위험·알레르기 등으로 벤조디아제핀의 위험이 이득보다 크면
+        경도–중등도 금단에 카르바마제핀, 가바펜틴, 발프로산을 대안으로 제안한다(Rec 6).
+        입원 금단 관리: 중증 금단(CIWA-Ar ≥20), 진전섬망·금단 발작 병력, 경구약 복용 불가, 외래 금단 관리가 위험한 동반질환, 다른 물질(진정수면제 등) 금단 위험,
+        또는 중등도 금단(CIWA-Ar ≥10)에 외래 금단 반복 실패·완료 가능성 낮음(예: 노숙)·활동성 정신병·중증 인지장애가 있는 경우.
+      sources:
+        - {id: VADOD-SUD-2021, locator: "Recommendations 5, 6; Sidebar 6, Sidebar 7"}
+    verification: primary
+    note: "티아민 50–100 mg/일 등 비타민 보충은 A등급 근거 미확보(원문 대조용)."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [F10.23, F10.13]}
+        recommendations:
+          - when: {var: CIWA_Ar, op: ">=", value: 10}
+            recommend: {drug_class: benzodiazepine, monitoring: required}
+            strength: "VA/DoD SUD Rec 5 (Strong for)"
+          - when: {all: [{var: CIWA_Ar, op: "<", value: 20}, {finding: benzodiazepine_risk_outweighs_benefit}]}
+            recommend: {options: [carbamazepine, gabapentin, valproic_acid]}
+            strength: "VA/DoD SUD Rec 6 (Weak for)"
+      - kind: referral
+        to: 입원 금단 관리
+        criteria:
+          - {var: CIWA_Ar, op: ">=", value: 20}
+          - {finding: history_delirium_tremens_or_withdrawal_seizure}
+          - {finding: unable_to_take_oral_medication}
+          - {finding: concurrent_sedative_withdrawal_risk}
+          - {all: [{var: CIWA_Ar, op: ">=", value: 10}, {any: [{finding: failed_ambulatory_withdrawal}, {finding: active_psychosis}, {finding: severe_cognitive_impairment}, {finding: unlikely_to_complete_ambulatory}]}]}
+
+  - id: 467-C03
+    topic: 알코올 사용장애 약물치료
+    type: dose
+    original:
+      text: "재활: 날트렉손, 아캄프로세이트, 디설피람 등 약물 보조와 상담·자조모임."
+      location: {file: by_chapter/467장.md, line: 211}
+    status: 개정
+    current:
+      text: >
+        중등도–중증 알코올 사용장애에 날트렉손(경구 또는 서방형 주사) 또는 토피라메이트를 권고하고(Rec 12, Strong for), 아캄프로세이트 또는 디설피람을 제안한다(Rec 13).
+        1차 약물이 금기·무효면 가바펜틴을 제안한다(Rec 14).
+        날트렉손 경구(미국 허가): 대부분 50 mg 1일 1회. 오피오이드 진통제 사용 중, 오피오이드 의존(메타돈·부프레노르핀 유지 포함), 급성 오피오이드 금단, 소변 오피오이드 양성 등에서는 금기이며,
+        단시간형 오피오이드 의존이었다면 최소 7–10일 오피오이드(트라마돌 포함) 없는 기간 후 시작한다.
+        아캄프로세이트(미국 허가): 333 mg 2정(666 mg) 1일 3회, 금단 후 금주가 이뤄지면 가능한 빨리 시작. CrCl 30–50은 333 mg 1일 3회로 시작, CrCl ≤30은 금기.
+      sources:
+        - {id: VADOD-SUD-2021, locator: "Recommendations 12–14"}
+        - {id: OPENFDA-NALTREXONE-ORAL, locator: "Dosage and Administration; Contraindications"}
+        - {id: OPENFDA-ACAMPROSATE, locator: "2–2.1; 4.2"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [F10.2]}
+        recommendations:
+          - when: {finding: moderate_severe_aud}
+            recommend: {options: [naltrexone, topiramate]}
+            strength: "VA/DoD SUD Rec 12 (Strong for)"
+          - when: {all: [{med: naltrexone}, {any: [{med_class: opioid}, {med: methadone}, {med: buprenorphine}]}]}
+            recommend: {action: contraindicated, detail: "날트렉손 + 오피오이드 사용·의존"}
+            alert_level: high
+      - kind: dose_rule
+        id: DR-ACAMPROSATE
+        ingredient: acamprosate
+        indication: 알코올 사용장애(금주 유지)
+        renal_param: CrCl
+        source_priority: [OPENFDA-ACAMPROSATE]
+        bands:
+          - {range: {min: 50.001}, action: "666 mg(333 mg×2) 1일 3회"}
+          - {range: {min: 30.001, max: 50}, action: "333 mg 1일 3회로 시작", alert: caution}
+          - {range: {max: 30}, action: "금기", alert: contraindicated}
+      - kind: dose_rule
+        id: DR-NALTREXONE-AUD
+        ingredient: naltrexone
+        indication: 알코올 사용장애
+        source_priority: [OPENFDA-NALTREXONE-ORAL]
+        standard_dose: "50 mg 1일 1회"
+        rules:
+          - {when: {any: [{med_class: opioid}, {finding: opioid_dependence}, {finding: acute_opioid_withdrawal}]}, action: "금기", alert: contraindicated}
+          - {when: {finding: recent_short_acting_opioid_dependence}, action: "최소 7–10일 오피오이드 없는 기간 후 시작", alert: high}
+
+  - id: 467-C04
+    topic: 알코올 사용장애 정신사회 치료와 자조모임
+    type: treatment
+    original:
+      text: "개인 상담, 직업 재활, AA 등 자조 모임. 단주 후 최소 6개월–1년 접촉 유지."
+      location: {file: by_chapter/467장.md, line: 211}
+    status: 유지
+    current:
+      text: >
+        선호와 가용성을 고려해 행동 부부치료, CBT, 지역사회 강화 접근, 동기강화치료, 12단계 촉진 중 하나 이상을 제안한다(Rec 15).
+        회복 초기나 재발 후에는 동료 연계·네트워크 지지·12단계 촉진 같은 체계적 방법으로 자조모임 참여를 권고한다(Rec 28, Strong for).
+        통상 진료에 더해 자동 문자·음성·스마트폰 앱 같은 기술 기반 중재(Rec 31)와 구조화된 전화 관리(Rec 33)를 제안한다.
+      sources:
+        - {id: VADOD-SUD-2021, locator: "Recommendations 15, 28, 31, 33"}
+    verification: primary
+    review: {status: draft}
+
+  - id: 467-C05
+    topic: 혈중 알코올 농도와 장기 영향
+    type: threshold
+    original:
+      text: "표 467-1 혈중 알코올 농도별 효과, 중추신경계·위장관·심혈관·암·조혈·태아 영향."
+      location: {file: by_chapter/467장.md, line: 48}
+    status: 개정
+    current:
+      text: >
+        미국 표준잔 1잔은 순수 에탄올 14 g(약 0.6 fl oz)이다. 폭음은 혈중 알코올 농도를 0.08%(0.08 g/dL, 미국 운전 법정 한계) 이상으로 올리는 음주로,
+        보통 약 2시간 안에 여성 4잔 이상·남성 5잔 이상이다. 과음은 여성 하루 4잔 이상 또는 주 8잔 이상, 남성 하루 5잔 이상 또는 주 15잔 이상으로 정의돼 왔다.
+        고강도 음주는 폭음 기준의 2배 이상(여성 8잔·남성 10잔 이상)이다. 폭음은 미국 알코올 관련 사망의 절반 이상을 일으키며, 취한 느낌이 없는 양에서도 운전 능력이 떨어질 수 있다.
+      sources:
+        - {id: NIAAA-CORE-ALCOHOL-2025, locator: "Standard drink; Binge drinking; Heavy drinking; High-intensity drinking"}
+    verification: primary
+    note: "혈중 알코올 농도 단계별 증상표와 장기별 영향은 A등급 출처에서 확인하지 않아 넣지 않았다. 국내 표준잔 기준과 다를 수 있음."
+    review: {status: draft}

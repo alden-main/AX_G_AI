@@ -1,0 +1,106 @@
+# 452장 근위축성 측삭경화증 및 기타 운동신경원질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 이란 ALS 진료지침(Front Neurol 2023, CC BY — 국제 지침·근거 종합, 이란 보건 환경 반영).
+
+chapter: "452"
+title: 근위축성 측삭경화증 및 기타 운동신경원질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 452-C01
+    topic: 진단 기준·평가 척도·유전 검사
+    type: diagnosis
+    original:
+      text: "임상 진단, 이차성 운동신경원병(치료 가능 질환) 감별 필수. 가족형 ALS·SOD1 등 유전 질환."
+      location: {file: by_chapter/452장.md, line: 83}
+    status: 개정
+    current:
+      text: >
+        진단은 임상 판단과 표준 근전도 검사(최소 3개 사지의 근위·원위, 흉부 척추옆근 등)에 근거한다. 조기 진단을 위해 Gold Coast 기준을 쓴다(A). 기저·추적 방문마다 ALSFRS-R로 장애를, ALS-CBS 또는 ECAS로 인지·행동을 평가한다(A).
+        1·2차 친족에 ALS가 있으면 유전 검사를 제공하고(C), 가족력이 없으면 일상적으로 권하지 않되 환자 요청 시 논의할 수 있다(B). 무증상인 사람의 유전 검사는 강하게 권하지 않는다(A).
+      sources:
+        - {id: PAPER-IRAN-ALS-2023, locator: "3.2.1; 3.3.6; 3.5.1 Recommendations"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: suspected_motor_neuron_disease}
+        tests:
+          - {exam: EMG_NCS, reason: "Gold Coast 기준"}
+          - {score: ALSFRS_R, reason: "기저·추적 장애"}
+          - {score: ECAS_or_ALS_CBS, reason: "인지·행동 선별"}
+          - {lab: ALS_genetic_panel, when: "1·2차 친족 ALS", reason: "가족형"}
+
+  - id: 452-C02
+    topic: 질병조절 약물
+    type: treatment
+    original:
+      text: "릴루졸 100 mg/일이 생존 기간 연장(18 vs 15개월). 부작용: 오심, 어지러움, 체중감소, 간수치 상승. SOD1 ASO 임상연구 계획 중."
+      location: {file: by_chapter/452장.md, line: 180}
+    status: 개정
+    current:
+      text: >
+        릴루졸은 상태와 관계없이 모든 ALS 환자에게 강하게 권한다(A) — 전체 생존을 약 3개월 늘리고 연수·사지 기능을 개선한다. 에다라본은 유병 2년 이하, ALSFRS-R상 경증, FVC 80% 이상인 독립 생활 환자에서 고려한다(A): 정주 30 mg 2바이알/일을 14일 투여 후 14일 휴약, 이후 주기는 10일 투여(경구 현탁제도 미국 승인).
+        SOD1 돌연변이 가족형 ALS에는 토퍼센(SOD1 표적 안티센스 올리고뉴클레오타이드)을 단독·추가로 권한다(C). 줄기세포 치료는 임상에서 권하지 않는다(C).
+        지침(2023)은 소듐 페닐부티레이트/타우르소디올을 증상 18개월 이내 환자에게 권했으나(B), 이후 확증 시험 실패로 2024년 미국 시장에서 철수된 것으로 알려져 있어 검수 시 확인이 필요하다.
+      sources:
+        - {id: PAPER-IRAN-ALS-2023, locator: "3.6.1.1; 3.6.2.1 Recommendations; edaravone dosing"}
+    verification: primary
+    conflicts:
+      - "원문(2015)에는 에다라본(2017)·토퍼센(2023) 없음."
+      - "소듐 페닐부티레이트/타우르소디올: 지침 권고(2023) vs 2024년 철수 보고 — A등급 출처로 확인 필요, 말뭉치에서 제외."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G12.2]}
+        recommendations:
+          - when: {all: [{dx: G12.2}, {not: {med: riluzole}}]}
+            recommend: {ingredient: riluzole, detail: "모든 ALS 환자(A)"}
+            alert_level: medium
+          - when: {all: [{dx: G12.2}, {finding: sod1_mutation}, {not: {med: tofersen}}]}
+            recommend: {ingredient: tofersen, detail: "SOD1-ALS(C)"}
+
+  - id: 452-C03
+    topic: 호흡·영양·연하·침흘림 관리와 다학제 진료
+    type: monitoring
+    original:
+      text: "보조기, 호흡 보조(간헐적 양압 환기), 기침유발기, 연수 기능장애 시 위루술, 의사소통 기구."
+      location: {file: by_chapter/452장.md, line: 182}
+    status: 개정
+    current:
+      text: >
+        진단 즉시 다학제 클리닉(3차 센터)으로 의뢰한다(B). 매 방문(최소 3개월에 1–2회) 아침 두통, 수면장애, 약한 기침, 힘든 호흡을 확인하고, 최소 3개월마다 FVC, SNIP, 최대 흡기·호기압(또는 누운 자세 FVC)을 잰다(A).
+        비침습 환기는 FVC 80% 미만, SNIP 40 cmH2O 미만, pCO2 45 mmHg 초과, 야간 산소포화도 저하, 호흡근 약화 증상·징후가 있으면 시작한다(A). 최대 기침 유량 270 L/분 미만이고 분비물 관리가 안 되면 기침 보조기를 제공한다.
+        영양사 평가(병력, 연하 평가, 체중, BMI)를 기저와 최소 3개월마다 한다(A). 언어치료·식이 변경이 실패하고 기저 체중의 약 10% 감소, BMI 18.5 미만, 기구 검사상 불안전 연하, 또는 연하 정도와 관계없이 FVC가 50%에 가까우면 경관 영양을 고려하며 PEG가 비위관보다 삶의 질이 낫다(A).
+        침흘림은 적극적으로 관리하며 항콜린제가 1차(A), 불응·부작용 시 침샘 보툴리눔 독소, 그 다음 침샘 방사선을 고려한다.
+      sources:
+        - {id: PAPER-IRAN-ALS-2023, locator: "3.7.1; 3.9.1.1–3.9.4.1; 3.10.1 Recommendations"}
+    verification: primary
+    conflicts:
+      - "원문은 연수 장애 시 위루술 — 현재는 FVC 50% 근접 시 연하와 무관하게 조기 고려(시술 위험)."
+    review: {status: draft}
+    corpus:
+      - kind: monitoring
+        after: {dx: G12.2}
+        check: [FVC, SNIP, Weight, BMI, ALSFRS_R]
+        interval_months: [3]
+        rules:
+          - {when: {any: [{var: FVC_pct, op: "<", value: 80}, {var: SNIP_cmH2O, op: "<", value: 40}, {var: pCO2, op: ">", value: 45}]}, action: "비침습 환기 시작(A)"}
+          - {when: {any: [{var: weight_loss_pct, op: ">=", value: 10}, {var: BMI, op: "<", value: 18.5}, {var: FVC_pct, op: "<=", value: 55}]}, action: "PEG 경관 영양 고려(A)"}
+      - kind: referral
+        to: ALS 다학제 클리닉
+        criteria:
+          - {dx: G12.2}
+        purpose: ["진단 즉시 다학제 진료(B)"]
+
+  - id: 452-C04
+    topic: 기타 운동신경원질환(케네디병, SMA, 다초점 운동신경병증)
+    type: treatment
+    original:
+      text: "성염색체성 척수연수성 근위축증, 척수성 근위축증, 전도 차단을 동반한 다초점성 운동신경병증(IVIG)."
+      location: {file: by_chapter/452장.md, line: 188}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "이번 묶음에서 A등급 출처 미확보(SMA 누시너센·리스디플람 등 미대조)."

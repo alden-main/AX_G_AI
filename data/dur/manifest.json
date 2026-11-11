@@ -1,0 +1,61 @@
+{
+  "format": "ax-g-dur-snapshot/1",
+  "built_at": "2026-11-11T01:16:44Z",
+  "source": {
+    "id": "KR-HIRA-DUR-2026-06",
+    "title": "건강보험심사평가원 의약품안전사용서비스(DUR) 의약품 목록(2026.6) — 공공데이터포털",
+    "url": "https://www.data.go.kr/data/15127983/fileData.do",
+    "license": "KOGL Type 1 (공공누리 제1유형 — 출처표시)",
+    "region": "KR"
+  },
+  "inputs": {
+    "elderly": {
+      "file": "의약품안전사용서비스(DUR)_노인주의 품목리스트 2026.6.csv",
+      "sha256": "336af2818e4363175d7d576fc741c6fac5f33b08a1c7ee34bc27133c820cdeb6"
+    },
+    "elderly_nsaid": {
+      "file": "의약품안전사용서비스(DUR)_노인주의(해열진통소염제) 품목리스트 2026.6.csv",
+      "sha256": "06bb0bc0434ede7e5b8a4c624a36187799481ca777f5e25c67ffe6e9dbd9bd2c"
+    },
+    "pair": {
+      "file": "의약품안전사용서비스(DUR)_병용금기 품목리스트 2026.6.csv",
+      "sha256": "c839e26fed63b6518c533a5ac1f4d3d0ff80ac858616de06b5130349d00a3054"
+    },
+    "age": {
+      "file": "의약품안전사용서비스(DUR)_연령금기 품목리스트 2026.6.csv",
+      "sha256": "8e2d89d8e86b00eb4942fa56eba51ab456ae6b7e2fe54183459f2010369fe348"
+    },
+    "pregnancy": {
+      "file": "의약품안전사용서비스(DUR)_임부금기 품목리스트 2026.6.csv",
+      "sha256": "a3d5a937a38697114ff0fef7d2d6b1289bc6c6333eb5f573cd5721eeb1dbd945"
+    }
+  },
+  "tables": {
+    "product": {
+      "file": "product.jsonl",
+      "count": 20106,
+      "sha256": "61f32d8fc7ce841796b7445117bd72497e053e6069977d19e5d323ef7661836d"
+    },
+    "pair_rule": {
+      "file": "pair_rule.jsonl",
+      "count": 23639,
+      "sha256": "7e1c2edba7f9e69edd65318b921f87cbe31d34b641ac334103fa60114a419442"
+    },
+    "age_rule": {
+      "file": "age_rule.jsonl",
+      "count": 607,
+      "sha256": "9eb435291ab84cc575c142aae5d45017817d16dbcb7da7398a4f2903759878c4"
+    },
+    "pregnancy_rule": {
+      "file": "pregnancy_rule.jsonl",
+      "count": 4011,
+      "sha256": "71b11ac15831bd5857316b7341fc318551f2704dc2a809117d949be459fd684b"
+    },
+    "elderly_rule": {
+      "file": "elderly_rule.jsonl",
+      "count": 245,
+      "sha256": "443a548fcb27713b4f2cd2c07362998ed65654bdf63468f7b19be48a3a7c0351"
+    }
+  },
+  "content_sha256": "6d07282f0f3f47d9836009f5b2e66214ad24040624b2b7c4875a191999972e96"
+}

@@ -1,0 +1,248 @@
+# 425장 골다공증 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: openFDA(CC0), VA/DoD 폐경 2026(골 건강 권고). 골다공증 학회 지침·USPSTF는 C등급.
+
+chapter: "425"
+title: 골다공증
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 425-C01
+    topic: 골다공증 정의·골밀도 측정·골절 위험 평가
+    type: diagnosis
+    original:
+      text: "WHO 골밀도 T점수 ≤-2.5는 골다공증. 이중에너지 X선 흡수계측법으로 대퇴골·척추 측정. FRAX로 10년 골절 확률. 표 425-2 골밀도 측정 적응증."
+      location: {file: by_chapter/425장.md, line: 15}
+    status: 유지
+    current:
+      text: >
+        골다공증은 고관절 전체·대퇴경부·요추의 BMD T점수로 진단할 수 있으며, 기준 측정법은 대퇴경부 DXA다(WHO·IOF). 대퇴경부 T점수는 NHANES III 젊은 여성 기준값을 쓴다.
+        취약골절 임상 위험인자가 있는 폐경 후 여성과 50세 이상 남성은 FRAX로 주요 골다공증 골절·고관절 골절 10년 확률을 평가해 BMD 측정, 의뢰, 약물치료를 결정한다(강한 권고).
+        중간 위험은 BMD를 측정해 FRAX를 재계산하고, 고·초고위험은 기준 BMD를 측정한다. 저위험이고 취약골절이 없으면 안심시키고 생활습관을 권한다.
+        척추골절 평가는 4 cm 이상 키 감소, 척추후만, 장기 경구 스테로이드, T점수 ≤-2.5 등에서 시행한다.
+        이차 원인 검사: CBC, ESR 또는 CRP, 칼슘·알부민·크레아티닌·인·ALP·간효소, 25(OH)D, 갑상선기능. 필요 시 단백 전기영동·유리 경쇄, PTH, 성호르몬, 코르티솔 검사, 셀리악 항체, 요칼슘, 골교체 표지자.
+      sources:
+        - {id: PAPER-UK-OSTEOPOROSIS-2022, locator: "Fracture risk assessment and case finding; Measurement of BMD; Investigation (Table 2); Intervention thresholds"}
+    verification: primary
+    review: {status: draft}
+    note: "영국(NOGG) 지침은 영국 FRAX 중재 역치를 씀 — 국내 FRAX·역치 적용은 검수자가 결정."
+    corpus:
+      - kind: lab_threshold
+        lab: BMD_T_score
+        unit: SD
+        context: "골다공증 BMD 진단(WHO)"
+        bands:
+          - {label: 골다공증, max: -2.5}
+      - kind: workup
+        trigger: {any: [{all: [{finding: postmenopausal}, {finding: fragility_fracture_risk_factor}]}, {all: [{var: age, op: ">=", value: 50}, {finding: fragility_fracture_risk_factor}]}]}
+        tests:
+          - {calc: FRAX, reason: "10년 골절 확률(강한 권고)"}
+          - {exam: DXA, when: "중간 위험 또는 기준 BMD 필요", reason: 골밀도}
+      - kind: workup
+        trigger: {dx: M81}
+        tests:
+          - {lab: CBC, reason: 이차 원인}
+          - {lab: CRP, reason: 이차 원인}
+          - {lab: Calcium, reason: 이차 원인}
+          - {lab: Albumin, reason: 이차 원인}
+          - {lab: SCr, reason: 이차 원인}
+          - {lab: Phosphate, reason: 이차 원인}
+          - {lab: ALP, reason: 이차 원인}
+          - {lab: LFT, reason: 이차 원인}
+          - {lab: Vitamin_D_25OH, reason: 이차 원인}
+          - {lab: TSH, reason: 이차 원인}
+
+  - id: 425-C02
+    topic: 비스포스포네이트 — 알렌드로네이트
+    type: dose
+    original:
+      text: "주 1회 70 mg이 매일 10 mg과 동등, 위장관 이상반응이 적어 선호. 아침 식사 전 물 한 컵과 함께, 식도 자극 때문에 복용 후 눕지 않음."
+      location: {file: by_chapter/425장.md, line: 348}
+    status: 유지
+    current:
+      text: >
+        알렌드로네이트(미국 허가): 폐경 후 여성·남성 골다공증 치료 70 mg 주 1회 또는 10 mg 1일 1회, 폐경 후 예방 35 mg 주 1회 또는 5 mg 1일 1회,
+        글루코코르티코이드 골다공증 5 mg 1일 1회(에스트로겐 미투여 폐경 후 여성 10 mg). 그날 첫 음식·음료·약 최소 30분 전에 맹물 170–240 mL와 함께 통째로 삼키고,
+        복용 후 최소 30분, 그리고 음식 섭취 후까지 눕지 않는다. CrCl <35 mL/min에서는 권장하지 않는다.
+      sources:
+        - {id: OPENFDA-ALENDRONATE, locator: "2.1–2.6; 8 Use in Specific Populations"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-ALENDRONATE
+        ingredient: alendronate
+        indication: 골다공증
+        renal_param: CrCl
+        source_priority: [OPENFDA-ALENDRONATE]
+        rules:
+          - {when: {finding: osteoporosis_treatment}, action: "70 mg 주 1회 또는 10 mg 1일 1회"}
+          - {when: {finding: osteoporosis_prevention_postmenopausal}, action: "35 mg 주 1회 또는 5 mg 1일 1회"}
+          - {when: {var: CrCl, op: "<", value: 35}, action: "권장하지 않음", alert: contraindicated}
+        administration: ["첫 음식·음료·약 30분 전 맹물 170–240 mL", "복용 후 최소 30분·식사 후까지 눕지 않음"]
+
+  - id: 425-C03
+    topic: 졸레드론산(연 1회 정주)
+    type: dose
+    original:
+      text: "졸레드로네이트 연 1회 정주 — 척추골절 77%, 비척추 25% 감소."
+      location: {file: by_chapter/425장.md, line: 356}
+    status: 유지
+    current:
+      text: >
+        졸레드론산 5 mg/100 mL(미국 허가): 골다공증 치료와 글루코코르티코이드 골다공증 치료·예방에 연 1회, 폐경 후 골다공증 예방에 2년에 1회, 최소 15분 이상 정주.
+        투여 전 충분한 수분 공급. 매 투여 전 혈청 크레아티닌을 측정하고 실제 체중으로 Cockcroft–Gault CrCl을 계산한다. CrCl <35 또는 급성 신손상이면 금기, 저칼슘혈증도 금기.
+      sources:
+        - {id: OPENFDA-ZOLEDRONIC-OSTEO, locator: "2.1–2.6 Dosage and Administration; 4 Contraindications"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-ZOLEDRONIC-OSTEOPOROSIS
+        ingredient: zoledronic_acid
+        indication: 골다공증
+        renal_param: CrCl
+        renal_method: "Cockcroft-Gault(실제 체중)"
+        source_priority: [OPENFDA-ZOLEDRONIC-OSTEO]
+        rules:
+          - {when: {var: CrCl, op: ">=", value: 35}, action: "5 mg 15분 이상 정주(치료 연 1회, 예방 2년 1회)"}
+          - {when: {any: [{var: CrCl, op: "<", value: 35}, {finding: acute_kidney_injury}]}, action: "금기", alert: contraindicated}
+          - {when: {finding: hypocalcemia}, action: "금기(교정 후)", alert: contraindicated}
+        pretreatment: [SCr, CrCl, Calcium, hydration]
+
+  - id: 425-C04
+    topic: 데노수맙
+    type: dose
+    original:
+      text: "데노수맙: RANKL 단클론항체, 6개월마다 피하주사, 척추·고관절·비척추 골절 감소."
+      location: {file: by_chapter/425장.md, line: 394}
+    status: 개정
+    current:
+      text: >
+        데노수맙(PROLIA, 미국 허가): 60 mg을 6개월마다 피하주사, 칼슘 1일 1,000 mg과 비타민 D 최소 400 IU를 함께 복용하게 한다. 가임 여성은 시작 전 임신 검사.
+        박스 경고: eGFR <30(투석 포함)의 진행 CKD에서 입원·생명 위협·사망에 이르는 중증 저칼슘혈증 위험이 크며, CKD-MBD가 있으면 위험이 크게 높다.
+        시작 전 intact PTH, 칼슘, 25(OH)D, 1,25(OH)2D로 CKD-MBD를 평가한다. 중단하면 골교체가 반동해 다발성 척추골절을 포함한 골절 위험이 높아진다.
+      sources:
+        - {id: OPENFDA-DENOSUMAB-PROLIA, locator: "Boxed Warning; 2.1–2.3; 5 Multiple Vertebral Fractures"}
+    verification: primary
+    conflicts:
+      - "원문(2015)에는 진행 CKD 중증 저칼슘혈증 박스 경고(2024 추가)와 중단 후 다발성 척추골절 경고가 없음."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-DENOSUMAB-OSTEOPOROSIS
+        ingredient: denosumab
+        indication: 골다공증
+        renal_param: eGFR
+        source_priority: [OPENFDA-DENOSUMAB-PROLIA]
+        standard_dose: "60 mg 6개월마다 피하, 칼슘 1,000 mg/일 + 비타민 D ≥400 IU/일"
+        rules:
+          - {when: {var: eGFR, op: "<", value: 30}, action: "박스 경고 — 중증 저칼슘혈증 위험. 시작 전 PTH·칼슘·25(OH)D·1,25(OH)2D로 CKD-MBD 평가", alert: high}
+          - {when: {event: denosumab_discontinuation_planned}, action: "중단 후 다발성 척추골절 위험 — 후속 치료 계획", alert: high}
+          - {when: {finding: childbearing_potential}, action: "시작 전 임신 검사", alert: caution}
+
+  - id: 425-C05
+    topic: 골형성 촉진제(테리파라타이드·로모소주맙)
+    type: dose
+    original:
+      text: "부갑상샘호르몬(테리파라타이드) 1일 1회 피하주사, 척추 골량 증가·골절 감소."
+      location: {file: by_chapter/425장.md, line: 400}
+    status: 보완
+    current:
+      text: >
+        테리파라타이드(미국 허가): 20 mcg 1일 1회 허벅지·복부 피하주사. 기립성 저혈압 증상에 대비해 처음에는 앉거나 누울 수 있는 상황에서 투여한다. 식이로 부족하면 칼슘·비타민 D 보충.
+        평생 2년 넘는 사용은 골절 고위험이 지속되거나 다시 높아진 경우에만 고려한다.
+        로모소주맙(EVENITY, 미국 허가, 원문 이후 승인): 210 mg(105 mg 2회)을 매월 1회 피하, 총 12회. 박스 경고 — 심근경색·뇌졸중·심혈관 사망 위험 증가 가능성,
+        지난 1년 내 심근경색·뇌졸중이 있으면 시작하지 않고, 치료 중 발생하면 중단한다.
+      sources:
+        - {id: OPENFDA-TERIPARATIDE, locator: "2.1–2.3"}
+        - {id: OPENFDA-ROMOSOZUMAB, locator: "Boxed Warning; 2.1–2.2"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-ROMOSOZUMAB
+        ingredient: romosozumab
+        indication: 골다공증
+        source_priority: [OPENFDA-ROMOSOZUMAB]
+        standard_dose: "210 mg 매월 피하, 12회"
+        rules:
+          - {when: {any: [{event: mi_within_12mo}, {event: stroke_within_12mo}]}, action: "시작 금지(박스 경고)", alert: contraindicated}
+      - kind: dose_rule
+        id: DR-TERIPARATIDE
+        ingredient: teriparatide
+        indication: 골다공증
+        source_priority: [OPENFDA-TERIPARATIDE]
+        standard_dose: "20 mcg 1일 1회 피하"
+        rules:
+          - {when: {var: lifetime_use_years, op: ">=", value: 2}, action: "2년 초과는 골절 고위험 지속 시에만", alert: caution}
+
+  - id: 425-C06
+    topic: 칼슘·비타민 D·폐경 후 골 건강
+    type: treatment
+    original:
+      text: "성인 칼슘 1,000–1,200 mg/일(식이 우선, 보충은 1회 600 mg 이하), 신결석 병력이면 24시간 요칼슘 측정. 비타민 D 혈청 25(OH)D >30 ng/mL."
+      location: {file: by_chapter/425장.md, line: 274}
+    status: 개정
+    current:
+      text: >
+        폐경 후 환자에게 골밀도 증가를 위해 식이 칼슘 및/또는 칼슘 보충을 제안한다(VA/DoD 폐경 Rec 31). 골다공증 위험인자가 있으면 결합 에스트로겐/바제독시펜을 선택지로 제안한다(Rec 30).
+        골다공증이 없는 경우 비타민 D3(Rec 32), 골다공증·골감소증 기록 없는 경우 일차예방 비스포스포네이트(Rec 33), 골감소증의 랄록시펜(Rec 34)은 근거 불충분이다.
+        약제별 보충: 데노수맙은 칼슘 1,000 mg/일+비타민 D ≥400 IU/일, 졸레드론산(파제트병)은 원소 칼슘 1,500 mg+비타민 D 800 IU/일.
+        골다공증·취약골절 위험이 있는 폐경 후 여성과 50세 이상 남성: 칼슘 최소 700 mg/일(식이 우선, 부족하면 보충), 비타민 D 부족 또는 위험인자가 있으면 비타민 D 최소 800 IU/일 보충,
+        체중부하·근력 운동, 금연, 음주 하루 2단위 이하, 낙상 평가와 균형 운동(영국 지침, 강한 권고).
+        비타민 D: 일반 인구의 25(OH)D 선별은 권고하지 않고, 심한 결핍 위험인자가 여러 개 있거나 대사성 골질환 평가 중일 때 측정한다. 보충은 경구 콜레칼시페롤이 선호되며 칼시트리올은 영양 보충용이 아니다.
+      sources:
+        - {id: VADOD-MENO-2026, locator: "Recommendations 30–34"}
+        - {id: OPENFDA-DENOSUMAB-PROLIA, locator: "2.3"}
+        - {id: OPENFDA-ZOLEDRONIC-OSTEO, locator: "2.6"}
+        - {id: PAPER-UK-OSTEOPOROSIS-2022, locator: "Non-pharmacological management — Recommendations"}
+        - {id: PAPER-VITD-CONSENSUS-2024, locator: "Screening and testing for vitamin D status; supplementation"}
+    verification: primary
+    note: "미국 일반 성인 권장량(NIH ODS)은 자동 접근 차단으로 대조하지 못함 — 영국 지침 수치를 사용."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [M81]}
+        recommendations:
+          - when: {any: [{dx: M81}, {finding: fragility_fracture_risk}]}
+            recommend: {calcium_mg_day_min: 700, vitamin_d_iu_day_min: 800, note: "비타민 D는 부족·위험인자 시", lifestyle: ["체중부하·근력 운동", "금연", "음주 ≤2단위/일", "낙상 평가"]}
+            strength: "UK NOGG 2022 (strong)"
+          - when: {all: [{event: vitamin_d_test_ordered}, {not: {finding: vitamin_d_deficiency_risk_factors}}]}
+            recommend: {action: avoid, detail: "일반 인구 25(OH)D 선별"}
+
+  - id: 425-C07
+    topic: 약물 선택·치료 기간·데노수맙 중단
+    type: treatment
+    original:
+      text: "비스포스포네이트·데노수맙·부갑상샘호르몬 등 약제별 효과. 치료 추적."
+      location: {file: by_chapter/425장.md, line: 438}
+    status: 보완
+    current:
+      text: >
+        대부분 1차는 골흡수억제제이며, 경구 비스포스포네이트(알렌드로네이트·리세드로네이트)나 정주 졸레드론산이 가장 비용효과적이다. 고관절 골절 후에는 졸레드론산을 1차로 권한다.
+        초고위험(특히 척추골절) 폐경 후 여성은 테리파라타이드·로모소주맙을 1차로 고려하고, 전문의 의뢰를 고려한다.
+        치료 기간: 경구 비스포스포네이트 최소 5년, 졸레드론산 최소 3년 후 골절 위험을 재평가한다. 70세 이상 시작 등 고위험은 각각 최소 10년, 6년으로 길게 한다.
+        중단 후 새 골절이 생기면 재평가 후 재시작하고, 골절이 없으면 알렌드로네이트 2년, 리세드로네이트·이반드로네이트 18개월, 졸레드론산 3년 후 FRAX로 재평가한다.
+        데노수맙은 계획 없이 중단하지 않는다(척추골절 증가). 중단하면 마지막 주사 6개월 뒤 졸레드론산을 정주하고 CTX로 추가 투여 시기를 정한다. 호르몬 치료는 60세 이하·저위험 폐경 후 여성에서 시작한다.
+      sources:
+        - {id: PAPER-UK-OSTEOPOROSIS-2022, locator: "Pharmacological treatment options; Duration and monitoring of bisphosphonate treatment — Recommendations"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: monitoring
+        after: {event: bisphosphonate_started}
+        rules:
+          - {when: {med: alendronate}, action: "최소 5년 후 골절 위험 재평가(70세 이상 시작 등 고위험은 10년)"}
+          - {when: {med: zoledronic_acid}, action: "최소 3년 후 재평가(고위험 6년)"}
+      - kind: treatment
+        condition: {kcd: [M81]}
+        recommendations:
+          - when: {event: denosumab_discontinuation_planned}
+            recommend: {action: "마지막 주사 6개월 후 졸레드론산 정주, CTX로 추가 투여 시기 결정"}
+            strength: "UK NOGG 2022 (strong)"
+            alert_level: high
+          - when: {finding: hip_fracture}
+            recommend: {ingredient: zoledronic_acid, line: first}
+            strength: "UK NOGG 2022 (strong)"

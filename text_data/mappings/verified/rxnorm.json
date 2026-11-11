@@ -1,0 +1,4595 @@
+{
+ "abatacept": {
+  "rxcui": "614391",
+  "name": "abatacept",
+  "tty": "IN",
+  "epc": [
+   "Selective T Cell Costimulation Modulator"
+  ],
+  "retrieved_at": "2026-11-10T05:38:48Z",
+  "source": "NLM RxNav"
+ },
+ "acamprosate": {
+  "rxcui": "82819",
+  "name": "acamprosate",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:36:10Z",
+  "source": "NLM RxNav"
+ },
+ "aceclofenac": {
+  "rxcui": "16689",
+  "name": "aceclofenac",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:35:43Z",
+  "source": "NLM RxNav"
+ },
+ "acetaminophen": {
+  "rxcui": "161",
+  "name": "acetaminophen",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:35:40Z",
+  "source": "NLM RxNav"
+ },
+ "acetylcysteine": {
+  "rxcui": "197",
+  "name": "acetylcysteine",
+  "tty": "IN",
+  "epc": [
+   "Antidote",
+   "Antidote for Acetaminophen Overdose",
+   "Mucolytic"
+  ],
+  "retrieved_at": "2026-11-10T05:37:53Z",
+  "source": "NLM RxNav"
+ },
+ "adalimumab": {
+  "rxcui": "327361",
+  "name": "adalimumab",
+  "tty": "IN",
+  "epc": [
+   "Tumor Necrosis Factor Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:38:45Z",
+  "source": "NLM RxNav"
+ },
+ "albumin human, USP": {
+  "rxcui": "828529",
+  "name": "albumin human, USP",
+  "tty": "IN",
+  "epc": [
+   "Human Serum Albumin"
+  ],
+  "retrieved_at": "2026-11-10T05:39:22Z",
+  "source": "NLM RxNav"
+ },
+ "alemtuzumab": {
+  "rxcui": "117055",
+  "name": "alemtuzumab",
+  "tty": "IN",
+  "epc": [
+   "CD52-directed Cytolytic Antibody"
+  ],
+  "retrieved_at": "2026-11-10T05:37:25Z",
+  "source": "NLM RxNav"
+ },
+ "alendronate": {
+  "rxcui": "46041",
+  "name": "alendronate",
+  "tty": "IN",
+  "epc": [
+   "Bisphosphonate"
+  ],
+  "retrieved_at": "2026-11-10T05:34:42Z",
+  "source": "NLM RxNav"
+ },
+ "alfuzosin": {
+  "rxcui": "17300",
+  "name": "alfuzosin",
+  "tty": "IN",
+  "epc": [
+   "alpha-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:24Z",
+  "source": "NLM RxNav"
+ },
+ "alirocumab": {
+  "rxcui": "1659152",
+  "name": "alirocumab",
+  "tty": "IN",
+  "epc": [
+   "PCSK9 Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:55Z",
+  "source": "NLM RxNav"
+ },
+ "aliskiren": {
+  "rxcui": "325646",
+  "name": "aliskiren",
+  "tty": "IN",
+  "epc": [
+   "Renin Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:35:11Z",
+  "source": "NLM RxNav"
+ },
+ "allopurinol": {
+  "rxcui": "519",
+  "name": "allopurinol",
+  "tty": "IN",
+  "epc": [
+   "Xanthine Oxidase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:13Z",
+  "source": "NLM RxNav"
+ },
+ "almotriptan": {
+  "rxcui": "279645",
+  "name": "almotriptan",
+  "tty": "IN",
+  "epc": [
+   "Serotonin-1b and Serotonin-1d Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:36:57Z",
+  "source": "NLM RxNav"
+ },
+ "alogliptin": {
+  "rxcui": "1368001",
+  "name": "alogliptin",
+  "tty": "IN",
+  "epc": [
+   "Dipeptidyl Peptidase 4 Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:33:48Z",
+  "source": "NLM RxNav"
+ },
+ "alprazolam": {
+  "rxcui": "596",
+  "name": "alprazolam",
+  "tty": "IN",
+  "epc": [
+   "Benzodiazepine"
+  ],
+  "retrieved_at": "2026-11-10T05:36:02Z",
+  "source": "NLM RxNav"
+ },
+ "alteplase": {
+  "rxcui": "8410",
+  "name": "alteplase",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:35:38Z",
+  "source": "NLM RxNav"
+ },
+ "amikacin": {
+  "rxcui": "641",
+  "name": "amikacin",
+  "tty": "IN",
+  "epc": [
+   "Aminoglycoside Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:25Z",
+  "source": "NLM RxNav"
+ },
+ "amiodarone": {
+  "rxcui": "703",
+  "name": "amiodarone",
+  "tty": "IN",
+  "epc": [
+   "Antiarrhythmic"
+  ],
+  "retrieved_at": "2026-11-10T05:35:30Z",
+  "source": "NLM RxNav"
+ },
+ "amitriptyline": {
+  "rxcui": "704",
+  "name": "amitriptyline",
+  "tty": "IN",
+  "epc": [
+   "Tricyclic Antidepressant"
+  ],
+  "retrieved_at": "2026-11-10T05:36:23Z",
+  "source": "NLM RxNav"
+ },
+ "amlodipine": {
+  "rxcui": "17767",
+  "name": "amlodipine",
+  "tty": "IN",
+  "epc": [
+   "Calcium Channel Blocker",
+   "Dihydropyridine Calcium Channel Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:14Z",
+  "source": "NLM RxNav"
+ },
+ "amoxicillin": {
+  "rxcui": "723",
+  "name": "amoxicillin",
+  "tty": "IN",
+  "epc": [
+   "Penicillin-class Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:37:59Z",
+  "source": "NLM RxNav"
+ },
+ "ampicillin": {
+  "rxcui": "733",
+  "name": "ampicillin",
+  "tty": "IN",
+  "epc": [
+   "Penicillin-class Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:00Z",
+  "source": "NLM RxNav"
+ },
+ "apixaban": {
+  "rxcui": "1364430",
+  "name": "apixaban",
+  "tty": "IN",
+  "epc": [
+   "Factor Xa Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:35:32Z",
+  "source": "NLM RxNav"
+ },
+ "apomorphine": {
+  "rxcui": "1043",
+  "name": "apomorphine",
+  "tty": "IN",
+  "epc": [
+   "Dopaminergic Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:11Z",
+  "source": "NLM RxNav"
+ },
+ "aripiprazole": {
+  "rxcui": "89013",
+  "name": "aripiprazole",
+  "tty": "IN",
+  "epc": [
+   "Atypical Antipsychotic"
+  ],
+  "retrieved_at": "2026-11-10T05:36:41Z",
+  "source": "NLM RxNav"
+ },
+ "aspirin": {
+  "rxcui": "1191",
+  "name": "aspirin",
+  "tty": "IN",
+  "epc": [
+   "Nonsteroidal Anti-inflammatory Drug",
+   "Platelet Aggregation Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:35:40Z",
+  "source": "NLM RxNav"
+ },
+ "atazanavir": {
+  "rxcui": "343047",
+  "name": "atazanavir",
+  "tty": "IN",
+  "epc": [
+   "Protease Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:51Z",
+  "source": "NLM RxNav"
+ },
+ "atenolol": {
+  "rxcui": "1202",
+  "name": "atenolol",
+  "tty": "IN",
+  "epc": [
+   "beta-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:15Z",
+  "source": "NLM RxNav"
+ },
+ "atezolizumab": {
+  "rxcui": "1792776",
+  "name": "atezolizumab",
+  "tty": "IN",
+  "epc": [
+   "Programmed Death Receptor-1 Blocking Antibody"
+  ],
+  "retrieved_at": "2026-11-10T05:39:00Z",
+  "source": "NLM RxNav"
+ },
+ "atorvastatin": {
+  "rxcui": "83367",
+  "name": "atorvastatin",
+  "tty": "IN",
+  "epc": [
+   "HMG-CoA Reductase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:49Z",
+  "source": "NLM RxNav"
+ },
+ "avacopan": {
+  "rxcui": "2572100",
+  "name": "avacopan",
+  "tty": "IN",
+  "epc": [
+   "Complement 5a Receptor Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:39:20Z",
+  "source": "NLM RxNav"
+ },
+ "azathioprine": {
+  "rxcui": "1256",
+  "name": "azathioprine",
+  "tty": "IN",
+  "epc": [
+   "Purine Antimetabolite"
+  ],
+  "retrieved_at": "2026-11-10T05:38:39Z",
+  "source": "NLM RxNav"
+ },
+ "azilsartan": {
+  "rxcui": "1091643",
+  "name": "azilsartan",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin 2 Receptor Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:11Z",
+  "source": "NLM RxNav"
+ },
+ "azithromycin": {
+  "rxcui": "18631",
+  "name": "azithromycin",
+  "tty": "IN",
+  "epc": [
+   "Macrolide Antimicrobial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:20Z",
+  "source": "NLM RxNav"
+ },
+ "baclofen": {
+  "rxcui": "1292",
+  "name": "baclofen",
+  "tty": "IN",
+  "epc": [
+   "gamma-Aminobutyric Acid-ergic Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:36:11Z",
+  "source": "NLM RxNav"
+ },
+ "balsalazide": {
+  "rxcui": "18747",
+  "name": "balsalazide",
+  "tty": "IN",
+  "epc": [
+   "Aminosalicylate"
+  ],
+  "retrieved_at": "2026-11-10T05:39:14Z",
+  "source": "NLM RxNav"
+ },
+ "baricitinib": {
+  "rxcui": "2047232",
+  "name": "baricitinib",
+  "tty": "IN",
+  "epc": [
+   "Janus Kinase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:38:54Z",
+  "source": "NLM RxNav"
+ },
+ "benazepril": {
+  "rxcui": "18867",
+  "name": "benazepril",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin Converting Enzyme Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:35:02Z",
+  "source": "NLM RxNav"
+ },
+ "benztropine": {
+  "rxcui": "1424",
+  "name": "benztropine",
+  "tty": "IN",
+  "epc": [
+   "Anticholinergic",
+   "Antihistamine"
+  ],
+  "retrieved_at": "2026-11-10T05:37:14Z",
+  "source": "NLM RxNav"
+ },
+ "betamethasone": {
+  "rxcui": "1514",
+  "name": "betamethasone",
+  "tty": "IN",
+  "epc": [
+   "Corticosteroid"
+  ],
+  "retrieved_at": "2026-11-10T05:34:25Z",
+  "source": "NLM RxNav"
+ },
+ "betaxolol": {
+  "rxcui": "1520",
+  "name": "betaxolol",
+  "tty": "IN",
+  "epc": [
+   "beta-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:22Z",
+  "source": "NLM RxNav"
+ },
+ "bismuth subcitrate potassium": {
+  "rxcui": "1294617",
+  "name": "bismuth subcitrate potassium",
+  "tty": "PIN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:38:35Z",
+  "source": "NLM RxNav"
+ },
+ "bisoprolol": {
+  "rxcui": "19484",
+  "name": "bisoprolol",
+  "tty": "IN",
+  "epc": [
+   "beta-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:15Z",
+  "source": "NLM RxNav"
+ },
+ "boceprevir": {
+  "rxcui": "1102129",
+  "name": "boceprevir",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:50Z",
+  "source": "NLM RxNav"
+ },
+ "bosentan": {
+  "rxcui": "75207",
+  "name": "bosentan",
+  "tty": "IN",
+  "epc": [
+   "Endothelin Receptor Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:31Z",
+  "source": "NLM RxNav"
+ },
+ "brexpiprazole": {
+  "rxcui": "1658314",
+  "name": "brexpiprazole",
+  "tty": "IN",
+  "epc": [
+   "Atypical Antipsychotic"
+  ],
+  "retrieved_at": "2026-11-10T05:36:43Z",
+  "source": "NLM RxNav"
+ },
+ "bromocriptine": {
+  "rxcui": "1760",
+  "name": "bromocriptine",
+  "tty": "IN",
+  "epc": [
+   "Ergot Derivative"
+  ],
+  "retrieved_at": "2026-11-10T05:34:30Z",
+  "source": "NLM RxNav"
+ },
+ "buprenorphine": {
+  "rxcui": "1819",
+  "name": "buprenorphine",
+  "tty": "IN",
+  "epc": [
+   "Partial Opioid Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:58Z",
+  "source": "NLM RxNav"
+ },
+ "bupropion": {
+  "rxcui": "42347",
+  "name": "bupropion",
+  "tty": "IN",
+  "epc": [
+   "Aminoketone"
+  ],
+  "retrieved_at": "2026-11-10T05:34:48Z",
+  "source": "NLM RxNav"
+ },
+ "buspirone": {
+  "rxcui": "1827",
+  "name": "buspirone",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:36:09Z",
+  "source": "NLM RxNav"
+ },
+ "butylscopolamine": {
+  "rxcui": "1085787",
+  "name": "butylscopolamine",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:32Z",
+  "source": "NLM RxNav"
+ },
+ "cabergoline": {
+  "rxcui": "47579",
+  "name": "cabergoline",
+  "tty": "IN",
+  "epc": [
+   "Ergot Derivative"
+  ],
+  "retrieved_at": "2026-11-10T05:34:29Z",
+  "source": "NLM RxNav"
+ },
+ "caffeine": {
+  "rxcui": "1886",
+  "name": "caffeine",
+  "tty": "IN",
+  "epc": [
+   "Central Nervous System Stimulant",
+   "Methylxanthine"
+  ],
+  "retrieved_at": "2026-11-10T05:37:03Z",
+  "source": "NLM RxNav"
+ },
+ "calcitriol": {
+  "rxcui": "1894",
+  "name": "calcitriol",
+  "tty": "IN",
+  "epc": [
+   "Vitamin D3 Analog"
+  ],
+  "retrieved_at": "2026-11-10T05:34:16Z",
+  "source": "NLM RxNav"
+ },
+ "calcium gluconate": {
+  "rxcui": "1908",
+  "name": "calcium gluconate",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:34:16Z",
+  "source": "NLM RxNav"
+ },
+ "canagliflozin": {
+  "rxcui": "1373458",
+  "name": "canagliflozin",
+  "tty": "IN",
+  "epc": [
+   "Sodium-Glucose Cotransporter 2 Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:33:42Z",
+  "source": "NLM RxNav"
+ },
+ "candesartan": {
+  "rxcui": "214354",
+  "name": "candesartan",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin 2 Receptor Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:08Z",
+  "source": "NLM RxNav"
+ },
+ "capsaicin": {
+  "rxcui": "1992",
+  "name": "capsaicin",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:39:20Z",
+  "source": "NLM RxNav"
+ },
+ "captopril": {
+  "rxcui": "1998",
+  "name": "captopril",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin Converting Enzyme Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:58Z",
+  "source": "NLM RxNav"
+ },
+ "carbamazepine": {
+  "rxcui": "2002",
+  "name": "carbamazepine",
+  "tty": "IN",
+  "epc": [
+   "Mood Stabilizer"
+  ],
+  "retrieved_at": "2026-11-10T05:36:45Z",
+  "source": "NLM RxNav"
+ },
+ "cariprazine": {
+  "rxcui": "1667655",
+  "name": "cariprazine",
+  "tty": "IN",
+  "epc": [
+   "Atypical Antipsychotic"
+  ],
+  "retrieved_at": "2026-11-10T05:36:44Z",
+  "source": "NLM RxNav"
+ },
+ "carvedilol": {
+  "rxcui": "20352",
+  "name": "carvedilol",
+  "tty": "IN",
+  "epc": [
+   "alpha-Adrenergic Blocker",
+   "beta-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:18Z",
+  "source": "NLM RxNav"
+ },
+ "cefaclor": {
+  "rxcui": "2176",
+  "name": "cefaclor",
+  "tty": "IN",
+  "epc": [
+   "Cephalosporin Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:06Z",
+  "source": "NLM RxNav"
+ },
+ "cefazolin": {
+  "rxcui": "2180",
+  "name": "cefazolin",
+  "tty": "IN",
+  "epc": [
+   "Cephalosporin Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:05Z",
+  "source": "NLM RxNav"
+ },
+ "cefditoren": {
+  "rxcui": "83682",
+  "name": "cefditoren",
+  "tty": "IN",
+  "epc": [
+   "Cephalosporin Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:12Z",
+  "source": "NLM RxNav"
+ },
+ "cefepime": {
+  "rxcui": "20481",
+  "name": "cefepime",
+  "tty": "IN",
+  "epc": [
+   "Cephalosporin Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:10Z",
+  "source": "NLM RxNav"
+ },
+ "cefixime": {
+  "rxcui": "25033",
+  "name": "cefixime",
+  "tty": "IN",
+  "epc": [
+   "Cephalosporin Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:10Z",
+  "source": "NLM RxNav"
+ },
+ "cefotaxime": {
+  "rxcui": "2186",
+  "name": "cefotaxime",
+  "tty": "IN",
+  "epc": [
+   "Cephalosporin Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:07Z",
+  "source": "NLM RxNav"
+ },
+ "cefoxitin": {
+  "rxcui": "2189",
+  "name": "cefoxitin",
+  "tty": "IN",
+  "epc": [
+   "Cephalosporin Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:13Z",
+  "source": "NLM RxNav"
+ },
+ "cefpodoxime": {
+  "rxcui": "20489",
+  "name": "cefpodoxime",
+  "tty": "IN",
+  "epc": [
+   "Cephalosporin Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:11Z",
+  "source": "NLM RxNav"
+ },
+ "ceftazidime": {
+  "rxcui": "2191",
+  "name": "ceftazidime",
+  "tty": "IN",
+  "epc": [
+   "Cephalosporin Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:09Z",
+  "source": "NLM RxNav"
+ },
+ "ceftriaxone": {
+  "rxcui": "2193",
+  "name": "ceftriaxone",
+  "tty": "IN",
+  "epc": [
+   "Cephalosporin Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:08Z",
+  "source": "NLM RxNav"
+ },
+ "cefuroxime": {
+  "rxcui": "2194",
+  "name": "cefuroxime",
+  "tty": "IN",
+  "epc": [
+   "Cephalosporin Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:07Z",
+  "source": "NLM RxNav"
+ },
+ "celecoxib": {
+  "rxcui": "140587",
+  "name": "celecoxib",
+  "tty": "IN",
+  "epc": [
+   "Nonsteroidal Anti-inflammatory Drug"
+  ],
+  "retrieved_at": "2026-11-10T05:35:44Z",
+  "source": "NLM RxNav"
+ },
+ "cemiplimab": {
+  "rxcui": "2058826",
+  "name": "cemiplimab",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:39:03Z",
+  "source": "NLM RxNav"
+ },
+ "cephalexin": {
+  "rxcui": "2231",
+  "name": "cephalexin",
+  "tty": "IN",
+  "epc": [
+   "Cephalosporin Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:05Z",
+  "source": "NLM RxNav"
+ },
+ "certolizumab pegol": {
+  "rxcui": "709271",
+  "name": "certolizumab pegol",
+  "tty": "IN",
+  "epc": [
+   "Tumor Necrosis Factor Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:38:48Z",
+  "source": "NLM RxNav"
+ },
+ "chlordiazepoxide": {
+  "rxcui": "2356",
+  "name": "chlordiazepoxide",
+  "tty": "IN",
+  "epc": [
+   "Benzodiazepine"
+  ],
+  "retrieved_at": "2026-11-10T05:36:04Z",
+  "source": "NLM RxNav"
+ },
+ "chlorpromazine": {
+  "rxcui": "2403",
+  "name": "chlorpromazine",
+  "tty": "IN",
+  "epc": [
+   "Phenothiazine"
+  ],
+  "retrieved_at": "2026-11-10T05:36:35Z",
+  "source": "NLM RxNav"
+ },
+ "chlorthalidone": {
+  "rxcui": "2409",
+  "name": "chlorthalidone",
+  "tty": "IN",
+  "epc": [
+   "Thiazide-like Diuretic"
+  ],
+  "retrieved_at": "2026-11-10T05:34:07Z",
+  "source": "NLM RxNav"
+ },
+ "cinacalcet": {
+  "rxcui": "407990",
+  "name": "cinacalcet",
+  "tty": "IN",
+  "epc": [
+   "Calcium-sensing Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:34:17Z",
+  "source": "NLM RxNav"
+ },
+ "ciprofloxacin": {
+  "rxcui": "2551",
+  "name": "ciprofloxacin",
+  "tty": "IN",
+  "epc": [
+   "Fluoroquinolone Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:16Z",
+  "source": "NLM RxNav"
+ },
+ "citalopram": {
+  "rxcui": "2556",
+  "name": "citalopram",
+  "tty": "IN",
+  "epc": [
+   "Serotonin Reuptake Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:21Z",
+  "source": "NLM RxNav"
+ },
+ "cladribine": {
+  "rxcui": "44157",
+  "name": "cladribine",
+  "tty": "IN",
+  "epc": [
+   "Purine Antimetabolite"
+  ],
+  "retrieved_at": "2026-11-10T05:37:24Z",
+  "source": "NLM RxNav"
+ },
+ "clarithromycin": {
+  "rxcui": "21212",
+  "name": "clarithromycin",
+  "tty": "IN",
+  "epc": [
+   "Macrolide Antimicrobial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:21Z",
+  "source": "NLM RxNav"
+ },
+ "clavulanate": {
+  "rxcui": "48203",
+  "name": "clavulanate",
+  "tty": "IN",
+  "epc": [
+   "beta Lactamase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:59Z",
+  "source": "NLM RxNav"
+ },
+ "clindamycin": {
+  "rxcui": "2582",
+  "name": "clindamycin",
+  "tty": "IN",
+  "epc": [
+   "Lincosamide Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:28Z",
+  "source": "NLM RxNav"
+ },
+ "clobazam": {
+  "rxcui": "21241",
+  "name": "clobazam",
+  "tty": "IN",
+  "epc": [
+   "Benzodiazepine"
+  ],
+  "retrieved_at": "2026-11-10T05:36:07Z",
+  "source": "NLM RxNav"
+ },
+ "clomipramine": {
+  "rxcui": "2597",
+  "name": "clomipramine",
+  "tty": "IN",
+  "epc": [
+   "Tricyclic Antidepressant"
+  ],
+  "retrieved_at": "2026-11-10T05:36:24Z",
+  "source": "NLM RxNav"
+ },
+ "clonazepam": {
+  "rxcui": "2598",
+  "name": "clonazepam",
+  "tty": "IN",
+  "epc": [
+   "Benzodiazepine"
+  ],
+  "retrieved_at": "2026-11-10T05:36:03Z",
+  "source": "NLM RxNav"
+ },
+ "clozapine": {
+  "rxcui": "2626",
+  "name": "clozapine",
+  "tty": "IN",
+  "epc": [
+   "Atypical Antipsychotic"
+  ],
+  "retrieved_at": "2026-11-10T05:36:44Z",
+  "source": "NLM RxNav"
+ },
+ "cobicistat": {
+  "rxcui": "1306284",
+  "name": "cobicistat",
+  "tty": "IN",
+  "epc": [
+   "Cytochrome P450 3A Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:39:09Z",
+  "source": "NLM RxNav"
+ },
+ "codeine": {
+  "rxcui": "2670",
+  "name": "codeine",
+  "tty": "IN",
+  "epc": [
+   "Opioid Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:53Z",
+  "source": "NLM RxNav"
+ },
+ "colchicine": {
+  "rxcui": "2683",
+  "name": "colchicine",
+  "tty": "IN",
+  "epc": [
+   "Alkaloid"
+  ],
+  "retrieved_at": "2026-11-10T05:34:15Z",
+  "source": "NLM RxNav"
+ },
+ "colistin": {
+  "rxcui": "2709",
+  "name": "colistin",
+  "tty": "IN",
+  "epc": [
+   "Polymyxin-class Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:33Z",
+  "source": "NLM RxNav"
+ },
+ "cyclophosphamide": {
+  "rxcui": "3002",
+  "name": "cyclophosphamide",
+  "tty": "IN",
+  "epc": [
+   "Alkylating Drug"
+  ],
+  "retrieved_at": "2026-11-10T05:38:42Z",
+  "source": "NLM RxNav"
+ },
+ "cyclosporine": {
+  "rxcui": "3008",
+  "name": "cyclosporine",
+  "tty": "IN",
+  "epc": [
+   "Calcineurin Inhibitor Immunosuppressant"
+  ],
+  "retrieved_at": "2026-11-10T05:38:42Z",
+  "source": "NLM RxNav"
+ },
+ "dabigatran": {
+  "rxcui": "1546356",
+  "name": "dabigatran",
+  "tty": "IN",
+  "epc": [
+   "Direct Thrombin Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:35:34Z",
+  "source": "NLM RxNav"
+ },
+ "daclatasvir": {
+  "rxcui": "1606218",
+  "name": "daclatasvir",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:39:16Z",
+  "source": "NLM RxNav"
+ },
+ "dalteparin": {
+  "rxcui": "67109",
+  "name": "dalteparin",
+  "tty": "IN",
+  "epc": [
+   "Anti-coagulant",
+   "Low Molecular Weight Heparin"
+  ],
+  "retrieved_at": "2026-11-10T05:35:37Z",
+  "source": "NLM RxNav"
+ },
+ "dapagliflozin": {
+  "rxcui": "1488564",
+  "name": "dapagliflozin",
+  "tty": "IN",
+  "epc": [
+   "Sodium-Glucose Cotransporter 2 Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:33:42Z",
+  "source": "NLM RxNav"
+ },
+ "darbepoetin alfa": {
+  "rxcui": "283838",
+  "name": "darbepoetin alfa",
+  "tty": "IN",
+  "epc": [
+   "Erythropoiesis-stimulating Agent"
+  ],
+  "retrieved_at": "2026-11-10T05:37:57Z",
+  "source": "NLM RxNav"
+ },
+ "darifenacin": {
+  "rxcui": "136198",
+  "name": "darifenacin",
+  "tty": "IN",
+  "epc": [
+   "Cholinergic Muscarinic Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:28Z",
+  "source": "NLM RxNav"
+ },
+ "deflazacort": {
+  "rxcui": "22396",
+  "name": "deflazacort",
+  "tty": "IN",
+  "epc": [
+   "Corticosteroid"
+  ],
+  "retrieved_at": "2026-11-10T05:34:24Z",
+  "source": "NLM RxNav"
+ },
+ "delafloxacin": {
+  "rxcui": "1927663",
+  "name": "delafloxacin",
+  "tty": "IN",
+  "epc": [
+   "Fluoroquinolone Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:19Z",
+  "source": "NLM RxNav"
+ },
+ "denosumab": {
+  "rxcui": "993449",
+  "name": "denosumab",
+  "tty": "IN",
+  "epc": [
+   "RANK Ligand Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:44Z",
+  "source": "NLM RxNav"
+ },
+ "desmopressin": {
+  "rxcui": "3251",
+  "name": "desmopressin",
+  "tty": "IN",
+  "epc": [
+   "Factor VIII Activator",
+   "Vasopressin Analog"
+  ],
+  "retrieved_at": "2026-11-10T05:34:11Z",
+  "source": "NLM RxNav"
+ },
+ "desogestrel": {
+  "rxcui": "22656",
+  "name": "desogestrel",
+  "tty": "IN",
+  "epc": [
+   "Progestin"
+  ],
+  "retrieved_at": "2026-11-10T05:34:38Z",
+  "source": "NLM RxNav"
+ },
+ "desvenlafaxine": {
+  "rxcui": "734064",
+  "name": "desvenlafaxine",
+  "tty": "IN",
+  "epc": [
+   "Serotonin and Norepinephrine Reuptake Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:16Z",
+  "source": "NLM RxNav"
+ },
+ "dexamethasone": {
+  "rxcui": "3264",
+  "name": "dexamethasone",
+  "tty": "IN",
+  "epc": [
+   "Corticosteroid"
+  ],
+  "retrieved_at": "2026-11-10T05:34:23Z",
+  "source": "NLM RxNav"
+ },
+ "dexlansoprazole": {
+  "rxcui": "816346",
+  "name": "dexlansoprazole",
+  "tty": "IN",
+  "epc": [
+   "Proton Pump Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:35Z",
+  "source": "NLM RxNav"
+ },
+ "dexmedetomidine": {
+  "rxcui": "48937",
+  "name": "dexmedetomidine",
+  "tty": "IN",
+  "epc": [
+   "Central alpha-2 Adrenergic Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:36:01Z",
+  "source": "NLM RxNav"
+ },
+ "diazepam": {
+  "rxcui": "3322",
+  "name": "diazepam",
+  "tty": "IN",
+  "epc": [
+   "Benzodiazepine"
+  ],
+  "retrieved_at": "2026-11-10T05:36:01Z",
+  "source": "NLM RxNav"
+ },
+ "diclofenac": {
+  "rxcui": "3355",
+  "name": "diclofenac",
+  "tty": "IN",
+  "epc": [
+   "Nonsteroidal Anti-inflammatory Drug"
+  ],
+  "retrieved_at": "2026-11-10T05:35:43Z",
+  "source": "NLM RxNav"
+ },
+ "dienogest": {
+  "rxcui": "22968",
+  "name": "dienogest",
+  "tty": "IN",
+  "epc": [
+   "Progestin"
+  ],
+  "retrieved_at": "2026-11-10T05:34:39Z",
+  "source": "NLM RxNav"
+ },
+ "dihydrocodeine": {
+  "rxcui": "23088",
+  "name": "dihydrocodeine",
+  "tty": "IN",
+  "epc": [
+   "Opioid Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:55Z",
+  "source": "NLM RxNav"
+ },
+ "diltiazem": {
+  "rxcui": "3443",
+  "name": "diltiazem",
+  "tty": "IN",
+  "epc": [
+   "Calcium Channel Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:12Z",
+  "source": "NLM RxNav"
+ },
+ "dimethyl fumarate": {
+  "rxcui": "1373478",
+  "name": "dimethyl fumarate",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:24Z",
+  "source": "NLM RxNav"
+ },
+ "disulfiram": {
+  "rxcui": "3554",
+  "name": "disulfiram",
+  "tty": "IN",
+  "epc": [
+   "Aldehyde Dehydrogenase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:10Z",
+  "source": "NLM RxNav"
+ },
+ "donepezil": {
+  "rxcui": "135447",
+  "name": "donepezil",
+  "tty": "IN",
+  "epc": [
+   "Cholinesterase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:05Z",
+  "source": "NLM RxNav"
+ },
+ "doxazosin": {
+  "rxcui": "49276",
+  "name": "doxazosin",
+  "tty": "IN",
+  "epc": [
+   "alpha-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:25Z",
+  "source": "NLM RxNav"
+ },
+ "doxepin": {
+  "rxcui": "3638",
+  "name": "doxepin",
+  "tty": "IN",
+  "epc": [
+   "Tricyclic Antidepressant"
+  ],
+  "retrieved_at": "2026-11-10T05:36:26Z",
+  "source": "NLM RxNav"
+ },
+ "doxycycline": {
+  "rxcui": "3640",
+  "name": "doxycycline",
+  "tty": "IN",
+  "epc": [
+   "Tetracycline-class Drug"
+  ],
+  "retrieved_at": "2026-11-10T05:38:22Z",
+  "source": "NLM RxNav"
+ },
+ "drospirenone": {
+  "rxcui": "11636",
+  "name": "drospirenone",
+  "tty": "IN",
+  "epc": [
+   "Progestin"
+  ],
+  "retrieved_at": "2026-11-10T05:34:38Z",
+  "source": "NLM RxNav"
+ },
+ "dulaglutide": {
+  "rxcui": "1551291",
+  "name": "dulaglutide",
+  "tty": "IN",
+  "epc": [
+   "GLP-1 Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:33:51Z",
+  "source": "NLM RxNav"
+ },
+ "duloxetine": {
+  "rxcui": "72625",
+  "name": "duloxetine",
+  "tty": "IN",
+  "epc": [
+   "Serotonin and Norepinephrine Reuptake Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:15Z",
+  "source": "NLM RxNav"
+ },
+ "durvalumab": {
+  "rxcui": "1919503",
+  "name": "durvalumab",
+  "tty": "IN",
+  "epc": [
+   "Programmed Death Ligand-1 Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:39:00Z",
+  "source": "NLM RxNav"
+ },
+ "eculizumab": {
+  "rxcui": "591781",
+  "name": "eculizumab",
+  "tty": "IN",
+  "epc": [
+   "Complement Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:38:54Z",
+  "source": "NLM RxNav"
+ },
+ "edaravone": {
+  "rxcui": "1921877",
+  "name": "edaravone",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:15Z",
+  "source": "NLM RxNav"
+ },
+ "edoxaban": {
+  "rxcui": "1599538",
+  "name": "edoxaban",
+  "tty": "IN",
+  "epc": [
+   "Factor Xa Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:35:34Z",
+  "source": "NLM RxNav"
+ },
+ "efgartigimod alfa": {
+  "rxcui": "2587717",
+  "name": "efgartigimod alfa",
+  "tty": "IN",
+  "epc": [
+   "Neonatal Fc Receptor Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:38:57Z",
+  "source": "NLM RxNav"
+ },
+ "eletriptan": {
+  "rxcui": "231049",
+  "name": "eletriptan",
+  "tty": "IN",
+  "epc": [
+   "Serotonin-1b and Serotonin-1d Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:36:57Z",
+  "source": "NLM RxNav"
+ },
+ "elinzanetant": {
+  "rxcui": "2725511",
+  "name": "elinzanetant",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:34:41Z",
+  "source": "NLM RxNav"
+ },
+ "empagliflozin": {
+  "rxcui": "1545653",
+  "name": "empagliflozin",
+  "tty": "IN",
+  "epc": [
+   "Sodium-Glucose Cotransporter 2 Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:33:42Z",
+  "source": "NLM RxNav"
+ },
+ "enalapril": {
+  "rxcui": "3827",
+  "name": "enalapril",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin Converting Enzyme Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:59Z",
+  "source": "NLM RxNav"
+ },
+ "enoxaparin": {
+  "rxcui": "67108",
+  "name": "enoxaparin",
+  "tty": "IN",
+  "epc": [
+   "Low Molecular Weight Heparin"
+  ],
+  "retrieved_at": "2026-11-10T05:35:35Z",
+  "source": "NLM RxNav"
+ },
+ "entecavir": {
+  "rxcui": "306266",
+  "name": "entecavir",
+  "tty": "IN",
+  "epc": [
+   "Hepatitis B Virus Nucleoside Analog Reverse Transcriptase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:44Z",
+  "source": "NLM RxNav"
+ },
+ "epinephrine": {
+  "rxcui": "3992",
+  "name": "epinephrine",
+  "tty": "IN",
+  "epc": [
+   "Catecholamine",
+   "alpha-Adrenergic Agonist",
+   "beta-Adrenergic Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:39Z",
+  "source": "NLM RxNav"
+ },
+ "eplerenone": {
+  "rxcui": "298869",
+  "name": "eplerenone",
+  "tty": "IN",
+  "epc": [
+   "Aldosterone Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:34:05Z",
+  "source": "NLM RxNav"
+ },
+ "epoetin alfa": {
+  "rxcui": "105694",
+  "name": "epoetin alfa",
+  "tty": "IN",
+  "epc": [
+   "Erythropoiesis-stimulating Agent"
+  ],
+  "retrieved_at": "2026-11-10T05:37:56Z",
+  "source": "NLM RxNav"
+ },
+ "epoetin beta": {
+  "rxcui": "105695",
+  "name": "epoetin beta",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:56Z",
+  "source": "NLM RxNav"
+ },
+ "eprosartan": {
+  "rxcui": "83515",
+  "name": "eprosartan",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin 2 Receptor Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:09Z",
+  "source": "NLM RxNav"
+ },
+ "erenumab": {
+  "rxcui": "2045613",
+  "name": "erenumab",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:36:58Z",
+  "source": "NLM RxNav"
+ },
+ "ertapenem": {
+  "rxcui": "325642",
+  "name": "ertapenem",
+  "tty": "IN",
+  "epc": [
+   "Penem Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:14Z",
+  "source": "NLM RxNav"
+ },
+ "ertugliflozin": {
+  "rxcui": "1992672",
+  "name": "ertugliflozin",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:33:45Z",
+  "source": "NLM RxNav"
+ },
+ "erythromycin": {
+  "rxcui": "4053",
+  "name": "erythromycin",
+  "tty": "IN",
+  "epc": [
+   "Macrolide",
+   "Macrolide Antimicrobial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:22Z",
+  "source": "NLM RxNav"
+ },
+ "escitalopram": {
+  "rxcui": "321988",
+  "name": "escitalopram",
+  "tty": "IN",
+  "epc": [
+   "Serotonin Reuptake Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:20Z",
+  "source": "NLM RxNav"
+ },
+ "esketamine": {
+  "rxcui": "2119365",
+  "name": "esketamine",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:35:59Z",
+  "source": "NLM RxNav"
+ },
+ "esmolol": {
+  "rxcui": "49737",
+  "name": "esmolol",
+  "tty": "IN",
+  "epc": [
+   "beta-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:21Z",
+  "source": "NLM RxNav"
+ },
+ "esomeprazole": {
+  "rxcui": "283742",
+  "name": "esomeprazole",
+  "tty": "IN",
+  "epc": [
+   "Proton Pump Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:34Z",
+  "source": "NLM RxNav"
+ },
+ "estetrol": {
+  "rxcui": "2539031",
+  "name": "estetrol",
+  "tty": "IN",
+  "epc": [
+   "Estrogen"
+  ],
+  "retrieved_at": "2026-11-10T05:34:35Z",
+  "source": "NLM RxNav"
+ },
+ "estradiol": {
+  "rxcui": "4083",
+  "name": "estradiol",
+  "tty": "IN",
+  "epc": [
+   "Estrogen",
+   "Radioactive Diagnostic Agent"
+  ],
+  "retrieved_at": "2026-11-10T05:34:32Z",
+  "source": "NLM RxNav"
+ },
+ "estrogens, conjugated (USP)": {
+  "rxcui": "4099",
+  "name": "estrogens, conjugated (USP)",
+  "tty": "IN",
+  "epc": [
+   "Estrogen"
+  ],
+  "retrieved_at": "2026-11-10T05:34:33Z",
+  "source": "NLM RxNav"
+ },
+ "etanercept": {
+  "rxcui": "214555",
+  "name": "etanercept",
+  "tty": "IN",
+  "epc": [
+   "Tumor Necrosis Factor Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:38:45Z",
+  "source": "NLM RxNav"
+ },
+ "ethinyl estradiol": {
+  "rxcui": "4124",
+  "name": "ethinyl estradiol",
+  "tty": "IN",
+  "epc": [
+   "Estrogen"
+  ],
+  "retrieved_at": "2026-11-10T05:34:41Z",
+  "source": "NLM RxNav"
+ },
+ "ethosuximide": {
+  "rxcui": "4135",
+  "name": "ethosuximide",
+  "tty": "IN",
+  "epc": [
+   "Anti-epileptic Agent"
+  ],
+  "retrieved_at": "2026-11-10T05:36:53Z",
+  "source": "NLM RxNav"
+ },
+ "etodolac": {
+  "rxcui": "24605",
+  "name": "etodolac",
+  "tty": "IN",
+  "epc": [
+   "Nonsteroidal Anti-inflammatory Drug"
+  ],
+  "retrieved_at": "2026-11-10T05:35:46Z",
+  "source": "NLM RxNav"
+ },
+ "evolocumab": {
+  "rxcui": "1665684",
+  "name": "evolocumab",
+  "tty": "IN",
+  "epc": [
+   "PCSK9 Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:55Z",
+  "source": "NLM RxNav"
+ },
+ "exenatide": {
+  "rxcui": "60548",
+  "name": "exenatide",
+  "tty": "IN",
+  "epc": [
+   "GLP-1 Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:33:48Z",
+  "source": "NLM RxNav"
+ },
+ "ezetimibe": {
+  "rxcui": "341248",
+  "name": "ezetimibe",
+  "tty": "IN",
+  "epc": [
+   "Dietary Cholesterol Absorption Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:54Z",
+  "source": "NLM RxNav"
+ },
+ "febuxostat": {
+  "rxcui": "73689",
+  "name": "febuxostat",
+  "tty": "IN",
+  "epc": [
+   "Xanthine Oxidase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:14Z",
+  "source": "NLM RxNav"
+ },
+ "fenofibrate": {
+  "rxcui": "8703",
+  "name": "fenofibrate",
+  "tty": "IN",
+  "epc": [
+   "Peroxisome Proliferator-activated Receptor alpha Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:34:55Z",
+  "source": "NLM RxNav"
+ },
+ "fentanyl": {
+  "rxcui": "4337",
+  "name": "fentanyl",
+  "tty": "IN",
+  "epc": [
+   "Opioid Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:52Z",
+  "source": "NLM RxNav"
+ },
+ "ferric carboxymaltose": {
+  "rxcui": "1433693",
+  "name": "ferric carboxymaltose",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:54Z",
+  "source": "NLM RxNav"
+ },
+ "ferrous sulfate": {
+  "rxcui": "24947",
+  "name": "ferrous sulfate",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:55Z",
+  "source": "NLM RxNav"
+ },
+ "fesoterodine": {
+  "rxcui": "797195",
+  "name": "fesoterodine",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:30Z",
+  "source": "NLM RxNav"
+ },
+ "fezolinetant": {
+  "rxcui": "2637134",
+  "name": "fezolinetant",
+  "tty": "IN",
+  "epc": [
+   "Neurokinin 3 Receptor Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:34:41Z",
+  "source": "NLM RxNav"
+ },
+ "finerenone": {
+  "rxcui": "2562811",
+  "name": "finerenone",
+  "tty": "IN",
+  "epc": [
+   "Nonsteroidal Mineralocorticoid-Receptor Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:34:05Z",
+  "source": "NLM RxNav"
+ },
+ "fingolimod": {
+  "rxcui": "1012892",
+  "name": "fingolimod",
+  "tty": "IN",
+  "epc": [
+   "Sphingosine 1-phosphate Receptor Modulator"
+  ],
+  "retrieved_at": "2026-11-10T05:37:17Z",
+  "source": "NLM RxNav"
+ },
+ "fludrocortisone": {
+  "rxcui": "4452",
+  "name": "fludrocortisone",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:34:26Z",
+  "source": "NLM RxNav"
+ },
+ "fluoxetine": {
+  "rxcui": "4493",
+  "name": "fluoxetine",
+  "tty": "IN",
+  "epc": [
+   "Serotonin Reuptake Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:18Z",
+  "source": "NLM RxNav"
+ },
+ "fluphenazine": {
+  "rxcui": "4496",
+  "name": "fluphenazine",
+  "tty": "IN",
+  "epc": [
+   "Phenothiazine"
+  ],
+  "retrieved_at": "2026-11-10T05:36:37Z",
+  "source": "NLM RxNav"
+ },
+ "flurazepam": {
+  "rxcui": "4501",
+  "name": "flurazepam",
+  "tty": "IN",
+  "epc": [
+   "Benzodiazepine"
+  ],
+  "retrieved_at": "2026-11-10T05:36:07Z",
+  "source": "NLM RxNav"
+ },
+ "fluvastatin": {
+  "rxcui": "41127",
+  "name": "fluvastatin",
+  "tty": "IN",
+  "epc": [
+   "HMG-CoA Reductase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:52Z",
+  "source": "NLM RxNav"
+ },
+ "fluvoxamine": {
+  "rxcui": "42355",
+  "name": "fluvoxamine",
+  "tty": "IN",
+  "epc": [
+   "Serotonin Reuptake Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:21Z",
+  "source": "NLM RxNav"
+ },
+ "fondaparinux": {
+  "rxcui": "321208",
+  "name": "fondaparinux",
+  "tty": "IN",
+  "epc": [
+   "Factor Xa Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:35:37Z",
+  "source": "NLM RxNav"
+ },
+ "fosfomycin": {
+  "rxcui": "4550",
+  "name": "fosfomycin",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:38:31Z",
+  "source": "NLM RxNav"
+ },
+ "fosinopril": {
+  "rxcui": "50166",
+  "name": "fosinopril",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin Converting Enzyme Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:35:02Z",
+  "source": "NLM RxNav"
+ },
+ "fremanezumab": {
+  "rxcui": "2056691",
+  "name": "fremanezumab",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:00Z",
+  "source": "NLM RxNav"
+ },
+ "frovatriptan": {
+  "rxcui": "228783",
+  "name": "frovatriptan",
+  "tty": "IN",
+  "epc": [
+   "Serotonin-1b and Serotonin-1d Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:36:58Z",
+  "source": "NLM RxNav"
+ },
+ "furosemide": {
+  "rxcui": "4603",
+  "name": "furosemide",
+  "tty": "IN",
+  "epc": [
+   "Loop Diuretic"
+  ],
+  "retrieved_at": "2026-11-10T05:34:09Z",
+  "source": "NLM RxNav"
+ },
+ "gabapentin": {
+  "rxcui": "25480",
+  "name": "gabapentin",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:36:13Z",
+  "source": "NLM RxNav"
+ },
+ "galantamine": {
+  "rxcui": "4637",
+  "name": "galantamine",
+  "tty": "IN",
+  "epc": [
+   "Cholinesterase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:06Z",
+  "source": "NLM RxNav"
+ },
+ "galcanezumab": {
+  "rxcui": "2058846",
+  "name": "galcanezumab",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:01Z",
+  "source": "NLM RxNav"
+ },
+ "gemfibrozil": {
+  "rxcui": "4719",
+  "name": "gemfibrozil",
+  "tty": "IN",
+  "epc": [
+   "Peroxisome Proliferator-activated Receptor alpha Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:34:56Z",
+  "source": "NLM RxNav"
+ },
+ "gemifloxacin": {
+  "rxcui": "138099",
+  "name": "gemifloxacin",
+  "tty": "IN",
+  "epc": [
+   "Quinolone Antimicrobial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:19Z",
+  "source": "NLM RxNav"
+ },
+ "gentamicin": {
+  "rxcui": "1596450",
+  "name": "gentamicin",
+  "tty": "IN",
+  "epc": [
+   "Aminoglycoside Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:25Z",
+  "source": "NLM RxNav"
+ },
+ "glatiramer": {
+  "rxcui": "214582",
+  "name": "glatiramer",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:22Z",
+  "source": "NLM RxNav"
+ },
+ "glecaprevir": {
+  "rxcui": "1940635",
+  "name": "glecaprevir",
+  "tty": "IN",
+  "epc": [
+   "Hepatitis C Virus NS3/4A Protease Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:48Z",
+  "source": "NLM RxNav"
+ },
+ "gliclazide": {
+  "rxcui": "4816",
+  "name": "gliclazide",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:33:54Z",
+  "source": "NLM RxNav"
+ },
+ "glimepiride": {
+  "rxcui": "25789",
+  "name": "glimepiride",
+  "tty": "IN",
+  "epc": [
+   "Sulfonylurea"
+  ],
+  "retrieved_at": "2026-11-10T05:33:54Z",
+  "source": "NLM RxNav"
+ },
+ "glipizide": {
+  "rxcui": "4821",
+  "name": "glipizide",
+  "tty": "IN",
+  "epc": [
+   "Sulfonylurea"
+  ],
+  "retrieved_at": "2026-11-10T05:33:56Z",
+  "source": "NLM RxNav"
+ },
+ "glyburide": {
+  "rxcui": "4815",
+  "name": "glyburide",
+  "tty": "IN",
+  "epc": [
+   "Sulfonylurea"
+  ],
+  "retrieved_at": "2026-11-10T05:33:56Z",
+  "source": "NLM RxNav"
+ },
+ "glycopyrrolate": {
+  "rxcui": "4955",
+  "name": "glycopyrrolate",
+  "tty": "PIN",
+  "epc": [
+   "Anticholinergic",
+   "Cholinergic Muscarinic Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:32Z",
+  "source": "NLM RxNav"
+ },
+ "golimumab": {
+  "rxcui": "819300",
+  "name": "golimumab",
+  "tty": "IN",
+  "epc": [
+   "Tumor Necrosis Factor Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:38:48Z",
+  "source": "NLM RxNav"
+ },
+ "haloperidol": {
+  "rxcui": "5093",
+  "name": "haloperidol",
+  "tty": "IN",
+  "epc": [
+   "Typical Antipsychotic"
+  ],
+  "retrieved_at": "2026-11-10T05:36:34Z",
+  "source": "NLM RxNav"
+ },
+ "heparin": {
+  "rxcui": "235473",
+  "name": "heparin, porcine",
+  "tty": "PIN",
+  "epc": [
+   "Anti-coagulant",
+   "Unfractionated Heparin"
+  ],
+  "retrieved_at": "2026-11-10T05:35:35Z",
+  "source": "NLM RxNav"
+ },
+ "hydrochlorothiazide": {
+  "rxcui": "5487",
+  "name": "hydrochlorothiazide",
+  "tty": "IN",
+  "epc": [
+   "Thiazide Diuretic"
+  ],
+  "retrieved_at": "2026-11-10T05:34:06Z",
+  "source": "NLM RxNav"
+ },
+ "hydrocodone": {
+  "rxcui": "5489",
+  "name": "hydrocodone",
+  "tty": "IN",
+  "epc": [
+   "Opioid Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:55Z",
+  "source": "NLM RxNav"
+ },
+ "hydrocortisone": {
+  "rxcui": "5492",
+  "name": "hydrocortisone",
+  "tty": "IN",
+  "epc": [
+   "Corticosteroid"
+  ],
+  "retrieved_at": "2026-11-10T05:34:20Z",
+  "source": "NLM RxNav"
+ },
+ "hydromorphone": {
+  "rxcui": "3423",
+  "name": "hydromorphone",
+  "tty": "IN",
+  "epc": [
+   "Opioid Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:50Z",
+  "source": "NLM RxNav"
+ },
+ "hydroxychloroquine": {
+  "rxcui": "5521",
+  "name": "hydroxychloroquine",
+  "tty": "IN",
+  "epc": [
+   "Antimalarial",
+   "Antirheumatic Agent"
+  ],
+  "retrieved_at": "2026-11-10T05:38:37Z",
+  "source": "NLM RxNav"
+ },
+ "hyoscyamine": {
+  "rxcui": "153970",
+  "name": "hyoscyamine",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:31Z",
+  "source": "NLM RxNav"
+ },
+ "ibuprofen": {
+  "rxcui": "5640",
+  "name": "ibuprofen",
+  "tty": "IN",
+  "epc": [
+   "Nonsteroidal Anti-inflammatory Drug"
+  ],
+  "retrieved_at": "2026-11-10T05:35:41Z",
+  "source": "NLM RxNav"
+ },
+ "icosapent ethyl": {
+  "rxcui": "1304974",
+  "name": "icosapent ethyl",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:34:57Z",
+  "source": "NLM RxNav"
+ },
+ "imipenem": {
+  "rxcui": "5690",
+  "name": "imipenem",
+  "tty": "IN",
+  "epc": [
+   "Penem Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:14Z",
+  "source": "NLM RxNav"
+ },
+ "imipramine": {
+  "rxcui": "5691",
+  "name": "imipramine",
+  "tty": "IN",
+  "epc": [
+   "Tricyclic Antidepressant"
+  ],
+  "retrieved_at": "2026-11-10T05:36:24Z",
+  "source": "NLM RxNav"
+ },
+ "immunoglobulin G, human": {
+  "rxcui": "1426680",
+  "name": "immunoglobulin G, human",
+  "tty": "PIN",
+  "epc": [
+   "Human Immunoglobulin G"
+  ],
+  "retrieved_at": "2026-11-10T05:39:56Z",
+  "source": "NLM RxNav"
+ },
+ "indapamide": {
+  "rxcui": "5764",
+  "name": "indapamide",
+  "tty": "IN",
+  "epc": [
+   "Thiazide-like Diuretic"
+  ],
+  "retrieved_at": "2026-11-10T05:34:08Z",
+  "source": "NLM RxNav"
+ },
+ "indomethacin": {
+  "rxcui": "5781",
+  "name": "indomethacin",
+  "tty": "IN",
+  "epc": [
+   "Nonsteroidal Anti-inflammatory Drug"
+  ],
+  "retrieved_at": "2026-11-10T05:35:49Z",
+  "source": "NLM RxNav"
+ },
+ "infliximab": {
+  "rxcui": "191831",
+  "name": "infliximab",
+  "tty": "IN",
+  "epc": [
+   "Tumor Necrosis Factor Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:38:45Z",
+  "source": "NLM RxNav"
+ },
+ "insulin aspart": {
+  "rxcui": "51428",
+  "name": "insulin aspart, human",
+  "tty": "IN",
+  "epc": [
+   "Insulin Analog"
+  ],
+  "retrieved_at": "2026-11-10T05:33:59Z",
+  "source": "NLM RxNav"
+ },
+ "insulin degludec": {
+  "rxcui": "1670007",
+  "name": "insulin degludec",
+  "tty": "IN",
+  "epc": [
+   "Insulin Analog"
+  ],
+  "retrieved_at": "2026-11-10T05:34:03Z",
+  "source": "NLM RxNav"
+ },
+ "insulin detemir": {
+  "rxcui": "139825",
+  "name": "insulin detemir",
+  "tty": "IN",
+  "epc": [
+   "Insulin Analog"
+  ],
+  "retrieved_at": "2026-11-10T05:34:02Z",
+  "source": "NLM RxNav"
+ },
+ "insulin glargine": {
+  "rxcui": "274783",
+  "name": "insulin glargine",
+  "tty": "IN",
+  "epc": [
+   "Insulin Analog"
+  ],
+  "retrieved_at": "2026-11-10T05:34:02Z",
+  "source": "NLM RxNav"
+ },
+ "insulin glulisine": {
+  "rxcui": "400008",
+  "name": "insulin glulisine, human",
+  "tty": "IN",
+  "epc": [
+   "Insulin Analog"
+  ],
+  "retrieved_at": "2026-11-10T05:34:02Z",
+  "source": "NLM RxNav"
+ },
+ "insulin isophane": {
+  "rxcui": "1605101",
+  "name": "insulin isophane",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:33:59Z",
+  "source": "NLM RxNav"
+ },
+ "insulin lispro": {
+  "rxcui": "86009",
+  "name": "insulin lispro",
+  "tty": "IN",
+  "epc": [
+   "Insulin Analog"
+  ],
+  "retrieved_at": "2026-11-10T05:34:00Z",
+  "source": "NLM RxNav"
+ },
+ "insulin, regular, human": {
+  "rxcui": "253182",
+  "name": "insulin, regular, human",
+  "tty": "IN",
+  "epc": [
+   "Insulin"
+  ],
+  "retrieved_at": "2026-11-10T05:33:59Z",
+  "source": "NLM RxNav"
+ },
+ "interferon beta-1a": {
+  "rxcui": "75917",
+  "name": "interferon beta-1a",
+  "tty": "IN",
+  "epc": [
+   "Interferon beta"
+  ],
+  "retrieved_at": "2026-11-10T05:37:21Z",
+  "source": "NLM RxNav"
+ },
+ "ipilimumab": {
+  "rxcui": "1094833",
+  "name": "ipilimumab",
+  "tty": "IN",
+  "epc": [
+   "CTLA-4-directed Blocking Antibody"
+  ],
+  "retrieved_at": "2026-11-10T05:39:03Z",
+  "source": "NLM RxNav"
+ },
+ "iptacopan": {
+  "rxcui": "2671061",
+  "name": "iptacopan",
+  "tty": "IN",
+  "epc": [
+   "Complement Factor B Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:38:57Z",
+  "source": "NLM RxNav"
+ },
+ "irbesartan": {
+  "rxcui": "83818",
+  "name": "irbesartan",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin 2 Receptor Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:07Z",
+  "source": "NLM RxNav"
+ },
+ "iron sucrose": {
+  "rxcui": "24909",
+  "name": "iron sucrose",
+  "tty": "IN",
+  "epc": [
+   "Parenteral Iron Replacement"
+  ],
+  "retrieved_at": "2026-11-10T05:37:53Z",
+  "source": "NLM RxNav"
+ },
+ "isocarboxazid": {
+  "rxcui": "6011",
+  "name": "isocarboxazid",
+  "tty": "IN",
+  "epc": [
+   "Monoamine Oxidase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:31Z",
+  "source": "NLM RxNav"
+ },
+ "isoniazid": {
+  "rxcui": "6038",
+  "name": "isoniazid",
+  "tty": "IN",
+  "epc": [
+   "Antimycobacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:33Z",
+  "source": "NLM RxNav"
+ },
+ "isosorbide mononitrate": {
+  "rxcui": "28004",
+  "name": "isosorbide mononitrate",
+  "tty": "PIN",
+  "epc": [
+   "Nitrate Vasodilator"
+  ],
+  "retrieved_at": "2026-11-10T05:35:28Z",
+  "source": "NLM RxNav"
+ },
+ "itraconazole": {
+  "rxcui": "28031",
+  "name": "itraconazole",
+  "tty": "IN",
+  "epc": [
+   "Azole Antifungal"
+  ],
+  "retrieved_at": "2026-11-10T05:39:07Z",
+  "source": "NLM RxNav"
+ },
+ "ixekizumab": {
+  "rxcui": "1745099",
+  "name": "ixekizumab",
+  "tty": "IN",
+  "epc": [
+   "Interleukin-17A Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:38:51Z",
+  "source": "NLM RxNav"
+ },
+ "ketamine": {
+  "rxcui": "6130",
+  "name": "ketamine",
+  "tty": "IN",
+  "epc": [
+   "General Anesthetic"
+  ],
+  "retrieved_at": "2026-11-10T05:35:58Z",
+  "source": "NLM RxNav"
+ },
+ "ketoconazole": {
+  "rxcui": "6135",
+  "name": "ketoconazole",
+  "tty": "IN",
+  "epc": [
+   "Azole Antifungal",
+   "Cortisol Synthesis Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:29Z",
+  "source": "NLM RxNav"
+ },
+ "ketorolac": {
+  "rxcui": "35827",
+  "name": "ketorolac",
+  "tty": "IN",
+  "epc": [
+   "Cyclooxygenase Inhibitor",
+   "Nonsteroidal Anti-inflammatory Drug"
+  ],
+  "retrieved_at": "2026-11-10T05:35:46Z",
+  "source": "NLM RxNav"
+ },
+ "labetalol": {
+  "rxcui": "6185",
+  "name": "labetalol",
+  "tty": "IN",
+  "epc": [
+   "beta-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:19Z",
+  "source": "NLM RxNav"
+ },
+ "lacosamide": {
+  "rxcui": "623400",
+  "name": "lacosamide",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:39:21Z",
+  "source": "NLM RxNav"
+ },
+ "lactulose": {
+  "rxcui": "6218",
+  "name": "lactulose",
+  "tty": "IN",
+  "epc": [
+   "Osmotic Laxative"
+  ],
+  "retrieved_at": "2026-11-10T05:37:40Z",
+  "source": "NLM RxNav"
+ },
+ "lamotrigine": {
+  "rxcui": "28439",
+  "name": "lamotrigine",
+  "tty": "IN",
+  "epc": [
+   "Anti-epileptic Agent",
+   "Mood Stabilizer"
+  ],
+  "retrieved_at": "2026-11-10T05:36:50Z",
+  "source": "NLM RxNav"
+ },
+ "lansoprazole": {
+  "rxcui": "17128",
+  "name": "lansoprazole",
+  "tty": "IN",
+  "epc": [
+   "Proton Pump Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:35Z",
+  "source": "NLM RxNav"
+ },
+ "ledipasvir": {
+  "rxcui": "1591922",
+  "name": "ledipasvir",
+  "tty": "IN",
+  "epc": [
+   "Hepatitis C Virus NS5A Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:39:15Z",
+  "source": "NLM RxNav"
+ },
+ "leflunomide": {
+  "rxcui": "27169",
+  "name": "leflunomide",
+  "tty": "IN",
+  "epc": [
+   "Antirheumatic Agent"
+  ],
+  "retrieved_at": "2026-11-10T05:38:38Z",
+  "source": "NLM RxNav"
+ },
+ "levetiracetam": {
+  "rxcui": "114477",
+  "name": "levetiracetam",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:36:50Z",
+  "source": "NLM RxNav"
+ },
+ "levodopa": {
+  "rxcui": "6375",
+  "name": "levodopa",
+  "tty": "IN",
+  "epc": [
+   "Aromatic Amino Acid"
+  ],
+  "retrieved_at": "2026-11-10T05:37:08Z",
+  "source": "NLM RxNav"
+ },
+ "levofloxacin": {
+  "rxcui": "82122",
+  "name": "levofloxacin",
+  "tty": "IN",
+  "epc": [
+   "Fluoroquinolone Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:16Z",
+  "source": "NLM RxNav"
+ },
+ "levoketoconazole": {
+  "rxcui": "2588846",
+  "name": "levoketoconazole",
+  "tty": "PIN",
+  "epc": [
+   "Azole Antifungal",
+   "Cortisol Synthesis Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:29Z",
+  "source": "NLM RxNav"
+ },
+ "levonorgestrel": {
+  "rxcui": "6373",
+  "name": "levonorgestrel",
+  "tty": "IN",
+  "epc": [
+   "Progestin",
+   "Progestin-containing Intrauterine System"
+  ],
+  "retrieved_at": "2026-11-10T05:34:38Z",
+  "source": "NLM RxNav"
+ },
+ "levothyroxine": {
+  "rxcui": "10582",
+  "name": "levothyroxine",
+  "tty": "IN",
+  "epc": [
+   "l-Thyroxine"
+  ],
+  "retrieved_at": "2026-11-10T05:34:18Z",
+  "source": "NLM RxNav"
+ },
+ "linaclotide": {
+  "rxcui": "1307404",
+  "name": "linaclotide",
+  "tty": "IN",
+  "epc": [
+   "Guanylate Cyclase-C Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:38Z",
+  "source": "NLM RxNav"
+ },
+ "linagliptin": {
+  "rxcui": "1100699",
+  "name": "linagliptin",
+  "tty": "IN",
+  "epc": [
+   "Dipeptidyl Peptidase 4 Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:33:47Z",
+  "source": "NLM RxNav"
+ },
+ "linezolid": {
+  "rxcui": "190376",
+  "name": "linezolid",
+  "tty": "IN",
+  "epc": [
+   "Oxazolidinone Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:28Z",
+  "source": "NLM RxNav"
+ },
+ "liraglutide": {
+  "rxcui": "475968",
+  "name": "liraglutide",
+  "tty": "IN",
+  "epc": [
+   "GLP-1 Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:33:48Z",
+  "source": "NLM RxNav"
+ },
+ "lisinopril": {
+  "rxcui": "29046",
+  "name": "lisinopril",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin Converting Enzyme Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:59Z",
+  "source": "NLM RxNav"
+ },
+ "lithium carbonate": {
+  "rxcui": "42351",
+  "name": "lithium carbonate",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:36:34Z",
+  "source": "NLM RxNav"
+ },
+ "lixisenatide": {
+  "rxcui": "1440051",
+  "name": "lixisenatide",
+  "tty": "IN",
+  "epc": [
+   "GLP-1 Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:33:50Z",
+  "source": "NLM RxNav"
+ },
+ "lorazepam": {
+  "rxcui": "6470",
+  "name": "lorazepam",
+  "tty": "IN",
+  "epc": [
+   "Benzodiazepine"
+  ],
+  "retrieved_at": "2026-11-10T05:36:01Z",
+  "source": "NLM RxNav"
+ },
+ "losartan": {
+  "rxcui": "52175",
+  "name": "losartan",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin 2 Receptor Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:05Z",
+  "source": "NLM RxNav"
+ },
+ "lovastatin": {
+  "rxcui": "6472",
+  "name": "lovastatin",
+  "tty": "IN",
+  "epc": [
+   "HMG-CoA Reductase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:52Z",
+  "source": "NLM RxNav"
+ },
+ "lubiprostone": {
+  "rxcui": "623033",
+  "name": "lubiprostone",
+  "tty": "IN",
+  "epc": [
+   "Chloride Channel Activator"
+  ],
+  "retrieved_at": "2026-11-10T05:37:38Z",
+  "source": "NLM RxNav"
+ },
+ "lurasidone": {
+  "rxcui": "1040028",
+  "name": "lurasidone",
+  "tty": "IN",
+  "epc": [
+   "Atypical Antipsychotic"
+  ],
+  "retrieved_at": "2026-11-10T05:36:42Z",
+  "source": "NLM RxNav"
+ },
+ "medroxyprogesterone": {
+  "rxcui": "6691",
+  "name": "medroxyprogesterone",
+  "tty": "IN",
+  "epc": [
+   "Progestin"
+  ],
+  "retrieved_at": "2026-11-10T05:34:35Z",
+  "source": "NLM RxNav"
+ },
+ "meloxicam": {
+  "rxcui": "41493",
+  "name": "meloxicam",
+  "tty": "IN",
+  "epc": [
+   "Nonsteroidal Anti-inflammatory Drug"
+  ],
+  "retrieved_at": "2026-11-10T05:35:46Z",
+  "source": "NLM RxNav"
+ },
+ "memantine": {
+  "rxcui": "6719",
+  "name": "memantine",
+  "tty": "IN",
+  "epc": [
+   "N-methyl-D-aspartate Receptor Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:07Z",
+  "source": "NLM RxNav"
+ },
+ "meperidine": {
+  "rxcui": "6754",
+  "name": "meperidine",
+  "tty": "IN",
+  "epc": [
+   "Opioid Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:55Z",
+  "source": "NLM RxNav"
+ },
+ "meropenem": {
+  "rxcui": "29561",
+  "name": "meropenem",
+  "tty": "IN",
+  "epc": [
+   "Penem Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:13Z",
+  "source": "NLM RxNav"
+ },
+ "mesalamine": {
+  "rxcui": "52582",
+  "name": "mesalamine",
+  "tty": "IN",
+  "epc": [
+   "Aminosalicylate"
+  ],
+  "retrieved_at": "2026-11-10T05:39:13Z",
+  "source": "NLM RxNav"
+ },
+ "metformin": {
+  "rxcui": "6809",
+  "name": "metformin",
+  "tty": "IN",
+  "epc": [
+   "Biguanide"
+  ],
+  "retrieved_at": "2026-11-10T05:33:42Z",
+  "source": "NLM RxNav"
+ },
+ "methadone": {
+  "rxcui": "6813",
+  "name": "methadone",
+  "tty": "IN",
+  "epc": [
+   "Opioid Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:56Z",
+  "source": "NLM RxNav"
+ },
+ "methimazole": {
+  "rxcui": "6835",
+  "name": "methimazole",
+  "tty": "IN",
+  "epc": [
+   "Thyroid Hormone Synthesis Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:19Z",
+  "source": "NLM RxNav"
+ },
+ "methotrexate": {
+  "rxcui": "6851",
+  "name": "methotrexate",
+  "tty": "IN",
+  "epc": [
+   "Folate Analog Metabolic Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:38:37Z",
+  "source": "NLM RxNav"
+ },
+ "methoxy polyethylene glycol-epoetin beta": {
+  "rxcui": "729596",
+  "name": "methoxy polyethylene glycol-epoetin beta",
+  "tty": "IN",
+  "epc": [
+   "Erythropoiesis-stimulating Agent"
+  ],
+  "retrieved_at": "2026-11-10T05:37:58Z",
+  "source": "NLM RxNav"
+ },
+ "methylprednisolone": {
+  "rxcui": "6902",
+  "name": "methylprednisolone",
+  "tty": "IN",
+  "epc": [
+   "Corticosteroid"
+  ],
+  "retrieved_at": "2026-11-10T05:34:22Z",
+  "source": "NLM RxNav"
+ },
+ "metolazone": {
+  "rxcui": "6916",
+  "name": "metolazone",
+  "tty": "IN",
+  "epc": [
+   "Thiazide-like Diuretic"
+  ],
+  "retrieved_at": "2026-11-10T05:34:08Z",
+  "source": "NLM RxNav"
+ },
+ "metoprolol": {
+  "rxcui": "6918",
+  "name": "metoprolol",
+  "tty": "IN",
+  "epc": [
+   "beta-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:16Z",
+  "source": "NLM RxNav"
+ },
+ "metronidazole": {
+  "rxcui": "6922",
+  "name": "metronidazole",
+  "tty": "IN",
+  "epc": [
+   "Nitroimidazole Antimicrobial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:28Z",
+  "source": "NLM RxNav"
+ },
+ "metyrapone": {
+  "rxcui": "6923",
+  "name": "metyrapone",
+  "tty": "IN",
+  "epc": [
+   "Adrenal Steroid Synthesis Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:28Z",
+  "source": "NLM RxNav"
+ },
+ "midazolam": {
+  "rxcui": "6960",
+  "name": "midazolam",
+  "tty": "IN",
+  "epc": [
+   "Benzodiazepine"
+  ],
+  "retrieved_at": "2026-11-10T05:36:05Z",
+  "source": "NLM RxNav"
+ },
+ "milnacipran": {
+  "rxcui": "588250",
+  "name": "milnacipran",
+  "tty": "IN",
+  "epc": [
+   "Serotonin and Norepinephrine Reuptake Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:17Z",
+  "source": "NLM RxNav"
+ },
+ "minocycline": {
+  "rxcui": "6980",
+  "name": "minocycline",
+  "tty": "IN",
+  "epc": [
+   "Tetracycline-class Drug"
+  ],
+  "retrieved_at": "2026-11-10T05:38:23Z",
+  "source": "NLM RxNav"
+ },
+ "mirtazapine": {
+  "rxcui": "15996",
+  "name": "mirtazapine",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:36:26Z",
+  "source": "NLM RxNav"
+ },
+ "moexipril": {
+  "rxcui": "30131",
+  "name": "moexipril",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:35:04Z",
+  "source": "NLM RxNav"
+ },
+ "morphine": {
+  "rxcui": "7052",
+  "name": "morphine",
+  "tty": "IN",
+  "epc": [
+   "Opioid Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:49Z",
+  "source": "NLM RxNav"
+ },
+ "moxifloxacin": {
+  "rxcui": "139462",
+  "name": "moxifloxacin",
+  "tty": "IN",
+  "epc": [
+   "Fluoroquinolone Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:17Z",
+  "source": "NLM RxNav"
+ },
+ "mycophenolate mofetil": {
+  "rxcui": "68149",
+  "name": "mycophenolate mofetil",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:38:39Z",
+  "source": "NLM RxNav"
+ },
+ "mycophenolic acid": {
+  "rxcui": "7145",
+  "name": "mycophenolic acid",
+  "tty": "IN",
+  "epc": [
+   "Antimetabolite Immunosuppressant"
+  ],
+  "retrieved_at": "2026-11-10T05:38:40Z",
+  "source": "NLM RxNav"
+ },
+ "nadolol": {
+  "rxcui": "7226",
+  "name": "nadolol",
+  "tty": "IN",
+  "epc": [
+   "beta-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:19Z",
+  "source": "NLM RxNav"
+ },
+ "naloxone": {
+  "rxcui": "7242",
+  "name": "naloxone",
+  "tty": "IN",
+  "epc": [
+   "Opioid Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:58Z",
+  "source": "NLM RxNav"
+ },
+ "naltrexone": {
+  "rxcui": "7243",
+  "name": "naltrexone",
+  "tty": "IN",
+  "epc": [
+   "Opioid Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:34:47Z",
+  "source": "NLM RxNav"
+ },
+ "naproxen": {
+  "rxcui": "7258",
+  "name": "naproxen",
+  "tty": "IN",
+  "epc": [
+   "Nonsteroidal Anti-inflammatory Drug"
+  ],
+  "retrieved_at": "2026-11-10T05:35:43Z",
+  "source": "NLM RxNav"
+ },
+ "naratriptan": {
+  "rxcui": "141366",
+  "name": "naratriptan",
+  "tty": "IN",
+  "epc": [
+   "Serotonin-1b and Serotonin-1d Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:36:56Z",
+  "source": "NLM RxNav"
+ },
+ "natalizumab": {
+  "rxcui": "354770",
+  "name": "natalizumab",
+  "tty": "IN",
+  "epc": [
+   "Integrin Receptor Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:20Z",
+  "source": "NLM RxNav"
+ },
+ "nateglinide": {
+  "rxcui": "274332",
+  "name": "nateglinide",
+  "tty": "IN",
+  "epc": [
+   "Glinide"
+  ],
+  "retrieved_at": "2026-11-10T05:33:57Z",
+  "source": "NLM RxNav"
+ },
+ "nebivolol": {
+  "rxcui": "31555",
+  "name": "nebivolol",
+  "tty": "IN",
+  "epc": [
+   "beta-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:17Z",
+  "source": "NLM RxNav"
+ },
+ "nefazodone": {
+  "rxcui": "31565",
+  "name": "nefazodone",
+  "tty": "IN",
+  "epc": [
+   "Serotonin Reuptake Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:29Z",
+  "source": "NLM RxNav"
+ },
+ "nicotine": {
+  "rxcui": "7407",
+  "name": "nicotine",
+  "tty": "IN",
+  "epc": [
+   "Cholinergic Nicotinic Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:36:13Z",
+  "source": "NLM RxNav"
+ },
+ "nifedipine": {
+  "rxcui": "7417",
+  "name": "nifedipine",
+  "tty": "IN",
+  "epc": [
+   "Dihydropyridine Calcium Channel Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:14Z",
+  "source": "NLM RxNav"
+ },
+ "nintedanib": {
+  "rxcui": "1592737",
+  "name": "nintedanib",
+  "tty": "IN",
+  "epc": [
+   "Kinase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:39:03Z",
+  "source": "NLM RxNav"
+ },
+ "nirmatrelvir": {
+  "rxcui": "2587892",
+  "name": "nirmatrelvir",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:39:10Z",
+  "source": "NLM RxNav"
+ },
+ "nitrofurantoin": {
+  "rxcui": "7454",
+  "name": "nitrofurantoin",
+  "tty": "IN",
+  "epc": [
+   "Nitrofuran Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:31Z",
+  "source": "NLM RxNav"
+ },
+ "nivolumab": {
+  "rxcui": "1597876",
+  "name": "nivolumab",
+  "tty": "IN",
+  "epc": [
+   "Programmed Death Receptor-1 Blocking Antibody"
+  ],
+  "retrieved_at": "2026-11-10T05:39:00Z",
+  "source": "NLM RxNav"
+ },
+ "norethindrone": {
+  "rxcui": "7514",
+  "name": "norethindrone",
+  "tty": "IN",
+  "epc": [
+   "Progestin"
+  ],
+  "retrieved_at": "2026-11-10T05:34:36Z",
+  "source": "NLM RxNav"
+ },
+ "nortriptyline": {
+  "rxcui": "7531",
+  "name": "nortriptyline",
+  "tty": "IN",
+  "epc": [
+   "Tricyclic Antidepressant"
+  ],
+  "retrieved_at": "2026-11-10T05:36:23Z",
+  "source": "NLM RxNav"
+ },
+ "obinutuzumab": {
+  "rxcui": "974779",
+  "name": "obinutuzumab",
+  "tty": "IN",
+  "epc": [
+   "CD20-directed Cytolytic Antibody"
+  ],
+  "retrieved_at": "2026-11-10T05:38:44Z",
+  "source": "NLM RxNav"
+ },
+ "ocrelizumab": {
+  "rxcui": "1876366",
+  "name": "ocrelizumab",
+  "tty": "IN",
+  "epc": [
+   "CD20-directed Cytolytic Antibody"
+  ],
+  "retrieved_at": "2026-11-10T05:37:20Z",
+  "source": "NLM RxNav"
+ },
+ "octreotide": {
+  "rxcui": "7617",
+  "name": "octreotide",
+  "tty": "IN",
+  "epc": [
+   "Somatostatin Analog"
+  ],
+  "retrieved_at": "2026-11-10T05:39:18Z",
+  "source": "NLM RxNav"
+ },
+ "ofatumumab": {
+  "rxcui": "712566",
+  "name": "ofatumumab",
+  "tty": "IN",
+  "epc": [
+   "CD20-directed Cytolytic Antibody"
+  ],
+  "retrieved_at": "2026-11-10T05:37:21Z",
+  "source": "NLM RxNav"
+ },
+ "ofloxacin": {
+  "rxcui": "7623",
+  "name": "ofloxacin",
+  "tty": "IN",
+  "epc": [
+   "Quinolone Antimicrobial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:17Z",
+  "source": "NLM RxNav"
+ },
+ "olanzapine": {
+  "rxcui": "61381",
+  "name": "olanzapine",
+  "tty": "IN",
+  "epc": [
+   "Atypical Antipsychotic"
+  ],
+  "retrieved_at": "2026-11-10T05:36:40Z",
+  "source": "NLM RxNav"
+ },
+ "olmesartan": {
+  "rxcui": "321064",
+  "name": "olmesartan",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin 2 Receptor Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:09Z",
+  "source": "NLM RxNav"
+ },
+ "olsalazine": {
+  "rxcui": "32385",
+  "name": "olsalazine",
+  "tty": "IN",
+  "epc": [
+   "Aminosalicylate"
+  ],
+  "retrieved_at": "2026-11-10T05:39:15Z",
+  "source": "NLM RxNav"
+ },
+ "omega-3 acid ethyl esters (USP)": {
+  "rxcui": "484348",
+  "name": "omega-3 acid ethyl esters (USP)",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:39:56Z",
+  "source": "NLM RxNav"
+ },
+ "omeprazole": {
+  "rxcui": "7646",
+  "name": "omeprazole",
+  "tty": "IN",
+  "epc": [
+   "Proton Pump Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:33Z",
+  "source": "NLM RxNav"
+ },
+ "onabotulinumtoxinA": {
+  "rxcui": "860189",
+  "name": "onabotulinumtoxinA",
+  "tty": "PIN",
+  "epc": [
+   "Acetylcholine Release Inhibitor",
+   "Neuromuscular Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:37:04Z",
+  "source": "NLM RxNav"
+ },
+ "orlistat": {
+  "rxcui": "37925",
+  "name": "orlistat",
+  "tty": "IN",
+  "epc": [
+   "Intestinal Lipase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:46Z",
+  "source": "NLM RxNav"
+ },
+ "osilodrostat": {
+  "rxcui": "2286252",
+  "name": "osilodrostat",
+  "tty": "IN",
+  "epc": [
+   "Cortisol Synthesis Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:26Z",
+  "source": "NLM RxNav"
+ },
+ "oxazepam": {
+  "rxcui": "7781",
+  "name": "oxazepam",
+  "tty": "IN",
+  "epc": [
+   "Benzodiazepine"
+  ],
+  "retrieved_at": "2026-11-10T05:36:04Z",
+  "source": "NLM RxNav"
+ },
+ "oxcarbazepine": {
+  "rxcui": "32624",
+  "name": "oxcarbazepine",
+  "tty": "IN",
+  "epc": [
+   "Anti-epileptic Agent"
+  ],
+  "retrieved_at": "2026-11-10T05:36:46Z",
+  "source": "NLM RxNav"
+ },
+ "oxybutynin": {
+  "rxcui": "32675",
+  "name": "oxybutynin",
+  "tty": "IN",
+  "epc": [
+   "Cholinergic Muscarinic Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:26Z",
+  "source": "NLM RxNav"
+ },
+ "oxycodone": {
+  "rxcui": "7804",
+  "name": "oxycodone",
+  "tty": "IN",
+  "epc": [
+   "Opioid Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:49Z",
+  "source": "NLM RxNav"
+ },
+ "ozanimod": {
+  "rxcui": "2288236",
+  "name": "ozanimod",
+  "tty": "IN",
+  "epc": [
+   "Sphingosine 1-phosphate Receptor Modulator"
+  ],
+  "retrieved_at": "2026-11-10T05:37:18Z",
+  "source": "NLM RxNav"
+ },
+ "paliperidone": {
+  "rxcui": "679314",
+  "name": "paliperidone",
+  "tty": "IN",
+  "epc": [
+   "Atypical Antipsychotic"
+  ],
+  "retrieved_at": "2026-11-10T05:36:39Z",
+  "source": "NLM RxNav"
+ },
+ "pancrelipase": {
+  "rxcui": "392491",
+  "name": "amylase / lipase / protease",
+  "tty": "MIN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:41Z",
+  "source": "NLM RxNav"
+ },
+ "pantoprazole": {
+  "rxcui": "40790",
+  "name": "pantoprazole",
+  "tty": "IN",
+  "epc": [
+   "Proton Pump Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:36Z",
+  "source": "NLM RxNav"
+ },
+ "paroxetine": {
+  "rxcui": "32937",
+  "name": "paroxetine",
+  "tty": "IN",
+  "epc": [
+   "Serotonin Reuptake Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:19Z",
+  "source": "NLM RxNav"
+ },
+ "patiromer": {
+  "rxcui": "1716203",
+  "name": "patiromer",
+  "tty": "IN",
+  "epc": [
+   "Potassium Binder"
+  ],
+  "retrieved_at": "2026-11-10T05:39:11Z",
+  "source": "NLM RxNav"
+ },
+ "pegcetacoplan": {
+  "rxcui": "2557372",
+  "name": "pegcetacoplan",
+  "tty": "IN",
+  "epc": [
+   "Complement Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:38:57Z",
+  "source": "NLM RxNav"
+ },
+ "peginterferon alfa-2a": {
+  "rxcui": "120608",
+  "name": "peginterferon alfa-2a",
+  "tty": "IN",
+  "epc": [
+   "Interferon alpha"
+  ],
+  "retrieved_at": "2026-11-10T05:37:46Z",
+  "source": "NLM RxNav"
+ },
+ "pembrolizumab": {
+  "rxcui": "1547545",
+  "name": "pembrolizumab",
+  "tty": "IN",
+  "epc": [
+   "Programmed Death Receptor-1 Blocking Antibody"
+  ],
+  "retrieved_at": "2026-11-10T05:39:00Z",
+  "source": "NLM RxNav"
+ },
+ "penicillamine": {
+  "rxcui": "7975",
+  "name": "penicillamine",
+  "tty": "IN",
+  "epc": [
+   "Antirheumatic Agent"
+  ],
+  "retrieved_at": "2026-11-10T05:39:05Z",
+  "source": "NLM RxNav"
+ },
+ "penicillin G": {
+  "rxcui": "7980",
+  "name": "penicillin G",
+  "tty": "IN",
+  "epc": [
+   "Penicillin-class Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:03Z",
+  "source": "NLM RxNav"
+ },
+ "penicillin V": {
+  "rxcui": "7984",
+  "name": "penicillin V",
+  "tty": "IN",
+  "epc": [
+   "Penicillin-class Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:04Z",
+  "source": "NLM RxNav"
+ },
+ "pentoxifylline": {
+  "rxcui": "8013",
+  "name": "pentoxifylline",
+  "tty": "IN",
+  "epc": [
+   "Blood Viscosity Reducer"
+  ],
+  "retrieved_at": "2026-11-10T05:37:41Z",
+  "source": "NLM RxNav"
+ },
+ "pergolide": {
+  "rxcui": "8047",
+  "name": "pergolide",
+  "tty": "IN",
+  "epc": [
+   "Ergot-derived Dopamine Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:12Z",
+  "source": "NLM RxNav"
+ },
+ "perindopril": {
+  "rxcui": "54552",
+  "name": "perindopril",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin Converting Enzyme Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:35:01Z",
+  "source": "NLM RxNav"
+ },
+ "perphenazine": {
+  "rxcui": "8076",
+  "name": "perphenazine",
+  "tty": "IN",
+  "epc": [
+   "Phenothiazine"
+  ],
+  "retrieved_at": "2026-11-10T05:36:36Z",
+  "source": "NLM RxNav"
+ },
+ "phenelzine": {
+  "rxcui": "8123",
+  "name": "phenelzine",
+  "tty": "IN",
+  "epc": [
+   "Monoamine Oxidase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:29Z",
+  "source": "NLM RxNav"
+ },
+ "phenobarbital": {
+  "rxcui": "8134",
+  "name": "phenobarbital",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:36:47Z",
+  "source": "NLM RxNav"
+ },
+ "phenoxybenzamine": {
+  "rxcui": "8149",
+  "name": "phenoxybenzamine",
+  "tty": "IN",
+  "epc": [
+   "alpha-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:28Z",
+  "source": "NLM RxNav"
+ },
+ "phentermine": {
+  "rxcui": "8152",
+  "name": "phentermine",
+  "tty": "IN",
+  "epc": [
+   "Sympathomimetic Amine Anorectic"
+  ],
+  "retrieved_at": "2026-11-10T05:34:46Z",
+  "source": "NLM RxNav"
+ },
+ "phenytoin": {
+  "rxcui": "8183",
+  "name": "phenytoin",
+  "tty": "IN",
+  "epc": [
+   "Anti-epileptic Agent"
+  ],
+  "retrieved_at": "2026-11-10T05:36:47Z",
+  "source": "NLM RxNav"
+ },
+ "pibrentasvir": {
+  "rxcui": "1940636",
+  "name": "pibrentasvir",
+  "tty": "IN",
+  "epc": [
+   "Hepatitis C Virus NS5A Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:49Z",
+  "source": "NLM RxNav"
+ },
+ "pilocarpine": {
+  "rxcui": "8328",
+  "name": "pilocarpine",
+  "tty": "IN",
+  "epc": [
+   "Cholinergic Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:39:04Z",
+  "source": "NLM RxNav"
+ },
+ "pimozide": {
+  "rxcui": "8331",
+  "name": "pimozide",
+  "tty": "IN",
+  "epc": [
+   "Typical Antipsychotic"
+  ],
+  "retrieved_at": "2026-11-10T05:36:37Z",
+  "source": "NLM RxNav"
+ },
+ "pioglitazone": {
+  "rxcui": "33738",
+  "name": "pioglitazone",
+  "tty": "IN",
+  "epc": [
+   "Peroxisome Proliferator-activated Receptor alpha Agonist",
+   "Peroxisome Proliferator-activated Receptor gamma Agonist",
+   "Thiazolidinedione"
+  ],
+  "retrieved_at": "2026-11-10T05:33:53Z",
+  "source": "NLM RxNav"
+ },
+ "piperacillin": {
+  "rxcui": "8339",
+  "name": "piperacillin",
+  "tty": "IN",
+  "epc": [
+   "Penicillin-class Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:02Z",
+  "source": "NLM RxNav"
+ },
+ "piroxicam": {
+  "rxcui": "8356",
+  "name": "piroxicam",
+  "tty": "IN",
+  "epc": [
+   "Nonsteroidal Anti-inflammatory Drug"
+  ],
+  "retrieved_at": "2026-11-10T05:35:47Z",
+  "source": "NLM RxNav"
+ },
+ "pitavastatin": {
+  "rxcui": "861634",
+  "name": "pitavastatin",
+  "tty": "IN",
+  "epc": [
+   "HMG-CoA Reductase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:49Z",
+  "source": "NLM RxNav"
+ },
+ "posaconazole": {
+  "rxcui": "282446",
+  "name": "posaconazole",
+  "tty": "IN",
+  "epc": [
+   "Azole Antifungal"
+  ],
+  "retrieved_at": "2026-11-10T05:39:09Z",
+  "source": "NLM RxNav"
+ },
+ "potassium citrate": {
+  "rxcui": "54993",
+  "name": "potassium citrate",
+  "tty": "IN",
+  "epc": [
+   "Metabolic Alkalinizer"
+  ],
+  "retrieved_at": "2026-11-10T05:34:14Z",
+  "source": "NLM RxNav"
+ },
+ "pramipexole": {
+  "rxcui": "746741",
+  "name": "pramipexole",
+  "tty": "IN",
+  "epc": [
+   "Nonergot Dopamine Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:09Z",
+  "source": "NLM RxNav"
+ },
+ "pravastatin": {
+  "rxcui": "42463",
+  "name": "pravastatin",
+  "tty": "IN",
+  "epc": [
+   "HMG-CoA Reductase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:52Z",
+  "source": "NLM RxNav"
+ },
+ "prazosin": {
+  "rxcui": "8629",
+  "name": "prazosin",
+  "tty": "IN",
+  "epc": [
+   "alpha-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:27Z",
+  "source": "NLM RxNav"
+ },
+ "prednisolone": {
+  "rxcui": "8638",
+  "name": "prednisolone",
+  "tty": "IN",
+  "epc": [
+   "Corticosteroid"
+  ],
+  "retrieved_at": "2026-11-10T05:34:21Z",
+  "source": "NLM RxNav"
+ },
+ "prednisone": {
+  "rxcui": "8640",
+  "name": "prednisone",
+  "tty": "IN",
+  "epc": [
+   "Corticosteroid"
+  ],
+  "retrieved_at": "2026-11-10T05:34:22Z",
+  "source": "NLM RxNav"
+ },
+ "pregabalin": {
+  "rxcui": "187832",
+  "name": "pregabalin",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:36:14Z",
+  "source": "NLM RxNav"
+ },
+ "primidone": {
+  "rxcui": "8691",
+  "name": "primidone",
+  "tty": "IN",
+  "epc": [
+   "Anti-epileptic Agent"
+  ],
+  "retrieved_at": "2026-11-10T05:36:48Z",
+  "source": "NLM RxNav"
+ },
+ "progesterone": {
+  "rxcui": "8727",
+  "name": "progesterone",
+  "tty": "IN",
+  "epc": [
+   "Progesterone"
+  ],
+  "retrieved_at": "2026-11-10T05:34:35Z",
+  "source": "NLM RxNav"
+ },
+ "propranolol": {
+  "rxcui": "8787",
+  "name": "propranolol",
+  "tty": "IN",
+  "epc": [
+   "beta-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:18Z",
+  "source": "NLM RxNav"
+ },
+ "propylthiouracil": {
+  "rxcui": "8794",
+  "name": "propylthiouracil",
+  "tty": "IN",
+  "epc": [
+   "Thyroid Hormone Synthesis Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:19Z",
+  "source": "NLM RxNav"
+ },
+ "pyridostigmine": {
+  "rxcui": "9000",
+  "name": "pyridostigmine",
+  "tty": "IN",
+  "epc": [
+   "Cholinesterase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:08Z",
+  "source": "NLM RxNav"
+ },
+ "quetiapine": {
+  "rxcui": "51272",
+  "name": "quetiapine",
+  "tty": "IN",
+  "epc": [
+   "Atypical Antipsychotic"
+  ],
+  "retrieved_at": "2026-11-10T05:36:40Z",
+  "source": "NLM RxNav"
+ },
+ "quinapril": {
+  "rxcui": "35208",
+  "name": "quinapril",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin Converting Enzyme Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:35:03Z",
+  "source": "NLM RxNav"
+ },
+ "rabeprazole": {
+  "rxcui": "114979",
+  "name": "rabeprazole",
+  "tty": "IN",
+  "epc": [
+   "Proton Pump Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:37Z",
+  "source": "NLM RxNav"
+ },
+ "ramipril": {
+  "rxcui": "35296",
+  "name": "ramipril",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin Converting Enzyme Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:35:00Z",
+  "source": "NLM RxNav"
+ },
+ "rasagiline": {
+  "rxcui": "134748",
+  "name": "rasagiline",
+  "tty": "IN",
+  "epc": [
+   "Monoamine Oxidase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:32Z",
+  "source": "NLM RxNav"
+ },
+ "ravulizumab": {
+  "rxcui": "2107301",
+  "name": "ravulizumab",
+  "tty": "IN",
+  "epc": [
+   "Complement Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:38:57Z",
+  "source": "NLM RxNav"
+ },
+ "repaglinide": {
+  "rxcui": "73044",
+  "name": "repaglinide",
+  "tty": "IN",
+  "epc": [
+   "Glinide"
+  ],
+  "retrieved_at": "2026-11-10T05:33:57Z",
+  "source": "NLM RxNav"
+ },
+ "resmetirom": {
+  "rxcui": "2677894",
+  "name": "resmetirom",
+  "tty": "IN",
+  "epc": [
+   "Thyroid Hormone Receptor beta Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:43Z",
+  "source": "NLM RxNav"
+ },
+ "rifabutin": {
+  "rxcui": "55672",
+  "name": "rifabutin",
+  "tty": "IN",
+  "epc": [
+   "Rifamycin Antimycobacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:34Z",
+  "source": "NLM RxNav"
+ },
+ "rifampin": {
+  "rxcui": "9384",
+  "name": "rifampin",
+  "tty": "IN",
+  "epc": [
+   "Rifamycin Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:34Z",
+  "source": "NLM RxNav"
+ },
+ "rifaximin": {
+  "rxcui": "35619",
+  "name": "rifaximin",
+  "tty": "IN",
+  "epc": [
+   "Rifamycin Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:37:39Z",
+  "source": "NLM RxNav"
+ },
+ "riluzole": {
+  "rxcui": "35623",
+  "name": "riluzole",
+  "tty": "IN",
+  "epc": [
+   "Benzothiazole"
+  ],
+  "retrieved_at": "2026-11-10T05:37:15Z",
+  "source": "NLM RxNav"
+ },
+ "rimegepant": {
+  "rxcui": "2282307",
+  "name": "rimegepant",
+  "tty": "IN",
+  "epc": [
+   "Calcitonin Gene-related Peptide Receptor Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:02Z",
+  "source": "NLM RxNav"
+ },
+ "risperidone": {
+  "rxcui": "35636",
+  "name": "risperidone",
+  "tty": "IN",
+  "epc": [
+   "Atypical Antipsychotic"
+  ],
+  "retrieved_at": "2026-11-10T05:36:38Z",
+  "source": "NLM RxNav"
+ },
+ "ritonavir": {
+  "rxcui": "85762",
+  "name": "ritonavir",
+  "tty": "IN",
+  "epc": [
+   "Cytochrome P450 3A Inhibitor",
+   "Protease Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:52Z",
+  "source": "NLM RxNav"
+ },
+ "rituximab": {
+  "rxcui": "121191",
+  "name": "rituximab",
+  "tty": "IN",
+  "epc": [
+   "CD20-directed Cytolytic Antibody"
+  ],
+  "retrieved_at": "2026-11-10T05:38:43Z",
+  "source": "NLM RxNav"
+ },
+ "rivaroxaban": {
+  "rxcui": "1114195",
+  "name": "rivaroxaban",
+  "tty": "IN",
+  "epc": [
+   "Factor Xa Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:35:33Z",
+  "source": "NLM RxNav"
+ },
+ "rivastigmine": {
+  "rxcui": "183379",
+  "name": "rivastigmine",
+  "tty": "IN",
+  "epc": [
+   "Cholinesterase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:05Z",
+  "source": "NLM RxNav"
+ },
+ "rizatriptan": {
+  "rxcui": "88014",
+  "name": "rizatriptan",
+  "tty": "IN",
+  "epc": [
+   "Serotonin-1b and Serotonin-1d Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:36:56Z",
+  "source": "NLM RxNav"
+ },
+ "romosozumab": {
+  "rxcui": "2123126",
+  "name": "romosozumab",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:34:45Z",
+  "source": "NLM RxNav"
+ },
+ "ropinirole": {
+  "rxcui": "72302",
+  "name": "ropinirole",
+  "tty": "IN",
+  "epc": [
+   "Nonergot Dopamine Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:10Z",
+  "source": "NLM RxNav"
+ },
+ "rosiglitazone": {
+  "rxcui": "84108",
+  "name": "rosiglitazone",
+  "tty": "IN",
+  "epc": [
+   "Peroxisome Proliferator-activated Receptor gamma Agonist",
+   "Thiazolidinedione"
+  ],
+  "retrieved_at": "2026-11-10T05:33:53Z",
+  "source": "NLM RxNav"
+ },
+ "rosuvastatin": {
+  "rxcui": "301542",
+  "name": "rosuvastatin",
+  "tty": "IN",
+  "epc": [
+   "HMG-CoA Reductase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:49Z",
+  "source": "NLM RxNav"
+ },
+ "rotigotine": {
+  "rxcui": "616739",
+  "name": "rotigotine",
+  "tty": "IN",
+  "epc": [
+   "Nonergot Dopamine Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:11Z",
+  "source": "NLM RxNav"
+ },
+ "safinamide": {
+  "rxcui": "1922448",
+  "name": "safinamide",
+  "tty": "IN",
+  "epc": [
+   "Monoamine Oxidase Type B Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:33Z",
+  "source": "NLM RxNav"
+ },
+ "saxagliptin": {
+  "rxcui": "857974",
+  "name": "saxagliptin",
+  "tty": "IN",
+  "epc": [
+   "Dipeptidyl Peptidase 4 Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:33:46Z",
+  "source": "NLM RxNav"
+ },
+ "scopolamine": {
+  "rxcui": "9601",
+  "name": "scopolamine",
+  "tty": "IN",
+  "epc": [
+   "Anticholinergic"
+  ],
+  "retrieved_at": "2026-11-10T05:37:30Z",
+  "source": "NLM RxNav"
+ },
+ "secukinumab": {
+  "rxcui": "1599788",
+  "name": "secukinumab",
+  "tty": "IN",
+  "epc": [
+   "Interleukin-17A Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:38:50Z",
+  "source": "NLM RxNav"
+ },
+ "selegiline": {
+  "rxcui": "9639",
+  "name": "selegiline",
+  "tty": "IN",
+  "epc": [
+   "Monoamine Oxidase Inhibitor",
+   "Monoamine Oxidase Type B Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:32Z",
+  "source": "NLM RxNav"
+ },
+ "semaglutide": {
+  "rxcui": "1991302",
+  "name": "semaglutide",
+  "tty": "IN",
+  "epc": [
+   "GLP-1 Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:33:51Z",
+  "source": "NLM RxNav"
+ },
+ "sertraline": {
+  "rxcui": "36437",
+  "name": "sertraline",
+  "tty": "IN",
+  "epc": [
+   "Serotonin Reuptake Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:19Z",
+  "source": "NLM RxNav"
+ },
+ "sildenafil": {
+  "rxcui": "136411",
+  "name": "sildenafil",
+  "tty": "IN",
+  "epc": [
+   "Phosphodiesterase 5 Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:35:30Z",
+  "source": "NLM RxNav"
+ },
+ "silodosin": {
+  "rxcui": "720825",
+  "name": "silodosin",
+  "tty": "IN",
+  "epc": [
+   "alpha-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:25Z",
+  "source": "NLM RxNav"
+ },
+ "simvastatin": {
+  "rxcui": "36567",
+  "name": "simvastatin",
+  "tty": "IN",
+  "epc": [
+   "HMG-CoA Reductase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:34:51Z",
+  "source": "NLM RxNav"
+ },
+ "siponimod": {
+  "rxcui": "2121085",
+  "name": "siponimod",
+  "tty": "IN",
+  "epc": [
+   "Sphingosine 1-phosphate Receptor Modulator"
+  ],
+  "retrieved_at": "2026-11-10T05:37:18Z",
+  "source": "NLM RxNav"
+ },
+ "sitagliptin": {
+  "rxcui": "593411",
+  "name": "sitagliptin",
+  "tty": "IN",
+  "epc": [
+   "Dipeptidyl Peptidase 4 Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:33:45Z",
+  "source": "NLM RxNav"
+ },
+ "sodium chloride": {
+  "rxcui": "9863",
+  "name": "sodium chloride",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:34:12Z",
+  "source": "NLM RxNav"
+ },
+ "sodium polystyrene sulfonate": {
+  "rxcui": "56512",
+  "name": "sodium polystyrene sulfonate",
+  "tty": "IN",
+  "epc": [
+   "Potassium Binder"
+  ],
+  "retrieved_at": "2026-11-10T05:39:12Z",
+  "source": "NLM RxNav"
+ },
+ "sodium zirconium cyclosilicate": {
+  "rxcui": "2047628",
+  "name": "sodium zirconium cyclosilicate",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:39:12Z",
+  "source": "NLM RxNav"
+ },
+ "sofosbuvir": {
+  "rxcui": "1484911",
+  "name": "sofosbuvir",
+  "tty": "IN",
+  "epc": [
+   "Hepatitis C Virus Nucleotide Analog NS5B Polymerase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:47Z",
+  "source": "NLM RxNav"
+ },
+ "solifenacin": {
+  "rxcui": "322167",
+  "name": "solifenacin",
+  "tty": "IN",
+  "epc": [
+   "Cholinergic Muscarinic Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:27Z",
+  "source": "NLM RxNav"
+ },
+ "somatostatin": {
+  "rxcui": "9939",
+  "name": "somatostatin",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:39:18Z",
+  "source": "NLM RxNav"
+ },
+ "somatropin": {
+  "rxcui": "61148",
+  "name": "somatropin",
+  "tty": "IN",
+  "epc": [
+   "Recombinant Human Growth Hormone"
+  ],
+  "retrieved_at": "2026-11-10T05:34:31Z",
+  "source": "NLM RxNav"
+ },
+ "sotalol": {
+  "rxcui": "9947",
+  "name": "sotalol",
+  "tty": "IN",
+  "epc": [
+   "Antiarrhythmic"
+  ],
+  "retrieved_at": "2026-11-10T05:35:21Z",
+  "source": "NLM RxNav"
+ },
+ "spironolactone": {
+  "rxcui": "9997",
+  "name": "spironolactone",
+  "tty": "IN",
+  "epc": [
+   "Aldosterone Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:34:05Z",
+  "source": "NLM RxNav"
+ },
+ "sulbactam": {
+  "rxcui": "10167",
+  "name": "sulbactam",
+  "tty": "IN",
+  "epc": [
+   "beta Lactamase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:38:01Z",
+  "source": "NLM RxNav"
+ },
+ "sulfamethoxazole": {
+  "rxcui": "10180",
+  "name": "sulfamethoxazole",
+  "tty": "IN",
+  "epc": [
+   "Sulfonamide Antimicrobial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:30Z",
+  "source": "NLM RxNav"
+ },
+ "sulfasalazine": {
+  "rxcui": "9524",
+  "name": "sulfasalazine",
+  "tty": "IN",
+  "epc": [
+   "Aminosalicylate"
+  ],
+  "retrieved_at": "2026-11-10T05:38:37Z",
+  "source": "NLM RxNav"
+ },
+ "sumatriptan": {
+  "rxcui": "37418",
+  "name": "sumatriptan",
+  "tty": "IN",
+  "epc": [
+   "Serotonin-1b and Serotonin-1d Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:36:54Z",
+  "source": "NLM RxNav"
+ },
+ "tacrolimus": {
+  "rxcui": "42316",
+  "name": "tacrolimus",
+  "tty": "IN",
+  "epc": [
+   "Calcineurin Inhibitor Immunosuppressant"
+  ],
+  "retrieved_at": "2026-11-10T05:38:41Z",
+  "source": "NLM RxNav"
+ },
+ "tamsulosin": {
+  "rxcui": "77492",
+  "name": "tamsulosin",
+  "tty": "IN",
+  "epc": [
+   "alpha-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:24Z",
+  "source": "NLM RxNav"
+ },
+ "tapentadol": {
+  "rxcui": "787390",
+  "name": "tapentadol",
+  "tty": "IN",
+  "epc": [
+   "Opioid Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:52Z",
+  "source": "NLM RxNav"
+ },
+ "tazobactam": {
+  "rxcui": "37617",
+  "name": "tazobactam",
+  "tty": "IN",
+  "epc": [
+   "beta Lactamase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:38:02Z",
+  "source": "NLM RxNav"
+ },
+ "telaprevir": {
+  "rxcui": "1102261",
+  "name": "telaprevir",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:51Z",
+  "source": "NLM RxNav"
+ },
+ "telmisartan": {
+  "rxcui": "73494",
+  "name": "telmisartan",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin 2 Receptor Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:08Z",
+  "source": "NLM RxNav"
+ },
+ "tenofovir alafenamide": {
+  "rxcui": "1721603",
+  "name": "tenofovir alafenamide",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:45Z",
+  "source": "NLM RxNav"
+ },
+ "tenofovir disoproxil": {
+  "rxcui": "300195",
+  "name": "tenofovir disoproxil",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:45Z",
+  "source": "NLM RxNav"
+ },
+ "terazosin": {
+  "rxcui": "37798",
+  "name": "terazosin",
+  "tty": "IN",
+  "epc": [
+   "alpha-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:27Z",
+  "source": "NLM RxNav"
+ },
+ "teriflunomide": {
+  "rxcui": "1310520",
+  "name": "teriflunomide",
+  "tty": "IN",
+  "epc": [
+   "Pyrimidine Synthesis Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:23Z",
+  "source": "NLM RxNav"
+ },
+ "teriparatide": {
+  "rxcui": "32915",
+  "name": "teriparatide",
+  "tty": "IN",
+  "epc": [
+   "Parathyroid Hormone Analog"
+  ],
+  "retrieved_at": "2026-11-10T05:34:44Z",
+  "source": "NLM RxNav"
+ },
+ "terlipressin": {
+  "rxcui": "57048",
+  "name": "terlipressin",
+  "tty": "IN",
+  "epc": [
+   "Vasopressin Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:39:17Z",
+  "source": "NLM RxNav"
+ },
+ "testosterone": {
+  "rxcui": "10379",
+  "name": "testosterone",
+  "tty": "IN",
+  "epc": [
+   "Androgen"
+  ],
+  "retrieved_at": "2026-11-10T05:34:32Z",
+  "source": "NLM RxNav"
+ },
+ "tetracycline": {
+  "rxcui": "10395",
+  "name": "tetracycline",
+  "tty": "IN",
+  "epc": [
+   "Tetracycline-class Antimicrobial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:24Z",
+  "source": "NLM RxNav"
+ },
+ "tiagabine": {
+  "rxcui": "31914",
+  "name": "tiagabine",
+  "tty": "IN",
+  "epc": [
+   "Anti-epileptic Agent"
+  ],
+  "retrieved_at": "2026-11-10T05:36:52Z",
+  "source": "NLM RxNav"
+ },
+ "timolol": {
+  "rxcui": "10600",
+  "name": "timolol",
+  "tty": "IN",
+  "epc": [
+   "beta-Adrenergic Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:22Z",
+  "source": "NLM RxNav"
+ },
+ "tirzepatide": {
+  "rxcui": "2601723",
+  "name": "tirzepatide",
+  "tty": "IN",
+  "epc": [
+   "GLP-1 Receptor Agonist",
+   "Glucose-dependent Insulinotropic Polypeptide Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:33:52Z",
+  "source": "NLM RxNav"
+ },
+ "tobramycin": {
+  "rxcui": "10627",
+  "name": "tobramycin",
+  "tty": "IN",
+  "epc": [
+   "Aminoglycoside Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:26Z",
+  "source": "NLM RxNav"
+ },
+ "tocilizumab": {
+  "rxcui": "612865",
+  "name": "tocilizumab",
+  "tty": "IN",
+  "epc": [
+   "Interleukin-6 Receptor Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:38:48Z",
+  "source": "NLM RxNav"
+ },
+ "tofacitinib": {
+  "rxcui": "1357536",
+  "name": "tofacitinib",
+  "tty": "IN",
+  "epc": [
+   "Janus Kinase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:38:53Z",
+  "source": "NLM RxNav"
+ },
+ "tofersen": {
+  "rxcui": "2634995",
+  "name": "tofersen",
+  "tty": "IN",
+  "epc": [
+   "Antisense Oligonucleotide"
+  ],
+  "retrieved_at": "2026-11-10T05:37:16Z",
+  "source": "NLM RxNav"
+ },
+ "tolcapone": {
+  "rxcui": "72937",
+  "name": "tolcapone",
+  "tty": "IN",
+  "epc": [
+   "Catechol-O-Methyltransferase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:13Z",
+  "source": "NLM RxNav"
+ },
+ "tolterodine": {
+  "rxcui": "119565",
+  "name": "tolterodine",
+  "tty": "IN",
+  "epc": [
+   "Cholinergic Muscarinic Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:27Z",
+  "source": "NLM RxNav"
+ },
+ "tolvaptan": {
+  "rxcui": "358257",
+  "name": "tolvaptan",
+  "tty": "IN",
+  "epc": [
+   "Vasopressin V2 Receptor Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:34:10Z",
+  "source": "NLM RxNav"
+ },
+ "topiramate": {
+  "rxcui": "38404",
+  "name": "topiramate",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:36:51Z",
+  "source": "NLM RxNav"
+ },
+ "torsemide": {
+  "rxcui": "38413",
+  "name": "torsemide",
+  "tty": "IN",
+  "epc": [
+   "Loop Diuretic"
+  ],
+  "retrieved_at": "2026-11-10T05:34:10Z",
+  "source": "NLM RxNav"
+ },
+ "tramadol": {
+  "rxcui": "10689",
+  "name": "tramadol",
+  "tty": "IN",
+  "epc": [
+   "Opioid Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:52Z",
+  "source": "NLM RxNav"
+ },
+ "trandolapril": {
+  "rxcui": "38454",
+  "name": "trandolapril",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin Converting Enzyme Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:35:05Z",
+  "source": "NLM RxNav"
+ },
+ "tranylcypromine": {
+  "rxcui": "10734",
+  "name": "tranylcypromine",
+  "tty": "IN",
+  "epc": [
+   "Monoamine Oxidase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:30Z",
+  "source": "NLM RxNav"
+ },
+ "trazodone": {
+  "rxcui": "10737",
+  "name": "trazodone",
+  "tty": "IN",
+  "epc": [
+   "Serotonin Reuptake Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:27Z",
+  "source": "NLM RxNav"
+ },
+ "triamcinolone": {
+  "rxcui": "10759",
+  "name": "triamcinolone",
+  "tty": "IN",
+  "epc": [
+   "Corticosteroid"
+  ],
+  "retrieved_at": "2026-11-10T05:34:25Z",
+  "source": "NLM RxNav"
+ },
+ "triazolam": {
+  "rxcui": "10767",
+  "name": "triazolam",
+  "tty": "IN",
+  "epc": [
+   "Benzodiazepine"
+  ],
+  "retrieved_at": "2026-11-10T05:36:07Z",
+  "source": "NLM RxNav"
+ },
+ "trientine": {
+  "rxcui": "10798",
+  "name": "trientine",
+  "tty": "IN",
+  "epc": [
+   "Copper Chelator"
+  ],
+  "retrieved_at": "2026-11-10T05:39:06Z",
+  "source": "NLM RxNav"
+ },
+ "trihexyphenidyl": {
+  "rxcui": "10811",
+  "name": "trihexyphenidyl",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:13Z",
+  "source": "NLM RxNav"
+ },
+ "trimethoprim": {
+  "rxcui": "10829",
+  "name": "trimethoprim",
+  "tty": "IN",
+  "epc": [
+   "Dihydrofolate Reductase Inhibitor Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:31Z",
+  "source": "NLM RxNav"
+ },
+ "trospium": {
+  "rxcui": "236778",
+  "name": "trospium",
+  "tty": "IN",
+  "epc": [
+   "Cholinergic Muscarinic Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:29Z",
+  "source": "NLM RxNav"
+ },
+ "ubrogepant": {
+  "rxcui": "2268216",
+  "name": "ubrogepant",
+  "tty": "IN",
+  "epc": [
+   "Calcitonin Gene-related Peptide Receptor Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:37:02Z",
+  "source": "NLM RxNav"
+ },
+ "upadacitinib": {
+  "rxcui": "2196092",
+  "name": "upadacitinib",
+  "tty": "IN",
+  "epc": [
+   "Janus Kinase Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:38:54Z",
+  "source": "NLM RxNav"
+ },
+ "ustekinumab": {
+  "rxcui": "847083",
+  "name": "ustekinumab",
+  "tty": "IN",
+  "epc": [
+   "Interleukin-12 Antagonist",
+   "Interleukin-23 Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:38:51Z",
+  "source": "NLM RxNav"
+ },
+ "valproic acid": {
+  "rxcui": "11118",
+  "name": "valproic acid",
+  "tty": "PIN",
+  "epc": [
+   "Anti-epileptic Agent",
+   "Mood Stabilizer"
+  ],
+  "retrieved_at": "2026-11-10T05:36:49Z",
+  "source": "NLM RxNav"
+ },
+ "valsartan": {
+  "rxcui": "69749",
+  "name": "valsartan",
+  "tty": "IN",
+  "epc": [
+   "Angiotensin 2 Receptor Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:06Z",
+  "source": "NLM RxNav"
+ },
+ "vancomycin": {
+  "rxcui": "11124",
+  "name": "vancomycin",
+  "tty": "IN",
+  "epc": [
+   "Glycopeptide Antibacterial"
+  ],
+  "retrieved_at": "2026-11-10T05:38:27Z",
+  "source": "NLM RxNav"
+ },
+ "varenicline": {
+  "rxcui": "591622",
+  "name": "varenicline",
+  "tty": "IN",
+  "epc": [
+   "Cholinergic Receptor Agonist",
+   "Partial Cholinergic Nicotinic Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:36:12Z",
+  "source": "NLM RxNav"
+ },
+ "vasopressin": {
+  "rxcui": "11149",
+  "name": "vasopressin (USP)",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:39:19Z",
+  "source": "NLM RxNav"
+ },
+ "vedolizumab": {
+  "rxcui": "1538097",
+  "name": "vedolizumab",
+  "tty": "IN",
+  "epc": [
+   "Integrin Receptor Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:38:51Z",
+  "source": "NLM RxNav"
+ },
+ "velpatasvir": {
+  "rxcui": "1799206",
+  "name": "velpatasvir",
+  "tty": "IN",
+  "epc": [
+   "Hepatitis C Virus NS5A Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:37:48Z",
+  "source": "NLM RxNav"
+ },
+ "venlafaxine": {
+  "rxcui": "39786",
+  "name": "venlafaxine",
+  "tty": "IN",
+  "epc": [
+   "Serotonin and Norepinephrine Reuptake Inhibitor"
+  ],
+  "retrieved_at": "2026-11-10T05:36:16Z",
+  "source": "NLM RxNav"
+ },
+ "verapamil": {
+  "rxcui": "11170",
+  "name": "verapamil",
+  "tty": "IN",
+  "epc": [
+   "Calcium Channel Blocker"
+  ],
+  "retrieved_at": "2026-11-10T05:35:12Z",
+  "source": "NLM RxNav"
+ },
+ "vigabatrin": {
+  "rxcui": "14851",
+  "name": "vigabatrin",
+  "tty": "IN",
+  "epc": [
+   "Anti-epileptic Agent"
+  ],
+  "retrieved_at": "2026-11-10T05:36:53Z",
+  "source": "NLM RxNav"
+ },
+ "vilazodone": {
+  "rxcui": "1086769",
+  "name": "vilazodone",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:36:27Z",
+  "source": "NLM RxNav"
+ },
+ "vildagliptin": {
+  "rxcui": "596554",
+  "name": "vildagliptin",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:33:45Z",
+  "source": "NLM RxNav"
+ },
+ "vitamin E": {
+  "rxcui": "11256",
+  "name": "vitamin E",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:42Z",
+  "source": "NLM RxNav"
+ },
+ "vonoprazan": {
+  "rxcui": "2604577",
+  "name": "vonoprazan",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:37:37Z",
+  "source": "NLM RxNav"
+ },
+ "voriconazole": {
+  "rxcui": "121243",
+  "name": "voriconazole",
+  "tty": "IN",
+  "epc": [
+   "Azole Antifungal"
+  ],
+  "retrieved_at": "2026-11-10T05:39:08Z",
+  "source": "NLM RxNav"
+ },
+ "vortioxetine": {
+  "rxcui": "1455099",
+  "name": "vortioxetine",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:36:28Z",
+  "source": "NLM RxNav"
+ },
+ "warfarin": {
+  "rxcui": "11289",
+  "name": "warfarin",
+  "tty": "IN",
+  "epc": [
+   "Vitamin K Antagonist"
+  ],
+  "retrieved_at": "2026-11-10T05:35:31Z",
+  "source": "NLM RxNav"
+ },
+ "zinc acetate": {
+  "rxcui": "58295",
+  "name": "zinc acetate",
+  "tty": "IN",
+  "epc": [],
+  "retrieved_at": "2026-11-10T05:39:06Z",
+  "source": "NLM RxNav"
+ },
+ "ziprasidone": {
+  "rxcui": "115698",
+  "name": "ziprasidone",
+  "tty": "IN",
+  "epc": [
+   "Atypical Antipsychotic"
+  ],
+  "retrieved_at": "2026-11-10T05:36:41Z",
+  "source": "NLM RxNav"
+ },
+ "zoledronic acid": {
+  "rxcui": "77655",
+  "name": "zoledronic acid",
+  "tty": "IN",
+  "epc": [
+   "Bisphosphonate"
+  ],
+  "retrieved_at": "2026-11-10T05:34:43Z",
+  "source": "NLM RxNav"
+ },
+ "zolmitriptan": {
+  "rxcui": "135775",
+  "name": "zolmitriptan",
+  "tty": "IN",
+  "epc": [
+   "Serotonin-1b and Serotonin-1d Receptor Agonist"
+  ],
+  "retrieved_at": "2026-11-10T05:36:55Z",
+  "source": "NLM RxNav"
+ },
+ "zolpidem": {
+  "rxcui": "39993",
+  "name": "zolpidem",
+  "tty": "IN",
+  "epc": [
+   "gamma-Aminobutyric Acid A Receptor Positive Modulator"
+  ],
+  "retrieved_at": "2026-11-10T05:36:08Z",
+  "source": "NLM RxNav"
+ }
+}

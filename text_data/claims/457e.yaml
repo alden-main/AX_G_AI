@@ -1,0 +1,93 @@
+# 457e장 뇌진탕과 다른 외상성 뇌 손상 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처는 손상 후 급성기 이후(post-acute) 경도 외상성 뇌손상 지침 — 급성기 영상·중증 손상 관리는 근거 미확보.
+
+chapter: "457e"
+title: 뇌진탕과 다른 외상성 뇌 손상
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 457e-C01
+    topic: 경도 두부 손상 급성기 CT 판단
+    type: workup
+    original:
+      text: >
+        지속적인 심한 두통·반복 구토가 오래 지속되면 CT. 고령, 2회 이상 구토, 30분 이상 기억상실, 경련, 약물·알코올 중독은 CT상 뇌출혈의 민감한 지표.
+        경도 손상은 수 시간 관찰 후 귀가, 악화 시 재내원.
+      location: {file: by_chapter/457e장.md, line: 116}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 출처 미확보(급성기 CT 결정 규칙은 응급의학 지침 영역). 원문 대조용으로만 유지."
+
+  - id: 457e-C02
+    topic: 경도 외상성 뇌손상 후 증상 평가와 진단 검사
+    type: workup
+    original:
+      text: "뇌진탕 증상: 두통, 어지럼, 구역, 집중 곤란, 기억상실, 시야흐림. 대개 예후 양호."
+      location: {file: by_chapter/457e장.md, line: 114}
+    status: 보완
+    current:
+      text: >
+        경도 외상성 뇌손상에 따른 증상이 있는 환자 대부분은 전문 진료보다 일차진료에서 증상 중심으로 평가·관리하도록 제안한다(Rec 1).
+        진단이나 진료 방향을 정하는 데 신경영상, 혈청 생체표지자, 뇌파를 쓰지 않도록 제안한다(Rec 4). 컴퓨터 뇌진탕후 선별검사 배터리의 일상적 사용(Rec 5)과
+        손상 후 30일 이내 종합 신경심리·인지 검사(Rec 6)도 제안하지 않는다. 손상 기전으로 예후·치료 전략을 바꾸지 않도록 제안한다(Rec 9).
+        손상 30일 넘어 새로 생긴 증상은 경도 외상성 뇌손상 외 원인을 찾는 증상별 평가를 제안한다(Rec 3).
+      sources:
+        - {id: VADOD-MTBI-2021, locator: "Recommendations 1, 3–6, 9"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [S06.0, F07.81]}
+        recommendations:
+          - when: {all: [{finding: post_acute_mtbi_symptoms}, {any: [{event: neuroimaging_ordered_for_mtbi_diagnosis}, {event: serum_biomarker_ordered_for_mtbi}, {event: eeg_ordered_for_mtbi}]}]}
+            recommend: {action: avoid, detail: "급성기 이후 mTBI 진단·진료 방향 결정 목적의 영상·혈청 표지자·뇌파"}
+            strength: "VA/DoD Rec 4 (Weak against)"
+          - when: {all: [{finding: post_acute_mtbi_symptoms}, {var: days_since_injury, op: "<=", value: 30}, {event: neuropsych_testing_ordered}]}
+            recommend: {action: avoid, detail: "손상 30일 이내 종합 신경심리 검사"}
+            strength: "VA/DoD Rec 6 (Weak against)"
+      - kind: workup
+        trigger: {all: [{finding: new_symptoms}, {var: days_since_injury, op: ">", value: 30}]}
+        tests:
+          - {review: symptom_specific_evaluation, reason: "mTBI 외 원인 감별(Rec 3)"}
+
+  - id: 457e-C03
+    topic: 뇌진탕후 증후군 재활
+    type: treatment
+    original:
+      text: "뇌진탕후 증후군: 두통, 어지럼, 피로, 집중 곤란, 기억장애, 불안·우울. 지지적 치료와 안심시키기."
+      location: {file: by_chapter/457e장.md, line: 140}
+    status: 개정
+    current:
+      text: >
+        수면·통증·정신건강·두통·평형장애 등 다른 요인을 관리한 뒤에도 기억·주의·실행 기능 문제가 있으면 임상가 주도의 단기 인지 재활에 의뢰하도록 제안하고(Rec 10),
+        자가 컴퓨터 훈련 프로그램은 제안하지 않는다(Rec 11). 지속되는 어지럼·불균형에 전정 재활·고유수용성 운동을 제안한다(Rec 13).
+        PTSD·물질사용장애·기분장애는 외상성 뇌손상 여부와 관계없이 각 VA/DoD 지침대로 평가·관리한다(Rec 12).
+        고압산소치료는 권고하지 않고(Rec 18, Strong against), 반복 경두개 자기자극도 제안하지 않는다(Rec 19). 특정 시각·운동 유발 증상 치료는 근거 불충분(Rec 14, 16).
+      sources:
+        - {id: VADOD-MTBI-2021, locator: "Recommendations 10–14, 16, 18, 19"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [F07.81]}
+        recommendations:
+          - when: {all: [{finding: post_acute_mtbi_symptoms}, {finding: persistent_dizziness_imbalance}]}
+            recommend: {intervention: vestibular_rehabilitation}
+            strength: "VA/DoD Rec 13 (Weak for)"
+          - when: {all: [{finding: post_acute_mtbi_symptoms}, {event: hyperbaric_oxygen_considered}]}
+            recommend: {action: avoid, intervention: hyperbaric_oxygen}
+            strength: "VA/DoD Rec 18 (Strong against)"
+
+  - id: 457e-C04
+    topic: 중등도·중증 두부 손상, 경막하·경막외 혈종 관리
+    type: treatment
+    original:
+      text: "중간·심한 손상의 입원 관리, 두개내압, 급성·만성 경막하혈종과 경막외혈종의 수술 적응증."
+      location: {file: by_chapter/457e장.md, line: 122}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 출처 미확보(신경외과·외상 지침은 C등급)."

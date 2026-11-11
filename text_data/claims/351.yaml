@@ -1,0 +1,183 @@
+# 351장 염증성장질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: JSGE IBD 지침 2020(J Gastroenterol 2021, CC BY — 일본 진료 환경 반영), CDC HBV 2023.
+
+chapter: "351"
+title: 염증성장질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 351-C01
+    topic: 염증성장질환 진단 접근과 대변 칼프로텍틴
+    type: workup
+    original:
+      text: "궤양성대장염·크론병의 임상·내시경·방사선 감별(표 351-5), 감염성 장염 등 유사 질환 감별(표 351-6)."
+      location: {file: by_chapter/351장.md, line: 271}
+    status: 보완
+    current:
+      text: >
+        병력, 진찰, 내시경·영상 소견으로 진단하며, 특히 젊은 환자에서 복통을 동반한 지속·반복 혈성 설사와 잦은 배변이 있으면 의심한다. 감별의 핵심은 감염성 장염이다.
+        대변 칼프로텍틴은 염증성장질환 같은 기질적 장질환과 과민성장증후군 같은 기능성 장질환 감별에 유용하다. 관해기 궤양성대장염의 활성도 평가에는 대변 칼프로텍틴과 분변면역화학검사(FIT)가 유용하다.
+        목표치료(treat to target)는 종합 활성지수로 적절한 간격마다 목표와 치료를 재검토해 조기 관해·저활성을 달성하는 전략이다.
+      sources:
+        - {id: PAPER-JSGE-IBD-2020, locator: "BQ 4, BQ 12, BQ 13, BQ 14"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {any: [{finding: chronic_bloody_diarrhea}, {all: [{finding: chronic_diarrhea}, {finding: abdominal_pain}]}]}
+        tests:
+          - {lab: Fecal_calprotectin, reason: "기질성(IBD) vs 기능성(IBS) 감별"}
+          - {lab: Stool_infection_workup, reason: 감염성 장염 감별}
+          - {exam: Colonoscopy, reason: 진단}
+      - kind: monitoring
+        after: {event: uc_remission}
+        check: [Fecal_calprotectin, FIT]
+        rules:
+          - {when: {always: true}, action: "관해기 활성도 감시에 대변 칼프로텍틴·FIT 활용"}
+
+  - id: 351-C02
+    topic: 5-ASA 제제
+    type: treatment
+    original:
+      text: "5-ASA(메살라민 등)는 경도–중등도 궤양성대장염 관해 유도·유지의 주된 약물(표 351-7), 좌반 대장염은 좌약·관장."
+      location: {file: by_chapter/351장.md, line: 412}
+    status: 유지
+    current:
+      text: >
+        경구·국소 5-ASA는 경도–중등도 활동성 궤양성대장염의 관해 유도에 유용하고, 원위부 대장염에 더 강한 효과가 필요하면 경구+직장 제제를 병용한다. 관해기 5-ASA 유지 치료는 임상·내시경 관해 유지에 유용하다.
+        직장염형에는 5-ASA 좌약이 관해 유도에 유용하다. 적정 유지 용량(CQ3)과 대장암 위험 감소(CQ4)는 지침에서 별도 검토된다.
+      sources:
+        - {id: PAPER-JSGE-IBD-2020, locator: "BQ 15–18, CQ 3, CQ 4"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K51]}
+        recommendations:
+          - when: {finding: mild_to_moderate_active_uc}
+            recommend: {drug_class: 5ASA, routes: [oral, topical], note: "원위부는 경구+직장 병용"}
+          - when: {finding: uc_remission}
+            recommend: {drug_class: 5ASA, purpose: maintenance}
+
+  - id: 351-C03
+    topic: 스테로이드·면역조절제
+    type: treatment
+    original:
+      text: "글루코코르티코이드는 중등도–중증 활동기에 관해 유도, 유지에는 효과 없음. 아자티오프린·6-MP는 스테로이드 의존·저항에, TPMT 검사."
+      location: {file: by_chapter/351장.md, line: 438}
+    status: 개정
+    current:
+      text: >
+        스테로이드는 궤양성대장염·크론병의 관해 유도에 유용하나 장기 부작용 때문에 관해 유지에는 쓰지 않는다. 시작 후 3개월 안에 프레드니솔론 환산 10 mg/일 미만(부데소니드 3 mg/일)으로 줄이는 것이 바람직하다.
+        아자티오프린·6-MP는 스테로이드 의존 또는 5-ASA로 관해 유지가 안 되는 궤양성대장염과 관해에 이른 크론병의 관해 유지에 효과적이다. 부작용: 위장관 증상, 골수억제, 탈모, 췌장염.
+        티오퓨린 시작 전 NUDT15 R139C 변이를 확인하도록 권고한다 — 급성 중증 백혈구감소·심한 탈모를 예측한다(강한 권고, 높은 근거 수준; 동아시아인에서 중요).
+      sources:
+        - {id: PAPER-JSGE-IBD-2020, locator: "BQ 22, BQ 25, CQ 5"}
+    verification: primary
+    conflicts:
+      - "원문은 티오퓨린 전 TPMT 검사 — JSGE(동아시아)는 NUDT15 R139C 확인을 강하게 권고. 한국인도 NUDT15 변이 빈도가 높음(원저 연구가 한국)."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {event: thiopurine_initiation_planned}
+        tests:
+          - {lab: NUDT15_genotype, reason: "급성 중증 백혈구감소·탈모 예측(JSGE CQ5, strong)"}
+      - kind: treatment
+        condition: {kcd: [K50, K51]}
+        recommendations:
+          - when: {all: [{med_class: systemic_glucocorticoid}, {finding: ibd_remission_maintenance}]}
+            recommend: {action: avoid, detail: "스테로이드를 관해 유지에 사용"}
+            alert_level: medium
+          - when: {all: [{med_class: systemic_glucocorticoid}, {var: steroid_months, op: ">", value: 3}, {var: prednisolone_mg_day, op: ">=", value: 10}]}
+            recommend: {action: taper_review, detail: "3개월 내 PSL <10 mg/일 목표"}
+            alert_level: medium
+
+  - id: 351-C04
+    topic: 생물학적 제제·JAK 억제제와 면역억제 전 선별
+    type: treatment
+    original:
+      text: "항TNF(인플릭시맙·아달리무맙), 나탈리주맙(PML, JC 바이러스 항체), 베돌리주맙. 결핵·감염 위험."
+      location: {file: by_chapter/351장.md, line: 494}
+    status: 개정
+    current:
+      text: >
+        항TNF-α 제제는 스테로이드 저항·의존 중등도–중증 궤양성대장염과 염증형 크론병의 관해 유도·유지에 효과적이다. 우스테키누맙은 크론병에, 베돌리주맙은 궤양성대장염·크론병과 항TNF 불응에 효과적이다.
+        토파시티닙은 중등도–중증 불응성 궤양성대장염에 유용하나 대상포진 등 감염 위험, 심혈관질환이 있는 고령 류마티스관절염 환자(주로 10 mg 1일 2회)에서 폐색전증 증가에 주의한다.
+        면역억제 치료를 겹칠 때 감염 위험을 고려하고, HBV 보유자·과거 감염자는 재활성화 위험을, 항TNF는 결핵 합병 위험을 고려한다.
+      sources:
+        - {id: PAPER-JSGE-IBD-2020, locator: "BQ 21, BQ 27, BQ 29–35"}
+        - {id: CDC-HBV-SCREENING-2023, locator: "Resolved infection — reactivation risk"}
+    verification: primary
+    note: "원문의 나탈리주맙은 JSGE 지침 권고 대상이 아님. 결핵 선별 검사 방법은 A등급으로 대조하지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {any: [{event: anti_tnf_initiation_planned}, {event: biologic_or_jak_initiation_planned}]}
+        tests:
+          - {lab: HBsAg, reason: HBV 재활성화 위험}
+          - {lab: Anti_HBc_total, reason: HBV 재활성화 위험}
+          - {lab: Latent_TB_screen, reason: "항TNF 결핵 합병 위험"}
+      - kind: treatment
+        condition: {kcd: [K51]}
+        recommendations:
+          - when: {all: [{med: tofacitinib}, {var: age, op: ">=", value: 50}, {finding: cardiovascular_risk}]}
+            recommend: {action: caution, detail: "폐색전증·대상포진 위험"}
+            alert_level: medium
+
+  - id: 351-C05
+    topic: 궤양성대장염 대장암 감시
+    type: workup
+    original:
+      text: "광범위대장염 8–10년 이상, 직장에스상결장염 12–15년 경과 시 매년·2년마다 다발 생검 대장내시경 감시."
+      location: {file: by_chapter/351장.md, line: 616}
+    status: 개정
+    current:
+      text: >
+        전대장형·좌측형 궤양성대장염은 발병 8년 후부터 감시 대장내시경을 권고한다(강한 권고, 낮은 근거 수준). 생검 방법(CQ14)과 크론병 암 감시(FRQ13)는 지침에서 별도 검토한다.
+      sources:
+        - {id: PAPER-JSGE-IBD-2020, locator: "CQ 13"}
+    verification: primary
+    note: "감시 간격(매년·2년)은 이 권고에 명시되지 않아 말뭉치에 넣지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{dx: K51}, {finding: extensive_or_left_sided_uc}, {var: years_since_uc_onset, op: ">=", value: 8}]}
+        tests:
+          - {exam: Surveillance_colonoscopy, reason: "UC 관련 대장암 감시"}
+        strength: "JSGE 2020 CQ13 (strong, low)"
+
+  - id: 351-C06
+    topic: 입원 환자 혈전 예방·임신
+    type: treatment
+    original:
+      text: "염증성장질환은 혈전색전 위험 증가. 임신 중 대부분 약물 지속(메토트렉세이트 금기)."
+      location: {file: by_chapter/351장.md, line: 402}
+    status: 보완
+    current:
+      text: >
+        입원한 염증성장질환 환자는 출혈 위험 증가를 이해한 상태에서 혈전 예방을 고려하도록 제안한다(약한 권고). 정맥혈전 위험은 비IBD의 약 2배이고 활동기·입원 중 더 높다.
+        임신·수유 중에는 치료 이득과 위해를 따져 함께 결정하며, 많은 경우 이득이 커서 임신 중 치료를 지속한다.
+      sources:
+        - {id: PAPER-JSGE-IBD-2020, locator: "CQ 15, BQ 38"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K50, K51]}
+        recommendations:
+          - when: {event: hospital_admission}
+            recommend: {action: consider_vte_prophylaxis, caveat: "출혈 위험 고려"}
+            strength: "JSGE 2020 CQ15 (weak, low)"
+
+  - id: 351-C07
+    topic: 수술 적응증·장외증상
+    type: treatment
+    original:
+      text: "표 351-8 수술 적응증, 피부·관절·눈·간담도·비뇨기·골 장외증상."
+      location: {file: by_chapter/351장.md, line: 574}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "JSGE BQ36·BQ39에 해당 내용이 있으나 이번에 세부 대조하지 않음."

@@ -1,0 +1,138 @@
+# 334장 급성 신손상 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: VA/DoD CKD 2025(AKI·AKD 정의는 KDIGO 2012에서 재수록 — 수치 사실만 사용)
+
+chapter: "334"
+title: 급성 신손상
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 334-C01
+    topic: AKI·AKD 정의
+    type: diagnosis
+    original:
+      text: "48시간 이내 혈청 크레아티닌 ≥0.3 mg/dL 증가, 1주 이내 기저 대비 ≥50% 증가, 또는 6시간 이상 소변량 ≤0.5 mL/kg/h."
+      location: {file: by_chapter/334장.md, line: 149}
+    status: 유지
+    current:
+      text: >
+        AKI(다음 중 하나): 48시간 이내 혈청 크레아티닌 0.3 mg/dL 초과 증가, 7일 이내에 생긴 것으로 보이는 기저 대비 50% 초과 증가, 6시간 동안 소변량 <0.5 mL/kg/h.
+        AKD(다음 중 하나, 3개월 미만): GFR <60 mL/min/1.73m², GFR 35% 초과 감소 또는 크레아티닌 50% 초과 증가, 구조적 신손상.
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Sidebar 4: Definition of AKI and AKD (KDIGO 2012 정의 재수록)"}
+    verification: primary
+    conflicts:
+      - "원문은 '0.3 mg/dL 이상·50% 이상', VA/DoD 표기는 '초과(>)' — 경계값 처리 차이. 정의 원저작은 KDIGO 2012(C등급)."
+    review: {status: draft}
+    corpus:
+      - kind: diagnosis
+        condition: {name: 급성 신손상, kcd: [N17]}
+        logic:
+          any:
+            - {var: SCr_rise_mg_dl_48h, op: ">", value: 0.3}
+            - {var: SCr_rise_pct_7d, op: ">", value: 50}
+            - {var: urine_output_ml_kg_h_6h, op: "<", value: 0.5}
+      - kind: diagnosis
+        condition: {name: 급성 신장질환(AKD), kcd: [N28.9]}
+        logic:
+          all:
+            - {var: duration_months, op: "<", value: 3}
+            - {any: [{var: eGFR, op: "<", value: 60}, {var: eGFR_change_pct, op: "<", value: -35}, {var: SCr_rise_pct, op: ">", value: 50}, {finding: structural_kidney_damage}]}
+
+  - id: 334-C02
+    topic: 신기능 저하의 초기 평가
+    type: workup
+    original:
+      text: >
+        병력(체액 소실, NSAID·ACEi·ARB, 조영제, 신독성 약물), 신체검사(체액 상태), 소변검사·침사, 혈액검사, 신부전 지표(FENa), 영상(초음파로 폐쇄 배제), 필요 시 조직검사.
+      location: {file: by_chapter/334장.md, line: 198}
+    status: 유지
+    current:
+      text: >
+        병력: 체액 감소(어지러움) 또는 과다(부종·호흡곤란) 증상과 원인(설사·구토·섭취 감소·더위), 약물·보충제(NSAID, 이뇨제, SGLT2i, 혈압약 변경), 최근 감염, 비뇨기 증상(혈뇨·폐쇄),
+        전신·류마티스 증상. 진찰: 활력징후, 체액 상태. 검사: 전해질, 크레아티닌, 소변검사, UACR/UPCR — 추이를 보고 필요에 따라 반복, 시스타틴C 고려.
+        AKD 평가: 체액 감소(기립성 저혈압 등), 요로 폐쇄(배뇨장애·옆구리 통증·혈뇨, 배뇨 후 잔뇨 증가, 영상상 수신증), 급성 사구체·간질 질환 의심 소견
+        (혈뇨, 변형 적혈구·적혈구 원주, 새 알부민뇨 + 최근 감염·전신 증상·발진·부종·객혈).
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Sidebar 2B (Initial Assessment), Sidebar 5 (Assessment for AKD)"}
+    verification: primary
+    note: "FENa·BUN/Cr 비 등 신부전 지표 기준은 A등급 근거 미확보(원문 대조용)."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {any: [{finding: new_decline_kidney_function}, {var: SCr_rise_mg_dl_48h, op: ">", value: 0.3}]}
+        tests:
+          - {lab: Electrolytes, reason: 초기 평가}
+          - {lab: SCr, reason: "초기 평가(추이 확인)"}
+          - {lab: Urinalysis, reason: "혈뇨·원주·단백"}
+          - {lab: UACR, reason: 알부민뇨}
+          - {lab: Post_void_residual, reason: 요로 폐쇄 감별}
+          - {exam: Renal_ultrasound, reason: "수신증(폐쇄) 확인"}
+          - {review: medications, reason: "NSAID, 이뇨제, SGLT2i, 혈압약 변경"}
+
+  - id: 334-C03
+    topic: 응급 평가가 필요한 상황
+    type: referral
+    original:
+      text: "합병증: 요독증, 용적 과다·감소, 저나트륨혈증, 고칼륨혈증, 산증, 고인산혈증·저칼슘혈증 — 투석 적응증."
+      location: {file: by_chapter/334장.md, line: 270}
+    status: 유지
+    current:
+      text: >
+        긴급·응급: 불안정 활력징후, 비대상 심부전·증상성 체액 과다(호흡곤란, 수포음, 경정맥 확장), 요독 증상·징후(구역, 구토, 의식 변화, 심낭염), 무뇨·핍뇨,
+        현저한 칼륨 이상, 설명되지 않는 급성 신기능 저하, 중증 산염기 장애.
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Sidebar 3: Urgent/Emergent Conditions"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: referral
+        to: 응급 평가
+        criteria:
+          - {finding: unstable_vital_signs}
+          - {finding: symptomatic_volume_overload}
+          - {finding: uremic_symptoms}
+          - {finding: anuria_or_oliguria}
+          - {var: K, op: ">=", value: 6.0}
+          - {finding: acute_unexplained_decline_kidney_function}
+          - {finding: severe_acid_base_disturbance}
+        note: "칼륨 6.0 기준은 '현저한 칼륨 이상'을 규칙으로 옮긴 운영 가정값 — 검수 시 확정"
+
+  - id: 334-C04
+    topic: 조영제 관련 AKI 예방
+    type: treatment
+    original:
+      text: "조영제 신증: 기저 CKD·당뇨·심부전·용적 감소에서 위험. 등장성 수액, 조영제 최소화. N-아세틸시스테인 효과는 불분명."
+      location: {file: by_chapter/334장.md, line: 99}
+    status: 개정
+    current:
+      text: >
+        요오드 조영제 AKI 위험이 높은 CKD 환자는 등장성 정질액 정맥 수액을 권고하고(Rec 22, Strong for), N-아세틸시스테인은 권고하지 않는다(Rec 23, Strong against).
+        수액 기준: CT(정맥) eGFR <30·혈관조영(동맥) eGFR <45는 모든 환자, CT 30–44·혈관조영 45–59는 위험인자가 많으면 처방의 판단, 그 이상은 불필요. 가능하면 비요오드 대안·최소 조영제량.
+        eGFR <30 또는 AKI에서는 group 1 가돌리늄을 쓰지 않는다.
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Recommendations 22, 23; Algorithm Module E; Sidebar 10"}
+    verification: primary
+    conflicts:
+      - "원문은 N-아세틸시스테인 효과 '불분명' — VA/DoD는 사용 반대 권고(Strong against)."
+    review: {status: draft}
+    note: "335-C19와 같은 근거 — 규칙은 335-C19 말뭉치를 재사용한다."
+
+  - id: 334-C05
+    topic: 신독성 약물과 아픈 날 수칙
+    type: treatment
+    original:
+      text: "아미노글리코사이드, 암포테리신, 항암제, NSAID, ACEi·ARB 등이 AKI 위험. 신독성 약물 중단, 용량 조절."
+      location: {file: by_chapter/334장.md, line: 105}
+    status: 유지
+    current:
+      text: >
+        급성 질환·탈수 시 설폰요소제, ACEi, 이뇨제·직접 레닌 억제제, 메트포르민, ARB, NSAID, SGLT2 억제제(SADMANS)를 일시 중단하는 아픈 날 계획을 교육한다.
+        당뇨 환자는 NSAID 등 신독성 약물을 피한다.
+      sources:
+        - {id: VADOD-CKD-2025, locator: "Appendix — CKD 관리 표(sick day planning, SADMANS)"}
+        - {id: VADOD-DM-2023, locator: "Sidebar 3"}
+    verification: primary
+    note: "아미노글리코사이드·암포테리신·항암제의 AKI 위험과 용량은 각 약 허가사항으로 추가 보강 필요."
+    review: {status: draft}

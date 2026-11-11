@@ -1,0 +1,105 @@
+# 348장 소화성 궤양 및 관련 질환들 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: openFDA(CC0), NIDDK. ACG·Maastricht 합의는 C등급.
+
+chapter: "348"
+title: 소화성 궤양 및 관련 질환들
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 348-C01
+    topic: H. pylori 진단 검사와 제균 확인
+    type: workup
+    original:
+      text: "H. pylori 진단: 혈청학적 검사, 요소호기검사, 대변 항원검사, 내시경 조직검사."
+      location: {file: by_chapter/348장.md, line: 300}
+    status: 유지
+    current:
+      text: >
+        H. pylori 검사: 혈액검사, 요소호기검사, 대변검사, 상부위장관 내시경 조직검사. 내시경은 소화성 궤양 확진과 원인 확인에 쓸 수 있다.
+        치료 후 항생제 복용을 마치고 최소 4주 뒤에 제균 여부를 검사하며, 감염이 지속되면 다른 항생제 조합으로 다시 치료한다.
+      sources:
+        - {id: NIDDK-PUD-DIAGNOSIS, locator: "Tests for H. pylori"}
+        - {id: NIDDK-PUD-TREATMENT, locator: "Retesting after treatment"}
+    verification: primary
+    note: "검사 전 PPI·비스무트·항생제 중단 기간은 A등급 출처에 없어 미반영."
+    review: {status: draft}
+    corpus:
+      - kind: monitoring
+        after: {event: h_pylori_eradication_completed}
+        check: [H_pylori_test_of_cure]
+        timing_weeks_min: 4
+        rules:
+          - {when: {finding: h_pylori_persistent}, action: "다른 항생제 조합으로 재치료"}
+
+  - id: 348-C02
+    topic: H. pylori 제균 요법
+    type: dose
+    original:
+      text: >
+        표 348-4: 비스무트·메트로니다졸·테트라사이클린 3제, 라니티딘 비스무트 시트레이트+테트라사이클린+클라리스로마이신/메트로니다졸, PPI+클라리스로마이신+아목시실린(또는 메트로니다졸) 3제,
+        PPI+비스무트 4제. 14일 요법이 가장 효과적. 2제 요법은 제균율이 낮아 권장하지 않음. Prevpac·Helidac.
+      location: {file: by_chapter/348장.md, line: 302}
+    status: 개정
+    current:
+      text: >
+        제균은 항생제 2개 이상과 PPI, 경우에 따라 비스무트를 함께 쓴다. 내성 가능성 때문에 이전에 쓴 항생제는 피하며, 처방대로 끝까지 복용해야 한다.
+        현재 미국 허가 포장 요법: 보노프라잔 3제(VOQUEZNA TRIPLE PAK) 보노프라잔 20 mg+아목시실린 1,000 mg+클라리스로마이신 500 mg 각 1일 2회 14일,
+        보노프라잔 2제(DUAL PAK) 보노프라잔 20 mg 1일 2회+아목시실린 1,000 mg 1일 3회 14일, 비스무트 4제(PYLERA) 3캡슐 1일 4회(식후·취침 전)+오메프라졸 20 mg 1일 2회 10일,
+        리파부틴 3제(TALICIA) 4캡슐(리파부틴 50 mg·아목시실린 1,000 mg·오메프라졸 40 mg) 1일 3회 식사와 함께 14일(알코올 금지).
+      sources:
+        - {id: NIDDK-PUD-TREATMENT, locator: "Treating H. pylori"}
+        - {id: OPENFDA-VONOPRAZAN-TRIPLE, locator: "2.1–2.2"}
+        - {id: OPENFDA-PYLERA, locator: "2 Dosage and Administration Table 1"}
+        - {id: OPENFDA-TALICIA, locator: "2.1"}
+    verification: primary
+    conflicts:
+      - "원문의 라니티딘 비스무트 시트레이트·라니티딘은 현재 미국에서 시판되지 않음(라니티딘은 2020 FDA 회수 요청) — 이 근거는 이번에 A등급으로 대조하지 않았음."
+      - "어떤 요법을 1차로 쓸지(지역 클라리스로마이신 내성률 등)는 ACG·국내 지침(C·U등급) 영역 — A등급 근거로 우선순위를 정하지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-HPYLORI-REGIMENS
+        indication: H. pylori 제균
+        source_priority: [OPENFDA-VONOPRAZAN-TRIPLE, OPENFDA-PYLERA, OPENFDA-TALICIA]
+        regimens:
+          vonoprazan_triple: "보노프라잔 20 mg+아목시실린 1,000 mg+클라리스로마이신 500 mg 각 1일 2회, 14일"
+          vonoprazan_dual: "보노프라잔 20 mg 1일 2회+아목시실린 1,000 mg 1일 3회, 14일"
+          bismuth_quadruple_pylera: "PYLERA 3캡슐 1일 4회+오메프라졸 20 mg 1일 2회, 10일"
+          rifabutin_triple_talicia: "4캡슐 1일 3회 식사와 함께, 14일(알코올 금지)"
+        rules:
+          - {when: {finding: prior_clarithromycin_exposure}, action: "이전 사용 항생제는 내성 가능성 — 다른 조합 고려", alert: caution}
+
+  - id: 348-C03
+    topic: NSAID 관련 궤양
+    type: treatment
+    original:
+      text: "NSAID 중단, PPI 치료. NSAID를 계속해야 하면 PPI·미소프로스톨 병용, COX-2 선택적 억제제 고려. 장기 NSAID·아스피린 사용자는 H. pylori 검사·치료."
+      location: {file: by_chapter/348장.md, line: 351}
+    status: 유지
+    current:
+      text: >
+        NSAID 관련 궤양은 NSAID 중단, 다른 NSAID로 교체, 저용량, 다른 진통제 사용 등으로 NSAID 사용을 조정한다. NSAID를 계속 써야 하면 PPI를 함께 쓸 수 있다.
+      sources:
+        - {id: NIDDK-PUD-TREATMENT, locator: "Treating NSAID-induced peptic ulcers"}
+    verification: primary
+    note: "미소프로스톨·COX-2 억제제·장기 아스피린 사용자 H. pylori 검사는 A등급 근거 미확보."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K25, K26, K27]}
+        recommendations:
+          - when: {all: [{finding: peptic_ulcer}, {med_class: NSAID}]}
+            recommend: {options: ["NSAID 중단", "다른 NSAID·저용량", "다른 진통제", "지속 시 PPI 병용"]}
+
+  - id: 348-C04
+    topic: 졸링거-엘리슨 증후군·위염·수술 합병증
+    type: diagnosis
+    original:
+      text: "졸링거-엘리슨 증후군(공복 가스트린, 세크레틴 자극 검사, 종양 위치 확인), A·B형 위염, 메네트리에병, 궤양 수술 후 합병증."
+      location: {file: by_chapter/348장.md, line: 491}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 출처 미확보."

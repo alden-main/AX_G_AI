@@ -1,0 +1,93 @@
+# 352장 과민성장증후군 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 일본소화기학회(JSGE) 과민성장증후군 진료지침 2020(J Gastroenterol 2021, CC BY — 일본 허가 약제 기준).
+
+chapter: "352"
+title: 과민성장증후군
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 352-C01
+    topic: 진단 기준과 경고 증상에 따른 대장내시경
+    type: workup
+    original:
+      text: "표 352-1 진단기준(로마 III): 지난 3개월 이내 한 달에 3일 이상 반복적 복통 또는 복부 불편감 + 배변 후 호전·배변 횟수 변화·변 형태 변화 중 2개 이상."
+      location: {file: by_chapter/352장.md, line: 13}
+    status: 개정
+    current:
+      text: >
+        진단은 로마 IV 기준을 쓴다(원문은 로마 III). 대상은 약 3개월 넘는 만성 복통·관련 증상 또는 배변 이상이며 급성 증상에는 적용하지 않는다.
+        경고 증상(혈변, 6개월 내 3 kg 넘는 의도치 않은 체중 감소, 발열, 관절통), 경고 징후(복부 종괴, 파동, 직장수지검사 혈액), 위험 인자(50세 초과, 대장 기질 질환의 병력·가족력, 환자의 검사 요구), 일상 검사 이상이 있으면 대장내시경을 한다.
+        일상 검사: 혈당·TSH 포함 혈액 화학, 혈구, (고감도) CRP, 소변 검사, 분변 잠혈, 복부 단순촬영. 분변 잠혈 양성·빈혈·저단백혈증·염증 반응 양성이면 대장 검사를 한다.
+        CRP 0.5 이하와 분변 칼프로텍틴 40 µg/g 이하이면 IBS 증상 환자에서 염증성 장질환을 사실상 배제할 수 있다. 경과 중 기질 질환이 2–5%에서 발견되므로 추적 중에도 검사가 유용하다.
+      sources:
+        - {id: PAPER-JSGE-IBS-2020, locator: "BQ2-1; CQ2-1–2-4; Fig. 1 Diagnostic algorithm"}
+    verification: primary
+    conflicts:
+      - "로마 III(원문, 복부 불편감 포함) → 로마 IV(복통 중심)."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: chronic_abdominal_pain_with_bowel_change}
+        tests:
+          - {lab: CBC, reason: "빈혈"}
+          - {lab: CRP, reason: "염증(≤0.5 + 칼프로텍틴 ≤40이면 IBD 배제)"}
+          - {lab: Fecal_calprotectin, reason: "IBD 감별"}
+          - {lab: Glucose, reason: "일상 검사"}
+          - {lab: TSH, reason: "갑상선 기능"}
+          - {lab: Urinalysis, reason: "일상 검사"}
+          - {lab: FOBT, reason: "양성이면 대장 검사"}
+      - kind: referral
+        to: 소화기내과(대장내시경)
+        criteria:
+          - {all: [{finding: chronic_abdominal_pain_with_bowel_change}, {any: [{finding: hematochezia}, {finding: unintended_weight_loss}, {finding: fever}, {finding: abdominal_mass}, {var: age, op: ">", value: 50}, {finding: family_history_colorectal_cancer}, {finding: fobt_positive}, {finding: anemia}]}]}
+        purpose: ["기질 질환 배제"]
+
+  - id: 352-C02
+    topic: 1단계 치료(식이·생활·장 표적 약물)
+    type: treatment
+    original:
+      text: "환자 안심시키기와 설명, 증상 유발 식이 제한, 저FODMAP 식이. 팽창성 하제(식이섬유), 지사제, 진경제."
+      location: {file: by_chapter/352장.md, line: 118}
+    status: 유지
+    current:
+      text: >
+        1단계는 식이 요법(저FODMAP, 지질·카페인·매운 음식·유제품 등 악화 음식 제거), 운동 등 행동 교정, 장 표적 약물을 4주 시행한다.
+        공통: 팽창성 고분자·식이섬유(강한 권고), 프로바이오틱스(강한 권고), 위장관 운동 조절제·항콜린제(약한 권고).
+        설사형: 5-HT3 길항제(강한 권고), 지사제(일부 환자). 변비형: 장 분비 촉진제(루비프로스톤·리나클로타이드, 강한 권고), 담즙산·회장 담즙산 수송체 억제제, 5-HT4 작용제, 삼투성 하제(약한 권고), 자극성 하제는 원칙적으로 필요할 때만.
+        비흡수성 항생제(약한 권고, 근거 A)와 페퍼민트 오일도 선택지다. 아편유사제·NSAID·아세트아미노펜은 IBS 복통에 효과가 없고 아편유사제 증량은 마약성 장 증후군을 일으킬 수 있다.
+      sources:
+        - {id: PAPER-JSGE-IBS-2020, locator: "CQ3-1–3-13; CQ3-19–3-21; Table 1; Fig. 2"}
+    verification: primary
+    note: "5-HT3 길항제(라모세트론 등)·담즙산 수송체 억제제(엘로빅시밧)는 일본 허가 약제 — 국내 허가는 확인 필요."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K58]}
+        recommendations:
+          - when: {dx: K58}
+            recommend: {first_line: [low_fodmap_diet, dietary_fiber, probiotics], duration: "4주 후 반응 평가"}
+          - when: {all: [{dx: K58}, {finding: ibs_d}]}
+            recommend: {options: [5HT3_antagonist, antidiarrheal]}
+          - when: {all: [{dx: K58}, {finding: ibs_c}]}
+            recommend: {options: [linaclotide, lubiprostone, osmotic_laxative], stimulant_laxative: "필요할 때만"}
+          - when: {all: [{dx: K58}, {med_class: opioid}]}
+            recommend: {action: review, detail: "IBS 복통에 효과 없음·마약성 장 증후군 위험"}
+            alert_level: medium
+
+  - id: 352-C03
+    topic: 2·3단계 치료(신경정신 약물·심리치료)
+    type: treatment
+    original:
+      text: "삼환계 항우울제·SSRI는 통증과 동반 정신 증상에, 인지행동치료·최면치료."
+      location: {file: by_chapter/352장.md, line: 150}
+    status: 유지
+    current:
+      text: >
+        1단계에 반응하지 않으면 2단계로 다른 기전의 장 표적 약 병용 그리고/또는 정신약물을 쓴다. 심리사회 스트레스와 정신과 동반 진단을 먼저 평가한다.
+        삼환계 항우울제와 SSRI는 병태생리와 부작용을 고려해 쓰고(약한 권고, 근거 A), 항불안제는 단기간만(약한 권고). 3단계는 심리치료(강한 권고)다. 치료 없이 진료를 이탈하지 않도록 관리한다.
+      sources:
+        - {id: PAPER-JSGE-IBS-2020, locator: "CQ3-14–3-16; CQ3-22; Therapeutic algorithm Step 2–3"}
+    verification: primary
+    review: {status: draft}

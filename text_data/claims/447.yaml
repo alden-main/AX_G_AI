@@ -1,0 +1,169 @@
+# 447장 편두통 및 다른 일차성 두통들 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+
+chapter: "447"
+title: 편두통 및 다른 일차성 두통들
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 447-C01
+    topic: 편두통 급성 치료
+    type: treatment
+    original:
+      text: "표 447-4: NSAID·아세트아미노펜·카페인 복합제, 트립탄(수마트립탄 등), 에르고트, 도파민 길항제 등. 증상 정도에 따른 단계별 치료."
+      location: {file: by_chapter/447장.md, line: 193}
+    status: 개정
+    current:
+      text: >
+        급성 편두통에 엘레트립탄, 프로바트립탄, 리자트립탄, 수마트립탄(경구·피하), 수마트립탄+나프록센, 졸미트립탄(경구·비강)을 권고한다(Rec 19, Strong for).
+        아스피린/아세트아미노펜/카페인 복합제를 권고하고(Rec 20, Strong for), 아세트아미노펜·아스피린·이부프로펜·나프록센을 제안한다(Rec 21).
+        리메게판트 또는 우브로게판트를 제안한다(Rec 22). 정맥 케타민은 제안하지 않으며(Rec 23), 라스미디탄은 근거 불충분(Rec 24). 대후두신경 차단을 제안한다(Rec 34).
+        정맥 항구토제(클로르프로마진·메토클로프라미드·프로클로르페라진)·정맥 마그네슘·비강 리도카인은 근거 불충분(Rec 37).
+      sources:
+        - {id: VADOD-HEADACHE-2023, locator: "Recommendations 19–24, 34, 37"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G43]}
+        recommendations:
+          - when: {finding: acute_migraine_attack}
+            recommend: {options: [triptan, aspirin_acetaminophen_caffeine]}
+            strength: "VA/DoD Rec 19, 20 (Strong for)"
+          - when: {finding: acute_migraine_attack}
+            recommend: {options: [acetaminophen, aspirin, ibuprofen, naproxen, rimegepant, ubrogepant]}
+            strength: "VA/DoD Rec 21, 22 (Weak for)"
+
+  - id: 447-C02
+    topic: 편두통 예방 치료
+    type: treatment
+    original:
+      text: >
+        표 447-6: 피조티펜, 프로프라놀롤 40–120 mg bid, 메토프롤롤, 아미트립틸린, 노르트립틸린, 벤라팍신, 토피라메이트 25–200 mg/d, 발프로에이트 400–600 mg bid,
+        메티세르지드, 플루나리진, 칸데사르탄 16 mg. 만성 편두통에 보툴리눔.
+      location: {file: by_chapter/447장.md, line: 327}
+    status: 개정
+    current:
+      text: >
+        삽화성 편두통 예방에 칸데사르탄 또는 텔미사르탄을 권고하고(Rec 4, Strong for), 삽화성·만성 편두통 예방에 에레누맙, 프레마네주맙, 갈카네주맙을 권고한다(Rec 5, Strong for).
+        정맥 엡티네주맙(Rec 6), 리시노프릴(Rec 7), 경구 마그네슘(Rec 8), 토피라메이트(Rec 9), 프로프라놀롤(Rec 10), 발프로에이트(삽화성, Rec 11), 메만틴(Rec 12), 아토게판트(Rec 13)를 제안한다.
+        만성 편두통에 오나보툴리눔톡신A를 제안하고(Rec 14), 삽화성 편두통에는 보툴리눔 주사를 제안하지 않는다(Rec 15). 가바펜틴은 삽화성 편두통 예방에 제안하지 않는다(Rec 17).
+        리메게판트·레베티라세탐 예방(Rec 16, 18), 플루옥세틴·벤라팍신(Rec 3), 코엔자임Q10·피버퓨·멜라토닌·오메가-3·비타민 B2·B6(Rec 2)은 근거 불충분.
+      sources:
+        - {id: VADOD-HEADACHE-2023, locator: "Recommendations 2–18"}
+    verification: primary
+    conflicts:
+      - "원문의 메티세르지드는 미국에서 사용 불가(원문도 언급), 피조티펜·플루나리진·도술레핀은 VA/DoD 권고 대상 아님."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G43]}
+        recommendations:
+          - when: {finding: episodic_migraine_prevention_needed}
+            recommend: {options: [candesartan, telmisartan, erenumab, fremanezumab, galcanezumab]}
+            strength: "VA/DoD Rec 4, 5 (Strong for)"
+          - when: {finding: chronic_migraine_prevention_needed}
+            recommend: {options: [erenumab, fremanezumab, galcanezumab, onabotulinumtoxinA]}
+            strength: "VA/DoD Rec 5 (Strong for), Rec 14 (Weak for)"
+          - when: {all: [{finding: episodic_migraine_prevention_needed}, {med: gabapentin}]}
+            recommend: {action: avoid, detail: "가바펜틴 편두통 예방"}
+            strength: "VA/DoD Rec 17 (Weak against)"
+
+  - id: 447-C03
+    topic: 약물과용 두통
+    type: workup
+    original:
+      text: "급성 두통약을 자주 쓰면 약물남용(과용) 두통 — 진통제 사용 제한."
+      location: {file: by_chapter/447장.md, line: 278}
+    status: 보완
+    current:
+      text: >
+        두통 환자에서 약물과용 두통 고위험 요인을 평가하도록 제안한다(영향 순): 두통 빈도 월 7일 이상, 편두통 진단, 항불안제·진통제(편두통 급성 치료용 오피오이드·비오피오이드 포함)·
+        진정수면제의 잦은 사용, 근골격·위장관 증상을 동반한 불안·우울 병력, 신체 비활동, 지난 1년 2주 넘는 병가, 편타손상 자가보고, 흡연(Rec 1).
+        약물과용 두통에 특정 예방약이나 중단 전략을 권고할 근거는 불충분하다(Rec 33).
+      sources:
+        - {id: VADOD-HEADACHE-2023, locator: "Recommendations 1, 33"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {any: [{var: headache_days_per_month, op: ">=", value: 7}, {all: [{dx: G43}, {any: [{med_class: opioid}, {med_class: analgesic_frequent}, {med_class: sedative_hypnotic}, {med_class: anxiolytic}]}]}]}
+        tests:
+          - {review: medication_overuse_headache_risk, reason: "약물과용 두통 고위험 요인 평가"}
+        strength: "VA/DoD Rec 1 (Weak for)"
+
+  - id: 447-C04
+    topic: 긴장형 두통
+    type: treatment
+    original:
+      text: "긴장성 두통: 단순 진통제(아세트아미노펜·아스피린·NSAID), 만성은 아미트립틸린 예방."
+      location: {file: by_chapter/447장.md, line: 321}
+    status: 유지
+    current:
+      text: >
+        급성 긴장형 두통에 이부프로펜 400 mg 또는 아세트아미노펜 1,000 mg을 제안한다(Rec 27). 만성 긴장형 두통 예방에 아미트립틸린을 제안하고(Rec 25), 보툴리눔 주사는 제안하지 않는다(Rec 26).
+        긴장형·편두통·경추성 두통에 물리치료(Rec 42), 긴장형·편두통 예방에 유산소 운동 또는 점진적 근력 운동(Rec 43)을 제안한다.
+      sources:
+        - {id: VADOD-HEADACHE-2023, locator: "Recommendations 25–27, 42, 43"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-TTH-ACUTE
+        indication: 급성 긴장형 두통
+        source_priority: [VADOD-HEADACHE-2023]
+        options: ["이부프로펜 400 mg", "아세트아미노펜 1,000 mg"]
+
+  - id: 447-C05
+    topic: 군발두통
+    type: treatment
+    original:
+      text: >
+        급성: 100% 산소 10–12 L/min 15–20분, 수마트립탄 6 mg 피하, 비강 수마트립탄 20 mg·졸미트립탄 5 mg. 예방: 프레드니손 60 mg 단기, 베라파밀(160–960 mg/일)이 장기 예방 1차, 리튬, 메티세르지드.
+      location: {file: by_chapter/447장.md, line: 405}
+    status: 개정
+    current:
+      text: >
+        급성 군발두통에 피하 수마트립탄 6 mg 또는 비강 졸미트립탄 10 mg(Rec 31)과 상압 산소 치료(Rec 32)를 제안한다. 삽화성 군발두통 급성 치료에 비침습 미주신경 자극을 제안한다(Rec 41).
+        삽화성 군발두통 예방에 갈카네주맙을 제안하고(Rec 28), 만성 군발두통에는 제안하지 않는다(Rec 29). 베라파밀의 삽화성·만성 군발두통 예방 효과는 근거 불충분이다(Rec 30).
+        이식형 접형구개신경절 자극기는 제안하지 않는다(Rec 39).
+      sources:
+        - {id: VADOD-HEADACHE-2023, locator: "Recommendations 28–32, 39, 41"}
+    verification: primary
+    conflicts:
+      - "원문은 베라파밀을 장기 예방 1차로 서술 — VA/DoD는 근거 불충분(Rec 30). 비강 졸미트립탄 용량: 원문 5 mg, VA/DoD 10 mg."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G44.0]}
+        recommendations:
+          - when: {finding: acute_cluster_attack}
+            recommend: {options: ["수마트립탄 6 mg 피하", "졸미트립탄 10 mg 비강", "상압 산소"]}
+            strength: "VA/DoD Rec 31, 32 (Weak for)"
+
+  - id: 447-C06
+    topic: 시술·보완요법·검사
+    type: treatment
+    original:
+      text: "비약물적 치료: 유발 요인 회피, 생활습관, 행동 치료. 신경자극 치료."
+      location: {file: by_chapter/447장.md, line: 145}
+    status: 개정
+    current:
+      text: >
+        편두통 치료·예방 목적의 난원공 폐쇄술은 제안하지 않는다(Rec 40). 식이 유발요인 회피는 근거 불충분(Rec 46)이며, 이를 위한 IgG 항체 검사는 제안하지 않는다(Rec 47).
+        바이오피드백, CBT, 마음챙김, 점진적 근이완(Rec 44), 침·건침·요가(Rec 45), 편두통 신경조절 기기(Rec 48)는 근거 불충분.
+      sources:
+        - {id: VADOD-HEADACHE-2023, locator: "Recommendations 40, 44–48"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G43, G44.2]}
+        recommendations:
+          - when: {event: food_igg_test_ordered}
+            recommend: {action: avoid, detail: "식이 유발요인 확인용 IgG 항체 검사"}
+            strength: "VA/DoD Rec 47 (Weak against)"
+          - when: {all: [{dx: G43}, {event: pfo_closure_considered_for_migraine}]}
+            recommend: {action: avoid, procedure: pfo_closure}
+            strength: "VA/DoD Rec 40 (Weak against)"

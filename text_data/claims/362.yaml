@@ -1,0 +1,290 @@
+# 362장 만성 간염 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: CDC(MMWR·HCP 페이지, 퍼블릭 도메인), openFDA(CC0)
+
+chapter: "362"
+title: 만성 간염
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 362-C01
+    topic: B형간염 선별 대상과 3종 검사
+    type: workup
+    original:
+      text: "만성 B형간염은 HBsAg 6개월 이상 지속으로 정의. 표 362-1 임상·검사 소견(HBsAg, HBeAg, HBV DNA, anti-HBc)."
+      location: {file: by_chapter/362장.md, line: 36}
+    status: 보완
+    current:
+      text: >
+        18세 이상 모든 성인을 평생 최소 1회 B형간염 선별검사한다. 임신부는 매 임신마다(가능하면 1분기) 검사한다. 초기 선별은 HBsAg, anti-HBs, total anti-HBc 3종 검사로 한다.
+        위험군(HBV 유병률 ≥2% 지역 출생, 주사약물 사용, 수감 경력, HIV, HCV 감염 또는 과거 감염, 남성 간 성관계, 성매개감염·다수 성상대, 감염자의 가족·성상대·주사기 공유자,
+        유지 투석, 원인 불명의 지속적 ALT·AST 상승 등)은 위험 기간에 감수성이 있었다면 검사하고, 위험이 지속되면 주기적으로 재검사한다. 원하는 사람은 위험 공개 여부와 관계없이 검사한다.
+        백신 접종 후 최대 18일까지 일시적 HBsAg 양성이 나올 수 있으므로 혈청검사는 접종 전에 채혈하되, 결과를 기다리느라 접종을 미루지 않는다.
+      sources:
+        - {id: CDC-HBV-SCREENING-2023, locator: "Recommendations; Triple panel; Vaccination"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{var: age, op: ">=", value: 18}, {not: {finding: prior_hbv_triple_panel}}]}
+        tests:
+          - {lab: HBsAg, reason: "B형간염 선별(평생 최소 1회)"}
+          - {lab: Anti_HBs, reason: "B형간염 선별(평생 최소 1회)"}
+          - {lab: Anti_HBc_total, reason: "B형간염 선별(평생 최소 1회)"}
+      - kind: workup
+        trigger: {any: [{dx: B20}, {dx: B18.2}, {event: dialysis}, {finding: persistent_unexplained_alt_elevation}, {finding: injection_drug_use}]}
+        tests:
+          - {lab: HBsAg, reason: 위험군 검사}
+          - {lab: Anti_HBc_total, reason: 위험군 검사}
+          - {lab: Anti_HBs, reason: 위험군 검사}
+
+  - id: 362-C02
+    topic: B형간염 혈청 결과 해석과 후속 조치
+    type: diagnosis
+    original:
+      text: "HBsAg 양성 6개월 이상이면 만성. HBeAg·HBV DNA로 복제 상태 평가."
+      location: {file: by_chapter/362장.md, line: 40}
+    status: 유지
+    current:
+      text: >
+        HBsAg 양성은 급성 또는 만성 감염이며, 6개월 이상 지속되면 만성이다. anti-HBs는 회복 또는 면역(접종 완료 1–2개월 후 ≥10 mIU/mL)을 뜻한다.
+        total anti-HBc는 과거·현재 감염 모두에서 생기고 대개 평생 유지되며 백신으로는 생기지 않는다. IgM anti-HBc는 급성 감염이 의심될 때만 검사한다.
+        anti-HBc 단독 양성(HBsAg·anti-HBs 음성)은 위양성일 수 있어 위험인자가 없으면 같은 검사로 재검한다. 감염이 확인되면 HBV DNA, HBeAg, anti-HBe로 복제·전파력·치료 반응을 평가한다.
+        활동성 감염: 전파·재활성화 상담, 접촉자 검사·접종, A형간염 면역 없으면 접종, HIV·HCV·HDV 선별. 과거(회복) 감염: B세포 고갈 치료 등에서 재활성화 위험 상담.
+        감수성: 접종. 접종 완료: 면역정상인에게 추가 접종은 권장하지 않는다.
+      sources:
+        - {id: CDC-HBV-SCREENING-2023, locator: "Interpretation of test results; Follow-up and linkage to care"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: diagnosis
+        condition: {name: 만성 B형간염, kcd: [B18.1]}
+        logic: {var: HBsAg_positive_months, op: ">=", value: 6}
+      - kind: workup
+        trigger: {finding: hbsag_positive}
+        tests:
+          - {lab: HBV_DNA, reason: 복제 평가}
+          - {lab: HBeAg, reason: 복제·전파력}
+          - {lab: Anti_HBe, reason: 복제·전파력}
+          - {lab: Anti_HIV, reason: 동반 감염 선별}
+          - {lab: Anti_HCV, reason: 동반 감염 선별}
+          - {lab: Anti_HDV, reason: 동반 감염 선별}
+          - {lab: Anti_HAV_total, reason: "A형간염 면역 확인(없으면 접종)"}
+      - kind: treatment
+        condition: {kcd: [B18.1, Z86.19]}
+        recommendations:
+          - when: {all: [{finding: anti_hbc_positive}, {any: [{med_class: anti_CD20}, {med_class: b_cell_depleting}]}]}
+            recommend: {action: counsel_and_monitor_hbv_reactivation}
+            alert_level: high
+
+  - id: 362-C03
+    topic: 만성 B형간염 항바이러스제와 용량
+    type: dose
+    original:
+      text: >
+        인터페론·페그인터페론, 라미부딘, 아데포비어, 엔테카비어, 텔비부딘, 테노포비어 비교(표 362-3). 라미부딘은 내성이 흔함.
+      location: {file: by_chapter/362장.md, line: 114}
+    status: 개정
+    current:
+      text: >
+        엔테카비르(미국 허가): 뉴클레오사이드 치료 경험 없는 16세 이상 0.5 mg 1일 1회. 라미부딘 치료 중 바이러스혈증·라미부딘/텔비부딘 내성 변이 또는 비대상성 간질환은 1 mg 1일 1회.
+        CrCl <50이면 감량: 30–49는 0.25 mg 1일 1회(또는 0.5 mg 48시간마다), 10–29는 0.15 mg(또는 0.5 mg 72시간마다), <10·혈액투석·CAPD는 0.05 mg(또는 0.5 mg 7일마다), 투석일에는 투석 후.
+        테노포비르 알라페나미드(VEMLIDY): 25 mg 1일 1회 음식과 함께. CrCl ≥15 또는 만성 혈액투석 중인 말기신부전은 조정 불필요(투석일에는 투석 후), 투석하지 않는 CrCl <15는 비권장,
+        비대상성 간(Child-Pugh B·C)에는 비권장. 시작 전 HIV 검사(HIV 동반 시 단독 사용 금지).
+        테노포비르 디소프록실 푸마르산(TDF): 300 mg. CrCl(이상체중으로 계산) ≥50은 24시간, 30–49는 48시간, 10–29는 72–96시간마다, 혈액투석은 7일마다(투석 후).
+        시작 전·치료 중 크레아티닌, CrCl, 요당, 요단백(CKD면 인도 포함)을 평가한다.
+      sources:
+        - {id: OPENFDA-ENTECAVIR, locator: "2.2 Adults; 2.4 Renal Impairment Table 2"}
+        - {id: OPENFDA-TAF-VEMLIDY, locator: "2.1–2.4"}
+        - {id: OPENFDA-TDF, locator: "2.1–2.4 Chronic Hepatitis B; Table 3"}
+    verification: primary
+    note: "치료 시작 기준(ALT·HBV DNA·간경변)은 AASLD(C등급) 등 지침 영역 — A등급 근거 미확보. 라미부딘·아데포비어·텔비부딘은 이 장에서 대조하지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-ENTECAVIR
+        ingredient: entecavir
+        indication: 만성 B형간염
+        renal_param: CrCl
+        source_priority: [OPENFDA-ENTECAVIR]
+        bands:
+          - range: {min: 50}
+            usual_0_5: "0.5 mg 1일 1회"
+            refractory_or_decompensated_1mg: "1 mg 1일 1회"
+          - range: {min: 30, max: 49.999}
+            usual_0_5: "0.25 mg 1일 1회 또는 0.5 mg 48시간마다"
+            refractory_or_decompensated_1mg: "0.5 mg 1일 1회 또는 1 mg 48시간마다"
+          - range: {min: 10, max: 29.999}
+            usual_0_5: "0.15 mg 1일 1회 또는 0.5 mg 72시간마다"
+            refractory_or_decompensated_1mg: "0.3 mg 1일 1회 또는 1 mg 72시간마다"
+          - range: {max: 9.999}
+            usual_0_5: "0.05 mg 1일 1회 또는 0.5 mg 7일마다(혈액투석·CAPD 포함, 투석 후)"
+            refractory_or_decompensated_1mg: "0.1 mg 1일 1회 또는 1 mg 7일마다"
+        alert_note: "미국 허가 기준 — 0.5 mg 미만은 경구액"
+      - kind: dose_rule
+        id: DR-TDF-HBV
+        ingredient: tenofovir_disoproxil_fumarate
+        indication: 만성 B형간염
+        renal_param: CrCl
+        renal_method: "Cockcroft-Gault(이상체중)"
+        source_priority: [OPENFDA-TDF]
+        bands:
+          - {range: {min: 50}, action: "300 mg 24시간마다"}
+          - {range: {min: 30, max: 49.999}, action: "300 mg 48시간마다", alert: caution}
+          - {range: {min: 10, max: 29.999}, action: "300 mg 72–96시간마다", alert: caution}
+          - {range: {max: 9.999}, action: "혈액투석: 7일마다(투석 후). 비투석 CrCl <10은 자료 없음", alert: high}
+        monitoring: ["크레아티닌·CrCl·요당·요단백(시작 전·치료 중)", "CKD면 혈청 인"]
+      - kind: dose_rule
+        id: DR-TAF-HBV
+        ingredient: tenofovir_alafenamide
+        indication: 만성 B형간염
+        renal_param: CrCl
+        source_priority: [OPENFDA-TAF-VEMLIDY]
+        standard_dose: "25 mg 1일 1회 음식과 함께"
+        rules:
+          - {when: {all: [{var: CrCl, op: "<", value: 15}, {not: {event: chronic_hemodialysis}}]}, action: "비권장", alert: contraindicated}
+          - {when: {finding: child_pugh_b_or_c}, action: "비권장", alert: contraindicated}
+          - {when: {event: chronic_hemodialysis}, action: "투석일에는 투석 후 투여"}
+
+  - id: 362-C04
+    topic: C형간염 선별과 진단
+    type: workup
+    original:
+      text: "만성 C형간염 진단은 anti-HCV와 HCV RNA."
+      location: {file: by_chapter/362장.md, line: 341}
+    status: 보완
+    current:
+      text: >
+        HCV RNA 유병률 <0.1%인 환경을 제외하고 18세 이상 모든 성인을 평생 최소 1회, 임신부는 매 임신마다 C형간염 선별한다.
+        위험군(HIV, 주사약물 공유 경험, 유지 혈액투석 경험, 지속적 ALT 이상 등)은 나이와 무관하게 1회 검사하고, 현재 주사약물 공유·유지 혈액투석처럼 위험이 지속되면 주기적으로 검사한다.
+        FDA 승인 anti-HCV 검사 후 양성이면 HCV RNA 검사를 하며, 같은 검체로 자동 시행하는 반사 검사를 권장한다.
+        anti-HCV+·RNA+는 현재 감염, anti-HCV+·RNA−는 과거 회복 감염 또는 위양성, anti-HCV−·RNA+는 최근 감염이다.
+      sources:
+        - {id: CDC-HCV-SCREENING-2020, locator: "Recommendations; Testing sequence"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{var: age, op: ">=", value: 18}, {not: {finding: prior_hcv_screening}}]}
+        tests:
+          - {lab: Anti_HCV, reflex: HCV_RNA, reason: "C형간염 선별(평생 최소 1회)"}
+      - kind: diagnosis
+        condition: {name: 현재 C형간염 감염, kcd: [B18.2]}
+        logic: {all: [{finding: anti_hcv_positive}, {finding: hcv_rna_positive}]}
+
+  - id: 362-C05
+    topic: 만성 C형간염 치료(DAA)
+    type: treatment
+    original:
+      text: >
+        페그인터페론+리바비린, 1세대 단백분해효소 억제제(텔라프레비르·보세프레비르, 2011–2013) 3제 요법, 새로운 약제(소포스부비르·시메프레비르 등) 소개.
+      location: {file: by_chapter/362장.md, line: 363}
+    status: 개정
+    current:
+      text: >
+        리바비린+(페그)인터페론은 효과가 낮고 부작용이 많아 더 이상 권고하지 않는다. 경구 직접작용 항바이러스제(DAA: 단백분해효소 억제제, 뉴클레오사이드 중합효소 억제제, NS5A 억제제)로
+        8–12주에 95% 넘게 완치된다. 임신부와 3세 미만을 제외하고 HCV RNA가 검출되는 모든 사람을 자연 소실을 기다리지 말고 치료한다.
+        치료 전: 만성 간질환 평가, HBV 검사(HBsAg, anti-HBs, total anti-HBc — HBsAg 양성이나 anti-HBc 단독 양성은 치료 중 HBV 재활성화 감시), HIV 위험 평가·검사, A·B형간염 접종.
+        치료 종료 12주 후 HCV RNA 미검출이면 완치(지속 바이러스 반응, SVR)로 본다.
+      sources:
+        - {id: CDC-HCV-CLINICAL-CARE, locator: "Treatment; Pretreatment evaluation; SVR"}
+    verification: primary
+    conflicts:
+      - "원문 중심 요법(페그인터페론+리바비린, 텔라프레비르·보세프레비르)은 현재 권고되지 않음 — 말뭉치에서 제외."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [B18.2]}
+        recommendations:
+          - when: {all: [{finding: hcv_rna_positive}, {not: {finding: pregnancy}}, {var: age, op: ">=", value: 3}]}
+            recommend: {drug_class: DAA, duration_weeks: "8–12", note: "자연 소실을 기다리지 않음"}
+          - when: {any: [{med: peginterferon}, {med: telaprevir}, {med: boceprevir}]}
+            recommend: {action: outdated_regimen_alert, detail: "현행 권고 아님 — DAA로 대체"}
+            alert_level: medium
+      - kind: workup
+        trigger: {event: hcv_treatment_planned}
+        tests:
+          - {lab: HBsAg, reason: "치료 중 HBV 재활성화 위험 평가"}
+          - {lab: Anti_HBs, reason: HBV 상태}
+          - {lab: Anti_HBc_total, reason: "치료 중 HBV 재활성화 위험 평가"}
+          - {lab: Anti_HIV, reason: 동반 감염}
+      - kind: monitoring
+        after: {event: hcv_treatment_completed}
+        check: [HCV_RNA]
+        timing_weeks: 12
+        rules:
+          - {when: {finding: hcv_rna_undetectable_12wk}, action: "완치(SVR)"}
+
+  - id: 362-C06
+    topic: 범유전형 DAA 용량과 기간
+    type: dose
+    original:
+      text: "(원문에 범유전형 DAA 없음 — 19판 이후 승인)"
+      location: {file: by_chapter/362장.md, line: 591}
+    status: 보완
+    current:
+      text: >
+        소포스부비르/벨파타스비르(EPCLUSA, 미국 허가): 400/100 mg 1정 1일 1회, 유전형 1–6. 간경변 없거나 대상성 간경변은 12주, 비대상성 간경변(Child-Pugh B·C)은 리바비린 병용 12주
+        (리바비린 <75 kg 1,000 mg/일, ≥75 kg 1,200 mg/일 분할). 투석을 포함한 모든 신기능 저하에서 EPCLUSA 용량 조정은 필요 없다.
+        글레카프레비르/피브렌타스비르(MAVYRET, 미국 허가): 3정(300/120 mg) 1일 1회 음식과 함께. 치료 경험 없는 유전형 1–6은 간경변 없거나 대상성 간경변 모두 8주.
+        중등도·중증 간기능 장애(Child-Pugh B·C) 또는 간 비대상 병력에서 금기, 아타자나비르·리팜핀 병용 금기. 신기능 저하 정도와 관계없이 같은 용량.
+      sources:
+        - {id: OPENFDA-SOF-VEL-EPCLUSA, locator: "2.2–2.3 Table 1; Renal Impairment"}
+        - {id: OPENFDA-GLE-PIB-MAVYRET, locator: "2.2–2.3 Treatment Duration; 4 Contraindications"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-SOF-VEL
+        ingredient: sofosbuvir_velpatasvir
+        indication: 만성 C형간염(유전형 1–6)
+        source_priority: [OPENFDA-SOF-VEL-EPCLUSA]
+        standard_dose: "400/100 mg 1일 1회"
+        rules:
+          - {when: {not: {finding: decompensated_cirrhosis}}, action: "12주"}
+          - {when: {finding: decompensated_cirrhosis}, action: "리바비린 병용 12주(<75 kg 1,000 mg/일, ≥75 kg 1,200 mg/일)"}
+        renal: "모든 신기능 저하·투석에서 조정 불필요(리바비린은 별도 조정)"
+      - kind: dose_rule
+        id: DR-GLE-PIB
+        ingredient: glecaprevir_pibrentasvir
+        indication: 만성 C형간염(유전형 1–6)
+        source_priority: [OPENFDA-GLE-PIB-MAVYRET]
+        standard_dose: "300/120 mg(3정) 1일 1회 음식과 함께"
+        rules:
+          - {when: {all: [{finding: treatment_naive}, {not: {finding: decompensated_cirrhosis}}]}, action: "8주"}
+          - {when: {any: [{finding: child_pugh_b_or_c}, {finding: history_hepatic_decompensation}]}, action: "금기", alert: contraindicated}
+          - {when: {any: [{med: atazanavir}, {med: rifampin}]}, action: "병용 금기", alert: contraindicated}
+        renal: "신기능 저하 정도와 관계없이 같은 용량"
+
+  - id: 362-C07
+    topic: 자가면역간염
+    type: workup
+    original:
+      text: "자가면역간염 정의, 진단(자가항체, 고감마글로불린혈증, 조직), 스테로이드±아자티오프린 치료."
+      location: {file: by_chapter/362장.md, line: 601}
+    status: 유지
+    current:
+      text: >
+        자가면역간염은 전형적인 임상·검사 소견(혈청 면역글로불린 G/감마글로불린 상승, 자가항체)과 병리 소견을 종합하고 다른 원인을 배제해 진단한다.
+        간생검은 정확한 진단의 전제 조건이며 중첩증후군 확인에도 도움이 된다(특이 조직 소견이 없어 숙련된 병리의가 필요). 생검이 어려우면 간 탄성도 등 비침습 평가를 쓸 수 있다.
+        IAIHG 간이 진단 기준은 ANA 또는 SMA(간접면역형광 ≥1:40 1점, ≥1:80 2점; 대안으로 anti-LKM1 ≥1:40 또는 anti-SLA 양성 2점), IgG(정상 상한 초과 1점, 1.1배 초과 2점),
+        간 조직 소견, 바이러스 간염 배제를 점수화한다. 표준 치료는 프레드니손(프레드니솔론)과 아자티오프린이며, 부데소니드·마이코페놀레이트는 1차·대체 치료로 쓰일 수 있다.
+        미노사이클린·니트로푸란토인 같은 약물 노출이 위험 요인으로 알려져 있다.
+      sources:
+        - {id: PAPER-APASL-AIH-2021, locator: "Diagnosis; Liver histology; Simplified criteria for the diagnosis of AIH; Standard treatment; Environmental factors"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          any:
+            - {finding: suspected_autoimmune_hepatitis}
+            - {finding: persistent_unexplained_alt_elevation}
+        tests:
+          - {lab: ANA, reason: "자가면역간염 간이 진단 기준"}
+          - {lab: ASMA, reason: "자가면역간염 간이 진단 기준"}
+          - {lab: Anti_LKM1, reason: "ANA·SMA 대안 자가항체"}
+          - {lab: IgG, reason: "IgG 상승(정상 상한 배수로 점수화)"}
+          - {exam: Liver_biopsy, reason: "진단의 전제 조건(숙련 병리 판독)"}
+        notes: ["원인 불명 ALT 지속 상승을 자가면역간염 평가로 연결한 것은 운영 가정 — 검수 시 확정"]

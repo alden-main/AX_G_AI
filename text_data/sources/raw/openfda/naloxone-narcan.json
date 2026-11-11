@@ -1,0 +1,28 @@
+{
+ "key": "naloxone-narcan",
+ "retrieved_at": "2026-11-10",
+ "license": "CC0 1.0 (openFDA, https://open.fda.gov/license)",
+ "query": "openfda.brand_name:\"NARCAN\"",
+ "set_id": "a0ebc83d-2892-40de-bc0a-775ce90b30db",
+ "id": "5943126a-0a41-d369-e063-6294a90ac238",
+ "version": "4",
+ "effective_time": "20260817",
+ "brand_name": [
+  "NARCAN"
+ ],
+ "generic_name": [
+  "NALOXONE HYDROCHLORIDE NASAL"
+ ],
+ "manufacturer_name": [
+  "Emergent Devices Inc."
+ ],
+ "dailymed_url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=a0ebc83d-2892-40de-bc0a-775ce90b30db",
+ "sections": {
+  "indications_and_usage": [
+   "Uses to “revive” someone during an overdose from many prescription pain medications or street drugs such as heroin this medicine can save a life"
+  ],
+  "dosage_and_administration": [
+   "Directions NARCAN ® Naloxone HCl Nasal Spray 4 mg Emergency Treatment of Opioid Overdose Important: For use in the nose only Do not test nasal spray device before use 1 nasal spray device contains 1 dose of medicine Each device sprays 1 time only Step 1: CHECK if you suspect an overdose: CHECK for a suspected overdose: the person will not wake up or is very sleepy or not breathing well yell “Wake up!” shake the person gently if the person is not awake, go to Step 2 Step 2: Give 1 st dose in the nose HOLD the nasal spray device with your thumb on the bottom of the plunger INSERT the nozzle into either NOSTRIL PRESS the plunger firmly to give the 1st dose 1 nasal spray device contains 1 dose Step 3: CALL 911 CALL 911 immediately after giving the l st dose Step 4: WATCH & GIVE WAIT 2-3 minutes after the l st dose to give the medicine time to work if the person wakes up : Go to Step 5 if the person does not wake up : CONTINUE TO GIVE doses every 2-3 minutes until the person wakes up it is safe to keep giving doses Step 5: STAY STAY until ambulance arrives: even if the person wakes up GIVE another dose if the person becomes very sleepy again You may need to give all the doses in the pack For opioid emergencies, call 911. For questions on NARCAN, call 1-844-4NARCAN (1-844-462-7226) or go to www.narcan.com . ©2023 Emergent Devices Inc. EMERGENT® and NARCAN® are registered trademarks of Emergent BioSolutions Inc, or its subsidiaries. Other Information store at room temperature or refrigerated, between 2°C to 25°C (36°F to 77°F) do not freeze avoid excessive heat above 40°C (104°F) protect from light the product is packaged in individually-sealed blisters. Do not use if the blister is open or torn, or if the device appears damaged. Naloxone HCl Nasal Spray 4 mg 1. Check 2. Give 3. Call 4. Watch/Give 5. Stay"
+  ]
+ }
+}

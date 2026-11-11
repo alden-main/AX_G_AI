@@ -1,0 +1,184 @@
+# 413장 폐경과 폐경후 호르몬 치료 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+
+chapter: "413"
+title: 폐경과 폐경후 호르몬 치료
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 413-C01
+    topic: 폐경·폐경주변기 진단
+    type: diagnosis
+    original:
+      text: "STRAW+10 분류, 월경 주기 특징이 기본 기준. FSH·에스트라디올은 불완전한 지표이나 무작위 FSH >25 IU/L는 후기 폐경 이행기 소견."
+      location: {file: by_chapter/413장.md, line: 24}
+    status: 개정
+    current:
+      text: "폐경·폐경주변기 진단에 항뮐러관호르몬(AMH)이나 FSH 같은 검사실 검사를 쓰지 않도록 제안한다(Rec 1, Weak against)."
+      sources:
+        - {id: VADOD-MENO-2026, locator: "Recommendation 1"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N95.1]}
+        recommendations:
+          - when: {any: [{event: fsh_ordered_for_menopause_diagnosis}, {event: amh_ordered_for_menopause_diagnosis}]}
+            recommend: {action: avoid, detail: "폐경 진단 목적 FSH·AMH 검사"}
+            strength: "VA/DoD Rec 1 (Weak against)"
+
+  - id: 413-C02
+    topic: 혈관운동 증상 — 호르몬 치료
+    type: treatment
+    original:
+      text: "에스트로겐 치료가 혈관운동·비뇨생식기 증상에 매우 효과적. 자궁이 있으면 프로게스틴 병용."
+      location: {file: by_chapter/413장.md, line: 70}
+    status: 유지
+    current:
+      text: >
+        자궁이 있으면 혈관운동 증상에 전신 에스트라디올+프로게스테론을 권고하고(Rec 2, Strong for), 결합 에스트로겐+바제독시펜을 제안한다(Rec 3).
+        자궁이 없으면 전신 에스트라디올 단독을 제안한다(Rec 4). 프로게스토겐 단독 요법은 제안하지 않는다(Rec 5).
+        호르몬 치료 금기가 없으면 벤라팍신·가바펜틴보다 호르몬 치료를 제안한다(Rec 10).
+      sources:
+        - {id: VADOD-MENO-2026, locator: "Recommendations 2–5, 10"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N95.1]}
+        recommendations:
+          - when: {all: [{finding: vasomotor_symptoms}, {finding: uterus_present}, {not: {finding: estrogen_contraindication}}]}
+            recommend: {regimen: "전신 에스트라디올+프로게스테론", alt: "결합 에스트로겐+바제독시펜"}
+            strength: "VA/DoD Rec 2 (Strong for), Rec 3 (Weak for)"
+          - when: {all: [{finding: vasomotor_symptoms}, {not: {finding: uterus_present}}, {not: {finding: estrogen_contraindication}}]}
+            recommend: {regimen: "전신 에스트라디올 단독"}
+            strength: "VA/DoD Rec 4 (Weak for)"
+          - when: {all: [{med_class: estrogen_systemic}, {finding: uterus_present}, {not: {med_class: progestogen}}]}
+            recommend: {action: alert, detail: "자궁이 있는데 전신 에스트로겐 단독 — 프로게스토겐 병용 확인"}
+            alert_level: high
+
+  - id: 413-C03
+    topic: 혈관운동 증상 — 비호르몬 치료
+    type: treatment
+    original:
+      text: >
+        대체 치료: 파록세틴 7.5 mg/일(FDA 승인), 벤라팍신 75–150 mg/일, 가바펜틴 300–900 mg/일, 클로니딘 0.1–0.2 mg/일, 비타민 E, 콩·식물성 에스트로겐 — 호르몬보다 효과 적음.
+      location: {file: by_chapter/413장.md, line: 70}
+    status: 개정
+    current:
+      text: >
+        혈관운동 증상에 인지행동치료(CBT)를 권고한다(Rec 6, Strong for). 엘린자네탄트 또는 페졸리네탄트를 제안하며(Rec 7), 이 약들과 호르몬 치료의 우열 근거는 불충분하다(Rec 8).
+        환자 특성·선호에 따라 비호르몬 선택지로 SSRI/SNRI 또는 가바펜틴을 제안한다(Rec 9). 지압, 침, 태극권, 요가(Rec 11)와 블랙코호시·인삼·홍삼 등 건강기능식품(Rec 12)은 근거 불충분.
+      sources:
+        - {id: VADOD-MENO-2026, locator: "Recommendations 6–9, 11, 12"}
+    verification: primary
+    note: "원문의 클로니딘·비타민 E는 VA/DoD 권고에 없음 — 개별 용량은 허가사항으로 미대조."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N95.1]}
+        recommendations:
+          - when: {finding: vasomotor_symptoms}
+            recommend: {intervention: CBT}
+            strength: "VA/DoD Rec 6 (Strong for)"
+          - when: {all: [{finding: vasomotor_symptoms}, {finding: estrogen_contraindication}]}
+            recommend: {options: [fezolinetant, elinzanetant, SSRI_or_SNRI, gabapentin]}
+            strength: "VA/DoD Rec 7, 9 (Weak for)"
+
+  - id: 413-C04
+    topic: 전신 에스트로겐 치료 금기·주의
+    type: treatment
+    original:
+      text: "표 413-1 호르몬 치료의 이득과 위험(WHI: 에스트로겐-프로게스틴군 이득-위험 불리, 에스트로겐 단독군 뇌졸중 초과)."
+      location: {file: by_chapter/413장.md, line: 66}
+    status: 보완
+    current:
+      text: >
+        절대 금기: 활동성·최근 동맥 혈전색전질환(뇌졸중·심근경색), 활동성·최근 DVT·PE, 활동성·중증 간질환, 심혈관질환이 있으면서 60세 초과 및/또는 폐경 10년 초과,
+        유방암 또는 병력(전이성 질환 치료 중 선택된 환자 제외), 에스트로겐 의존성 종양, 에스트로겐 관련 아나필락시스·혈관부종, 임신(의심 포함),
+        단백 C·S·항트롬빈 결핍 등 혈전성향, 원인 불명 생식기 출혈.
+        주의: 심혈관질환은 없으나 위험이 있으면 검증된 위험 계산기 사용, 갑상선 호르몬 대체 중이면 갑상선 기능 감시, 담낭질환, DVT·PE·뇌졸중·MI 병력,
+        중증 고칼슘혈증·시력 소실·중증 고중성지방혈증·담즙정체 황달이 생기면 중단. 호르몬 양성 유방암 생존자에게 전신 호르몬 치료를 제안하지 않는다(Rec 41).
+      sources:
+        - {id: VADOD-MENO-2026, locator: "Sidebar 2 (Contraindications to Systemic Menopausal Estrogen Therapy); Recommendation 41"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N95.1]}
+        recommendations:
+          - when:
+              all:
+                - {med_class: estrogen_systemic}
+                - any:
+                    - {dx: I63}
+                    - {dx: I21}
+                    - {dx: I26}
+                    - {dx: I80}
+                    - {dx: C50}
+                    - {finding: active_severe_liver_disease}
+                    - {finding: thrombophilia}
+                    - {finding: undiagnosed_genital_bleeding}
+                    - {finding: pregnancy}
+                    - {all: [{finding: established_cvd}, {any: [{var: age, op: ">", value: 60}, {var: years_since_menopause, op: ">", value: 10}]}]}
+            recommend: {action: contraindicated, detail: "전신 에스트로겐 절대 금기 — 전문의 상담"}
+            alert_level: high
+
+  - id: 413-C05
+    topic: 심혈관 예방 목적 호르몬 치료
+    type: treatment
+    original:
+      text: "관찰 연구의 심혈관 이득은 무작위 연구에서 확인되지 않음 — 심혈관질환 예방은 호르몬 치료 목적에서 배제."
+      location: {file: by_chapter/413장.md, line: 64}
+    status: 유지
+    current:
+      text: >
+        폐경 후 뇌혈관 사건 일차예방으로 경구 에스트로겐 또는 에스트로겐+프로게스토겐을 쓰지 않도록 권고한다(Rec 38, Strong against).
+        심혈관질환 일차예방으로 경구 호르몬 치료(저용량 포함)를 제안하지 않는다(Rec 39). 60세 미만·폐경 10년 미만이고 심혈관질환과 심한 혈관운동 증상이 있으면 전신 에스트로겐 치료를 고려할 수 있다(Rec 40).
+        치매 예방 목적은 근거 불충분(Rec 19), 인지 증상 치료 목적은 제안하지 않는다(Rec 20).
+      sources:
+        - {id: VADOD-MENO-2026, locator: "Recommendations 19, 20, 38–40"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [N95.1, Z79.890]}
+        recommendations:
+          - when: {all: [{med_class: estrogen_oral}, {finding: indication_cv_or_stroke_prevention_only}]}
+            recommend: {action: avoid, detail: "심·뇌혈관 일차예방 목적 경구 호르몬 치료"}
+            strength: "VA/DoD Rec 38 (Strong against), Rec 39 (Weak against)"
+
+  - id: 413-C06
+    topic: 비뇨생식기 증후군·성기능
+    type: treatment
+    original:
+      text: "에스트로겐은 비뇨생식기계 증상에 매우 효과적."
+      location: {file: by_chapter/413장.md, line: 70}
+    status: 보완
+    current:
+      text: >
+        폐경 비뇨생식기 증후군에 국소 질 에스트로겐을 제안하며(Rec 22), 유방암 생존자에게도 국소 질 에스트로겐을 제안한다(Rec 23). 성교통에는 국소 질 에스트로겐 및/또는 질 DHEA(Rec 24),
+        질 건조에는 질 에스트로겐, 질 DHEA, 질 보습제, 오스페미펜(Rec 25)을 제안한다. 성기능 장애(관심·욕구·흥분)에 경피 테스토스테론(Rec 26), 성적 관심·흥분 장애에 플리반세린(Rec 27)을 제안한다.
+        질 레이저는 제안하지 않는다(Rec 29).
+      sources:
+        - {id: VADOD-MENO-2026, locator: "Recommendations 21–29"}
+    verification: primary
+    review: {status: draft}
+
+  - id: 413-C07
+    topic: 폐경 후 골 건강·체중·기분
+    type: treatment
+    original:
+      text: "호르몬 치료는 골다공증 예방 전략으로 장려되어 왔음."
+      location: {file: by_chapter/413장.md, line: 56}
+    status: 개정
+    current:
+      text: >
+        골다공증 위험인자가 있으면 골밀도 증가를 위해 결합 에스트로겐/바제독시펜을 선택지로 제안하고(Rec 30), 식이 칼슘·칼슘 보충을 제안한다(Rec 31).
+        골다공증이 없는 경우 비타민 D3(Rec 32), 골다공증·골감소증 기록 없는 경우 일차예방 비스포스포네이트(Rec 33), 골감소증의 랄록시펜(Rec 34)은 근거 불충분.
+        과체중·비만에 열량 제한 식이(Rec 35)와 운동(Rec 36)을 제안한다. 우울·불안 증상에 CBT(Rec 14)와 MBSR(Rec 15)을 권고하고, 폐경주변기 우울 증상에 호르몬 치료(Rec 16)와 운동(Rec 17)을 제안한다.
+      sources:
+        - {id: VADOD-MENO-2026, locator: "Recommendations 14–17, 30–36"}
+    verification: primary
+    review: {status: draft}

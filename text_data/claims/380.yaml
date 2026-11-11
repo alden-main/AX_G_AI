@@ -1,0 +1,121 @@
+# 380장 류마티스 관절염 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 류마티스관절염 진료지침 핵심 권고 체계적 고찰(Clin Rheumatol 2023, CC BY — 고품질 지침 13개 종합).
+# ACR·EULAR 지침 원문은 C·B등급이라 직접 인용하지 않는다.
+
+chapter: "380"
+title: 류마티스 관절염
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 380-C01
+    topic: 치료 목표와 질병 활성도 감시
+    type: monitoring
+    original:
+      text: "치료 목표는 통증·염증 조절, 관절 기능 보존, 질병 진행 억제. 조기 적극 치료."
+      location: {file: by_chapter/380장.md, line: 274}
+    status: 개정
+    current:
+      text: >
+        치료 목표는 임상 관해, 불가능하면 낮은 질병 활성도다. 검증된 도구(DAS28, SDAI, CDAI, ACR-EULAR 기준 등)로 활성도를 측정하며, 진단 후 또는 치료 전략을 바꾼 뒤 목표에 도달할 때까지 1–3개월마다 감시한다.
+        공동 의사결정으로 환자 상황에 맞추고, 모든 환자에게 질병·치료 선택지 교육과 운동 치료를 권한다.
+      sources:
+        - {id: PAPER-RA-CPG-SR-2023, locator: "Consensus recommendations — Treatment target and monitoring; Non-pharmacological"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: monitoring
+        after: {event: ra_diagnosis_or_treatment_change}
+        check: [DAS28_or_SDAI_or_CDAI]
+        interval_months: [1, 3]
+        rules:
+          - {when: {not: {finding: ra_target_reached}}, action: "목표(관해 또는 낮은 활성도) 도달까지 1–3개월마다 평가"}
+
+  - id: 380-C02
+    topic: DMARD 치료 순서
+    type: treatment
+    original:
+      text: "DMARD(메토트렉세이트가 기본), 생물학적 제제(항TNF, 아바타셉트, 리툭시맙, 토실리주맙), 표 380-2. NSAID와 저용량 스테로이드는 보조."
+      location: {file: by_chapter/380장.md, line: 292}
+    status: 유지
+    current:
+      text: >
+        진단 후 곧바로 기존 합성 DMARD(csDMARD)를 시작하며, 메토트렉세이트가 모든 지침에서 선호 약제다. 금기·불내·목표 미달이면 레플루노마이드, 설파살라진, 하이드록시클로로퀸을 쓴다.
+        목표에 도달하지 못하면 csDMARD에 생물학적(bDMARD) 또는 표적 합성(tsDMARD) DMARD를 추가하며, 첫 단계로는 bDMARD가 권장된다. csDMARD 실패 시 JAK 억제제, TNF 억제제, 비TNF 제제를 추가할 수 있고,
+        bDMARD 실패 시 IL-6 억제제를 쓸 수 있다. NSAID는 최저 유효 용량·최단 기간으로 DMARD와 병용할 수 있고(필요 시 PPI 또는 COX-2 선택 억제제), 스테로이드는 발작·활동성 조절에 고려할 수 있다.
+        관해 중이면 스테로이드 → bDMARD·tsDMARD → csDMARD 순으로 감량할 수 있다(감량 시점은 지침마다 6–12개월로 다름).
+      sources:
+        - {id: PAPER-RA-CPG-SR-2023, locator: "Pharmacological; DMARDs; 'Could do' recommendations"}
+    verification: primary
+    note: "메토트렉세이트 용량은 지침 간 차이(주 10 mg 이상 vs 15 mg 이상)로 말뭉치에 넣지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [M05, M06]}
+        recommendations:
+          - when: {finding: new_ra_diagnosis}
+            recommend: {ingredient: methotrexate, line: first, timing: "진단 직후"}
+          - when: {all: [{med: methotrexate}, {not: {finding: ra_target_reached}}]}
+            recommend: {add: [bDMARD, tsDMARD], note: "csDMARD 병용"}
+
+  - id: 380-C03
+    topic: 생물학적·표적 치료 전 검사와 금기
+    type: workup
+    original:
+      text: "생물학적 제제 전 결핵 선별, 감염 위험."
+      location: {file: by_chapter/380장.md, line: 298}
+    status: 유지
+    current:
+      text: >
+        치료 시작 전 동반질환, 임신, 흉부 방사선, 혈액·신기능·간기능 검사를 할 수 있다. 모든 환자의 감염과 예방접종을 평가하고, 생백신은 bDMARD·tsDMARD 시작 4주 전까지 맞히며 치료 중에는 생백신을 주지 않는다.
+        사백신·재조합 백신은 치료 전·중 모두 가능하다. bDMARD·tsDMARD 시작 전 결핵 감염을 선별하고, 활동성·잠복 결핵은 먼저 적절히 치료한다. B형·C형간염을 선별해 양성이면 추가 평가·치료한다.
+        울혈성 심부전 병력이 있으면 다른 합리적 선택지가 없고 심부전이 대상 상태가 아니라면 TNF 억제제를 쓰지 않는다.
+      sources:
+        - {id: PAPER-RA-CPG-SR-2023, locator: "Pre-treatment investigations and vaccinations; 'Do not do' recommendations"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {any: [{event: bdmard_initiation_planned}, {event: tsdmard_initiation_planned}]}
+        tests:
+          - {lab: Latent_TB_screen, reason: "결핵 선별(활동·잠복 결핵 먼저 치료)"}
+          - {lab: HBsAg, reason: B형간염 선별}
+          - {lab: Anti_HBc_total, reason: B형간염 선별}
+          - {lab: Anti_HCV, reason: C형간염 선별}
+          - {exam: Chest_xray, reason: 치료 전 평가}
+          - {review: vaccination_status, reason: "생백신은 시작 4주 전까지"}
+      - kind: treatment
+        condition: {kcd: [M05, M06]}
+        recommendations:
+          - when: {all: [{med_class: TNF_inhibitor}, {dx: I50}]}
+            recommend: {action: avoid, detail: "울혈성 심부전 병력 — 다른 선택지 없고 대상 상태일 때만"}
+            alert_level: high
+          - when: {all: [{any: [{med_class: bDMARD}, {med_class: tsDMARD}]}, {event: live_vaccine_planned}]}
+            recommend: {action: avoid, detail: "bDMARD·tsDMARD 치료 중 생백신"}
+            alert_level: high
+
+  - id: 380-C04
+    topic: 류마티스관절염 분류기준·검사
+    type: diagnosis
+    original:
+      text: "표 380-1 ACR/EULAR 2010 분류기준(관절 침범, 혈청학 RF·항CCP, 급성기 반응물질, 증상 기간). 활액·영상 검사."
+      location: {file: by_chapter/380장.md, line: 217}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "ACR/EULAR 분류기준 원문은 C등급 — A등급 출처 미확보."
+
+  - id: 380-C05
+    topic: 수술 의뢰
+    type: referral
+    original:
+      text: "내과 치료에 반응하지 않는 관절 손상은 수술(관절 치환 등)."
+      location: {file: by_chapter/380장.md, line: 272}
+    status: 유지
+    current:
+      text: "내과 치료가 실패하고 근거 기반 수술 기준을 충족하면 수술을 고려한다."
+      sources:
+        - {id: PAPER-RA-CPG-SR-2023, locator: "Surgical — Referral for surgical opinion"}
+    verification: primary
+    review: {status: draft}

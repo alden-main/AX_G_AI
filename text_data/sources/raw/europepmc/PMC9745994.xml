@@ -1,0 +1,1134 @@
+
+<!DOCTYPE article
+  PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD with MathML3 v1.4 20241031//EN" "JATS-archivearticle1-4-mathml3.dtd">
+<article xml:lang="en" article-type="research-article" dtd-version="1.4"><processing-meta base-tagset="archiving" mathml-version="3.0" table-model="xhtml" tagset-family="jats"><restricted-by>pmc</restricted-by></processing-meta><front><journal-meta><journal-id journal-id-type="nlm-ta">Dement Neuropsychol</journal-id><journal-id journal-id-type="pmc-domain-id">3245</journal-id><journal-id journal-id-type="pmc-domain">dementneuro</journal-id><journal-id journal-id-type="nlm-id">101506587</journal-id><journal-id journal-id-type="publisher-id">dn</journal-id><journal-title-group><journal-title>Dementia &amp; Neuropsychologia</journal-title></journal-title-group><issn pub-type="ppub">1980-5764</issn><issn pub-type="epub">2764-4863</issn><?publisher_abbrev acbrne?><publisher><publisher-name>Academia Brasileira de Neurologia</publisher-name></publisher></journal-meta><article-meta><article-id pub-id-type="pmcid">PMC9745994</article-id><article-id pub-id-type="pmcid-ver">PMC9745994.1</article-id><article-id pub-id-type="pmcaid">9745994</article-id><article-id pub-id-type="pmcaiid">9745994</article-id><article-id pub-id-type="pmid">36533154</article-id><article-id pub-id-type="doi">10.1590/1980-5764-DN-2022-S106PT</article-id><article-version article-version-type="pmc-version">1</article-version><article-categories><subj-group subj-group-type="heading"><subject>Consenso</subject></subj-group></article-categories><title-group><article-title>Treatment of dementia: recommendations of the Scientific Department of Cognitive Neurology and Aging of the Brazilian Academy of Neurology</article-title><trans-title-group xml:lang="pt"><trans-title>Tratamento da demência: recomendações do Departamento Científico de Neurologia Cognitiva e do Envelhecimento da Academia Brasileira de Neurologia</trans-title></trans-title-group></title-group><contrib-group><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0002-4786-6990</contrib-id><name name-style="western"><surname>Caramelli</surname><given-names initials="P">Paulo</given-names></name><xref rid="aff1" ref-type="aff">
+<sup>1</sup>
+</xref><role>concepção</role><role>redação do manuscrito original</role><role>revisão crítica e conteúdo intelectual do manuscrito</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0003-4665-9655</contrib-id><name name-style="western"><surname>Marinho</surname><given-names initials="V">Valeska</given-names></name><xref rid="aff2" ref-type="aff">
+<sup>2</sup>
+</xref><role>concepção</role><role>redação do manuscrito original</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0002-5129-9087</contrib-id><name name-style="western"><surname>Laks</surname><given-names initials="J">Jerson</given-names></name><xref rid="aff3" ref-type="aff">
+<sup>3</sup>
+</xref><xref rid="aff4" ref-type="aff">
+<sup>4</sup>
+</xref><role>concepção</role><role>redação do manuscrito original</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0002-3368-8492</contrib-id><name name-style="western"><surname>Coletta</surname><given-names initials="MVD">Marcus Vinicius Della</given-names></name><xref rid="aff5" ref-type="aff">
+<sup>5</sup>
+</xref><role>concepção</role><role>redação do manuscrito original</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0001-6052-7312</contrib-id><name name-style="western"><surname>Stella</surname><given-names initials="F">Florindo</given-names></name><xref rid="aff6" ref-type="aff">
+<sup>6</sup>
+</xref><xref rid="aff7" ref-type="aff">
+<sup>7</sup>
+</xref><role>concepção</role><role>redação do manuscrito original</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0003-1991-5529</contrib-id><name name-style="western"><surname>Camargos</surname><given-names initials="EF">Einstein Francisco</given-names></name><xref rid="aff8" ref-type="aff">
+<sup>8</sup>
+</xref><xref rid="aff9" ref-type="aff">
+<sup>9</sup>
+</xref><role>concepção</role><role>redação do manuscrito original</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0001-9513-0964</contrib-id><name name-style="western"><surname>Smid</surname><given-names initials="J">Jerusa</given-names></name><xref rid="aff10" ref-type="aff">
+<sup>10</sup>
+</xref><role>concepção</role><role>revisão crítica e conteúdo intelectual do manuscrito</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0003-4333-2024</contrib-id><name name-style="western"><surname>Barbosa</surname><given-names initials="BJAP">Breno José Alencar Pires</given-names></name><xref rid="aff10" ref-type="aff">
+<sup>10</sup>
+</xref><xref rid="aff11" ref-type="aff">
+<sup>11</sup>
+</xref><xref rid="aff12" ref-type="aff">
+<sup>12</sup>
+</xref><role>concepção</role><role>revisão crítica e conteúdo intelectual do manuscrito</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0002-9923-6982</contrib-id><name name-style="western"><surname>Schilling</surname><given-names initials="LP">Lucas Porcello</given-names></name><xref rid="aff13" ref-type="aff">
+<sup>13</sup>
+</xref><xref rid="aff14" ref-type="aff">
+<sup>14</sup>
+</xref><xref rid="aff15" ref-type="aff">
+<sup>15</sup>
+</xref><role>concepção</role><role>revisão crítica e conteúdo intelectual do manuscrito</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0002-4780-444X</contrib-id><name name-style="western"><surname>Balthazar</surname><given-names initials="MLF">Marcio Luiz Figueredo</given-names></name><xref rid="aff16" ref-type="aff">
+<sup>16</sup>
+</xref><role>revisão crítica e conteúdo intelectual do manuscrito</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0002-2828-5664</contrib-id><name name-style="western"><surname>Frota</surname><given-names initials="NAF">Norberto Anízio Ferreira</given-names></name><xref rid="aff17" ref-type="aff">
+<sup>17</sup>
+</xref><xref rid="aff18" ref-type="aff">
+<sup>18</sup>
+</xref><role>revisão crítica e conteúdo intelectual do manuscrito</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0001-5027-9722</contrib-id><name name-style="western"><surname>de Souza</surname><given-names initials="LC">Leonardo Cruz</given-names></name><xref rid="aff1" ref-type="aff">
+<sup>1</sup>
+</xref><role>revisão crítica e conteúdo intelectual do manuscrito</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0001-8826-2010</contrib-id><name name-style="western"><surname>Vale</surname><given-names initials="FAC">Francisco Assis Carvalho</given-names></name><xref rid="aff19" ref-type="aff">
+<sup>19</sup>
+</xref><role>revisão crítica e conteúdo intelectual do manuscrito</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0002-1940-4043</contrib-id><name name-style="western"><surname>Chaves</surname><given-names initials="MLF">Márcia Lorena Fagundes</given-names></name><xref rid="aff20" ref-type="aff">
+<sup>20</sup>
+</xref><xref rid="aff21" ref-type="aff">
+<sup>21</sup>
+</xref><role>revisão crítica e conteúdo intelectual do manuscrito</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0002-8303-6732</contrib-id><name name-style="western"><surname>Brucki</surname><given-names initials="SMD">Sonia Maria Dozzi</given-names></name><xref rid="aff10" ref-type="aff">
+<sup>10</sup>
+</xref><role>revisão crítica e conteúdo intelectual do manuscrito</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0002-5721-1525</contrib-id><name name-style="western"><surname>Nitrini</surname><given-names initials="R">Ricardo</given-names></name><xref rid="aff10" ref-type="aff">
+<sup>10</sup>
+</xref><role>revisão crítica e conteúdo intelectual do manuscrito</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0002-2044-6865</contrib-id><name name-style="western"><surname>Durgante</surname><given-names initials="HB">Helen Bedinoto</given-names></name><xref rid="aff22" ref-type="aff">
+<sup>22</sup>
+</xref><role>concepção</role><role>redação do manuscrito original</role></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">http://orcid.org/0000-0001-7902-7502</contrib-id><name name-style="western"><surname>Bertolucci</surname><given-names initials="PHF">Paulo Henrique Ferreira</given-names></name><xref rid="aff23" ref-type="aff">
+<sup>23</sup>
+</xref><role>concepção</role><role>redação do manuscrito original</role><role>revisão crítica e conteúdo intelectual do manuscrito</role></contrib></contrib-group><aff id="aff1">
+<label>1</label>Universidade Federal de Minas Gerais, Faculdade de Medicina, Departamento de Clínica Médica, Belo Horizonte MG, Brasil.</aff><aff id="aff2">
+<label>2</label>Universidade Federal do Rio de Janeiro, Instituto de Psiquiatria, Centro para Doença de Alzheimer, Rio de Janeiro RJ, Brasil.</aff><aff id="aff3">
+<label>3</label>Universidade Federal do Rio de Janeiro, Instituto de Psiquiatria, Programa de Pós-Graduação em Psiquiatria e Saúde Mental, Rio de Janeiro RJ, Brasil.</aff><aff id="aff4">
+<label>4</label>Universidade do Estado do Rio de Janeiro, Faculdade de Ciências Médicas, Rio de Janeiro RJ, Brasil.</aff><aff id="aff5">
+<label>5</label>Universidade do Estado do Amazonas, Manaus AM, Brasil.</aff><aff id="aff6">
+<label>6</label>Universidade Estadual Paulista, Instituto de Biociências, Campus de Rio Claro SP, Brasil.</aff><aff id="aff7">
+<label>7</label>Universidade de São Paulo, Faculdade de Medicina, Departamento e Instituto de Psiquiatria, Laboratório de Neurociências, São Paulo SP, Brasil.</aff><aff id="aff8">
+<label>8</label>Hospital Universitário de Brasília, Centro de Medicina do Idoso, Brasília DF, Brasil.</aff><aff id="aff9">
+<label>9</label>Universidade de Brasília, Faculdade de Medicina, Programa de Pós-Graduação em Ciências Médicas, Brasília DF, Brasil.</aff><aff id="aff10">
+<label>10</label>Universidade de São Paulo, Faculdade de Medicina, Departamento de Neurologia, Grupo de Neurologia Cognitiva e do Comportamento, São Paulo SP, Brasil.</aff><aff id="aff11">
+<label>11</label>Universidade Federal de Pernambuco, Centro de Ciências Médicas, Área Acadêmica de Neuropsiquiatria, Recife PE, Brasil.</aff><aff id="aff12">
+<label>12</label>Instituto de Medicina Integral Prof. Fernando Figueira, Recife PE, Brasil.</aff><aff id="aff13">
+<label>13</label>Pontifícia Universidade do Rio Grande do Sul, Escola de Medicina, Serviço de Neurologia, Porto Alegre RS, Brasil.</aff><aff id="aff14">
+<label>14</label>Pontifícia Universidade do Rio Grande do Sul, Instituto do Cérebro do Rio Grande do Sul, Porto Alegre RS, Brasil.</aff><aff id="aff15">
+<label>15</label>Pontifícia Universidade do Rio Grande do Sul, Programa de Pós-Graduação em Gerontologia Biomédica, Porto Alegre RS, Brasil.</aff><aff id="aff16">
+<label>16</label>Universidade Estadual de Campinas, Departamento de Neurologia, Faculdade de Ciências Médicas, Campinas SP, Brasil.</aff><aff id="aff17">
+<label>17</label>Hospital Geral de Fortaleza, Serviço de Neurologia, Fortaleza CE, Brasil.</aff><aff id="aff18">
+<label>18</label>Universidade de Fortaleza, Fortaleza CE, Brasil.</aff><aff id="aff19">
+<label>19</label>Universidade Federal de São Carlos, Centro de Ciências Biológicas e da Saúde, Departamento de Medicina, São Carlos SP, Brasil.</aff><aff id="aff20">
+<label>20</label>Hospital de Clínicas de Porto Alegre, Serviço de Neurologia, Porto Alegre RS, Brasil.</aff><aff id="aff21">
+<label>21</label>Universidade Federal do Rio Grande do Sul, Faculdade de Medicina, Departamento de Medicina Interna, Porto Alegre RS, Brasil.</aff><aff id="aff22">
+<label>22</label>Universidade Federal de Pelotas, Pelotas RS, Brasil.</aff><aff id="aff23">
+<label>23</label>Universidade Federal de São Paulo, Escola Paulista de Medicina, Departamento de Neurologia e Neurocirurgia, São Paulo SP, Brasil</aff><author-notes><corresp id="c1">
+<bold>Correspondente:</bold> Paulo Caramelli; E-mail: <email>caramelli@ufmg.br</email>.</corresp><fn fn-type="COI-statement" id="fn1"><p><bold>
+Conflito de interesses:
+:</bold> PC: Participação como investigador principal em ensaios clínicos patrocinados pelos laboratórios Novo Nordisk e Roche. Atividades de consultoria para os laboratórios Aché, Biogen, EMS, Nutricia e Roche. Desenvolvimento de material para educação médica continuada e participação como palestrante em simpósios patrocinados pelos laboratórios Aché, Nutricia, Libbs, Roche, Sandoz, Torrent e Zodiac; VM: Desenvolvimento de material para educação médica continuada e participação como palestrante em simpósios patrocinados pelos laboratórios Biogen, Sandoz e Torrent; JS: Participação como palestrante em simpósios patrocinado pelo laboratório Roche; LPS: Atividades de consultoria para o laboratório Biogen. Participação como palestrante em simpósios patrocinados pelos laboratórios Aché, Apsen e Biogen; MLFB: Atividades de consultoria para o laboratório Biogen. Desenvolvimento de material para educação médica continuada e participação como palestrante em simpósios patrocinados pelos laboratórios EMS e Torrent; PHFB: Atividades de consultoria para os laboratórios Biogen e Novo Nordisk. Supervisão das atividades de treinamento para os laboratórios Biogen, Janssen-Cilag e Novo Nordisk, e para a Quintiles. Participação como palestrante em simpósios patrocinados pelos laboratórios Apsen, Nutricia, Roche e Sandoz; LCS: Atividades de consultoria para o laboratório Biogen. Participação como palestrante em simpósios patrocinados pela Biogen; RN: Participação no conselho consultivo do laboratório; JL, MVDC, FS, EFC, BJAPB, NAFF, FACV, MLFC, SMDB, HBD: Não há conflito de interesse a declarar.</p></fn></author-notes><pub-date date-type="pub" publication-format="electronic"><day>28</day><month>11</month><year>2022</year></pub-date><pub-date date-type="collection" publication-format="electronic"><month>9</month><year>2022</year></pub-date><volume>16</volume><issue>3 Suppl 1</issue><issue-id pub-id-type="pmc-issue-id">423598</issue-id><fpage>88</fpage><lpage>100</lpage><history><date date-type="received"><day>20</day><month>2</month><year>2022</year></date><date date-type="rev-recd"><day>27</day><month>4</month><year>2022</year></date><date date-type="accepted"><day>27</day><month>4</month><year>2022</year></date></history><pub-history><event event-type="pmc-release"><date><day>28</day><month>11</month><year>2022</year></date></event><event event-type="pmc-live"><date><day>15</day><month>12</month><year>2022</year></date></event><event event-type="pmc-last-change"><date iso-8601-date="2022-12-20 00:10:10.953"><day>20</day><month>12</month><year>2022</year></date></event></pub-history><permissions><license><ali:license_ref xmlns:ali="http://www.niso.org/schemas/ali/1.0/" specific-use="textmining" content-type="ccbylicense">https://creativecommons.org/licenses/by/4.0/</ali:license_ref><license-p>Este é um artigo publicado em acesso aberto sob uma licença Creative Commons</license-p></license></permissions><self-uri xmlns:xlink="http://www.w3.org/1999/xlink" content-type="pmc-pdf" xlink:href="1980-5764-dn-16-03-s1-88.pdf"><?pdf-name 1980-5764-dn-16-03-s1-88.pdf?><?pdf-size 354160?><?pdf-md5 2956a4cc93615d4adb8cf6aef463bd1d?><?pdf-image-server-status NEVER_LOAD?><?pdf-cloudpmc-urn urn:app:75bd/9745994/2956a4cc9361/1980-5764-dn-16-03-s1-88.pdf?></self-uri><abstract><title>ABSTRACT</title><p>There is currently no cure for neurodegenerative or vascular dementias, but some pharmacological and non-pharmacological interventions may contribute to alleviate symptoms, slow disease progression and improve quality of life. Current treatment approaches are based on etiology, symptom profile and stage of dementia. This manuscript presents recommendations on pharmacological and non-pharmacological treatments of dementia due to Alzheimer’s disease, vascular cognitive impairment, frontotemporal dementia, Parkinson’s disease dementia, and dementia with Lewy bodies.</p></abstract><trans-abstract xml:lang="pt"><title>RESUMO</title><p>Atualmente não há tratamento curativo para as demências neurodegenerativas ou para a demência vascular, mas algumas intervenções farmacológicas e não farmacológicas podem contribuir para aliviar os sintomas, retardar a progressão da doença e melhorar a qualidade de vida. As abordagens terapêuticas atuais são baseadas na etiologia, no perfil dos sintomas e no estágio da demência. Neste artigo apresentamos recomendações sobre os tratamentos farmacológicos e não farmacológicos da demência devida à doença de Alzheimer, comprometimento cognitivo vascular, demência frontotemporal, demência da doença de Parkinson e demência com corpos de Lewy.</p></trans-abstract><kwd-group><title>Keywords:</title><kwd>Dementia</kwd><kwd>Drug Therapy</kwd><kwd>Behavior</kwd><kwd>Cognition</kwd></kwd-group><kwd-group xml:lang="pt"><title>Palavras-chave:</title><kwd>Demência</kwd><kwd>Tratamento Farmacológico</kwd><kwd>Comportamento</kwd><kwd>Cognição</kwd></kwd-group><counts><fig-count count="4"/><table-count count="0"/><equation-count count="0"/><ref-count count="111"/><page-count count="13"/></counts><custom-meta-group><custom-meta><meta-name>pmc-status-qastatus</meta-name><meta-value>0</meta-value></custom-meta><custom-meta><meta-name>pmc-status-live</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-status-embargo</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-status-released</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-open-access</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-olf</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-manuscript</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-legally-suppressed</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-pdf</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-supplement</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-pdf-only</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-suppress-copyright</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-real-version</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-scanned-article</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-preprint</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-in-epmc</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-license-ref</meta-name><meta-value>CC BY</meta-value></custom-meta></custom-meta-group></article-meta></front><body><sec sec-type="intro"><title>INTRODUCTION</title><p>Research estimates that by 2050 about 152 million people will have dementia, or one new case every three seconds, mostly from low- and middle-income countries (LMIC). Currently, about two thirds of people diagnosed with dementia (PwD) live in LMIC<xref rid="B1" ref-type="bibr">
+<sup>1</sup>
+</xref>, added to a high estimate of underdiagnosed cases-approximately 800.000 people in Brazil-according to recent data<xref rid="B2" ref-type="bibr">
+<sup>2</sup>
+</xref>.</p><p>Dementia is one of the leading causes of disability in older adults, with significant impacts on the autonomy and quality of life (QoL) of PwD and their families. Neurodegenerative diseases and cerebrovascular disorders are the main causes of dementia, with Alzheimer’s disease (AD) accounting for more than half of the cases<xref rid="B3" ref-type="bibr">
+<sup>3</sup>
+</xref>. In Brazil, AD ranked among the top ten causes of deaths in 2019<xref rid="B4" ref-type="bibr">
+<sup>4</sup>
+</xref>. Other degenerative causes include frontotemporal dementia (FTD), Parkinson’s disease (PD) dementia (PDD) and dementia with Lewy bodies (DLB).</p><p>Although we currently lack a cure for neurodegenerative or vascular dementias, some pharmacological and non-pharmacological interventions can contribute to alleviate symptoms, slow disease progression and improve QoL<xref rid="B5" ref-type="bibr">
+<sup>5</sup>
+</xref>. Therapeutic approaches are based on etiology, symptom profile and stage of dementia. Thus, this manuscript presents updated information and recommendations on current available treatments in Brazil for dementia due to AD, vascular cognitive impairment (VCI), FTD, PDD and DLB.</p></sec><sec><title>TREATMENT OF DEMENTIA DUE TO AD</title><sec><title>Pharmacological treatment</title><p>Degeneration of basal forebrain cholinergic neurons precedes clinical manifestations in AD, thus implying an early deficit in cholinergic activity in mild to moderate stages of dementia due to AD<xref rid="B6" ref-type="bibr">
+<sup>6</sup>
+</xref>. Cholinesterase inhibitors (ChEI) donepezil, galantamine, and rivastigmine inhibit the ChE enzyme and increase acetylcholine availability in the brain. These drugs are approved for treating mild and moderate AD dementia, but have also shown positive effects in severe stages<xref rid="B7" ref-type="bibr">
+<sup>7</sup>
+</xref>. For moderate-to-severe AD dementia, studies recommend combining ChEI with the glutamatergic NMDA receptor antagonist memantine.</p><p>Despite modest effects, use of ChEI and memantine have shown improvement in disease symptoms or slower progression when compared with placebo. Clinical benefits can be seen in cognitive, behavioral, and functional domains<xref rid="B5" ref-type="bibr">
+<sup>5</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B7" ref-type="bibr">
+<sup>7</sup>
+</xref>. Despite conflicting evidence, research shows that all ChEI may reduce AD mortality and galantamine may reduce the risk of conversion to severe dementia<xref rid="B8" ref-type="bibr">
+<sup>8</sup>
+</xref>.</p><p>When prescribing these drugs, physicians must clarify to PwD and caregivers that the expected clinical effects are usually modest, sometimes characterized only by stabilization or slower worsening. Therapy should begin with the lowest dosage to avoid adverse events (AEs) and be increased at least every four weeks for ChEI and one week for memantine. Regarding ChEI, usage should reach the therapeutic doses, i.e., 5-10mg for donepezil, 16-24 mg for galantamine, 6-12mg for oral rivastigmine and 9.5mg for rivastigmine patch (the 13.3mg patch is also available and can be prescribed for selected cases). Ideally, the highest dose within the therapeutic range of each drug should be targeted, given the greater potential for clinical benefits. <xref rid="f3" ref-type="fig">Figure 1</xref> illustrates the dose regimen for drug therapy of AD dementia.</p><p>
+<fig position="float" id="f3" orientation="portrait"><label>Figure 1</label><caption><title>Overview of pharmacological treatment for AD dementia. </title><p>
+<sup>1</sup>In case of improvement or stabilization, the highest dose of rivastigmine patch can be postponed; <sup>2</sup>memantine is indicated for treating moderate or severe AD dementia.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="1980-5764-dn-16-03-s1-88-gf3.jpg"><?image-name 1980-5764-dn-16-03-s1-88-gf3.jpg?><?image-size 69525?><?image-md5 be55b4d26e7b09360a0fee3e12b37707?><?image-image-server-status LOAD_COMPLETED?><?image-original-height 410?><?image-original-width 866?><?image-scaled-height 273?><?image-scaled-width 577?><?image-cloudpmc-urn urn:cdn:blobs/75bd/9745994/be55b4d26e7b/1980-5764-dn-16-03-s1-88-gf3.jpg?><?thumb-name 1980-5764-dn-16-03-s1-88-gf3.gif?><?thumb-size 14381?><?thumb-md5 0d209ee19b10352b5d6f1c7cedc83f57?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 80?><?thumb-scaled-width 168?><?thumb-cloudpmc-urn urn:cdn:blobs/75bd/9745994/0d209ee19b10/1980-5764-dn-16-03-s1-88-gf3.gif?></graphic></fig>
+</p><p>Common AEs consist of nausea, vomiting, diarrhea, headache and insomnia, and are less likely to occur if medication is taken after a meal. Donepezil should be administered at bedtime; in case of insomnia or nightmares, it can be taken in the morning. Less common, but more serious AEs are bradyarrhythmia and syncope. Treatment effects and duration vary from person to person, and any positive effect may be lost over time. No research has confirmed the superiority of one ChEI over the others, despite some specificities on the mechanisms of action and frequency/types of AEs. Switching to another ChEI is encouraged, particularly when no clinical benefit is observed after a few months of follow-up or in case of AEs that do not resolve. With progression to moderate dementia, the association with memantine is indicated<xref rid="B5" ref-type="bibr">
+<sup>5</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B9" ref-type="bibr">
+<sup>9</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B10" ref-type="bibr">
+<sup>10</sup>
+</xref>. Memantine is usually well tolerated; the most common AEs are drowsiness, dizziness and headache<xref rid="B5" ref-type="bibr">
+<sup>5</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B7" ref-type="bibr">
+<sup>7</sup>
+</xref>.</p></sec><sec><title>Practical issues for prescribing and discontinuing ChEI and memantine</title><p>
+<list list-type="bullet"><list-item><p>ChEI increase vagal tone and are contraindicated in patients with baseline bradycardia or known cardiac conduction system disorder (i.e., atrioventricular block &gt; 1<sup>st</sup> degree). Caution is required when any of the three ChEI are used in combination with drugs that induce bradycardia or alter atrioventricular conduction (e.g., beta blockers or calcium channel blockers);</p></list-item><list-item><p>Caution is required when prescribing ChEI to individuals with chronic obstructive pulmonary disease or asthma;</p></list-item><list-item><p>Discontinuation or switching (in the case of ChEI) shall be considered when there is no clinical benefit or in case of relevant AEs;</p></list-item><list-item><p>Avoid abrupt discontinuation of ChEI or memantine;</p></list-item><list-item><p>In the case of AEs with higher doses, dose reduction may be considered, noting whether there is a decrease in AEs as well as changes in cognitive, functional, or neuropsychiatric symptoms;</p></list-item><list-item><p>Discontinue medication in the absence of clinical benefits or if AEs persist.</p></list-item></list>
+</p></sec><sec><title>Pharmacological treatment of neuropsychiatric symptoms</title><p>Neuropsychiatric symptoms may precede the cognitive symptoms in AD, becoming more common at the second half of the mild dementia stage, increasing along the moderate stage and usually decreasing at severe stage.</p><p>Clinical trials specifically addressing neuropsychiatric symptoms in AD have been disappointing. The benefits of ChEI tend to favor specific neuropsychiatric symptoms, such as depression, anxiety, dysphoria, and apathy<xref rid="B11" ref-type="bibr">
+<sup>11</sup>
+</xref>. For depression, which may be present in more than half of AD patients, there is some evidence for the indication of sertraline or mirtazapine as the best antidepressant options<xref rid="B12" ref-type="bibr">
+<sup>12</sup>
+</xref>. A recent clinical trial, however, observed a trend to increased mortality with mirtazapine used to treat agitation in AD dementia<xref rid="B13" ref-type="bibr">
+<sup>13</sup>
+</xref>.</p><p>Aggressiveness is a common neuropsychiatric symptom which may contribute to agitation and increased caregiver burden. Treatment encompasses both pharmacological and non-pharmacological interventions (see next session). Specific AD drugs (i.e., ChEI and memantine) might have modest but significant effects on these symptoms and even if there is a good initial effect, it may be lost after some time. Given the absence of approved pharmacological treatment for neuropsychiatric symptoms in AD dementia, a sequence of drugs may be considered for treatment of agitation and aggressiveness<xref rid="B14" ref-type="bibr">
+<sup>14</sup>
+</xref>. According to this algorithm<xref rid="B14" ref-type="bibr">
+<sup>14</sup>
+</xref>, first-line treatment would be atypical antipsychotics, the first choice being risperidone, followed by aripiprazole or quetiapine. If these drugs fail or are offset by AEs, carbamazepine may be an option. In case of a new failure the next step would be citalopram, followed by gabapentin and prazosin. Citalopram is a good therapeutic option for agitation. Benzodiazepines must be avoided in dementia due to AD.</p><p>Another common neuropsychiatric symptom is sleep disorder. The first step to a successful treatment of sleep disorder in AD is to ask why and how it occurs. A sleep disorder may be the consequence of a sleep wake cycle inversion, and in this case sleep hygiene and non-pharmacological interventions may be helpful. For pain or another discomfort, the cause should be addressed; issues related to sundowning, fragmented sleep or difficulty in starting sleep should be addressed. The sleep may be interrupted by delusions and hallucinations, when an antipsychotic, particularly with sedative effects (e.g., quetiapine) may be useful. There is no evidence that hypnotics or mirtazapine have positive effects. Trazodone might improve sleep, although the effects are usually modest<xref rid="B15" ref-type="bibr">
+<sup>15</sup>
+</xref>. A recent Brazilian study has shown that short-term use (i.e., 14 days) of zopiclone or zolpidem may be clinically helpful in treating insomnia in AD dementia<xref rid="B16" ref-type="bibr">
+<sup>16</sup>
+</xref>.</p><p>Delusions and hallucinations may be present in up to one third of AD patients and indicate poorer prognosis, with increased functional impairment and higher mortality. Treatment of these neuropsychiatric symptoms includes avoiding typical antipsychotics, due to AEs and cognitive worsening. There is evidence of a modest effect of ChEI, but often there is a need of using antipsychotics, and in this case the evidence is stronger for risperidone and olanzapine, while for quetiapine the evidence is scanter. Studies with brexpiprazole are ongoing, but evidence of efficacy and safety has not been definitively established to date<xref rid="B17" ref-type="bibr">
+<sup>17</sup>
+</xref>. Although some studies suggest that cannabinoids may have potential positive effects in neurodegenerative diseases, there is no current evidence to support their clinical use in dementia<xref rid="B18" ref-type="bibr">
+<sup>18</sup>
+</xref>.</p></sec><sec><title>Pharmacological treatment for AD-related conditions</title><p>AD may have associated complications. Parkinsonism may be present in 9% to 70%, depending on the disease stage. There are differences with typical PD, with tremor being mild or absent, and usually presenting symmetrical bradykinesia and rigidity from the start. Levodopa may be tried, but response is less likely than in PD.</p><p>Between 10% and 20% of AD patients will have at least one seizure. Newer anticonvulsants (e.g., lamotrigine or levetiracetam) are first-line treatments for epilepsy in PwD<xref rid="B19" ref-type="bibr">
+<sup>19</sup>
+</xref>.</p></sec><sec><title>Non-pharmacological treatments for AD: cognitive symptoms</title><sec><title>Cognitive stimulation therapy (CST)</title><p>Recommended treatment according to the National Institute for Health and Clinical Excellence of the United Kingdom<xref rid="B20" ref-type="bibr">
+<sup>20</sup>
+</xref> to stimulate language, memory, executive functions; approved by the Alzheimer’s Disease International and used in many countries<xref rid="B21" ref-type="bibr">
+<sup>21</sup>
+</xref>. CST was shown to improve cognition, QoL, neuropsychiatric symptoms in PwD from LMIC<xref rid="B22" ref-type="bibr">
+<sup>22</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B23" ref-type="bibr">
+<sup>23</sup>
+</xref>. CST and its implementation manual have been adapted for use in Brazil<xref rid="B24" ref-type="bibr">
+<sup>24</sup>
+</xref> and the intervention was found to be feasible and beneficial to improve mood in PwD in a recent clinical trial<xref rid="B25" ref-type="bibr">
+<sup>25</sup>
+</xref>.</p></sec><sec><title>Multicomponent/multidisciplinary cognitive rehabilitation program (MCRP)</title><p>MCRP includes cognitive rehabilitation, stimulation and computer-assisted therapy, physical training, physiotherapy, reading and games. This program may decrease depressive symptoms and improve QoL indicators of PwD/caregivers. However, MCRP effects on cognition are questionable<xref rid="B23" ref-type="bibr">
+<sup>23</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B26" ref-type="bibr">
+<sup>26</sup>
+</xref>.</p></sec><sec><title>Reality orientation (RO)</title><p>Neurosensory stimulation to reorient daily activities may improve cognition and adherence to pharmacological treatment in mild-moderate AD dementia<xref rid="B27" ref-type="bibr">
+<sup>27</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B28" ref-type="bibr">
+<sup>28</sup>
+</xref>. Results for neuropsychiatric symptoms are inconclusive<xref rid="B29" ref-type="bibr">
+<sup>29</sup>
+</xref>.</p></sec></sec><sec><title>Non-pharmacological treatments for AD: neuropsychiatric symptoms</title><p>To increase the chance of success with a non-pharmacological treatment it is essential to adopt an individualized approach that considers:</p><p>
+<list list-type="bullet"><list-item><p>When and how the neuropsychiatric symptom started? (Was there a trigger?)</p></list-item><list-item><p>How did it evolve? (Are there associated symptoms?)</p></list-item><list-item><p>How did it end?</p></list-item><list-item><p>What are the associated worsening and improving factors?</p></list-item></list>
+</p><sec><title>Psychosocial/psychoeducational interventions</title><p>These are group or person-centered approaches to inform the management and care of dementia, including emotional and social stimulation of PwD/caregivers. Face-to-face or technology-based multicomponent psychoeducational and Cognitive-Behavioral Therapy approaches (cognitive reframing, self-monitoring, mood management techniques, mindfulness-based training) may improve neuropsychiatric symptoms (agitation, restlessness, anxiety, sleep disturbances), delay the progression of cognitive impairment, and benefit caregiver confidence, self-efficacy, burden, depression, stress levels, and QoL of the dyad<xref rid="B30" ref-type="bibr">
+<sup>30</sup>
+</xref>
+<sup>)- (</sup>
+<xref rid="B33" ref-type="bibr">
+<sup>33</sup>
+</xref>. Positive Psychology practices are recommended for mental health promotion of PwD/caregivers according to the Alzheimer’s Association Psychosocial Measurement Workgroup<xref rid="B33" ref-type="bibr">
+<sup>33</sup>
+</xref> and the European INTERDEM Social Health Taskforce<xref rid="B34" ref-type="bibr">
+<sup>34</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B35" ref-type="bibr">
+<sup>35</sup>
+</xref>.</p></sec><sec><title>Reminiscence therapy (RT)</title><p>RT is a group-based intervention to recall autobiographical memories. It is used for mild-moderate dementia with modest evidence to improve depressive symptoms, mood, cognition<xref rid="B22" ref-type="bibr">
+<sup>22</sup>
+</xref>, and well-being<xref rid="B36" ref-type="bibr">
+<sup>36</sup>
+</xref>. Lacking theoretical basis and methodological systematization make RT effects questionable<xref rid="B37" ref-type="bibr">
+<sup>37</sup>
+</xref>.</p></sec><sec><title>Music therapy (MT)/dancing</title><p>Significant positive effects were found of MT on memory<xref rid="B38" ref-type="bibr">
+<sup>38</sup>
+</xref>, emotional/mood<xref rid="B22" ref-type="bibr">
+<sup>22</sup>
+</xref> and neuropsychiatric symptoms<xref rid="B27" ref-type="bibr">
+<sup>27</sup>
+</xref>. Dancing may also lead to beneficial effects on cognition and psychical health<xref rid="B20" ref-type="bibr">
+<sup>20</sup>
+</xref>.</p></sec><sec><title>Physical-related/lifestyle-related interventions</title><p>Repetitive transcranial magnetic stimulation (rTMS) and acupuncture seem to improve cognitive functions, whereas acupuncture, exercise and light therapy presented potential to enhance functional performance<xref rid="B22" ref-type="bibr">
+<sup>22</sup>
+</xref> and cognition<xref rid="B39" ref-type="bibr">
+<sup>39</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B40" ref-type="bibr">
+<sup>40</sup>
+</xref>. Long-term exercise improves blood flow, hippocampal volume, neurogenesis, also neuropsychiatric symptoms<xref rid="B41" ref-type="bibr">
+<sup>41</sup>
+</xref>. Occupational therapy (error-reduction techniques) <sup>(</sup>
+<xref rid="B42" ref-type="bibr">
+<sup>42</sup>
+</xref> and physiotherapy<xref rid="B43" ref-type="bibr">
+<sup>43</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B44" ref-type="bibr">
+<sup>44</sup>
+</xref> tend to enhance functioning and delay physical decline; results are inconclusive for improvement in cognition. Early interventions targeting lifestyle modifiable risk factors (arterial hypertension, diabetes, obesity, physical inactivity, high alcohol consumption, smoking, social isolation), clinical conditions (hearing loss and depression), and poor nutrient intake, may work as protective measures for reducing AD risk<xref rid="B1" ref-type="bibr">
+<sup>1</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B10" ref-type="bibr">
+<sup>10</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B45" ref-type="bibr">
+<sup>45</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B46" ref-type="bibr">
+<sup>46</sup>
+</xref>.</p></sec></sec></sec><sec><title>TREATMENT OF VASCULAR COGNITIVE IMPAIRMENT</title><p>The general principles of approach and treatment for VCI are the same as for dementia due to AD. They encompass the treatment of comorbidities, including neuropsychiatric symptoms, providing information and support to PwD and caregivers, and maintaining independence.</p><sec><title>Primary and secondary prevention</title><p>The multidisciplinary team should focus primarily on controlling the main risk factors for new cerebrovascular events and cognitive impairment in VCI. Although we recognize risk factors for post-stroke dementia, such as low education and diabetes mellitus<xref rid="B47" ref-type="bibr">
+<sup>47</sup>
+</xref>, factors for stroke itself have long been known and controllable, including smoking, arterial hypertension, diabetes mellitus and dyslipidemia (notably high LDL-cholesterol levels) <sup>(</sup>
+<xref rid="B48" ref-type="bibr">
+<sup>48</sup>
+</xref>.</p><p>However, in recent decades several studies have proposed measuring the weight of these risk factors on the appearance of new strokes, on post-stroke cognition and functionality, often with conflicting results. Based on these observations we recommend:</p><p>
+<list list-type="bullet"><list-item><p>Blood pressure control: There is strong evidence that increased blood pressure levels are associated with stroke<xref rid="B48" ref-type="bibr">
+<sup>48</sup>
+</xref>. There are still no studies that have confirmed the impact of blood pressure control on worsening cognitive impairment. Intensive blood pressure control (systolic pressure of 120 <italic toggle="yes">versus</italic> 140 mmHg) does not show a reduction in the incidence of dementia (all etiologies). In frail older adults, with symptoms of orthostatic hypotension and increased risk of falls, individualize blood pressure targets to avoid symptoms of hypotension;</p></list-item><list-item><p>Glycemic control: There is strong evidence that increased blood glucose levels are associated with stroke<xref rid="B48" ref-type="bibr">
+<sup>48</sup>
+</xref>. However, there is no evidence that strict glycemic control in older adults prevents cardiovascular events. Studies have shown that tight blood glucose control in older adults was associated with greater frailty and mortality, with no benefit in the evolution of dementia<xref rid="B49" ref-type="bibr">
+<sup>49</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B50" ref-type="bibr">
+<sup>50</sup>
+</xref>. Acceptable fasting glycemic values in individuals with VCI should be around up to 150 mg/dL and postprandial &lt; 180 mg/dL, as well as glycated hemoglobin targets should be less stringent (e.g., &lt; 8%)<xref rid="B51" ref-type="bibr">
+<sup>51</sup>
+</xref>;</p></list-item><list-item><p>Antiplatelet agents: There is strong evidence to support using these agents for secondary prevention of non-embolic stroke, either acetylsalicylic acid (81 to 100mg/day) or clopidogrel (75mg/day) <sup>(</sup>
+<xref rid="B52" ref-type="bibr">
+<sup>52</sup>
+</xref>. In cases of VCI without evidence of previous stroke, therapy should be individualized<xref rid="B53" ref-type="bibr">
+<sup>53</sup>
+</xref>, especially in individuals with significant risk of falls. In recent years, no studies have been published providing support for the benefits of antiaggregants in the evolution of VCI<xref rid="B54" ref-type="bibr">
+<sup>54</sup>
+</xref>;</p></list-item><list-item><p>Statins: Statins are of interest in the secondary prevention of cerebrovascular disease due to both their lipid-lowering and pleiotropic effects on vascular function, combining to inhibit atherosclerosis. There is good evidence that statins given late in life to people at risk for vascular disease do not prevent cognitive decline or dementia<xref rid="B55" ref-type="bibr">
+<sup>55</sup>
+</xref>. For individuals with VCI and a history of ischemic (non-embolic) stroke, statin use should follow secondary prevention recommendations with individual risk analysis. The use of statins in older adults and subjects with vascular risk factors is not recommended for the sole purpose of primary prevention or treatment of dementia;</p></list-item><list-item><p>Multidisciplinary interventions: In a systematic review of 15 prospective studies with over 30,000 individuals without dementia, involvement in at least one physical activity of minimal to moderate intensity was associated with a 35% reduction in the relative risk of cognitive decline in one to 12 years of follow-up<xref rid="B56" ref-type="bibr">
+<sup>56</sup>
+</xref>. In another study with 639 older adults without disability and with cerebral white matter changes, physical activity reduced the risk of cognitive and functional deficits, regardless of the severity of white matter changes or other risk factors<xref rid="B57" ref-type="bibr">
+<sup>57</sup>
+</xref>. Hence, practice of physical activity at mild to moderate intensity should be strongly recommended to all individuals at the primary care level as a means of primary and secondary prevention of VCI. On the other hand, evidence that physical rehabilitation reduces post-stroke cognitive loss is still insufficient<xref rid="B58" ref-type="bibr">
+<sup>58</sup>
+</xref>;</p></list-item><list-item><p>Diet and supplements: A balanced diet, rich in vegetables and fruits, impacts many organ systems. One recent systematic review with metanalysis has shown that high adherence to the Mediterranean diet reduced the risk of global cognitive decline in non-demented older adults<xref rid="B59" ref-type="bibr">
+<sup>59</sup>
+</xref>. The use of vitamin and mineral supplements should only be indicated in cases with insufficiency. It is not recommended to use vitamin supplements for the prevention or treatment of VCI.</p></list-item></list>
+</p></sec><sec><title>Pharmacological treatment</title><sec><title>ChEI and memantine</title><p>The pharmacological treatment commonly prescribed in VCI, particularly vascular dementia, is mainly based on ChEI and memantine. These medications are routinely used in clinical practice to treat cognitive decline, functionality changes and neuropsychiatric symptoms. However, randomized controlled clinical trials have shown limited efficacy of these drugs.</p><p>Randomized, placebo-controlled studies demonstrate little efficacy of ChEI in pure vascular dementia<xref rid="B60" ref-type="bibr">
+<sup>60</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B61" ref-type="bibr">
+<sup>61</sup>
+</xref>. There is a statistically significant but clinically slight cognitive benefit for cognitive functions, mainly processing speed and executive functions<xref rid="B62" ref-type="bibr">
+<sup>62</sup>
+</xref>. In general, there is a slight attenuation of cognitive decline compared to placebo<xref rid="B61" ref-type="bibr">
+<sup>61</sup>
+</xref>. Some studies report favorable results regarding functional performance, but the gain is not consistent. Improvement of neuropsychiatric symptoms, when present, is also limited. On the other hand, agitation has been observed as an AE of ChEI and memantine<xref rid="B63" ref-type="bibr">
+<sup>63</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B64" ref-type="bibr">
+<sup>64</sup>
+</xref>.</p><p>Favorable results of ChEI seem more evident in mixed dementia (vascular + AD) compared to ‘pure’ vascular dementia<xref rid="B65" ref-type="bibr">
+<sup>65</sup>
+</xref>. Galantamine is approved in Brazil for treatment of mild to moderate AD dementia with concomitant significant cerebrovascular disease and has shown positive effects on cognitive speed and QoL of individuals with mixed dementia in a controlled clinical trial in the country<xref rid="B66" ref-type="bibr">
+<sup>66</sup>
+</xref>. Possible benefits of ChEI in mixed dementia, although limited, are attributed to the reduction of cholinergic depletion caused by concomitant AD<xref rid="B60" ref-type="bibr">
+<sup>60</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B65" ref-type="bibr">
+<sup>65</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B66" ref-type="bibr">
+<sup>66</sup>
+</xref>. There is insufficient clarity regarding the differences in efficacy of ChEI, as well as memantine, between multiple infarcts and subcortical vascular dementia<xref rid="B64" ref-type="bibr">
+<sup>64</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B67" ref-type="bibr">
+<sup>67</sup>
+</xref>
+<sup>)-(</sup>
+<xref rid="B69" ref-type="bibr">
+<sup>69</sup>
+</xref>. Initiation of ChEI treatment in patients with severe dementia is not recommended.</p><p>Among the AEs of ChEI already described above, bradycardia and arterial hypotension are the main conditions associated that require special attention in patients with vascular dementia<xref rid="B62" ref-type="bibr">
+<sup>62</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B65" ref-type="bibr">
+<sup>65</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B67" ref-type="bibr">
+<sup>67</sup>
+</xref>
+<sup>)-(</sup>
+<xref rid="B71" ref-type="bibr">
+<sup>71</sup>
+</xref>.</p><p>In current clinical practice, memantine is commonly added to ChEI in subjects with moderate or severe vascular dementia. However, the benefits of memantine are very limited or controversial for controlling cognitive and neuropsychiatric symptoms, as well as for slowing cognitive or functional decline<xref rid="B61" ref-type="bibr">
+<sup>61</sup>
+</xref>. For this reason, the drug has not been approved for treatment of vascular dementia. The few randomized, placebo-controlled studies report that memantine is well-tolerated and that drowsiness has been the AE of major concern<xref rid="B72" ref-type="bibr">
+<sup>72</sup>
+</xref>.</p></sec></sec><sec><title>Treatment of neuropsychiatric symptoms in VCI</title><p>Overall, the neuropsychiatric symptoms in VCI are like those observed in AD, and the treatment is similar<xref rid="B14" ref-type="bibr">
+<sup>14</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B73" ref-type="bibr">
+<sup>73</sup>
+</xref>
+<sup>)-(</sup>
+<xref rid="B75" ref-type="bibr">
+<sup>75</sup>
+</xref>. The non-pharmacological interventions include occupational therapy, cognitive stimulation, art therapy, involvement in social interaction activities, physical activity, and psychological support for PwD and caregivers.</p><p>Regarding pharmacological interventions, general recommendations follow the commentaries made above (AD section), namely, to avoid benzodiazepines, to prescribe antipsychotics in low doses and for strictly necessary periods, antidepressants for depression, anxiety, panic and mild agitation, and anticonvulsants when indicated.</p><p>The pharmacological treatment of patients with vascular dementia should be regularly monitored for cardiovascular signs and symptoms.</p></sec></sec><sec><title>TREATMENT OF FRONTOTEMPORAL DEMENTIA (BEHAVIORAL AND LANGUAGE VARIANTS) </title><p>Frontotemporal dementia (FTD) encompasses different clinical syndromes associated with progressive behavioral/personality deterioration or language disorders, and is considered the second most frequent cause of young-onset dementia<xref rid="B76" ref-type="bibr">
+<sup>76</sup>
+</xref>.</p><sec><title>Treatment of behavioral variant frontotemporal dementia</title><p>The clinical syndrome associated with behavioral and personality changes called behavioral variant (bvFTD) is the most common clinical presentation and specific diagnostic criteria are available for clinical use<xref rid="B77" ref-type="bibr">
+<sup>77</sup>
+</xref>.</p><p>There are no approved treatments for bvFTD, either disease-modifying drugs or symptomatic treatments to ameliorate disturbing symptoms. Only a few small studies have shown benefits of symptomatic pharmacological approaches<xref rid="B78" ref-type="bibr">
+<sup>78</sup>
+</xref>.</p><p>Considering that there are no specific treatments, care should focus on managing behavioral symptoms and disability, and reducing caregiver burden that is high in bvFTD. In a recent Brazilian study including 20 bvFTD and 30 AD individuals, Lima-Silva et al. found out that bvFTD subjects presented higher levels of neuropsychiatric symptoms and that their caregivers experienced higher levels of distress than AD caregivers. Moreover, bvFTD caregiver’s distress and burden were related to cognitive and functional impairment<xref rid="B79" ref-type="bibr">
+<sup>79</sup>
+</xref>.</p><p>Multidisciplinary management may be needed throughout the disease process, but this has not been specifically established for bvFTD treatment. A multidisciplinary team may offer a more comprehensive care management and seems to be an essential tool for dealing with other degenerative diseases<xref rid="B80" ref-type="bibr">
+<sup>80</sup>
+</xref>. However, the needs in bvFTD may be more specific and studies regarding their management should be conducted. Social, financial, psychological counseling may be required to address specific issues and more knowledge on those topics should be gathered to help services’ organization. For instance, the emergence of swallowing problems during dementia progression may require specialized evaluation. Problems with inappropriate eating speed, passivity, coughing, and choking beginning in the mild stages and following the worsening cognitive and behavioral declines were recently reported and add information about specific treatment needs<xref rid="B81" ref-type="bibr">
+<sup>81</sup>
+</xref>.</p><p>Regarding pharmacological approaches, a recent systematic review gathered information aiming to identify pharmacological interventions that could be used to treat the more troublesome behaviors in bvFTD. Trieu et al. <sup>(</sup>
+<xref rid="B78" ref-type="bibr">
+<sup>78</sup>
+</xref> found 23 studies (11 randomized controlled trials, eight open-label studies, one proof-of-concept study, and three case series) involving a sample of 573 individuals. Sixteen out of the 23 studies used pharmacological interventions, resulting in benefits, as measured by the Neuropsychiatric Inventory, for trazodone, citalopram, rivastigmine, paroxetine, ameliorating symptoms such as disinhibition, hyperorality, and depression.</p><p>Two reviews<xref rid="B82" ref-type="bibr">
+<sup>82</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B83" ref-type="bibr">
+<sup>83</sup>
+</xref> published by Brazilian authors report that most studies have small sample sizes, short duration of treatment, and non-uniform measures while evaluating efficacy and tolerability.</p><p>Portugal et al. <sup>(</sup>
+<xref rid="B82" ref-type="bibr">
+<sup>82</sup>
+</xref> conducted a systematic review and reported better results for drugs with serotonergic action, such as selective serotonin reuptake inhibitors or SSRIs (paroxetine, citalopram, fluvoxamine) and trazodone to treat behavioral symptoms, but not cognition. Authors suggest that using SSRIs as the first-line treatment seems to be the best practice until better data on evidence-based strategies to rely upon are available.</p><p>In a narrative review aiming to guide clinical practice, Gambogi et al. <sup>(</sup>
+<xref rid="B83" ref-type="bibr">
+<sup>83</sup>
+</xref> conducted a literature search on bvFTD treatment. According to drug class, ChEI and memantine do not have significant therapeutic actions. Antidepressants (SSRIs and trazodone) improved behavioral symptoms with better tolerability; antipsychotics reduced agitation (quetiapine, risperidone, aripiprazole), improper behaviors (risperidone and aripiprazole), and scores on the Neuropsychiatric Inventory (olanzapine) in uncontrolled cases series and clinical reports. However, mortality issues related to antipsychotic use in dementia, cardiovascular risks, and motor AEs limit their use in bvFTD. Psychostimulants for apathy and anticonvulsants for abnormal behaviors were investigated, but must be used with caution due to AEs. In a symptom-focused approach, authors suggest SSRIs or trazodone as the first option for disinhibition, compulsive/perseverative behaviors, stereotyped behaviors, and hyperorality. Psychostimulants may be an option for apathy and antipsychotics should be used with care and reserved to manage challenging and hazardous behaviors.</p><p>In summary, several low-quality reports are focusing on symptomatic treatment for bvFTD and no specific treatment proved to be effective to date. ChEI and memantine should not be used as they have not shown any significant therapeutic action. SSRIs or trazodone seem the best practice to manage behavioral problems as a first step, and the use of second-generation antipsychotics should be reserved for the management of psychotic manifestations, troublesome or hazardous behaviors.</p></sec><sec><title>Treatment of primary progressive aphasias</title><p>Primary progressive aphasia (PPA) refers to clinical syndromes characterized by an insidious and progressive loss of language abilities associated with neurodegenerative diseases. The three variants differ in anatomic, phenotypic presentation, and underlying pathology<xref rid="B84" ref-type="bibr">
+<sup>84</sup>
+</xref>.</p><p>The non-fluent/agrammatic variant PPA (nfvPPA) is associated with atrophy of left frontal lobe, insula, and supplementary motor areas, and progressive, effortful, non-fluent speech, with syntactic deficits, grammatical errors, and omissions. The semantic variant PPA (svPPA) is associated with left anterior temporal lobe atrophy and fluent speech with deficits in lexical retrieval, naming, and word comprehension. The logopenic variant PPA (lvPPA) presents AD as the pathological substrate in most cases and is associated with left posterior temporal/parietal atrophy, and slow speech with long-word finding pauses, anomia, and repetition deficits<xref rid="B84" ref-type="bibr">
+<sup>84</sup>
+</xref>.</p><p>Up to this moment, there are no disease-modifying agents approved for these language syndromes associated with neurodegenerative diseases. Symptomatic treatments aiming to improve language disorders have been shown to enhance oral and written naming abilities<xref rid="B85" ref-type="bibr">
+<sup>85</sup>
+</xref>. Language training therapies improve naming accuracy for trained items at short- and long-term follow-up and are considered the standard treatment for PPA<xref rid="B85" ref-type="bibr">
+<sup>85</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B86" ref-type="bibr">
+<sup>86</sup>
+</xref>.</p><p>There are very few studies on PPA treatment in Brazil and Latin-America, with small sample sizes, demonstrating the lack of local information about language therapies in PPA<xref rid="B87" ref-type="bibr">
+<sup>87</sup>
+</xref>. Notwithstanding, an important piece of information was gathered by a Brazilian systematic review organized by Carthery-Goulart et al. <sup>(</sup>
+<xref rid="B88" ref-type="bibr">
+<sup>88</sup>
+</xref>. The literature on evidence-based strategies of language rehabilitation in PPA was summarized and the language behavioral treatments classified into impairment-directed and functional interventions. The results suggest, as a practical option, the recommendations for the use of impairment-directed therapies aimed at naming and lexical retrieval in svPPA. In relation to nfvPPA and lvPPA, the small number of studies limits conclusions about the best therapeutic option for such variants<xref rid="B88" ref-type="bibr">
+<sup>88</sup>
+</xref>.</p><p>While impairment-directed intervention targets the remediation or slowing the progression of specific language and speech impairments, the functional interventions focus on communication, including environmental modifications. The functional interventions key components rely on building communication strategies and practicing the strategies with a communication partner. However, the frequency and dosage of such interventions using rigorous outcomes is an unmet need up to this moment<xref rid="B89" ref-type="bibr">
+<sup>89</sup>
+</xref>.</p><p>The maintenance of therapy gains, in the absence of continuous training, is more evident in the short-term than long-term in all PPA variants and is influenced by treatment length and session frequency. Generalization to untreated items varies following each PPA subtype and occurs more often in nfvPPA and lvPPA than in svPPA<xref rid="B90" ref-type="bibr">
+<sup>90</sup>
+</xref>.</p><p>Language therapies usually focus on enhancing abilities in trained activities or tasks and such training may limit benefits to the practiced domains<xref rid="B86" ref-type="bibr">
+<sup>86</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B88" ref-type="bibr">
+<sup>88</sup>
+</xref>. Recent reviews have shown a potential benefit for non-invasive brain stimulation combined with language therapies in improving oral or written naming accuracy for trained and untrained items<xref rid="B85" ref-type="bibr">
+<sup>85</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B86" ref-type="bibr">
+<sup>86</sup>
+</xref>.</p><p>As a practical orientation cognitive-linguistic interventions targeting impairment and aiming at remediation and symptoms’ improvement seem the best practice. In this sense, a recent Brazilian study investigated the short- and mid-term effects of four training programs directed to language and speech deficits in 18 PPA individuals (different subtypes) carried out during four months (two weekly sessions). All cases improved performance on trained items during the active phase of treatment. Statistically significant clinical benefits were observed in 13 individuals, while for five, the results were maintained. However, generalization to untrained items or to other tasks were observed only in two individuals<xref rid="B91" ref-type="bibr">
+<sup>91</sup>
+</xref>.</p></sec></sec><sec><title>TREATMENT OF PARKINSON’S DISEASE DEMENTIA AND DEMENTIA WITH LEWY BODIES</title><p>PD and DLB are neurodegenerative disorders that share some common features such as dopaminergic depletion and movement disorders<xref rid="B92" ref-type="bibr">
+<sup>92</sup>
+</xref>. Lewy body inclusions throughout the cortex ensue the typical triad of the dementia syndrome in DLB: dementia, complex visual hallucinations and parkinsonism. PDD, in turn, starts with a dysexecutive syndrome<xref rid="B93" ref-type="bibr">
+<sup>93</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B94" ref-type="bibr">
+<sup>94</sup>
+</xref>.</p><p>DLB may show parkinsonism later in the course of the disease, whereas complex visual hallucinations appear early, together with <italic toggle="yes">delirium</italic> without other clinical causes. PD first symptoms, on the other hand, encompass asymmetric bradykinesia, tremor and muscle rigidity<xref rid="B95" ref-type="bibr">
+<sup>95</sup>
+</xref>. Memory complaints are not the first symptoms in DLB or in PDD, as usually observed in dementia due to AD and VCI. PDD typically presents with a frontal dysexecutive syndrome<xref rid="B95" ref-type="bibr">
+<sup>95</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B96" ref-type="bibr">
+<sup>96</sup>
+</xref>.</p><p>The identification of the disease which is causing dementia is important to identify drugs that should and should not be prescribed when neuropsychiatric symptoms occur. Antipsychotics should be avoided in DLB, as there is a hypersensitivity to neuroleptic malignant syndrome and because they may aggravate parkinsonism, regardless of the dose prescribed. When psychosis exists in PDD, levodopa and other antiparkinsonian drugs should be re-evaluated, before prescribing any antipsychotics to deal with the behavioral and mood symptoms<xref rid="B97" ref-type="bibr">
+<sup>97</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B98" ref-type="bibr">
+<sup>98</sup>
+</xref>.</p><p>Cognitive and neuropsychiatric symptoms in PDD and DLB are treated with rivastigmine, the only approved ChEI for these indications<xref rid="B98" ref-type="bibr">
+<sup>98</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B99" ref-type="bibr">
+<sup>99</sup>
+</xref>. Memantine appears to be associated with some improvement in behavioral aspects, but studies have not reported benefits for cognition in these individuals<xref rid="B98" ref-type="bibr">
+<sup>98</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B99" ref-type="bibr">
+<sup>99</sup>
+</xref>. Memantine has not been approved for treatment of DLB or PDD.</p><p>As for treatment of neuropsychiatric symptoms and syndromes, stimuli regulation should be tried before any medication is applied. Excessive stimulation, or the lack of proper stimulation, can worsen orientation and behavior. Room light, physical exercise, cognitive stimulation, calm environment and maintenance of clinical status can help control behavioral problems before medication comes into place<xref rid="B100" ref-type="bibr">
+<sup>100</sup>
+</xref>. Even if medication is needed, all these measures should be enforced.</p><p>The clinical diagnosis, differentiating PDD from DLB, can be a challenge, even for the specialist, since the two conditions seem to be different spectra of the same pathological family, being mainly differentiated by the clinical course.</p><p>The cortical and subcortical distribution of Lewy bodies will lead to different clinical presentations. Although it seems somewhat theoretical, this distinction is essential in some details of the medication management inherent to each situation. Diagnostic criteria for PDD and DLB have been published before<xref rid="B96" ref-type="bibr">
+<sup>96</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B97" ref-type="bibr">
+<sup>97</sup>
+</xref>.</p><sec><title>Lewy body diseases spectrum</title><p>Due to the inherent characteristics of PDD and DLB, several clinical-pathological correlation studies include the two conditions as different spectra of the same pathological process. In the present consensus, we consider the two diseases from this viewpoint, i.e., different involvements of a common pathological substrate. In PDD, the accumulation of Lewy bodies is mainly concentrated in subcortical areas, while in DLB the pathological process affects cortical areas (<xref rid="f4" ref-type="fig">Figure 2</xref>) <sup>(</sup>
+<xref rid="B101" ref-type="bibr">
+<sup>101</sup>
+</xref>
+<sup>)-(</sup>
+<xref rid="B103" ref-type="bibr">
+<sup>103</sup>
+</xref>.</p><p>
+<fig position="float" id="f4" orientation="portrait"><label>Figure 2</label><caption><title>Topographic distribution pattern of Lewy bodies in dementia with Lewy bodies (DLB), Parkinson’s disease (PD) and dementia associated with Parkinson’s disease (PDD).</title></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="1980-5764-dn-16-03-s1-88-gf4.jpg"><?image-name 1980-5764-dn-16-03-s1-88-gf4.jpg?><?image-size 40461?><?image-md5 dc0b3835d3b59cfcb72f24a141c9fafa?><?image-image-server-status NEVER_LOAD?><?image-original-height 253?><?image-original-width 341?><?image-scaled-height 253?><?image-scaled-width 341?><?image-cloudpmc-urn urn:cdn:blobs/75bd/9745994/dc0b3835d3b5/1980-5764-dn-16-03-s1-88-gf4.jpg?><?thumb-name 1980-5764-dn-16-03-s1-88-gf4.gif?><?thumb-size 12382?><?thumb-md5 54cf472721952f230006270bde3d2ada?><?thumb-image-server-status NEVER_LOAD?><?thumb-scaled-height 79?><?thumb-scaled-width 107?><?thumb-cloudpmc-urn urn:cdn:blobs/75bd/9745994/54cf47272195/1980-5764-dn-16-03-s1-88-gf4.gif?></graphic></fig>
+</p></sec><sec><title>Management of DLB</title><p>There is no specific disease-modifying treatment for DLB. Non-pharmacological and pharmacological interventions can be used in symptomatic management. There are no specific non-pharmacological interventions in DLB<xref rid="B100" ref-type="bibr">
+<sup>100</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B104" ref-type="bibr">
+<sup>104</sup>
+</xref>.</p><sec><title>Motor symptoms</title><p>Levodopa is the drug of choice to treat motor symptoms. Slow titration is important to achieve some motor response with minimal psychiatric AEs. Response to levodopa in DLB can be limited, especially in the later stages, due to the predominance of levodopa non-responsive symptoms. Dopamine agonists are not recommended due to the risk of worsening hallucinations. Anticholinergics are contraindicated<xref rid="B97" ref-type="bibr">
+<sup>97</sup>
+</xref>
+<sup>)-(</sup>
+<xref rid="B99" ref-type="bibr">
+<sup>99</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B105" ref-type="bibr">
+<sup>105</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B106" ref-type="bibr">
+<sup>106</sup>
+</xref>.</p></sec><sec><title>Neuropsychiatric symptoms</title><p>The use of antipsychotics must be done very judiciously, due to the high sensitivity of these patients, with important paradoxical reactions<xref rid="B107" ref-type="bibr">
+<sup>107</sup>
+</xref>. Typical antipsychotics are contraindicated. Atypical antipsychotics, specifically quetiapine and clozapine, can be used, always under close supervision, to detect AEs<xref rid="B97" ref-type="bibr">
+<sup>97</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B99" ref-type="bibr">
+<sup>99</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B108" ref-type="bibr">
+<sup>108</sup>
+</xref>. Of special note, clozapine may cause neutropenia in about 3% of cases, which demands weekly monitoring of blood cell count within the first 18 weeks of treatment.</p><p>As for ChEI (mainly rivastigmine), besides the cognitive benefits several studies have shown positive effects on neuropsychiatric symptoms, particularly visual hallucinations, delusions, and apathy. It is essential to be aware that the withdrawal of ChEI, for any reason, may be associated with cognitive deterioration<xref rid="B99" ref-type="bibr">
+<sup>99</sup>
+</xref>
+<sup>),(</sup>
+<xref rid="B109" ref-type="bibr">
+<sup>109</sup>
+</xref>
+<sup>)-(</sup>
+<xref rid="B111" ref-type="bibr">
+<sup>111</sup>
+</xref>.</p></sec></sec></sec><sec sec-type="conclusions"><title>CONCLUSIONS</title><p>Although current treatments for neurodegenerative and vascular dementias are only symptomatic, several evidenced-based therapies are available and may provide benefits to Pwd and to their caregivers. The clinician must combine the best pharmacological options with the best available non-pharmacological interventions, taking into consideration the underlying etiology, symptoms profile and severity of the dementia syndrome, as well as the clinical and personal history of each individual.</p><p>It is important to inform the PwD and their families about the potential expected benefits of the overall treatment, as well as the possible AEs of the prescribed drugs. Regular follow-up is critical (ideally every three to four months in the beginning of treatment and around every six months later on) to evaluate the clinical effects and whether adjustments (e.g., drug dosing, additional pharmacological and non-pharmacological interventions) are needed.</p><p>Given that the modest effects of the available treatments and the lack of approved disease-specific drug therapies, prevention of dementia is a key principle. Several modifiable risk factors have been identified and lifestyle and clinical interventions (e.g., adequate control of hypertension and diabetes, regular physical activity, diet programs, cognitive stimulation activities) shall be recommended for middle-age and older adults to reduce the risk of cognitive impairment and dementia, thus contributing to mitigate the personal, socioeconomic and public health impacts of these devastating disorders. <sup>(</sup>
+<xref rid="B45" ref-type="bibr">
+<sup>45</sup>
+</xref>
+</p></sec></body><back><ack><title>ACKNOWLEDGEMENTS</title><p>PC, JL, LCS and RN are funded by CNPq, Brazil (<italic toggle="yes">bolsa de produtividade em pesquisa</italic>).</p></ack><ref-list><title>Referências</title><ref id="B1"><label>1</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Mukadam</surname><given-names>N</given-names></name>
+<name name-style="western"><surname>Sommerlad</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Huntley</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Livingston</surname><given-names>G</given-names></name>
+</person-group><article-title>Population attributable fractions for risk factors for dementia in low-income and middle-income countries: an analysis using cross-sectional survey data</article-title><source>Lancet Glob Health</source><year>2019</year><volume>7</volume><issue>5</issue><fpage>e596</fpage><lpage>e603</lpage><pub-id pub-id-type="doi">10.1016/S2214-109X(19)30074-9</pub-id><pub-id pub-id-type="pmid">31000129</pub-id><pub-id pub-id-type="pmcid">PMC7617123</pub-id></element-citation></ref><ref id="B2"><label>2</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Nakamura</surname><given-names>AE</given-names></name>
+<name name-style="western"><surname>Opaleye</surname><given-names>D</given-names></name>
+<name name-style="western"><surname>Tani</surname><given-names>G</given-names></name>
+<name name-style="western"><surname>Ferri</surname><given-names>CP</given-names></name>
+</person-group><article-title>Dementia underdiagnosis in Brazil</article-title><source>Lancet</source><year>2015</year><volume>385</volume><issue>9966</issue><fpage>418</fpage><lpage>419</lpage><pub-id pub-id-type="doi">10.1016/S0140-6736(15)60153-2</pub-id><pub-id pub-id-type="pmid">25706975</pub-id></element-citation></ref><ref id="B3"><label>3</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Nitrini</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Bottino</surname><given-names>CM</given-names></name>
+<name name-style="western"><surname>Albala</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Custodio Capuñay</surname><given-names>NS</given-names></name>
+<name name-style="western"><surname>Ketzoian</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Llibre Rodriguez</surname><given-names>JJ</given-names></name>
+</person-group><article-title>Prevalence of dementia in Latin America: a collaborative study of population-based cohorts</article-title><source>Int Psychogeriatr</source><year>2009</year><volume>21</volume><issue>4</issue><fpage>622</fpage><lpage>630</lpage><pub-id pub-id-type="doi">10.1017/S1041610209009430</pub-id><pub-id pub-id-type="pmid">19505354</pub-id><pub-id pub-id-type="pmcid">PMC8324310</pub-id></element-citation></ref><ref id="B4"><label>4</label><element-citation publication-type="book"><source>Institute of Health Metrics</source><publisher-loc>Brazil</publisher-loc><year>2018</year><date-in-citation content-type="access-date" iso-8601-date="2022-08-22">citado em 22 ago 2022</date-in-citation><comment>Disponível em: <ext-link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.healthdata.org/brazil" ext-link-type="uri">http://www.healthdata.org/brazil</ext-link>
+</comment></element-citation></ref><ref id="B5"><label>5</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Engelhardt</surname><given-names>E</given-names></name>
+<name name-style="western"><surname>Brucki</surname><given-names>SMD</given-names></name>
+<name name-style="western"><surname>Cavalcanti</surname><given-names>JLS</given-names></name>
+<name name-style="western"><surname>Forlenza</surname><given-names>OV</given-names></name>
+<name name-style="western"><surname>Laks</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Vale</surname><given-names>FAC</given-names></name>
+</person-group><article-title>Treatment of Alzheimer's Disease: recommendations and suggestions of the Scientific Department of Cognitive Neurology and Aging of the Brazilian Academy of Neurology</article-title><source>Arq Neuropsiquiatr</source><year>2005</year><volume>63</volume><issue>4</issue><fpage>1104</fpage><lpage>1112</lpage><pub-id pub-id-type="doi">10.1590/S0004-282X2005000600035</pub-id><pub-id pub-id-type="pmid">16400437</pub-id></element-citation></ref><ref id="B6"><label>6</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Bartus</surname><given-names>RT</given-names></name>
+</person-group><article-title>On neurodegenerative diseases, models, and treatment strategies: lessons learned and lessons forgotten a generation following the cholinergic hypothesis</article-title><source>Exp Neurol</source><year>2000</year><volume>163</volume><issue>2</issue><fpage>495</fpage><lpage>529</lpage><pub-id pub-id-type="doi">10.1006/exnr.2000.7397</pub-id><pub-id pub-id-type="pmid">10833325</pub-id></element-citation></ref><ref id="B7"><label>7</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Small</surname><given-names>G</given-names></name>
+<name name-style="western"><surname>Bullock</surname><given-names>R</given-names></name>
+</person-group><article-title>Defining optimal treatment with cholinesterase inhibitors in Alzheimer's disease</article-title><source>Alzheimers Dement</source><year>2011</year><volume>7</volume><issue>2</issue><fpage>177</fpage><lpage>184</lpage><pub-id pub-id-type="doi">10.1016/j.jalz.2010.03.016</pub-id><pub-id pub-id-type="pmid">21056013</pub-id></element-citation></ref><ref id="B8"><label>8</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Xu</surname><given-names>H</given-names></name>
+<name name-style="western"><surname>Garcia-Ptacek</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Jönsson</surname><given-names>L</given-names></name>
+<name name-style="western"><surname>Wilmo</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Nordström</surname><given-names>P</given-names></name>
+<name name-style="western"><surname>Eriksdotter</surname><given-names>M</given-names></name>
+</person-group><article-title>Long-term effects of cholinesterase inhibitors on cognitive decline and mortality</article-title><source>Neurology</source><year>2021</year><volume>96</volume><issue>e</issue><fpage>2220</fpage><lpage>2230</lpage><pub-id pub-id-type="doi">10.1212/WNL.0000000000011832</pub-id><pub-id pub-id-type="pmcid">PMC8166426</pub-id><pub-id pub-id-type="pmid">33741639</pub-id></element-citation></ref><ref id="B9"><label>9</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<collab>Ministério da Saúde (BR)</collab>
+<collab>Secretaria de Atenção à Saúde</collab>
+</person-group><article-title>Portaria Conjunta nº 13, de 28 de novembro de 2017. Aprova o Protocolo Clínico e Diretrizes Terapêuticas da Doença de Alzheimer</article-title><source>Diário Oficial da União</source><day>08</day><month>12</month><year>2017</year><volume>1</volume><fpage>201</fpage><lpage>201</lpage></element-citation></ref><ref id="B10"><label>10</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Pais</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Martinez</surname><given-names>L</given-names></name>
+<name name-style="western"><surname>Ribeiro</surname><given-names>O</given-names></name>
+<name name-style="western"><surname>Loureiro</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Fernandez</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Valiengo</surname><given-names>L</given-names></name>
+</person-group><article-title>Early diagnosis and treatment of Alzheimer's disease: New definitions and challenges</article-title><source>Braz J Psychiatry</source><year>2020</year><volume>42</volume><issue>4</issue><fpage>431</fpage><lpage>441</lpage><pub-id pub-id-type="doi">10.1590/1516-4446-2019-0735</pub-id><pub-id pub-id-type="pmid">31994640</pub-id><pub-id pub-id-type="pmcid">PMC7430379</pub-id></element-citation></ref><ref id="B11"><label>11</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Vale</surname><given-names>FAC</given-names></name>
+<name name-style="western"><surname>Corrêa</surname><given-names>Y</given-names><suffix>Neto</suffix></name>
+<name name-style="western"><surname>Bertolucci</surname><given-names>PHF</given-names></name>
+<name name-style="western"><surname>Machado</surname><given-names>JCB</given-names></name>
+<name name-style="western"><surname>Silva</surname><given-names>DJ</given-names></name>
+<name name-style="western"><surname>Allam</surname><given-names>N</given-names></name>
+</person-group><article-title>Treatment of Alzheimer's disease in Brazil: II. Behavioral and psychological symptoms of dementia</article-title><source>Dement Neuropsychol</source><year>2011</year><volume>5</volume><issue>3</issue><fpage>189</fpage><lpage>197</lpage><pub-id pub-id-type="doi">10.1590/S1980-57642011DN05030006</pub-id><pub-id pub-id-type="pmid">29213743</pub-id><pub-id pub-id-type="pmcid">PMC5619478</pub-id></element-citation></ref><ref id="B12"><label>12</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>He</surname><given-names>Y</given-names></name>
+<name name-style="western"><surname>Li</surname><given-names>H</given-names></name>
+<name name-style="western"><surname>Huang</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Huang</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Bai</surname><given-names>Y</given-names></name>
+<name name-style="western"><surname>Li</surname><given-names>Y</given-names></name>
+</person-group><article-title>Efficacy of antidepressant drugs in the treatment of depression in Alzheimer disease patients: A systematic review and network meta-analysis</article-title><source>J Psychopharmacol</source><year>2021</year><volume>35</volume><issue>8</issue><fpage>901</fpage><lpage>909</lpage><pub-id pub-id-type="doi">10.1177/02698811211030181</pub-id><pub-id pub-id-type="pmid">34238048</pub-id></element-citation></ref><ref id="B13"><label>13</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Banerjee</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>High</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Stirling</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Shepstone</surname><given-names>L</given-names></name>
+<name name-style="western"><surname>Swart</surname><given-names>AM</given-names></name>
+<name name-style="western"><surname>Telling</surname><given-names>T</given-names></name>
+</person-group><article-title>Study of mirtazapine for agitated behaviours in dementia (SYMBAD): a randomised, double-blind, placebo-controlled trial</article-title><source>Lancet</source><year>2021</year><volume>398</volume><issue>10310</issue><fpage>1487</fpage><lpage>1497</lpage><pub-id pub-id-type="doi">10.1016/S0140-6736(21)01210-1</pub-id><pub-id pub-id-type="pmid">34688369</pub-id><pub-id pub-id-type="pmcid">PMC8546216</pub-id></element-citation></ref><ref id="B14"><label>14</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Davies</surname><given-names>SJ</given-names></name>
+<name name-style="western"><surname>Burhan</surname><given-names>AM</given-names></name>
+<name name-style="western"><surname>Kim</surname><given-names>D</given-names></name>
+<name name-style="western"><surname>Gerretsen</surname><given-names>P</given-names></name>
+<name name-style="western"><surname>Graff-Guerrero</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Woo</surname><given-names>VL</given-names></name>
+</person-group><article-title>Sequential drug treatment algorithm for agitation and aggression in Alzheimer's and mixed dementia</article-title><source>J Psychopharmacol</source><year>2018</year><volume>32</volume><issue>5</issue><fpage>509</fpage><lpage>523</lpage><pub-id pub-id-type="doi">10.1177/0269881117744996</pub-id><pub-id pub-id-type="pmid">29338602</pub-id><pub-id pub-id-type="pmcid">PMC5944080</pub-id></element-citation></ref><ref id="B15"><label>15</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Camargos</surname><given-names>EF</given-names></name>
+<name name-style="western"><surname>Louzada</surname><given-names>LL</given-names></name>
+<name name-style="western"><surname>Quintas</surname><given-names>JL</given-names></name>
+<name name-style="western"><surname>Naves</surname><given-names>JO</given-names></name>
+<name name-style="western"><surname>Louzada</surname><given-names>FM</given-names></name>
+<name name-style="western"><surname>Nóbrega</surname><given-names>OT</given-names></name>
+</person-group><article-title>Trazodone improves sleep parameters in Alzheimer disease patients: a randomized, double-blind, and placebo-controlled study</article-title><source>Am J Geriatr Psychiatry</source><year>2014</year><volume>22</volume><issue>12</issue><fpage>1565</fpage><lpage>1574</lpage><pub-id pub-id-type="doi">10.1016/j.jagp.2013.12.174</pub-id><pub-id pub-id-type="pmid">24495406</pub-id></element-citation></ref><ref id="B16"><label>16</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Louzada</surname><given-names>LL</given-names></name>
+<name name-style="western"><surname>Machado</surname><given-names>FV</given-names></name>
+<name name-style="western"><surname>Quintas</surname><given-names>JL</given-names></name>
+<name name-style="western"><surname>Ribeiro</surname><given-names>GA</given-names></name>
+<name name-style="western"><surname>Silva</surname><given-names>MV</given-names></name>
+<name name-style="western"><surname>Mendonça-Silva</surname><given-names>DL</given-names></name>
+</person-group><article-title>The efficacy and safety of zolpidem and zopiclone to treat insomnia in Alzheimer's disease: a randomized, triple-blind, placebo-controlled trial</article-title><source>Neuropsychopharmacology</source><year>2022</year><volume>47</volume><issue>2</issue><fpage>570</fpage><lpage>579</lpage><pub-id pub-id-type="doi">10.1038/s41386-021-01191-3</pub-id><pub-id pub-id-type="pmid">34635802</pub-id><pub-id pub-id-type="pmcid">PMC8674235</pub-id></element-citation></ref><ref id="B17"><label>17</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Caraci</surname><given-names>F</given-names></name>
+<name name-style="western"><surname>Santagati</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Caruso</surname><given-names>G</given-names></name>
+<name name-style="western"><surname>Cannavò</surname><given-names>D</given-names></name>
+<name name-style="western"><surname>Leggio</surname><given-names>GM</given-names></name>
+<name name-style="western"><surname>Salomone</surname><given-names>S</given-names></name>
+</person-group><article-title>New antipsychotic drugs for the treatment of agitation and psychosis in Alzheimer's disease: focus on brexpiprazole and pimavanserin</article-title><source>F1000Res</source><year>2020</year><volume>9</volume><fpage>F1000</fpage><lpage>F1000</lpage><comment>Faculty Rev-686</comment><pub-id pub-id-type="doi">10.12688/f1000research.22662.1</pub-id><pub-id pub-id-type="pmcid">PMC7344175</pub-id><pub-id pub-id-type="pmid">32695312</pub-id></element-citation></ref><ref id="B18"><label>18</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Brucki</surname><given-names>SMD</given-names></name>
+<name name-style="western"><surname>Adoni</surname><given-names>T</given-names></name>
+<name name-style="western"><surname>Almeida</surname><given-names>CMO</given-names></name>
+<name name-style="western"><surname>Andrade</surname><given-names>DC</given-names></name>
+<name name-style="western"><surname>Anghinah</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Barbosa</surname><given-names>LM</given-names></name>
+</person-group><article-title>Cannabinoids in Neurology - Position paper from Scientific Departments from Brazilian Academy of Neurology</article-title><source>Arq Neuropsiquiatr</source><year>2021</year><volume>79</volume><issue>4</issue><fpage>354</fpage><lpage>369</lpage><pub-id pub-id-type="doi">10.1590/0004-282X-ANP-2020-0432</pub-id><pub-id pub-id-type="pmid">34133518</pub-id><pub-id pub-id-type="pmcid">PMC9231442</pub-id></element-citation></ref><ref id="B19"><label>19</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Frederiksen</surname><given-names>KS</given-names></name>
+<name name-style="western"><surname>Cooper</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Frisoni</surname><given-names>GB</given-names></name>
+<name name-style="western"><surname>Frölich</surname><given-names>L</given-names></name>
+<name name-style="western"><surname>Georges</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Kramberger</surname><given-names>MG</given-names></name>
+</person-group><article-title>A European Academy of Neurology guideline on medical management issues in dementia</article-title><source>Eur J Neurol</source><year>2020</year><volume>27</volume><issue>10</issue><fpage>1805</fpage><lpage>1820</lpage><pub-id pub-id-type="doi">10.1111/ene.14412</pub-id><pub-id pub-id-type="pmid">32713125</pub-id><pub-id pub-id-type="pmcid">PMC7540303</pub-id></element-citation></ref><ref id="B20"><label>20</label><element-citation publication-type="book"><person-group person-group-type="author">
+<collab>York Health Economics Consortium</collab>
+</person-group><source>NICE: Overview of Systematic Reviews of Non-pharmacological Interventions for Dementia</source><comment>Final Report</comment><publisher-loc>Heslington</publisher-loc><publisher-name>University of York</publisher-name><year>2017</year><date-in-citation content-type="access-date" iso-8601-date="2022-08-22">citado em 22 ago 2022</date-in-citation><comment>Disponível em: <ext-link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.nice.org.uk/guidance/ng97/evidence/appendix-o-yhec-report-pdf-174697045530" ext-link-type="uri">https://www.nice.org.uk/guidance/ng97/evidence/appendix-o-yhec-report-pdf-174697045530</ext-link>
+</comment></element-citation></ref><ref id="B21"><label>21</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Aguirre</surname><given-names>E</given-names></name>
+<name name-style="western"><surname>Spector</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Orrell</surname><given-names>M</given-names></name>
+</person-group><article-title>Guidelines for adapting cognitive stimulation therapy to other cultures</article-title><source>Clin Interv Aging</source><year>2014</year><volume>9</volume><fpage>1003</fpage><lpage>1007</lpage><pub-id pub-id-type="doi">10.2147/CIA.S61849</pub-id><pub-id pub-id-type="pmid">25061282</pub-id><pub-id pub-id-type="pmcid">PMC4079629</pub-id></element-citation></ref><ref id="B22"><label>22</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Meyer</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>O'Keefe</surname><given-names>F</given-names></name>
+</person-group><article-title>Non-pharmacological interventions for people with dementia: A review of reviews</article-title><source>Dementia (London)</source><year>2020</year><volume>19</volume><issue>6</issue><fpage>1927</fpage><lpage>1954</lpage><pub-id pub-id-type="doi">10.1177/1471301218813234</pub-id><pub-id pub-id-type="pmid">30526036</pub-id></element-citation></ref><ref id="B23"><label>23</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Stoner</surname><given-names>CR</given-names></name>
+<name name-style="western"><surname>Lakshminarayanan</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Durgante</surname><given-names>H</given-names></name>
+<name name-style="western"><surname>Spector</surname><given-names>A</given-names></name>
+</person-group><article-title>Psychosocial interventions for dementia in low- and middle-income countries (LMICs): a systematic review of effectiveness and implementation readiness</article-title><source>Aging Ment Health</source><year>2021</year><volume>25</volume><issue>3</issue><fpage>408</fpage><lpage>419</lpage><pub-id pub-id-type="doi">10.1080/13607863.2019.1695742</pub-id><pub-id pub-id-type="pmid">31814427</pub-id><pub-id pub-id-type="pmcid">PMC8026009</pub-id></element-citation></ref><ref id="B24"><label>24</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Bertrand</surname><given-names>E</given-names></name>
+<name name-style="western"><surname>Naylor</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Laks</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Marinho</surname><given-names>V</given-names></name>
+<name name-style="western"><surname>Spector</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Mograbi</surname><given-names>DC</given-names></name>
+</person-group><article-title>Cognitive stimulation therapy for Brazilian people with dementia: examination of implementation' issues and cultural adaptation</article-title><source>Aging Ment Health</source><year>2019</year><volume>23</volume><issue>10</issue><fpage>1400</fpage><lpage>1404</lpage><pub-id pub-id-type="doi">10.1080/13607863.2018.1488944</pub-id><pub-id pub-id-type="pmid">30444133</pub-id></element-citation></ref><ref id="B25"><label>25</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Marinho</surname><given-names>V</given-names></name>
+<name name-style="western"><surname>Bertrand</surname><given-names>E</given-names></name>
+<name name-style="western"><surname>Naylor</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Bomilcar</surname><given-names>I</given-names></name>
+<name name-style="western"><surname>Laks</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Spector</surname><given-names>A</given-names></name>
+</person-group><article-title>Cognitive stimulation therapy for people with dementia in Brazil (CST-Brasil): Results from a single blind randomized controlled trial</article-title><source>Int J Geriatr Psychiatry</source><year>2021</year><volume>36</volume><issue>2</issue><fpage>286</fpage><lpage>293</lpage><pub-id pub-id-type="doi">10.1002/gps.5421</pub-id><pub-id pub-id-type="pmid">32881071</pub-id></element-citation></ref><ref id="B26"><label>26</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Madureira</surname><given-names>BG</given-names></name>
+<name name-style="western"><surname>Pereira</surname><given-names>MG</given-names></name>
+<name name-style="western"><surname>Avelino</surname><given-names>PR</given-names></name>
+<name name-style="western"><surname>Costa</surname><given-names>HS</given-names></name>
+<name name-style="western"><surname>Menezes</surname><given-names>KKP</given-names></name>
+</person-group><article-title>Efeitos de programas de reabilitação multidisciplinar no tratamento de pacientes com doença de Alzheimer: uma revisão sistemática</article-title><source>Cad Saude Coletiva</source><year>2018</year><volume>26</volume><issue>2</issue><fpage>222</fpage><lpage>232</lpage><pub-id pub-id-type="doi">10.1590/1414-462x201800020446</pub-id></element-citation></ref><ref id="B27"><label>27</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Cammisuli</surname><given-names>DM</given-names></name>
+<name name-style="western"><surname>Danti</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Bosinelli</surname><given-names>F</given-names></name>
+<name name-style="western"><surname>Cipriani</surname><given-names>G</given-names></name>
+</person-group><article-title>Non-pharmacological interventions for people with Alzheimer's disease: A critical review of the scientific literature from the last ten years</article-title><source>Eur Geriatr Med</source><year>2016</year><volume>7</volume><issue>1</issue><fpage>57</fpage><lpage>64</lpage><pub-id pub-id-type="doi">10.1016/j.eurger.2016.01.002</pub-id></element-citation></ref><ref id="B28"><label>28</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Carrion</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Folkvord</surname><given-names>F</given-names></name>
+<name name-style="western"><surname>Anastasiadou</surname><given-names>D</given-names></name>
+<name name-style="western"><surname>Aymerich</surname><given-names>M</given-names></name>
+</person-group><article-title>Cognitive therapy for dementia patients: a systematic review</article-title><source>Dement Geriatr Cogn Disord</source><year>2018</year><volume>46</volume><issue>1-2</issue><fpage>1</fpage><lpage>26</lpage><pub-id pub-id-type="doi">10.1159/000490851</pub-id><pub-id pub-id-type="pmid">30092585</pub-id></element-citation></ref><ref id="B29"><label>29</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Chiu</surname><given-names>H-Y</given-names></name>
+<name name-style="western"><surname>Chen</surname><given-names>P-Y</given-names></name>
+<name name-style="western"><surname>Chen</surname><given-names>Y-T</given-names></name>
+<name name-style="western"><surname>Huang</surname><given-names>H-C</given-names></name>
+</person-group><article-title>Reality orientation therapy benefits cognition in older people with dementia: A meta-analysis</article-title><source>Int J Nurs Stud</source><year>2018</year><volume>86</volume><fpage>20</fpage><lpage>28</lpage><pub-id pub-id-type="doi">10.1016/j.ijnurstu.2018.06.008</pub-id><pub-id pub-id-type="pmid">29960104</pub-id></element-citation></ref><ref id="B30"><label>30</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Alves</surname><given-names>GS</given-names></name>
+<name name-style="western"><surname>Casali</surname><given-names>ME</given-names></name>
+<name name-style="western"><surname>Veras</surname><given-names>AB</given-names></name>
+<name name-style="western"><surname>Carrilho</surname><given-names>CG</given-names></name>
+<name name-style="western"><surname>Bruno Costa</surname><given-names>E</given-names></name>
+<name name-style="western"><surname>Rodrigues</surname><given-names>VM</given-names></name>
+</person-group><article-title>A systematic review of home-setting psychoeducation interventions for behavioral changes in dementia: some lessons for the COVID-19 Pandemic and post-pandemic assistance</article-title><source>Front Psychiatry</source><year>2020</year><volume>11</volume><fpage>577871</fpage><lpage>577871</lpage><pub-id pub-id-type="doi">10.3389/fpsyt.2020.577871</pub-id><pub-id pub-id-type="pmid">33132937</pub-id><pub-id pub-id-type="pmcid">PMC7550734</pub-id></element-citation></ref><ref id="B31"><label>31</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Duan</surname><given-names>Y</given-names></name>
+<name name-style="western"><surname>Lu</surname><given-names>L</given-names></name>
+<name name-style="western"><surname>Chen</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Wu</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Liang</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Zheng</surname><given-names>Y</given-names></name>
+</person-group><article-title>Psychosocial interventions for Alzheimer's disease cognitive symptoms: a Bayesian network meta-analysis</article-title><source>BMC Geriatr</source><year>2018</year><volume>18</volume><issue>1</issue><fpage>175</fpage><lpage>175</lpage><pub-id pub-id-type="doi">10.1186/s12877-018-0864-6</pub-id><pub-id pub-id-type="pmid">30086714</pub-id><pub-id pub-id-type="pmcid">PMC6081912</pub-id></element-citation></ref><ref id="B32"><label>32</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Piersol</surname><given-names>CV</given-names></name>
+<name name-style="western"><surname>Canton</surname><given-names>K</given-names></name>
+<name name-style="western"><surname>Connor</surname><given-names>SE</given-names></name>
+<name name-style="western"><surname>Giller</surname><given-names>I</given-names></name>
+<name name-style="western"><surname>Lipman</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Sager</surname><given-names>S</given-names></name>
+</person-group><article-title>Effectiveness of interventions for caregivers of people with Alzheimer's Disease and related major neurocognitive disorders: a systematic review</article-title><source>Am J Occup Ther</source><year>2017</year><volume>71</volume><issue>5</issue><fpage>7105180020p1</fpage><lpage>710518002p10</lpage><pub-id pub-id-type="doi">10.5014/ajot.2017.027581</pub-id><pub-id pub-id-type="pmid">28809652</pub-id></element-citation></ref><ref id="B33"><label>33</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Shim</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Tilley</surname><given-names>JL</given-names></name>
+<name name-style="western"><surname>Im</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Price</surname><given-names>K</given-names></name>
+<name name-style="western"><surname>Gonzalez</surname><given-names>A</given-names></name>
+</person-group><article-title>A systematic review of mindfulness-based interventions for patients with mild cognitive impairment or dementia and caregivers</article-title><source>J Geriatr Psychiatry Neurol</source><year>2021</year><volume>34</volume><issue>6</issue><fpage>528</fpage><lpage>554</lpage><pub-id pub-id-type="doi">10.1177/0891988720957104</pub-id><pub-id pub-id-type="pmid">32935611</pub-id></element-citation></ref><ref id="B34"><label>34</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Gaugler</surname><given-names>JE</given-names></name>
+<name name-style="western"><surname>Bain</surname><given-names>LJ</given-names></name>
+<name name-style="western"><surname>Mitchell</surname><given-names>L</given-names></name>
+<name name-style="western"><surname>Finlay</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Fazio</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Jutkowitz</surname><given-names>E</given-names></name>
+<collab>Alzheimer's Association Psychosocial Measurement Workgroup</collab>
+</person-group><article-title>Reconsidering frameworks of Alzheimer's dementia when assessing psychosocial outcomes</article-title><source>Alzheimers Dement</source><year>2019</year><volume>5</volume><fpage>388</fpage><lpage>397</lpage><pub-id pub-id-type="doi">10.1016/j.trci.2019.02.008</pub-id><pub-id pub-id-type="pmcid">PMC6708985</pub-id><pub-id pub-id-type="pmid">31463361</pub-id></element-citation></ref><ref id="B35"><label>35</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Dröes</surname><given-names>RM</given-names></name>
+<name name-style="western"><surname>Chattat</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Diaz</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Gove</surname><given-names>D</given-names></name>
+<name name-style="western"><surname>Graff</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Murphy</surname><given-names>K</given-names></name>
+</person-group><article-title>Social health and dementia: a European consensus on the operationalization of the concept and directions for research and practice</article-title><source>Aging Ment Health</source><year>2017</year><volume>21</volume><issue>1</issue><fpage>4</fpage><lpage>17</lpage><pub-id pub-id-type="doi">10.1080/13607863.2016.1254596</pub-id><pub-id pub-id-type="pmid">27869503</pub-id></element-citation></ref><ref id="B36"><label>36</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Oksnebjerg</surname><given-names>L</given-names></name>
+<name name-style="western"><surname>Diaz-Ponce</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Gove</surname><given-names>D</given-names></name>
+<name name-style="western"><surname>Moniz-Cook</surname><given-names>E</given-names></name>
+<name name-style="western"><surname>Mountain</surname><given-names>G</given-names></name>
+<name name-style="western"><surname>Chattat</surname><given-names>R</given-names></name>
+</person-group><article-title>Towards capturing meaningful outcomes for people with dementia in psychosocial intervention research: a pan-European consultation</article-title><source>Health Expect</source><year>2018</year><volume>21</volume><issue>6</issue><fpage>1056</fpage><lpage>1065</lpage><pub-id pub-id-type="doi">10.1111/hex.12799</pub-id><pub-id pub-id-type="pmid">29920881</pub-id><pub-id pub-id-type="pmcid">PMC6250864</pub-id></element-citation></ref><ref id="B37"><label>37</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Arroyo-Anlló</surname><given-names>EM</given-names></name>
+<name name-style="western"><surname>Díaz-Marta</surname><given-names>JP</given-names></name>
+<name name-style="western"><surname>Chamorro Sánchez</surname><given-names>J</given-names></name>
+</person-group><article-title>Técnicas de rehabilitación neuropsicológica en demencias: hacia la ciber-rehabilitación neuropsicológica</article-title><source>Pensam Psicol</source><year>2012</year><volume>10</volume><issue>1</issue><fpage>107</fpage><lpage>127</lpage></element-citation></ref><ref id="B38"><label>38</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Moreira</surname><given-names>SV</given-names></name>
+<name name-style="western"><surname>Reis Justi</surname><given-names>FR</given-names></name>
+<name name-style="western"><surname>Moreira</surname><given-names>M</given-names></name>
+</person-group><article-title>Can musical intervention improve memory in Alzheimer's patients? Evidence from a systematic review</article-title><source>Dement Neuropsychol</source><year>2018</year><volume>12</volume><issue>2</issue><fpage>133</fpage><lpage>142</lpage><pub-id pub-id-type="doi">10.1590/1980-57642018dn12-020005</pub-id><pub-id pub-id-type="pmid">29988347</pub-id><pub-id pub-id-type="pmcid">PMC6022981</pub-id></element-citation></ref><ref id="B39"><label>39</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Jia</surname><given-names>RX</given-names></name>
+<name name-style="western"><surname>Liang</surname><given-names>JH</given-names></name>
+<name name-style="western"><surname>Xu</surname><given-names>Y</given-names></name>
+<name name-style="western"><surname>Wang</surname><given-names>YQ</given-names></name>
+</person-group><article-title>Effects of physical activity and exercise on the cognitive function of patients with Alzheimer disease: a meta-analysis</article-title><source>BMC Geriatr</source><year>2019</year><volume>19</volume><issue>1</issue><fpage>181</fpage><lpage>181</lpage><pub-id pub-id-type="doi">10.1186/s12877-019-1175-2</pub-id><pub-id pub-id-type="pmid">31266451</pub-id><pub-id pub-id-type="pmcid">PMC6604129</pub-id></element-citation></ref><ref id="B40"><label>40</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Wang</surname><given-names>LY</given-names></name>
+<name name-style="western"><surname>Pei</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Zhan</surname><given-names>YJ</given-names></name>
+<name name-style="western"><surname>Cai</surname><given-names>YW</given-names></name>
+</person-group><article-title>Overview of meta-analyses of five non-pharmacological interventions for Alzheimer's Disease</article-title><source>Front Aging Neurosci</source><year>2020</year><volume>12</volume><fpage>594432</fpage><lpage>594432</lpage><pub-id pub-id-type="doi">10.3389/fnagi.2020.594432</pub-id><pub-id pub-id-type="pmid">33324194</pub-id><pub-id pub-id-type="pmcid">PMC7723835</pub-id></element-citation></ref><ref id="B41"><label>41</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Meng</surname><given-names>Q</given-names></name>
+<name name-style="western"><surname>Lin</surname><given-names>MS</given-names></name>
+<name name-style="western"><surname>Tzeng</surname><given-names>IS</given-names></name>
+</person-group><article-title>Relationship between exercise and Alzheimer's disease: a narrative literature review</article-title><source>Front Neurosci</source><year>2020</year><volume>14</volume><fpage>131</fpage><lpage>131</lpage><pub-id pub-id-type="doi">10.3389/fnins.2020.00131</pub-id><pub-id pub-id-type="pmid">32273835</pub-id><pub-id pub-id-type="pmcid">PMC7113559</pub-id></element-citation></ref><ref id="B42"><label>42</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Smallfield</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Heckenlaible</surname><given-names>C</given-names></name>
+</person-group><article-title>Effectiveness of occupational therapy interventions to enhance occupational performance for adults with Alzheimer's Disease and related major neurocognitive disorders: a systematic review</article-title><source>Am J Occup Ther</source><year>2017</year><volume>71</volume><issue>5</issue><fpage>7105180010p1</fpage><lpage>7105180010p9</lpage><pub-id pub-id-type="doi">10.5014/ajot.2017.024752</pub-id><pub-id pub-id-type="pmid">28809651</pub-id></element-citation></ref><ref id="B43"><label>43</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Marques</surname><given-names>CLS</given-names></name>
+<name name-style="western"><surname>Borgato</surname><given-names>MH</given-names></name>
+<name name-style="western"><surname>Moura</surname><given-names>E</given-names><suffix>Neto</suffix></name>
+<name name-style="western"><surname>Bazan</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Luvizutto</surname><given-names>GJ</given-names></name>
+</person-group><article-title>Physical therapy in patients with Alzheimer's disease: a systematic review of randomized controlled clinical trials</article-title><source>Fisioter Pesqui</source><year>2019</year><volume>26</volume><issue>3</issue><fpage>311</fpage><lpage>321</lpage><pub-id pub-id-type="doi">10.1590/1809-2950/18037226032019</pub-id></element-citation></ref><ref id="B44"><label>44</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Zhu</surname><given-names>XC</given-names></name>
+<name name-style="western"><surname>Yu</surname><given-names>Y</given-names></name>
+<name name-style="western"><surname>Wang</surname><given-names>HF</given-names></name>
+<name name-style="western"><surname>Jiang</surname><given-names>T</given-names></name>
+<name name-style="western"><surname>Cao</surname><given-names>L</given-names></name>
+<name name-style="western"><surname>Wang</surname><given-names>C</given-names></name>
+</person-group><article-title>Physiotherapy intervention in Alzheimer's disease: systematic review and meta-analysis</article-title><source>J Alzheimers Dis</source><year>2015</year><volume>44</volume><issue>1</issue><fpage>163</fpage><lpage>174</lpage><pub-id pub-id-type="doi">10.3233/JAD-141377</pub-id><pub-id pub-id-type="pmid">25201787</pub-id></element-citation></ref><ref id="B45"><label>45</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Kivipelto</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Mangialasche</surname><given-names>F</given-names></name>
+<name name-style="western"><surname>Snyder</surname><given-names>HM</given-names></name>
+<name name-style="western"><surname>Allegri</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Andrieu</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Arai</surname><given-names>H</given-names></name>
+</person-group><article-title>World-Wide FINGERS Network: A global approach to risk reduction and prevention of dementia</article-title><source>Alzheimers Dement</source><year>2020</year><volume>16</volume><issue>7</issue><fpage>1078</fpage><lpage>1094</lpage><pub-id pub-id-type="doi">10.1002/alz.12123</pub-id><pub-id pub-id-type="pmid">32627328</pub-id><pub-id pub-id-type="pmcid">PMC9527644</pub-id></element-citation></ref><ref id="B46"><label>46</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Moreira</surname><given-names>SC</given-names></name>
+<name name-style="western"><surname>Jansen</surname><given-names>AK</given-names></name>
+<name name-style="western"><surname>Silva</surname><given-names>FM</given-names></name>
+</person-group><article-title>Dietary interventions and cognition of Alzheimer's disease patients: a systematic review of randomized controlled trial</article-title><source>Dement Neuropsychol</source><year>2020</year><volume>14</volume><issue>3</issue><fpage>258</fpage><lpage>282</lpage><pub-id pub-id-type="doi">10.1590/1980-57642020dn14-030008</pub-id><pub-id pub-id-type="pmid">32973980</pub-id><pub-id pub-id-type="pmcid">PMC7500808</pub-id></element-citation></ref><ref id="B47"><label>47</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Pendlebury</surname><given-names>ST</given-names></name>
+<name name-style="western"><surname>Rothwell</surname><given-names>PM</given-names></name>
+</person-group><article-title>Prevalence, incidence, and factors associated with pre-stroke and post-stroke dementia: a systematic review and meta-analysis</article-title><source>Lancet Neurol</source><year>2009</year><volume>8</volume><issue>11</issue><fpage>1006</fpage><lpage>1018</lpage><pub-id pub-id-type="doi">10.1016/S1474-4422(09)70236-4</pub-id><pub-id pub-id-type="pmid">19782001</pub-id></element-citation></ref><ref id="B48"><label>48</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Boehme</surname><given-names>AK</given-names></name>
+<name name-style="western"><surname>Esenwa</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Elkind</surname><given-names>MSV</given-names></name>
+</person-group><article-title>Stroke risk factors, genetics, and prevention</article-title><source>Circ Res</source><year>2017</year><volume>120</volume><issue>3</issue><fpage>472</fpage><lpage>495</lpage><pub-id pub-id-type="doi">10.1161/CIRCRESAHA.116.308398</pub-id><pub-id pub-id-type="pmid">28154098</pub-id><pub-id pub-id-type="pmcid">PMC5321635</pub-id></element-citation></ref><ref id="B49"><label>49</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<collab>ADVANCE Collaborative Group</collab>
+<name name-style="western"><surname>Patel</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>MacMahon</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Chalmers</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Neal</surname><given-names>B</given-names></name>
+<name name-style="western"><surname>Billot</surname><given-names>L</given-names></name>
+<etal/>
+</person-group><article-title>Intensive blood glucose control and vascular outcomes in patients with type 2 diabetes</article-title><source>N Engl J Med</source><year>2008</year><volume>358</volume><issue>24</issue><fpage>2560</fpage><lpage>2572</lpage><pub-id pub-id-type="doi">10.1056/NEJMoa0802987</pub-id><pub-id pub-id-type="pmid">18539916</pub-id></element-citation></ref><ref id="B50"><label>50</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Launer</surname><given-names>LJ</given-names></name>
+<name name-style="western"><surname>Miller</surname><given-names>ME</given-names></name>
+<name name-style="western"><surname>Williamson</surname><given-names>JD</given-names></name>
+<name name-style="western"><surname>Lazar</surname><given-names>RM</given-names></name>
+<name name-style="western"><surname>Gerstein</surname><given-names>HC</given-names></name>
+</person-group><article-title>Effects of intensive glucose lowering on brain structure and function in people with type 2 diabetes (ACCORD MIND): a randomised open-label substudy</article-title><source>Lancet Neurol</source><year>2011</year><volume>10</volume><issue>11</issue><fpage>969</fpage><lpage>977</lpage><pub-id pub-id-type="doi">10.1016/S1474-4422(11)70188-0</pub-id><pub-id pub-id-type="pmid">21958949</pub-id><pub-id pub-id-type="pmcid">PMC3333485</pub-id></element-citation></ref><ref id="B51"><label>51</label><element-citation publication-type="book"><person-group person-group-type="author">
+<name name-style="western"><surname>Costa e Forti</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Pires</surname><given-names>AC</given-names></name>
+<name name-style="western"><surname>Pittito</surname><given-names>BA</given-names></name>
+<name name-style="western"><surname>Gerchman</surname><given-names>F</given-names></name>
+<name name-style="western"><surname>Oliveira</surname><given-names>JEP</given-names></name>
+<name name-style="western"><surname>Zajdenverg</surname><given-names>L</given-names></name>
+<etal/>
+</person-group><source>Diretrizes da Sociedade Brasileira de Diabetes: 2019-2020</source><year>2019</year><publisher-loc>São Paulo</publisher-loc><publisher-name>Clannad</publisher-name></element-citation></ref><ref id="B52"><label>52</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Kernan</surname><given-names>WN</given-names></name>
+<name name-style="western"><surname>Ovbiagele</surname><given-names>B</given-names></name>
+<name name-style="western"><surname>Black</surname><given-names>HR</given-names></name>
+<name name-style="western"><surname>Bravata</surname><given-names>DM</given-names></name>
+<name name-style="western"><surname>Chimowitz</surname><given-names>MI</given-names></name>
+<name name-style="western"><surname>Ezekowitz</surname><given-names>MD</given-names></name>
+</person-group><article-title>Guidelines for the prevention of stroke in patients with stroke and transient ischemic attack</article-title><source>Stroke</source><year>2014</year><volume>45</volume><issue>7</issue><fpage>2160</fpage><lpage>2236</lpage><pub-id pub-id-type="doi">10.1161/STR.0000000000000024</pub-id><pub-id pub-id-type="pmid">24788967</pub-id></element-citation></ref><ref id="B53"><label>53</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Smith</surname><given-names>EE</given-names></name>
+<name name-style="western"><surname>Saposnik</surname><given-names>G</given-names></name>
+<name name-style="western"><surname>Biessels</surname><given-names>GJ</given-names></name>
+<name name-style="western"><surname>Doubal</surname><given-names>FN</given-names></name>
+<name name-style="western"><surname>Fornage</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Gorelick</surname><given-names>PB</given-names></name>
+</person-group><article-title>Prevention of stroke in patients with silent cerebrovascular disease: a scientific statement for healthcare professionals from the American Heart Association/American Stroke Association</article-title><source>Stroke</source><year>2017</year><volume>48</volume><issue>2</issue><fpage>e44</fpage><lpage>e71</lpage><pub-id pub-id-type="doi">10.1161/STR.0000000000000116</pub-id><pub-id pub-id-type="pmid">27980126</pub-id></element-citation></ref><ref id="B54"><label>54</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Davis</surname><given-names>KAS</given-names></name>
+<name name-style="western"><surname>Bishara</surname><given-names>D</given-names></name>
+<name name-style="western"><surname>Molokhia</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Mueller</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Perera</surname><given-names>G</given-names></name>
+<name name-style="western"><surname>Stewart</surname><given-names>RJ</given-names></name>
+</person-group><article-title>Aspirin in people with dementia, long-term benefits, and harms: a systematic review</article-title><source>Eur J Clin Pharmacol</source><year>2021</year><volume>77</volume><issue>7</issue><fpage>943</fpage><lpage>954</lpage><pub-id pub-id-type="doi">10.1007/s00228-021-03089-x</pub-id><pub-id pub-id-type="pmid">33483830</pub-id><pub-id pub-id-type="pmcid">PMC8184554</pub-id></element-citation></ref><ref id="B55"><label>55</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>McGuinness</surname><given-names>B</given-names></name>
+<name name-style="western"><surname>Craig</surname><given-names>D</given-names></name>
+<name name-style="western"><surname>Bullock</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Malouf</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Passmore</surname><given-names>P</given-names></name>
+</person-group><article-title>Statins for the prevention of dementia</article-title><source>Cochrane Database Syst Rev</source><year>2014</year><issue>7</issue><fpage>CD007514</fpage><lpage>CD007514</lpage><pub-id pub-id-type="doi">10.1002/14651858.CD007514.pub3</pub-id><pub-id pub-id-type="pmid">25004278</pub-id><pub-id pub-id-type="pmcid">PMC11112650</pub-id></element-citation></ref><ref id="B56"><label>56</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Sofi</surname><given-names>F</given-names></name>
+<name name-style="western"><surname>Valecchi</surname><given-names>D</given-names></name>
+<name name-style="western"><surname>Bacci</surname><given-names>D</given-names></name>
+<name name-style="western"><surname>Abbate</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Gensini</surname><given-names>GF</given-names></name>
+<name name-style="western"><surname>Casini</surname><given-names>A</given-names></name>
+</person-group><article-title>Physical activity and risk of cognitive decline: a meta-analysis of prospective studies</article-title><source>J Int Med</source><year>2011</year><volume>269</volume><issue>1</issue><fpage>107</fpage><lpage>117</lpage><pub-id pub-id-type="doi">10.1111/j.1365-2796.2010.02281.x</pub-id><pub-id pub-id-type="pmid">20831630</pub-id></element-citation></ref><ref id="B57"><label>57</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Verdelho</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Madureira</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Ferro</surname><given-names>JM</given-names></name>
+<name name-style="western"><surname>Baezner</surname><given-names>H</given-names></name>
+<name name-style="western"><surname>Blahak</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Poggesi</surname><given-names>A</given-names></name>
+</person-group><article-title>Physical activity prevents progression for cognitive impairment and vascular dementia: results from the LADIS (Leukoaraiosis and Disability) study</article-title><source>Stroke</source><year>2012</year><volume>43</volume><issue>12</issue><fpage>3331</fpage><lpage>3335</lpage><pub-id pub-id-type="doi">10.1161/STROKEAHA.112.661793</pub-id><pub-id pub-id-type="pmid">23117721</pub-id></element-citation></ref><ref id="B58"><label>58</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Gillespie</surname><given-names>DC</given-names></name>
+<name name-style="western"><surname>Bowen</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Chung</surname><given-names>CS</given-names></name>
+<name name-style="western"><surname>Cockburn</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Knapp</surname><given-names>P</given-names></name>
+<name name-style="western"><surname>Pollock</surname><given-names>A</given-names></name>
+</person-group><article-title>Rehabilitation for post-stroke cognitive impairment: an overview of recommendations arising from systematic reviews of current evidence</article-title><source>Clin Rehabil</source><year>2015</year><volume>29</volume><issue>2</issue><fpage>120</fpage><lpage>128</lpage><pub-id pub-id-type="doi">10.1177/0269215514538982</pub-id><pub-id pub-id-type="pmid">24942480</pub-id></element-citation></ref><ref id="B59"><label>59</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Coelho-Júnior</surname><given-names>HJ</given-names></name>
+<name name-style="western"><surname>Trichopoulou</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Panza</surname><given-names>F</given-names></name>
+</person-group><article-title>Cross-sectional and longitudinal associations between adherence to Mediterranean diet with physical performance and cognitive function in older adults: A systematic review and meta-analysis</article-title><source>Ageing Res Rev</source><year>2021</year><volume>70</volume><fpage>101395</fpage><lpage>101395</lpage><pub-id pub-id-type="doi">10.1016/j.arr.2021.101395</pub-id><pub-id pub-id-type="pmid">34153553</pub-id></element-citation></ref><ref id="B60"><label>60</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Brucki</surname><given-names>SMD</given-names></name>
+<name name-style="western"><surname>Ferraz</surname><given-names>AC</given-names></name>
+<name name-style="western"><surname>Freitas</surname><given-names>GR</given-names></name>
+<name name-style="western"><surname>Massaro</surname><given-names>AR</given-names></name>
+<name name-style="western"><surname>Radanovic</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Schultz</surname><given-names>RR</given-names></name>
+</person-group><article-title>Treatment of vascular dementia. Recommendations of the Scientific Department of Cognitive Neurology and Aging of the Brazilian Academy of Neurology</article-title><source>Dement Neuropsychol</source><year>2011</year><volume>5</volume><issue>4</issue><fpage>275</fpage><lpage>287</lpage><pub-id pub-id-type="doi">10.1590/S1980-57642011DN05040005</pub-id><pub-id pub-id-type="pmid">29213754</pub-id><pub-id pub-id-type="pmcid">PMC5619040</pub-id></element-citation></ref><ref id="B61"><label>61</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Smith</surname><given-names>EE</given-names></name>
+<name name-style="western"><surname>Barber</surname><given-names>P</given-names></name>
+<name name-style="western"><surname>Field</surname><given-names>TS</given-names></name>
+<name name-style="western"><surname>Ganesh</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Hachinski</surname><given-names>V</given-names></name>
+<name name-style="western"><surname>Hogan</surname><given-names>DB</given-names></name>
+</person-group><article-title>Canadian Consensus Conference on Diagnosis and Treatment of Dementia (CCCDTD) 5: Guidelines for management of vascular cognitive impairment</article-title><source>Alzheimers Dement (N Y)</source><year>2020</year><volume>6</volume><issue>1</issue><elocation-id>e12056</elocation-id><pub-id pub-id-type="doi">10.1002/trc2.12056</pub-id><pub-id pub-id-type="pmid">33209971</pub-id><pub-id pub-id-type="pmcid">PMC7657196</pub-id></element-citation></ref><ref id="B62"><label>62</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Dichgans</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Markus</surname><given-names>HS</given-names></name>
+<name name-style="western"><surname>Salloway</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Verkkoniemi</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Moline</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Wang</surname><given-names>Q</given-names></name>
+</person-group><article-title>Donepezil in patients with subcortical vascular cognitive impairment a randomised double-blind trial in CADASIL</article-title><source>Lancet Neurol</source><year>2008</year><volume>7</volume><issue>4</issue><fpage>310</fpage><lpage>318</lpage><pub-id pub-id-type="doi">10.1016/S1474-4422(08)70046-2</pub-id><pub-id pub-id-type="pmid">18296124</pub-id></element-citation></ref><ref id="B63"><label>63</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Black</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Román</surname><given-names>GC</given-names></name>
+<name name-style="western"><surname>Geldmacher</surname><given-names>DS</given-names></name>
+<name name-style="western"><surname>Salloway</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Hecker</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Burns</surname><given-names>A</given-names></name>
+</person-group><article-title>Efficacy and tolerability of donepezil in vascular dementia: positive results of a 24-week, multicenter, international, randomized, placebo-controlled clinical trial</article-title><source>Stroke</source><year>2003</year><volume>34</volume><issue>10</issue><fpage>2323</fpage><lpage>2330</lpage><pub-id pub-id-type="doi">10.1161/01.STR.0000091396.95360.E1</pub-id><pub-id pub-id-type="pmid">12970516</pub-id></element-citation></ref><ref id="B64"><label>64</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Orgogozo</surname><given-names>JM</given-names></name>
+<name name-style="western"><surname>Rigaud</surname><given-names>AS</given-names></name>
+</person-group><person-group person-group-type="author">
+<collab>Sto¨ffler A.Mo¨bius HJ.Forette F</collab>
+</person-group><article-title>Efficacy and safety of memantine in patients with mild to moderate vascular dementia: a randomized, placebo-controlled trial (MMM 300)</article-title><source>Stroke</source><year>2002</year><volume>33</volume><issue>7</issue><fpage>1834</fpage><lpage>1839</lpage><pub-id pub-id-type="doi">10.1161/01.str.0000020094.08790.49</pub-id><pub-id pub-id-type="pmid">12105362</pub-id></element-citation></ref><ref id="B65"><label>65</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Erkinjuntti</surname><given-names>T</given-names></name>
+<name name-style="western"><surname>Kurz</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Gauthier</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Bullock</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Lilienfeld</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Damaraju</surname><given-names>CV</given-names></name>
+</person-group><article-title>Efficacy of galantamine in probable vascular dementia and Alzheimer's disease combined with cerebrovascular disease: a randomised trial</article-title><source>Lancet</source><year>2002</year><volume>359</volume><issue>9314</issue><fpage>1283</fpage><lpage>1290</lpage><pub-id pub-id-type="doi">10.1016/S0140-6736(02)08267-3</pub-id><pub-id pub-id-type="pmid">11965273</pub-id></element-citation></ref><ref id="B66"><label>66</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Caramelli</surname><given-names>P</given-names></name>
+<name name-style="western"><surname>Laks</surname><given-names>J</given-names></name>
+<name name-style="western"><surname>Palmini</surname><given-names>AL</given-names></name>
+<name name-style="western"><surname>Nitrini</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Chaves</surname><given-names>ML</given-names></name>
+<name name-style="western"><surname>Forlenza</surname><given-names>OV</given-names></name>
+</person-group><article-title>Effects of galantamine and galantamine combined with nimodipine on cognitive speed and quality of life in mixed dementia: a 24-week, randomized, placebo-controlled exploratory trial (the REMIX study)</article-title><source>Arq Neuropsiquiatr</source><year>2014</year><volume>72</volume><issue>6</issue><fpage>411</fpage><lpage>417</lpage><pub-id pub-id-type="doi">10.1590/0004-282x20140055</pub-id><pub-id pub-id-type="pmid">24964105</pub-id></element-citation></ref><ref id="B67"><label>67</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Ballard</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Sauter</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Scheltens</surname><given-names>P</given-names></name>
+<name name-style="western"><surname>He</surname><given-names>Y</given-names></name>
+<name name-style="western"><surname>Barkhof</surname><given-names>F</given-names></name>
+<name name-style="western"><surname>Straaten</surname><given-names>EC</given-names></name>
+</person-group><article-title>Efficacy, safety and tolerability of rivastigmine capsules in patients with probable vascular dementia: the VantagE study</article-title><source>Curr Med Res Opin</source><year>2008</year><volume>24</volume><issue>9</issue><fpage>2561</fpage><lpage>2574</lpage><pub-id pub-id-type="doi">10.1185/03007990802328142</pub-id><pub-id pub-id-type="pmid">18674411</pub-id></element-citation></ref><ref id="B68"><label>68</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Román</surname><given-names>GC</given-names></name>
+<name name-style="western"><surname>Salloway</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Black</surname><given-names>SE</given-names></name>
+<name name-style="western"><surname>Royall</surname><given-names>DR</given-names></name>
+<name name-style="western"><surname>Decarli</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Weiner</surname><given-names>MW</given-names></name>
+</person-group><article-title>Randomized, placebo-controlled, clinical trial of donepezil in vascular dementia: differential effects by hippocampal size</article-title><source>Stroke</source><year>2010</year><volume>41</volume><issue>6</issue><fpage>1213</fpage><lpage>1221</lpage><pub-id pub-id-type="doi">10.1161/STROKEAHA.109.570077</pub-id><pub-id pub-id-type="pmid">20395618</pub-id><pub-id pub-id-type="pmcid">PMC2954887</pub-id></element-citation></ref><ref id="B69"><label>69</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Moretti</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Torre</surname><given-names>P</given-names></name>
+<name name-style="western"><surname>Antonello</surname><given-names>RM</given-names></name>
+<name name-style="western"><surname>Cazzato</surname><given-names>G</given-names></name>
+<name name-style="western"><surname>Pizzolato</surname><given-names>G</given-names></name>
+</person-group><article-title>Different responses to rivastigmine in subcortical vascular dementia and multi-infarct dementia</article-title><source>Am J Alzheimers Dis Other Demen</source><year>2008</year><volume>23</volume><issue>2</issue><fpage>167</fpage><lpage>176</lpage><pub-id pub-id-type="doi">10.1177/1533317507312558</pub-id><pub-id pub-id-type="pmid">18184948</pub-id><pub-id pub-id-type="pmcid">PMC10846156</pub-id></element-citation></ref><ref id="B70"><label>70</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Auchus</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Brashear</surname><given-names>HR</given-names></name>
+<name name-style="western"><surname>Salloway</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Korczyn</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>De Deyn</surname><given-names>PP</given-names></name>
+<name name-style="western"><surname>Gassmann-Mayer</surname><given-names>C</given-names></name>
+</person-group><person-group person-group-type="author">
+<collab>GAL-INT-26 Study Group</collab>
+</person-group><article-title>Galantamine treatment of vascular dementia: a randomized trial</article-title><source>Neurology</source><year>2007</year><volume>69</volume><issue>5</issue><fpage>448</fpage><lpage>458</lpage><pub-id pub-id-type="doi">10.1212/01.wnl.0000266625.31615.f6</pub-id><pub-id pub-id-type="pmid">17664404</pub-id></element-citation></ref><ref id="B71"><label>71</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Narasimhalu</surname><given-names>K</given-names></name>
+<name name-style="western"><surname>Effendy</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Sim</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Lee</surname><given-names>JM</given-names></name>
+<name name-style="western"><surname>Chen</surname><given-names>I</given-names></name>
+<name name-style="western"><surname>Hia</surname><given-names>SB</given-names></name>
+</person-group><article-title>A randomized controlled trial of rivastigmine in patients with cognitive impairment no dementia because of cerebrovascular disease</article-title><source>Acta Neurol Scand</source><year>2010</year><volume>121</volume><issue>4</issue><fpage>217</fpage><lpage>224</lpage><pub-id pub-id-type="doi">10.1111/j.1600-0404.2009.01263.x</pub-id><pub-id pub-id-type="pmid">19951274</pub-id></element-citation></ref><ref id="B72"><label>72</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Wilcock</surname><given-names>G</given-names></name>
+<name name-style="western"><surname>Möbius</surname><given-names>HJ</given-names></name>
+<name name-style="western"><surname>Stöffler</surname><given-names>A</given-names></name>
+</person-group><person-group person-group-type="author">
+<collab>MMM 500 group</collab>
+</person-group><article-title>A double-blind, placebo-controlled multicentre study of memantine in mild to moderate vascular dementia (MMM500)</article-title><source>Int Clin Psychopharmacol</source><year>2002</year><volume>17</volume><issue>6</issue><fpage>297</fpage><lpage>305</lpage><pub-id pub-id-type="doi">10.1097/00004850-200211000-00005</pub-id><pub-id pub-id-type="pmid">12409683</pub-id></element-citation></ref><ref id="B73"><label>73</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Reus</surname><given-names>VI</given-names></name>
+<name name-style="western"><surname>Fochtmann</surname><given-names>LJ</given-names></name>
+<name name-style="western"><surname>Eyler</surname><given-names>AE</given-names></name>
+<name name-style="western"><surname>Hilty</surname><given-names>DM</given-names></name>
+<name name-style="western"><surname>Horvitz-Lennon</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Jibson</surname><given-names>MD</given-names></name>
+</person-group><article-title>The American Psychiatric Association practice guideline on the use of antipsychotics to treat agitation or psychosis in patients with dementia</article-title><source>Am J Psychiatry</source><year>2016</year><volume>173</volume><issue>5</issue><fpage>543</fpage><lpage>546</lpage><pub-id pub-id-type="doi">10.1176/appi.ajp.2015.173501</pub-id><pub-id pub-id-type="pmid">27133416</pub-id></element-citation></ref><ref id="B74"><label>74</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Kales</surname><given-names>HC</given-names></name>
+<name name-style="western"><surname>Lyketsos</surname><given-names>CG</given-names></name>
+<name name-style="western"><surname>Miller</surname><given-names>EM</given-names></name>
+<name name-style="western"><surname>Ballard</surname><given-names>C</given-names></name>
+</person-group><article-title>Management of behavioral and psychological symptoms in people with Alzheimer's disease: an international Delphi consensus</article-title><source>Int Psychogeriatr</source><year>2019</year><volume>31</volume><issue>1</issue><fpage>83</fpage><lpage>90</lpage><pub-id pub-id-type="doi">10.1017/S1041610218000534</pub-id><pub-id pub-id-type="pmid">30068400</pub-id></element-citation></ref><ref id="B75"><label>75</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Oliveira</surname><given-names>LF</given-names></name>
+<name name-style="western"><surname>Camargos</surname><given-names>EF</given-names></name>
+<name name-style="western"><surname>Martini</surname><given-names>LLL</given-names></name>
+<name name-style="western"><surname>Machado</surname><given-names>FV</given-names></name>
+<name name-style="western"><surname>Novaes</surname><given-names>MRCG</given-names></name>
+</person-group><article-title>Use of psychotropic agents to treat agitation and aggression in Brazilian patients with Alzheimer's disease: A naturalistic and multicenter study</article-title><source>Psychiatry Res</source><year>2021</year><volume>295</volume><fpage>113591</fpage><lpage>113591</lpage><pub-id pub-id-type="doi">10.1016/j.psychres.2020.113591</pub-id><pub-id pub-id-type="pmid">33271491</pub-id></element-citation></ref><ref id="B76"><label>76</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Onyike</surname><given-names>CU</given-names></name>
+<name name-style="western"><surname>Diehl-Schmid</surname><given-names>J</given-names></name>
+</person-group><article-title>The epidemiology of frontotemporal dementia</article-title><source>Int Rev of Psychiatry</source><year>2013</year><volume>25</volume><issue>2</issue><fpage>130</fpage><lpage>137</lpage><pub-id pub-id-type="doi">10.3109/09540261.2013.776523</pub-id><pub-id pub-id-type="pmid">23611343</pub-id><pub-id pub-id-type="pmcid">PMC3932112</pub-id></element-citation></ref><ref id="B77"><label>77</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Rascovsky</surname><given-names>K</given-names></name>
+<name name-style="western"><surname>Hodges</surname><given-names>JR</given-names></name>
+<name name-style="western"><surname>Knopman</surname><given-names>D</given-names></name>
+<name name-style="western"><surname>Mendez</surname><given-names>MF</given-names></name>
+<name name-style="western"><surname>Kramer</surname><given-names>JH</given-names></name>
+<name name-style="western"><surname>Neuhaus</surname><given-names>J</given-names></name>
+</person-group><article-title>Sensitivity of revised diagnostic criteria for the behavioural variant of frontotemporal dementia</article-title><source>Brain</source><year>2011</year><volume>134</volume><issue>9</issue><fpage>2456</fpage><lpage>2477</lpage><pub-id pub-id-type="doi">10.1093/brain/awr179</pub-id><pub-id pub-id-type="pmid">21810890</pub-id><pub-id pub-id-type="pmcid">PMC3170532</pub-id></element-citation></ref><ref id="B78"><label>78</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Trieu</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Gossink</surname><given-names>F</given-names></name>
+<name name-style="western"><surname>Stek</surname><given-names>ML</given-names></name>
+<name name-style="western"><surname>Scheltens</surname><given-names>P</given-names></name>
+<name name-style="western"><surname>Pijnenburg</surname><given-names>YAL</given-names></name>
+<name name-style="western"><surname>Dols</surname><given-names>A</given-names></name>
+</person-group><article-title>Effectiveness of pharmacological interventions for symptoms of behavioral variant frontotemporal dementia: a systematic review</article-title><source>Cogn Behav Neurol</source><year>2020</year><volume>33</volume><issue>1</issue><fpage>1</fpage><lpage>15</lpage><pub-id pub-id-type="doi">10.1097/WNN.0000000000000217</pub-id><pub-id pub-id-type="pmid">32132398</pub-id></element-citation></ref><ref id="B79"><label>79</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Lima-Silva</surname><given-names>TB</given-names></name>
+<name name-style="western"><surname>Bahia</surname><given-names>VS</given-names></name>
+<name name-style="western"><surname>Carvalho</surname><given-names>VA</given-names></name>
+<name name-style="western"><surname>Guimarães</surname><given-names>HC</given-names></name>
+<name name-style="western"><surname>Caramelli</surname><given-names>P</given-names></name>
+<name name-style="western"><surname>Balthazar</surname><given-names>ML</given-names></name>
+</person-group><article-title>Neuropsychiatric symptoms, caregiver burden and distress in behavioral-variant frontotemporal dementia and Alzheimer's disease</article-title><source>Dement Geriatr Cogn Disord</source><year>2015</year><volume>40</volume><issue>5-6</issue><fpage>268</fpage><lpage>275</lpage><pub-id pub-id-type="doi">10.1159/000437351</pub-id><pub-id pub-id-type="pmid">26302667</pub-id></element-citation></ref><ref id="B80"><label>80</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Wylie</surname><given-names>MA</given-names></name>
+<name name-style="western"><surname>Shnall</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Onyike</surname><given-names>CU</given-names></name>
+<name name-style="western"><surname>Huey</surname><given-names>ED</given-names></name>
+</person-group><article-title>Management of frontotemporal dementia in mental health and multidisciplinary settings</article-title><source>Int Rev Psychiatry</source><year>2013</year><volume>25</volume><issue>2</issue><fpage>230</fpage><lpage>236</lpage><pub-id pub-id-type="doi">10.3109/09540261.2013.776949</pub-id><pub-id pub-id-type="pmid">23611352</pub-id><pub-id pub-id-type="pmcid">PMC3929950</pub-id></element-citation></ref><ref id="B81"><label>81</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Marin</surname><given-names>SMC</given-names></name>
+<name name-style="western"><surname>Mansur</surname><given-names>LL</given-names></name>
+<name name-style="western"><surname>Oliveira</surname><given-names>FF</given-names></name>
+<name name-style="western"><surname>Marin</surname><given-names>LF</given-names></name>
+<name name-style="western"><surname>Wajman</surname><given-names>JR</given-names></name>
+<name name-style="western"><surname>Bahia</surname><given-names>VS</given-names></name>
+</person-group><article-title>Swallowing in behavioral variant frontotemporal dementia</article-title><source>Arq Neuropsiquiatr</source><year>2021</year><volume>79</volume><issue>1</issue><fpage>8</fpage><lpage>14</lpage><pub-id pub-id-type="doi">10.1590/0004-282X20200060</pub-id><pub-id pub-id-type="pmid">33656114</pub-id></element-citation></ref><ref id="B82"><label>82</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Portugal</surname><given-names>MG</given-names></name>
+<name name-style="western"><surname>Marinho</surname><given-names>V</given-names></name>
+<name name-style="western"><surname>Laks</surname><given-names>J</given-names></name>
+</person-group><article-title>Pharmacological treatment of frontotemporal lobar degeneration: systematic review</article-title><source>Braz J Psychiatry</source><year>2011</year><fpage>33</fpage><lpage>33</lpage><pub-id pub-id-type="doi">10.1590/s1516-44462011000100016</pub-id><pub-id pub-id-type="pmid">21537725</pub-id></element-citation></ref><ref id="B83"><label>83</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Gambogi</surname><given-names>LB</given-names></name>
+<name name-style="western"><surname>Guimarães</surname><given-names>HC</given-names></name>
+<name name-style="western"><surname>Souza</surname><given-names>LC</given-names></name>
+<name name-style="western"><surname>Caramelli</surname><given-names>P</given-names></name>
+</person-group><article-title>Treatment of the behavioral variant of frontotemporal dementia: a narrative review</article-title><source>Dement Neuropsychol</source><year>2021</year><volume>15</volume><issue>3</issue><fpage>331</fpage><lpage>338</lpage><pub-id pub-id-type="doi">10.1590/1980-57642021dn15-030004</pub-id><pub-id pub-id-type="pmid">34630920</pub-id><pub-id pub-id-type="pmcid">PMC8485641</pub-id></element-citation></ref><ref id="B84"><label>84</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Gorno-Tempini</surname><given-names>ML</given-names></name>
+<name name-style="western"><surname>Hillis</surname><given-names>AE</given-names></name>
+<name name-style="western"><surname>Weintraub</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Kertesz</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Mendez</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Cappa</surname><given-names>SF</given-names></name>
+</person-group><article-title>Classification of primary progressive aphasia and its variants</article-title><source>Neurology</source><year>2011</year><volume>76</volume><issue>11</issue><fpage>1006</fpage><lpage>1014</lpage><pub-id pub-id-type="doi">10.1212/WNL.0b013e31821103e6</pub-id><pub-id pub-id-type="pmid">21325651</pub-id><pub-id pub-id-type="pmcid">PMC3059138</pub-id></element-citation></ref><ref id="B85"><label>85</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Cotelli</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Manenti</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Ferrari</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Gobbi</surname><given-names>E</given-names></name>
+<name name-style="western"><surname>Macis</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Cappa</surname><given-names>SF</given-names></name>
+</person-group><article-title>Effectiveness of language training and non-invasive brain stimulation on oral and written naming performance in Primary Progressive Aphasia: A meta-analysis and systematic review</article-title><source>Neurosci Biobehav Rev</source><year>2020</year><volume>108</volume><fpage>498</fpage><lpage>525</lpage><pub-id pub-id-type="doi">10.1016/j.neubiorev.2019.12.003</pub-id><pub-id pub-id-type="pmid">31811834</pub-id></element-citation></ref><ref id="B86"><label>86</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Nissim</surname><given-names>NR</given-names></name>
+<name name-style="western"><surname>Moberg</surname><given-names>PJ</given-names></name>
+<name name-style="western"><surname>Hamilton</surname><given-names>RH</given-names></name>
+</person-group><article-title>Efficacy of noninvasive brain stimulation (tDCS or TMS) paired with language therapy in the treatment of primary progressive aphasia: an exploratory meta-analysis</article-title><source>Brain Sci</source><year>2020</year><volume>10</volume><issue>9</issue><fpage>597</fpage><lpage>597</lpage><pub-id pub-id-type="doi">10.3390/brainsci10090597</pub-id><pub-id pub-id-type="pmid">32872344</pub-id><pub-id pub-id-type="pmcid">PMC7563447</pub-id></element-citation></ref><ref id="B87"><label>87</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Beber</surname><given-names>BC</given-names></name>
+<name name-style="western"><surname>Brandão</surname><given-names>L</given-names></name>
+<name name-style="western"><surname>Chaves</surname><given-names>MLF</given-names></name>
+</person-group><article-title>A warning to the Brazilian Speech-Language Pathology and Audiology community about the importance of scientific and clinical activities in primary progressive aphasia</article-title><source>CoDAS</source><year>2015</year><volume>27</volume><issue>5</issue><fpage>505</fpage><lpage>508</lpage><pub-id pub-id-type="doi">10.1590/2317-1782/20152015081</pub-id><pub-id pub-id-type="pmid">26648224</pub-id></element-citation></ref><ref id="B88"><label>88</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Carthery-Goulart</surname><given-names>MT</given-names></name>
+<name name-style="western"><surname>Silveira</surname><given-names>AC</given-names></name>
+<name name-style="western"><surname>Machado</surname><given-names>TH</given-names></name>
+<name name-style="western"><surname>Mansur</surname><given-names>LL</given-names></name>
+<name name-style="western"><surname>Parente</surname><given-names>MAMP</given-names></name>
+<name name-style="western"><surname>Senaha</surname><given-names>MLH</given-names></name>
+</person-group><article-title>Nonpharmacological interventions for cognitive impairments following primary progressive aphasia: A systematic review of the literature</article-title><source>Dement Neuropsychol</source><year>2013</year><volume>7</volume><issue>1</issue><fpage>122</fpage><lpage>131</lpage><pub-id pub-id-type="doi">10.1590/S1980-57642013DN70100018</pub-id><pub-id pub-id-type="pmid">29213828</pub-id><pub-id pub-id-type="pmcid">PMC5619554</pub-id></element-citation></ref><ref id="B89"><label>89</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Volkmer</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Spector</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Meitanis</surname><given-names>V</given-names></name>
+<name name-style="western"><surname>Warren</surname><given-names>JD</given-names></name>
+<name name-style="western"><surname>Beeke</surname><given-names>S</given-names></name>
+</person-group><article-title>Effects of functional communication interventions for people with primary progressive aphasia and their caregivers: A systematic review</article-title><source>Aging Ment Health</source><year>2020</year><volume>24</volume><issue>9</issue><fpage>1381</fpage><lpage>1393</lpage><pub-id pub-id-type="doi">10.1080/13607863.2019.1617246</pub-id><pub-id pub-id-type="pmid">31134821</pub-id></element-citation></ref><ref id="B90"><label>90</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Cadório</surname><given-names>I</given-names></name>
+<name name-style="western"><surname>Lousada</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Martins</surname><given-names>P</given-names></name>
+<name name-style="western"><surname>Figueiredo</surname><given-names>D</given-names></name>
+</person-group><article-title>Generalization and maintenance of treatment gains in primary progressive aphasia (PPA): A systematic review</article-title><source>Int J Lang Commun Disord</source><year>2017</year><volume>52</volume><issue>5</issue><fpage>543</fpage><lpage>560</lpage><pub-id pub-id-type="doi">10.1111/1460-6984.12310</pub-id><pub-id pub-id-type="pmid">28120406</pub-id></element-citation></ref><ref id="B91"><label>91</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Machado</surname><given-names>TH</given-names></name>
+<name name-style="western"><surname>Carthery-Goulart</surname><given-names>MT</given-names></name>
+<name name-style="western"><surname>Campanha</surname><given-names>AC</given-names></name>
+<name name-style="western"><surname>Caramelli</surname><given-names>P</given-names></name>
+</person-group><article-title>Cognitive intervention strategies directed to speech and language deficits in primary progressive aphasia: practice-based evidence from 18 cases</article-title><source>Brain Sci</source><year>2021</year><volume>11</volume><issue>10</issue><fpage>1268</fpage><lpage>1268</lpage><pub-id pub-id-type="doi">10.3390/brainsci11101268</pub-id><pub-id pub-id-type="pmid">34679333</pub-id><pub-id pub-id-type="pmcid">PMC8533834</pub-id></element-citation></ref><ref id="B92"><label>92</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Aarsland</surname><given-names>D</given-names></name>
+</person-group><article-title>Cognitive impairment in Parkinson's disease and dementia with Lewy bodies</article-title><source>Parkinsonism Relat Disord</source><year>2016</year><volume>22</volume><issue>Suppl 1</issue><fpage>S144</fpage><lpage>S148</lpage><pub-id pub-id-type="doi">10.1016/j.parkreldis.2015.09.034</pub-id><pub-id pub-id-type="pmid">26411499</pub-id></element-citation></ref><ref id="B93"><label>93</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Burn</surname><given-names>DJ</given-names></name>
+</person-group><article-title>Cortical Lewy body disease and Parkinson's disease dementia</article-title><source>Curr Opin Neurol</source><year>2006</year><volume>19</volume><issue>6</issue><fpage>572</fpage><lpage>579</lpage><pub-id pub-id-type="doi">10.1097/01.wco.0000247607.34697.a2</pub-id><pub-id pub-id-type="pmid">17102696</pub-id></element-citation></ref><ref id="B94"><label>94</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Outeiro</surname><given-names>TF</given-names></name>
+<name name-style="western"><surname>Koss</surname><given-names>DJ</given-names></name>
+<name name-style="western"><surname>Erskine</surname><given-names>D</given-names></name>
+<name name-style="western"><surname>Walker</surname><given-names>L</given-names></name>
+<name name-style="western"><surname>Kurzawa-Akanbi</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Burn</surname><given-names>D</given-names></name>
+</person-group><article-title>Dementia with Lewy bodies: an update and outlook</article-title><source>Mol Neurodegener</source><year>2019</year><volume>14</volume><issue>1</issue><fpage>5</fpage><lpage>5</lpage><pub-id pub-id-type="doi">10.1186/s13024-019-0306-8</pub-id><pub-id pub-id-type="pmid">30665447</pub-id><pub-id pub-id-type="pmcid">PMC6341685</pub-id></element-citation></ref><ref id="B95"><label>95</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Jellinger</surname><given-names>KA</given-names></name>
+</person-group><article-title>Dementia with Lewy bodies and Parkinson's disease-dementia: current concepts and controversies</article-title><source>J Neural Transm (Vienna)</source><year>2018</year><volume>125</volume><issue>4</issue><fpage>615</fpage><lpage>650</lpage><pub-id pub-id-type="doi">10.1007/s00702-017-1821-9</pub-id><pub-id pub-id-type="pmid">29222591</pub-id></element-citation></ref><ref id="B96"><label>96</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Emre</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Aarsland</surname><given-names>D</given-names></name>
+<name name-style="western"><surname>Brown</surname><given-names>R</given-names></name>
+<name name-style="western"><surname>Burn</surname><given-names>DJ</given-names></name>
+<name name-style="western"><surname>Duyckaerts</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Mizuno</surname><given-names>Y</given-names></name>
+</person-group><article-title>Clinical diagnostic criteria for dementia associated with Parkinson's disease</article-title><source>Mov Disord</source><year>2007</year><volume>22</volume><issue>12</issue><fpage>1689</fpage><lpage>1707</lpage><pub-id pub-id-type="doi">10.1002/mds.21507</pub-id><pub-id pub-id-type="pmid">17542011</pub-id></element-citation></ref><ref id="B97"><label>97</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>McKeith</surname><given-names>IG</given-names></name>
+<name name-style="western"><surname>Boeve</surname><given-names>BF</given-names></name>
+<name name-style="western"><surname>Dickson</surname><given-names>DW</given-names></name>
+<name name-style="western"><surname>Halliday</surname><given-names>G</given-names></name>
+<name name-style="western"><surname>Taylor</surname><given-names>JP</given-names></name>
+<name name-style="western"><surname>Weintraub</surname><given-names>D</given-names></name>
+</person-group><article-title>Diagnosis and management of dementia with Lewy bodies: Fourth consensus report of the DLB Consortium</article-title><source>Neurology</source><year>2017</year><volume>89</volume><issue>1</issue><fpage>88</fpage><lpage>100</lpage><pub-id pub-id-type="doi">10.1212/WNL.0000000000004058</pub-id><pub-id pub-id-type="pmid">28592453</pub-id><pub-id pub-id-type="pmcid">PMC5496518</pub-id></element-citation></ref><ref id="B98"><label>98</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Broadstock</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Ballard</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Corbett</surname><given-names>A</given-names></name>
+</person-group><article-title>Latest treatment options for Alzheimer's disease, Parkinson's disease dementia and dementia with Lewy bodies</article-title><source>Expert Opin Pharmacother</source><year>2014</year><volume>15</volume><issue>13</issue><fpage>1797</fpage><lpage>1810</lpage><pub-id pub-id-type="doi">10.1517/14656566.2014.936848</pub-id><pub-id pub-id-type="pmid">24992196</pub-id></element-citation></ref><ref id="B99"><label>99</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Stinton</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>McKeith</surname><given-names>I</given-names></name>
+<name name-style="western"><surname>Taylor</surname><given-names>JP</given-names></name>
+<name name-style="western"><surname>Lafortune</surname><given-names>L</given-names></name>
+<name name-style="western"><surname>Mioshi</surname><given-names>E</given-names></name>
+<name name-style="western"><surname>Mak</surname><given-names>E</given-names></name>
+</person-group><article-title>Pharmacological management of Lewy body dementia: a systematic review and meta-analysis</article-title><source>Am J Psychiatry</source><year>2015</year><volume>172</volume><issue>8</issue><fpage>731</fpage><lpage>742</lpage><pub-id pub-id-type="doi">10.1176/appi.ajp.2015.14121582</pub-id><pub-id pub-id-type="pmid">26085043</pub-id></element-citation></ref><ref id="B100"><label>100</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Connors</surname><given-names>MH</given-names></name>
+<name name-style="western"><surname>Quinto</surname><given-names>L</given-names></name>
+<name name-style="western"><surname>McKeith</surname><given-names>I</given-names></name>
+<name name-style="western"><surname>Brodaty</surname><given-names>H</given-names></name>
+<name name-style="western"><surname>Allan</surname><given-names>L</given-names></name>
+<name name-style="western"><surname>Bamford</surname><given-names>C</given-names></name>
+</person-group><article-title>Non-pharmacological interventions for Lewy body dementia: a systematic review</article-title><source>Psychol Med</source><year>2018</year><volume>48</volume><issue>11</issue><fpage>1749</fpage><lpage>1758</lpage><pub-id pub-id-type="doi">10.1017/S0033291717003257</pub-id><pub-id pub-id-type="pmid">29143692</pub-id><pub-id pub-id-type="pmcid">PMC6088773</pub-id></element-citation></ref><ref id="B101"><label>101</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Dugger</surname><given-names>BN</given-names></name>
+<name name-style="western"><surname>Boeve</surname><given-names>BF</given-names></name>
+<name name-style="western"><surname>Murray</surname><given-names>ME</given-names></name>
+<name name-style="western"><surname>Parisi</surname><given-names>JE</given-names></name>
+<name name-style="western"><surname>Fujishiro</surname><given-names>H</given-names></name>
+<name name-style="western"><surname>Dickson</surname><given-names>DW</given-names></name>
+</person-group><article-title>Rapid eye movement sleep behavior disorder and subtypes in autopsy-confirmed dementia with Lewy bodies</article-title><source>Mov Disord</source><year>2012</year><volume>27</volume><issue>1</issue><fpage>72</fpage><lpage>78</lpage><pub-id pub-id-type="doi">10.1002/mds.24003</pub-id><pub-id pub-id-type="pmid">22038951</pub-id><pub-id pub-id-type="pmcid">PMC3513369</pub-id></element-citation></ref><ref id="B102"><label>102</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Ohma</surname><given-names>E</given-names></name>
+<name name-style="western"><surname>Ikuta</surname><given-names>F</given-names></name>
+</person-group><article-title>Parkinson's disease distribution of Lewy bodies and monoamine neuron system</article-title><source>Acta Neuropathol</source><year>1976</year><volume>34</volume><issue>4</issue><fpage>311</fpage><lpage>319</lpage><pub-id pub-id-type="doi">10.1007/BF00696560</pub-id><pub-id pub-id-type="pmid">179263</pub-id></element-citation></ref><ref id="B103"><label>103</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Hughes</surname><given-names>AJ</given-names></name>
+<name name-style="western"><surname>Daniel</surname><given-names>SE</given-names></name>
+<name name-style="western"><surname>Blankson</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Lees</surname><given-names>AJ</given-names></name>
+</person-group><article-title>A clinicopathological study of 100 cases of Parkinson's disease</article-title><source>J Neurol Neurosurg Psychiatry</source><year>1992</year><volume>55</volume><issue>3</issue><fpage>181</fpage><lpage>184</lpage><pub-id pub-id-type="doi">10.1136/jnnp.55.3.181</pub-id><pub-id pub-id-type="pmid">1564476</pub-id><pub-id pub-id-type="pmcid">PMC1014720</pub-id></element-citation></ref><ref id="B104"><label>104</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Rongve</surname><given-names>A</given-names></name>
+<name name-style="western"><surname>Aarsland</surname><given-names>D</given-names></name>
+</person-group><article-title>Management of Parkinson's disease dementia: practical considerations</article-title><source>Drugs Aging</source><year>2006</year><volume>23</volume><issue>10</issue><fpage>807</fpage><lpage>822</lpage><pub-id pub-id-type="doi">10.2165/00002512-200623100-00004</pub-id><pub-id pub-id-type="pmid">17067184</pub-id></element-citation></ref><ref id="B105"><label>105</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Caviness</surname><given-names>JN</given-names></name>
+<name name-style="western"><surname>Lue</surname><given-names>L</given-names></name>
+<name name-style="western"><surname>Adler</surname><given-names>CH</given-names></name>
+<name name-style="western"><surname>Walker</surname><given-names>DG</given-names></name>
+</person-group><article-title>Parkinson's disease dementia and potential therapeutic strategies</article-title><source>CNS Neurosci Ther</source><year>2011</year><volume>17</volume><issue>1</issue><fpage>32</fpage><lpage>44</lpage><pub-id pub-id-type="doi">10.1111/j.1755-5949.2010.00216.x</pub-id><pub-id pub-id-type="pmid">21199444</pub-id><pub-id pub-id-type="pmcid">PMC6493795</pub-id></element-citation></ref><ref id="B106"><label>106</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Gauthier</surname><given-names>S</given-names></name>
+</person-group><article-title>Pharmacotherapy of Parkinson disease dementia and Lewy body dementia</article-title><source>Front Neurol Neurosci</source><year>2009</year><volume>24</volume><fpage>135</fpage><lpage>139</lpage><pub-id pub-id-type="doi">10.1159/000197892</pub-id><pub-id pub-id-type="pmid">19182471</pub-id></element-citation></ref><ref id="B107"><label>107</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Garcia-Ptacek</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Kramberger</surname><given-names>MG</given-names></name>
+</person-group><article-title>Parkinson disease and dementia</article-title><source>J Geriatr Psychiatry Neurol</source><year>2016</year><volume>29</volume><issue>5</issue><fpage>261</fpage><lpage>270</lpage><pub-id pub-id-type="doi">10.1177/0891988716654985</pub-id><pub-id pub-id-type="pmid">27502301</pub-id></element-citation></ref><ref id="B108"><label>108</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Sezgin</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Bilgic</surname><given-names>B</given-names></name>
+<name name-style="western"><surname>Tinaz</surname><given-names>S</given-names></name>
+<name name-style="western"><surname>Emre</surname><given-names>M</given-names></name>
+</person-group><article-title>Parkinson's disease dementia and Lewy body disease</article-title><source>Semin Neurol</source><year>2019</year><volume>39</volume><issue>2</issue><fpage>274</fpage><lpage>282</lpage><pub-id pub-id-type="doi">10.1055/s-0039-1678579</pub-id><pub-id pub-id-type="pmid">30925619</pub-id></element-citation></ref><ref id="B109"><label>109</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Taylor</surname><given-names>JP</given-names></name>
+<name name-style="western"><surname>McKeith</surname><given-names>IG</given-names></name>
+<name name-style="western"><surname>Burn</surname><given-names>DJ</given-names></name>
+<name name-style="western"><surname>Boeve</surname><given-names>BF</given-names></name>
+<name name-style="western"><surname>Weintraub</surname><given-names>D</given-names></name>
+<name name-style="western"><surname>Bamford</surname><given-names>C</given-names></name>
+</person-group><article-title>New evidence on the management of Lewy body dementia</article-title><source>Lancet Neurol</source><year>2020</year><volume>19</volume><issue>2</issue><fpage>157</fpage><lpage>169</lpage><pub-id pub-id-type="doi">10.1016/S1474-4422(19)30153-X</pub-id><pub-id pub-id-type="pmid">31519472</pub-id><pub-id pub-id-type="pmcid">PMC7017451</pub-id></element-citation></ref><ref id="B110"><label>110</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Velayudhan</surname><given-names>L</given-names></name>
+<name name-style="western"><surname>Ffytche</surname><given-names>D</given-names></name>
+<name name-style="western"><surname>Ballard</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Aarsland</surname><given-names>D</given-names></name>
+</person-group><article-title>New therapeutic strategies for Lewy body dementias</article-title><source>Curr Neurol Neurosci Rep</source><year>2017</year><volume>17</volume><issue>9</issue><fpage>68</fpage><lpage>68</lpage><pub-id pub-id-type="doi">10.1007/s11910-017-0778-2</pub-id><pub-id pub-id-type="pmid">28741230</pub-id></element-citation></ref><ref id="B111"><label>111</label><element-citation publication-type="journal"><person-group person-group-type="author">
+<name name-style="western"><surname>Rolinski</surname><given-names>M</given-names></name>
+<name name-style="western"><surname>Fox</surname><given-names>C</given-names></name>
+<name name-style="western"><surname>Maidment</surname><given-names>I</given-names></name>
+<name name-style="western"><surname>McShane</surname><given-names>R</given-names></name>
+</person-group><article-title>Cholinesterase inhibitors for dementia with Lewy bodies, Parkinson's disease dementia and cognitive impairment in Parkinson's disease</article-title><source>Cochrane Database Syst Rev</source><year>2012</year><issue>3</issue><fpage>CD006504</fpage><lpage>CD006504</lpage><pub-id pub-id-type="doi">10.1002/14651858.CD006504.pub2</pub-id><pub-id pub-id-type="pmid">22419314</pub-id><pub-id pub-id-type="pmcid">PMC8985413</pub-id></element-citation></ref></ref-list></back></article>

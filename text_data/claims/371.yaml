@@ -1,0 +1,168 @@
+# 371장 급성 및 만성 췌장염 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: WSES 중증 급성 췌장염 지침 2019(World J Emerg Surg 2019, CC BY), 일본소화기학회(JSGE) 만성 췌장염 지침 2021(J Gastroenterol 2022, CC BY).
+
+chapter: "371"
+title: 급성 및 만성 췌장염
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 371-C01
+    topic: 급성 췌장염 원인·중증도 평가
+    type: workup
+    original:
+      text: "진단은 전형적 복통, 리파제·아밀라제 3배 이상, 영상 소견 중 2가지. 중증도 지표: 헤마토크리트 >44%, BUN >22 mg/dL, SIRS, 장기 부전. 중성지방 1,000 mg/dL 초과."
+      location: {file: by_chapter/371장.md, line: 107}
+    status: 유지
+    current:
+      text: >
+        리파제가 아밀라제보다 신뢰할 만한 진단 표지자다. 입원 시 초음파로 담석 원인을 확인하고(1C), 진단이 의심스러울 때만 CT를 쓴다(대부분 CT 불필요). 중증 급성 췌장염은 증상 72–96시간 뒤 조영 CT 또는 MRI로 평가하며, CT 중증도 지수 3 이상이면 7–10일 뒤 추적 CT를 한다.
+        담석·음주력이 없으면 중성지방과 칼슘을 재고 중성지방 1,000 mg/dL(11.3 mmol/L) 초과이면 원인으로 본다. 원인 미상이면 MRCP·EUS로 숨은 담관결석을 찾고, 특발성이면 초음파를 2회 시행한다.
+        중증 예측: 3일째 CRP 150 mg/L 이상(2A), 헤마토크리트 44% 초과는 괴사의 독립 위험 인자(1B), 요소 20 mg/dL 초과는 사망 예측 인자(2B). 프로칼시토닌은 감염 괴사 검출에 가장 민감하다. BISAP가 실용적이다.
+        중증은 지속 장기부전(48시간 초과)으로 정의하며(개정 아틀랜타·결정인자 기반 분류), 장기부전 환자는 가능하면 중환자실에 입원한다.
+      sources:
+        - {id: PAPER-WSES-PANCREATITIS-2019, locator: "Statements (severity grading); Diagnosis; Laboratory; Imaging"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: suspected_acute_pancreatitis}
+        tests:
+          - {lab: Lipase, reason: "아밀라제보다 신뢰"}
+          - {exam: Abdominal_US, reason: "입원 시 담석 원인"}
+          - {lab: Triglycerides, when: "담석·음주 없음", reason: ">1,000 mg/dL이면 원인"}
+          - {lab: Calcium, when: "담석·음주 없음", reason: "고칼슘혈증 원인"}
+          - {lab: Hematocrit, reason: ">44% 괴사 위험"}
+          - {lab: BUN, reason: ">20 mg/dL 사망 예측"}
+          - {lab: CRP, timing: "3일째", reason: "≥150 mg/L 중증"}
+          - {lab: LFT, reason: "담석·담관염"}
+      - kind: monitoring
+        after: {finding: severe_acute_pancreatitis}
+        check: [CT_abdomen_contrast]
+        interval_hours: [72, 96]
+        rules:
+          - {when: {var: CT_severity_index, op: ">=", value: 3}, action: "7–10일 뒤 추적 조영 CT"}
+
+  - id: 371-C02
+    topic: 급성 췌장염 수액·영양·진통
+    type: treatment
+    original:
+      text: "링거젖산 또는 생리식염수 15~20 cc/kg 일시 주사 후 시간당 3 mL/kg(200~250 mL), 8~12시간마다 헤마토크리트·BUN. 금식, 마약성 진통제. 중증은 2~3일째 경장영양."
+      location: {file: by_chapter/371장.md, line: 182}
+    status: 개정
+    current:
+      text: >
+        혈역학 악화를 기다리지 않고 조기에 수액을 주되 잦은 재평가로 조절하며, 수액 과다는 해롭다. 등장성 결정질이 선호되고 링거젖산의 생리식염수 대비 우월성 근거는 약하다(1B). 헤마토크리트, BUN, 크레아티닌, 젖산으로 혈량·관류를 감시한다.
+        초기 중증 췌장염에서 과도한 수액 소생을 조심하고 복강내압을 정기적으로 잰다(1C). 적절한 수액에도 장기부전이 지속되면 중환자실에 입원한다.
+        진통제 제한 근거는 없으며 급성 신손상에서는 NSAID를 피하고, 경막외 진통·환자 조절 진통을 다중 진통에 포함한다. 장기 지지와 영양 외 특이 약물치료는 없다(1B).
+        경장영양으로 장 부전과 감염 합병증을 예방하고 완전 정맥영양은 피한다(경구·위·공장 모두 안전, 1A).
+      sources:
+        - {id: PAPER-WSES-PANCREATITIS-2019, locator: "Statements (fluid resuscitation; pain; pharmacological; enteral nutrition; IAH)"}
+    verification: primary
+    conflicts:
+      - "원문 '적극적 수액(15–20 mL/kg 일시 + 3 mL/kg/시간)' vs WSES '조기 수액이되 재평가로 조절, 과다 수액 주의'. 원문 단위 오기(mg/kg → mL/kg)도 있음."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K85]}
+        recommendations:
+          - when: {dx: K85}
+            recommend: {fluid: isotonic_crystalloid, detail: "조기 투여·잦은 재평가, 과다 수액 주의", monitor: [Hematocrit, BUN, SCr, Lactate]}
+          - when: {all: [{dx: K85}, {finding: acute_kidney_injury}, {med_class: nsaid}]}
+            recommend: {action: avoid, detail: "급성 신손상 시 NSAID 회피"}
+            alert_level: medium
+          - when: {all: [{dx: K85}, {finding: total_parenteral_nutrition}]}
+            recommend: {action: prefer_enteral, detail: "TPN 회피, 경장영양(1A)"}
+            alert_level: medium
+
+  - id: 371-C03
+    topic: 예방적 항생제와 감염 괴사
+    type: treatment
+    original:
+      text: "괴사성 췌장염에서 예방적 항생제 역할 없음. 감염 징후 시 괴사 경피 흡인 그람 염색·배양, 패혈증이면 광범위 항생제."
+      location: {file: by_chapter/371장.md, line: 214}
+    status: 개정
+    current:
+      text: >
+        예방적 항생제는 사망·이환을 줄이지 못해 모든 급성 췌장염에 일상적으로 쓰지 않는다(1A). 감염된 중증 췌장염에는 항상 항생제를 쓴다. 프로칼시토닌은 감염 괴사 위험 예측에 유용하며, CT 유도 미세침 흡인은 확진에 쓸 수 있으나 위음성이 많아 더 이상 일상적으로 하지 않는다.
+        감염 괴사에는 괴사 조직에 침투하는 항생제를 쓰고, 호기·혐기 그람 음성·양성균을 포괄한다. 내성 때문에 퀴놀론은 베타락탐 알레르기에서만 쓴다. 예방적 항진균제는 쓰지 않는다.
+        감염 괴사는 경피 배액을 1차로 하는 단계적 접근(25–60%에서 수술 없이 해결, 1A)을 하고, 수술적 중재는 발병 4주 이후로 미루면 사망이 줄어든다(2B).
+      sources:
+        - {id: PAPER-WSES-PANCREATITIS-2019, locator: "Statements (prophylactic antibiotics; infected necrosis; type of antibiotics; surgical/step-up)"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K85]}
+        recommendations:
+          - when: {all: [{dx: K85}, {not: {finding: infected_necrosis}}, {not: {finding: extrapancreatic_infection}}, {med_class: antibiotic}]}
+            recommend: {action: review, detail: "예방적 항생제 비권장(1A)"}
+            strength: "WSES 2019 (1A)"
+            alert_level: medium
+
+  - id: 371-C04
+    topic: 담석 췌장염 담낭절제 시기
+    type: treatment
+    original:
+      text: "상행 담관염 소견이면 입원 24~48시간 이내 ERCP. 담석성 췌장염은 입원 중 또는 퇴원 후 4~6주 이내 담낭절제."
+      location: {file: by_chapter/371장.md, line: 198}
+    status: 개정
+    current:
+      text: >
+        경증 급성 담석 췌장염은 같은 입원 중에 복강경 담낭절제를 한다(1A). 입원 중 ERCP·괄약근 절개를 해도 재발 위험은 줄지만 다른 담도 합병증 때문에 같은 입원 담낭절제를 여전히 권한다(1B).
+        췌장 주위 체액 고임이 있으면 체액이 해소·안정되고 급성 염증이 가라앉을 때까지 담낭절제를 미룬다(2C).
+      sources:
+        - {id: PAPER-WSES-PANCREATITIS-2019, locator: "Statements (timing of cholecystectomy)"}
+    verification: primary
+    conflicts:
+      - "원문 '입원 중 또는 퇴원 후 4–6주 이내' vs 현재 경증은 같은 입원 중(1A)."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K85.1]}
+        recommendations:
+          - when: {all: [{dx: K85.1}, {finding: mild_pancreatitis}, {not: {finding: peripancreatic_collection}}]}
+            recommend: {action: same_admission_cholecystectomy, detail: "경증 담석 췌장염 — 같은 입원 중 복강경 담낭절제(1A)"}
+            alert_level: medium
+
+  - id: 371-C05
+    topic: 만성 췌장염 생활·통증·외분비 부전 치료
+    type: treatment
+    original:
+      text: "만성 췌장염 치료: 지방변에 췌장효소(표 371-8 판크렐리파제), 복통에 금주·진통제·효소·내시경·수술."
+      location: {file: by_chapter/371장.md, line: 359}
+    status: 개정
+    current:
+      text: >
+        금주는 재발성 급성 췌장염과 만성화 진행을 막을 수 있고, 흡연은 만성 췌장염 위험(RR 2.29)과 석회화를 높여 금연 지도를 권한다.
+        보상기 통증에는 지방 제한식이 효과적이고 NSAID가 1차, 효과가 없으면 약한 아편유사제를 쓴다. 충분한 NSAID·약한 아편유사제에 효과가 없으면 내시경 치료나 수술을 고려하고, 강한 아편유사제는 이 치료들이 적합하지 않은 환자로 제한한다.
+        췌장효소 대체요법은 통증 치료로 쓰지 않는다(외분비 부전의 팽만·방귀에는 도움). 2–3년 넘는 장기 반복 내시경 치료는 통증에 쓰지 않으며, 내시경 치료가 실패하면 수술을 권한다.
+        지방변·체중 감소를 동반한 외분비 부전은 고역가 판크렐리파제로 치료하고 지방 제한 없이 적절히 영양을 공급한다. 효과가 부족하면 H2 차단제나 PPI를 추가한다. 췌장성 당뇨에는 저영양·저혈당 위험으로 일률적 열량 제한을 하지 않는다.
+      sources:
+        - {id: PAPER-JSGE-CHRONIC-PANCREATITIS-2021, locator: "Treatment — lifestyle; pain (CQ); exocrine insufficiency; pancreatogenic diabetes; Fig. 2"}
+    verification: primary
+    note: "단백분해효소 억제제(카모스타트) 통증 치료 제안은 일본 허가 기준."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K86.0, K86.1, K86.81]}
+        recommendations:
+          - when: {any: [{dx: K86.0}, {dx: K86.1}]}
+            recommend: {lifestyle: [alcohol_abstinence, smoking_cessation]}
+          - when: {all: [{any: [{dx: K86.0}, {dx: K86.1}]}, {finding: steatorrhea}]}
+            recommend: {ingredient: pancrelipase, add_if_inadequate: [H2RA, PPI], detail: "지방 제한하지 않음"}
+          - when: {all: [{any: [{dx: K86.0}, {dx: K86.1}]}, {finding: chronic_pain}, {med_class: strong_opioid}, {not: {finding: endoscopic_or_surgical_option_unsuitable}}]}
+            recommend: {action: review, detail: "강한 아편유사제는 내시경·수술 부적합 시만 — 내시경·수술 의뢰 고려"}
+            alert_level: medium
+
+  - id: 371-C06
+    topic: 자가면역 췌장염
+    type: treatment
+    original:
+      text: "표 371-6 자가면역췌장염 특징, 글루코코르티코이드 반응."
+      location: {file: by_chapter/371장.md, line: 303}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "이번 묶음에서 A등급 출처 미확보."

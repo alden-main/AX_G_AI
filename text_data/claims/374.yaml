@@ -1,0 +1,75 @@
+# 374장 일차면역결핍질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: ESID·ERN RITA 보체 결핍 지침(J Clin Immunol 2020, CC BY). 다른 일차면역결핍(SCID, CVID, 면역글로불린 대치)은 A등급 출처 미확보.
+
+chapter: "374"
+title: 일차면역결핍질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 374-C01
+    topic: 보체 결핍 의심 신호와 검사
+    type: workup
+    original:
+      text: "보체결핍 진단은 전형경로 CH50, 교대경로 AP50 기능 검사. 장애가 있으면 해당 경로 성분 평가. 전형경로 결핍은 침습 세균감염, 교대·용해경로 결핍은 Neisseria 감염, 전형경로 결핍은 SLE와 연관."
+      location: {file: by_chapter/374장.md, line: 132}
+    status: 유지
+    current:
+      text: >
+        경고 신호: 5세 넘어 발생한 수막구균 수막염, 피막 세균(특히 폐렴구균, 드물게 임균)의 반복 전신 감염, 자가면역질환(특히 SLE), 두드러기 없는 혈관부종, 신장·눈 염증 질환, 비정형 감염(Hib 접종에도 후두개염), 피막 세균 중증 감염.
+        반복 폐렴구균 감염은 초기 성분, 나이세리아 감염은 말단 성분(C5–C9)·프로퍼딘 결핍을 시사하고, aHUS·막증식 사구체신염은 대체경로 조절 이상, 두드러기 없는 혈관부종은 C1 억제제 결핍을 시사한다. 기능 검사는 CH50(고전 경로)·AH50(대체 경로)이며 이상 시 개별 성분과 활성화 산물을 측정한다. 자세한 가족력이 진단에 유용하다.
+      sources:
+        - {id: PAPER-ESID-COMPLEMENT-2020, locator: "Laboratory evaluation; Warning signs; Table 1"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {any: [{finding: meningococcal_infection_age_gt5}, {finding: recurrent_encapsulated_bacterial_infection}, {finding: angioedema_without_urticaria}]}
+        tests:
+          - {lab: CH50, reason: "고전 경로"}
+          - {lab: AH50, reason: "대체 경로"}
+          - {lab: C4, when: "두드러기 없는 혈관부종", reason: "C1 억제제 결핍 선별"}
+          - {lab: C1_inhibitor_level_function, when: "두드러기 없는 혈관부종", reason: "유전성 혈관부종"}
+
+  - id: 374-C02
+    topic: 보체 결핍 예방접종·항생제 예방·에쿨리주맙
+    type: treatment
+    original:
+      text: "적절한 예방접종과 경구 페니실린 매일 복용이 반복 감염 예방에 효과적."
+      location: {file: by_chapter/374장.md, line: 134}
+    status: 개정
+    current:
+      text: >
+        건강인과 같은 백신을 접종하되 폐렴구균·Hib·수막구균 단백결합 백신을 특히 강조한다(비결합 다당류 백신은 기억 반응이 없음). 가능하면 백신 반응을 감시하고 항체 지속에 따라 추가 접종한다. 혈액제제가 필요할 수 있는 유전성 혈관부종 환자는 B형간염 백신을 맞는다.
+        항생제 예방은 적절한 접종에도 반복 감염하는 환자에게 주로 쓰며, 예방(페니실린·마크로라이드) vs 응급 항생제 휴대는 노출 위험에 따라 개별화한다. 수술 후 면밀히 감시하고 조기에 항생제를 쓴다. 여행 3개월 전 면역팀과 상담한다.
+        에쿨리주맙(항C5) 등 보체 억제제 치료는 수막구균 감염 위험이 커서 시작 전 수막구균 백신 접종이 필요하며 같은 예방 원칙을 적용한다. 유전성 혈관부종은 수술·치과 시술 전 C1 억제제 농축제 예방을 권한다.
+      sources:
+        - {id: PAPER-ESID-COMPLEMENT-2020, locator: "Vaccinations; Antibiotic prophylaxis; Eculizumab; HAE management; Surgery/travel"}
+    verification: primary
+    conflicts:
+      - "원문 '경구 페니실린 매일' 일률 권고 vs 현재 반복 감염 환자 중심 개별화(예방 또는 응급 항생제)."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [D84.1, D84.8]}
+        recommendations:
+          - when: {all: [{any: [{med: eculizumab}, {med: ravulizumab}, {med_class: complement_inhibitor}]}, {not: {finding: meningococcal_vaccine_complete}}]}
+            recommend: {action: vaccinate_before_start, detail: "보체 억제제 — 시작 전 수막구균 백신"}
+            alert_level: high
+          - when: {all: [{finding: complement_deficiency}, {not: {finding: conjugate_vaccines_complete}}]}
+            recommend: {vaccines: [pneumococcal_conjugate, Hib, meningococcal_conjugate]}
+          - when: {all: [{dx: D84.1}, {event: surgery_or_dental_procedure_planned}]}
+            recommend: {action: preprocedural_c1_inhibitor, detail: "유전성 혈관부종 시술 전 C1 억제제 예방"}
+            alert_level: high
+
+  - id: 374-C03
+    topic: 항체 결핍·중증복합면역결핍·면역글로불린 대치
+    type: treatment
+    original:
+      text: "무감마글로불린혈증, CVID, 고IgM 증후군, SCID 진단·치료, 면역글로불린 대치요법."
+      location: {file: by_chapter/374장.md, line: 298}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "이번 묶음에서 A등급 출처 미확보."

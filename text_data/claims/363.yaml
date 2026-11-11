@@ -1,0 +1,126 @@
+# 363장 알코올 간질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 만성 간질환 환자의 알코올 사용장애 관리(Hepatol Commun 2023, CC BY), 알코올 간질환 환자의 알코올 금단 관리(Hepatol Commun 2024, CC BY),
+#            중증 알코올 간염 글루코코르티코이드 서술 종설(J Xenobiot 2022, CC BY).
+
+chapter: "363"
+title: 알코올 간질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 363-C01
+    topic: 중증 알코올 간염 약물치료
+    type: dose
+    original:
+      text: "판별함수 ≥32 또는 MELD ≥21이면 프레드니솔론 32 mg 4주 후 4주 감량, 대안은 펜톡시필린 400 mg 1일 3회 4주. 위장관출혈·감염이 없으면 대상."
+      location: {file: by_chapter/363장.md, line: 84}
+    status: 개정
+    current:
+      text: >
+        글루코코르티코이드(프레드니솔론 등)가 중증 알코올 간염의 유일한 1차 약물로 권고되지만 28일 사망만 소폭 줄이고 장기 생존 이득은 없다. 대규모 무작위 시험에서 프레드니솔론은 28일 사망을 줄이는 경향(OR 0.72)을 보였고 펜톡시필린은 효과가 없었다.
+        11개 무작위 시험 개별 환자 메타분석에서 스테로이드는 대조군·펜톡시필린보다 28일 사망을 줄였으나 6개월 뒤에는 이득이 사라졌다. MELD 51 초과에서는 스테로이드 이득이 없었다. 감염 위험 증가가 이득을 상쇄할 수 있다.
+        장기 예후는 재음주 예방이 결정하므로 알코올 사용장애 치료를 함께 한다(363-C02).
+      sources:
+        - {id: PAPER-GC-ALCOHOLIC-HEPATITIS-2022, locator: "Clinical studies of GCs in sAH; Conclusion"}
+    verification: primary
+    conflicts:
+      - "원문 '펜톡시필린 대안' vs 현재 펜톡시필린 효과 없음(STOPAH) — 대안 치료로 쓰지 않음."
+    note: "Lille 점수(7일째 반응) 기반 중단 규칙과 판별함수·MELD 기준은 이 종설로 세부 대조하지 않음 — 추가 A등급 근거 필요."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K70.1]}
+        recommendations:
+          - when: {all: [{dx: K70.1}, {med: pentoxifylline}]}
+            recommend: {action: review, detail: "펜톡시필린은 중증 알코올 간염에 효과 없음"}
+            alert_level: medium
+          - when: {all: [{dx: K70.1}, {med_class: systemic_glucocorticoid}, {finding: active_infection}]}
+            recommend: {action: alert, detail: "감염 시 스테로이드 이득 상쇄 — 재평가"}
+            alert_level: high
+      - kind: formula
+        name: Maddrey 판별함수(DF)
+        output: {var: Maddrey_DF}
+        expression: "4.6 × (PT 연장 초) + 총빌리루빈(mg/dL)"
+        variables:
+          PT_prolongation_sec: "환자 PT − 대조 PT(초)"
+          Bilirubin_total: "mg/dL"
+        implement_in: null
+        status_note: "원문(C등급) 공식 — A등급 근거로 절단값(≥32) 대조 후 구현"
+
+  - id: 363-C02
+    topic: 간질환 환자의 알코올 사용장애 약물
+    type: dose
+    original:
+      text: "가장 핵심은 완전한 단주. 상담사 의뢰와 금주 프로그램."
+      location: {file: by_chapter/363장.md, line: 70}
+    status: 보완
+    current:
+      text: >
+        알코올 사용장애 약물은 간질환 환자에서 공식 연구가 적다. 디설피람은 치명적 약물 간손상·간부전 보고가 있어 간질환에서 쓰지 않는다.
+        아캄프로세이트는 간 대사·간독성이 없어 간질환에서 안전성 우려가 가장 적다: 크레아티닌 청소율 50 초과 666 mg 1일 3회, 30–50 333 mg 1일 3회, 30 이하 회피.
+        날트렉손은 보상성 간경변에서 관찰 자료상 안전해 보이나 비대상 간경변·중증 간염 자료는 제한적이며, 아편유사제 병용 중에는 피한다(마지막 투여 후 7–10일). 경구 50 mg(아편유사제 노출력·위장 증상 우려 시 25 mg으로 시작 후 1–3일에 50 mg), 근주 380 mg 매달.
+        바클로펜(허가 외)은 간질환 무작위 자료가 있는 유일한 약으로 5 mg 1일 3회 또는 10 mg 1일 1회로 시작하며 간성뇌증·신장애에서 주의한다. 가바펜틴·토피라메이트는 간성뇌증 위험이 있으면 주의·회피한다.
+        간질환에서 음주 확인에 직접 바이오마커(혈중 포스파티딜에탄올 2–3주, 소변 에틸글루쿠로나이드 3–5일)를 병력과 함께 쓴다.
+      sources:
+        - {id: PAPER-AUD-CLD-2023, locator: "Alcohol biomarkers; Pharmacotherapy (Table)"}
+        - {id: PAPER-AWS-ALD-2024, locator: "Table 4 relapse prevention medications"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K70, F10.2]}
+        recommendations:
+          - when: {all: [{any: [{dx: K70}, {dx: K74}]}, {med: disulfiram}]}
+            recommend: {action: avoid, detail: "간질환에서 디설피람 금지(간부전 보고)"}
+            alert_level: high
+          - when: {all: [{dx: F10.2}, {any: [{dx: K70}, {dx: K74}]}, {not: {any: [{med: acamprosate}, {med: naltrexone}, {med: baclofen}]}}]}
+            recommend: {options: [acamprosate, baclofen, naltrexone_if_compensated]}
+      - kind: dose_rule
+        id: DR-ACAMPROSATE-RENAL
+        ingredient: acamprosate
+        indication: 알코올 사용장애(간질환 포함)
+        source_priority: [PAPER-AWS-ALD-2024]
+        renal_adjustment: {crcl_gt_50: "666 mg 1일 3회", crcl_30_50: "333 mg 1일 3회", crcl_le_30: "회피"}
+        rules:
+          - {when: {var: CrCl, op: "<=", value: 30}, action: "아캄프로세이트 회피", alert: contraindicated}
+          - {when: {all: [{med: naltrexone}, {med_class: opioid}]}, action: "날트렉손 — 아편유사제 병용 금지(7–10일 간격)", alert: high}
+
+  - id: 363-C03
+    topic: 간질환 환자의 알코올 금단 치료
+    type: treatment
+    original:
+      text: "(원문 해당 범위에 금단 치료 서술 없음)"
+      location: {file: by_chapter/363장.md, line: 70}
+    status: 보완
+    current:
+      text: >
+        알코올 금단의 표준 치료는 증상 기반 벤조디아제핀이며 대개 3–5일이면 충분하다. 특정 벤조디아제핀이 더 효과적이라는 근거나 간질환 비교 연구는 없다. 장시간 작용제(디아제팜·클로르디아제폭사이드)가 경도–중등도에 편하지만 간기능 저하에서는 활성 대사물로 과진정 위험이 있어 주로 글루쿠론산 포합으로 대사되는 로라제팜·옥사제팜을 선호할 수 있다.
+        CIWA-Ar 점수 8–10 이상이면 2–4시간마다 투여한다(섬망에는 부적합). 간단 금단 척도(BAWS) 예: 3–5점 로라제팜 2 mg 4시간마다, 6–8점 4 mg 2시간마다, 8점 초과 4 mg 후 의사 호출.
+        중증 금단은 집중치료 환경에서 고용량 진정제를 쓰고, 페노바르비탈 단독·병용, 덱스메데토미딘·프로포폴 보조를 고려한다. 페노티아진은 벤조디아제핀 불응 섬망에 병용하며 단독으로 쓰지 않는다. 가바펜틴은 외래 경도–중등도 금단에 쓸 수 있다.
+      sources:
+        - {id: PAPER-AWS-ALD-2024, locator: "Benzodiazepines; withdrawal scales; Table 3; phenobarbital; severe AWS"}
+    verification: primary
+    note: "티아민 용량은 A등급 근거로 대조하지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [F10.3, F10.4]}
+        recommendations:
+          - when: {all: [{finding: alcohol_withdrawal}, {any: [{dx: K70.3}, {dx: K74}, {finding: hepatic_encephalopathy}]}, {any: [{med: diazepam}, {med: chlordiazepoxide}]}]}
+            recommend: {action: review, detail: "간기능 저하 — 장시간 작용 벤조디아제핀 과진정 위험, 로라제팜 고려"}
+            alert_level: medium
+          - when: {finding: alcohol_withdrawal_severe}
+            recommend: {setting: icu, options: [benzodiazepine_high_dose, phenobarbital, dexmedetomidine_adjunct]}
+            alert_level: high
+
+  - id: 363-C04
+    topic: 알코올 간질환 진단·영양
+    type: workup
+    original:
+      text: "표 363-2 알코올 지방간·간염 진단검사(AST/ALT >2, GGT 등). 영양학적·심리사회적 상태 관심."
+      location: {file: by_chapter/363장.md, line: 56}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "이번 묶음에서 A등급 출처로 대조하지 않음."

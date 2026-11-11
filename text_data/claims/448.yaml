@@ -1,0 +1,157 @@
+# 448장 알츠하이머병과 기타 치매 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: SIGN 168 치매 지침 요약(Age Ageing 2024, CC BY), 브라질 신경학회 치매 치료 권고(Dement Neuropsychol 2022, CC BY), openFDA(CC0).
+
+chapter: "448"
+title: 알츠하이머병과 기타 치매
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 448-C01
+    topic: 치매 진단 평가와 인지 선별 검사
+    type: workup
+    original:
+      text: "치매 진단: 병력(보호자), 인지검사(MMSE 등), 신경학적 진찰, 혈액검사(B12, 갑상선), 뇌영상(CT·MRI)으로 가역적 원인 배제."
+      location: {file: by_chapter/448장.md, line: 34}
+    status: 유지
+    current:
+      text: >
+        치매는 병력, 진찰, 가능하면 보호자 정보를 종합한 임상 진단이다. 2차 의뢰 판단용 간이 인지 선별 검사로 5분 이내 검사(시계 그리기, GPCOG, Mini-Cog, MIS, 6-CIT, SIS),
+        10–30분 검사(ACE-III, Free-Cog, MMSE, MoCA, RUDAS), 자가 설문(TYM), 보호자 설문(AD8)을 고려하며, 모든 상황에 맞는 단일 검사는 없다.
+        구조적 뇌영상은 진단·아형이 이미 분명하지 않다면 가역적 원인 배제와 아형 진단에 쓴다. 추가 검사는 관리를 바꿀 때만 고려하고, 아밀로이드 PET 같은 고급 영상을 진단에 일상적으로 쓰지 않는다.
+      sources:
+        - {id: PAPER-SIGN-DEMENTIA-2024, locator: "Identification and diagnosis (Table 2); Further investigative procedures"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: suspected_cognitive_decline}
+        tests:
+          - {screen: brief_cognitive_test, options: [Mini_Cog, MoCA, MMSE, ACE_III, AD8], reason: "2차 의뢰 판단"}
+          - {exam: Structural_brain_imaging, reason: "가역적 원인 배제·아형"}
+      - kind: treatment
+        condition: {kcd: [F03, G30]}
+        recommendations:
+          - when: {all: [{event: amyloid_pet_ordered}, {not: {event: anti_amyloid_therapy_evaluation}}]}
+            recommend: {action: avoid_routine, detail: "진단 목적 아밀로이드 PET 일상 사용"}
+
+  - id: 448-C02
+    topic: 콜린분해효소억제제·메만틴
+    type: dose
+    original:
+      text: "도네페질(목표 10 mg/일), 리바스티그민(6 mg 1일 2회 또는 9.5 mg 패치), 갈란타민(서방형 24 mg/일), 메만틴(10 mg 1일 2회). 4–6주에 걸쳐 증량."
+      location: {file: by_chapter/448장.md, line: 82}
+    status: 유지
+    current:
+      text: >
+        도네페질·갈란타민·리바스티그민은 경도–중등도 알츠하이머 치매에 승인되었고 중증에서도 효과가 있다. 중등도–중증에는 메만틴과의 병용이 권고된다. 효과는 대개 안정·완만한 악화 수준임을 설명한다.
+        최저 용량으로 시작해 콜린분해효소억제제는 최소 4주, 메만틴은 1주 간격으로 증량하며 치료 용량(도네페질 5–10 mg, 갈란타민 16–24 mg, 경구 리바스티그민 6–12 mg, 패치 9.5 mg; 13.3 mg 패치도 가능)에 도달한다.
+        흔한 부작용은 구역·구토·설사·두통·불면이며 식후 복용으로 줄인다. 도네페질은 취침 전, 불면·악몽이면 아침 복용. 서맥·실신이 드물지만 중대하다.
+        기저 서맥이나 1도 초과 방실차단 같은 전도장애에서는 금기이고, 베타차단제·칼슘통로차단제 병용, COPD·천식에서 주의한다. 갑자기 중단하지 않고, 효과가 없거나 부작용이 지속되면 중단·교체한다.
+      sources:
+        - {id: PAPER-BRAZIL-DEMENTIA-TX-2022, locator: "Pharmacological treatment; Practical issues for prescribing and discontinuing ChEI and memantine"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-CHEI-MEMANTINE
+        indication: 알츠하이머 치매
+        source_priority: [PAPER-BRAZIL-DEMENTIA-TX-2022]
+        therapeutic_doses: {donepezil: "5–10 mg", galantamine: "16–24 mg", rivastigmine_oral: "6–12 mg", rivastigmine_patch: "9.5 mg(선택적으로 13.3 mg)"}
+        titration: {ChEI: "최소 4주 간격", memantine: "1주 간격"}
+        rules:
+          - {when: {any: [{finding: bradycardia}, {finding: av_block_above_first_degree}]}, action: "콜린분해효소억제제 금기", alert: contraindicated}
+          - {when: {any: [{med_class: beta_blocker}, {med_class: non_dhp_ccb}]}, action: "서맥·전도장애 주의", alert: caution}
+          - {when: {any: [{dx: J44}, {dx: J45}]}, action: "COPD·천식 주의", alert: caution}
+
+  - id: 448-C03
+    topic: 아밀로이드 표적 항체(레카네맙·도나네맙)
+    type: dose
+    original:
+      text: "(원문에 없음 — 2023–2024 미국 승인)"
+      location: {file: by_chapter/448장.md, line: 82}
+    status: 보완
+    current:
+      text: >
+        레카네맙(LEQEMBI)·도나네맙(KISUNLA, 미국 허가): 경도인지장애 또는 경도 치매 단계의 알츠하이머병에서 시작하며, 시작 전 아밀로이드 병리를 확인한다.
+        박스 경고: 아밀로이드 관련 영상 이상(ARIA-E 부종, ARIA-H 혈철소 침착)이 치료 초기에 생기며 대개 무증상이나 중대·치명적일 수 있고, 1 cm 넘는 뇌내출혈 사망 사례가 있다.
+        ApoE ε4 동형접합(알츠하이머 환자의 약 15%)은 ARIA 위험이 더 높아 시작 전 ApoE ε4 검사를 하도록 한다(검사 전 위험·의미 상담). 시작 전 최근 기저 뇌 MRI, 치료 중 정해진 시점 MRI(레카네맙 1·2·3·6개월 후).
+        레카네맙 정주 10 mg/kg 2주마다. 도나네맙 4주마다 정주 350 → 700 → 1,050 mg, 4회째부터 1,400 mg, 아밀로이드 PET에서 플라크가 최소 수준이면 중단을 고려한다.
+      sources:
+        - {id: OPENFDA-LECANEMAB, locator: "Boxed Warning; 1; 2.1–2.4"}
+        - {id: OPENFDA-DONANEMAB, locator: "Boxed Warning; 1; 2.1–2.2"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {event: anti_amyloid_therapy_evaluation}
+        tests:
+          - {exam: Amyloid_confirmation, reason: "아밀로이드 병리 확인(PET 또는 CSF)"}
+          - {lab: APOE_genotype, reason: "ε4 동형접합 ARIA 고위험"}
+          - {exam: Brain_MRI_baseline, reason: "ARIA 기저 평가"}
+      - kind: dose_rule
+        id: DR-ANTI-AMYLOID
+        indication: 경도인지장애·경도 치매 알츠하이머병
+        source_priority: [OPENFDA-LECANEMAB, OPENFDA-DONANEMAB]
+        regimens:
+          lecanemab_iv: "10 mg/kg 2주마다"
+          donanemab_iv: "4주마다 350 → 700 → 1,050 → 이후 1,400 mg"
+        monitoring: ["시작 전 기저 MRI", "레카네맙 1·2·3·6개월 MRI", "ARIA 소견에 따라 지속·중단"]
+        rules:
+          - {when: {finding: apoe4_homozygote}, action: "ARIA 위험 높음 — 위험 상담", alert: high}
+
+  - id: 448-C04
+    topic: 행동·심리 증상
+    type: treatment
+    original:
+      text: "초조·공격성·정신병 증상에 항정신병약은 사망 위험 증가 경고, 우울에 SSRI."
+      location: {file: by_chapter/448장.md, line: 90}
+    status: 유지
+    current:
+      text: >
+        고통 행동(초조, 서성거림, 반복 질문 등)은 생물·심리·사회·환경적 미충족 욕구의 신호로 보고 비약물 접근을 1차로 한다. 종합적 구조화 평가에 근거해 개인 맞춤 활동, 보존된 능력, 이전 역할·관심을 활용한다.
+        알츠하이머 우울에는 서트랄린 또는 미르타자핀이 가장 나은 선택지라는 근거가 일부 있으나, 초조 치료에 미르타자핀을 쓴 시험에서 사망 증가 경향이 관찰됐다. 섬망 위험도 높다.
+      sources:
+        - {id: PAPER-SIGN-DEMENTIA-2024, locator: "Non-pharmacological approaches for distressed behaviours"}
+        - {id: PAPER-BRAZIL-DEMENTIA-TX-2022, locator: "Pharmacological treatment of neuropsychiatric symptoms"}
+    verification: primary
+    note: "항정신병약 사망 위험 박스 경고는 개별 약 허가사항으로 대조하지 않음."
+    review: {status: draft}
+
+  - id: 448-C05
+    topic: 혈관성 치매·전두측두엽 치매·루이소체 치매
+    type: treatment
+    original:
+      text: "혈관성 치매(위험인자 조절), 전두측두 치매(콜린분해효소억제제 효과 없음, SSRI), 파킨슨병 치매·루이소체 치매(항정신병약 과민, 콜린분해효소억제제)."
+      location: {file: by_chapter/448장.md, line: 100}
+    status: 개정
+    current:
+      text: >
+        혈관성 인지장애: 흡연·고혈압·당뇨·이상지질혈증 등 뇌졸중 위험 인자 조절이 중심이다. 집중 혈압 조절(수축기 120 vs 140 mmHg)은 치매 발생을 줄이지 못했고, 기립성 저혈압·낙상 위험이 있는 허약 노인은 혈압 목표를 개별화한다.
+        순수 혈관성 치매에서 콜린분해효소억제제·메만틴의 효과는 통계적으로 유의하나 임상적으로 작고, 초조가 부작용으로 보고된다. 신경정신 증상 치료는 알츠하이머와 비슷하다.
+        행동변이형 전두측두 치매: 승인된 치료가 없다. 콜린분해효소억제제·메만틴은 효과가 없어 쓰지 않으며, 행동 증상의 1차는 SSRI(파록세틴, 시탈로프람, 플루복사민)나 트라조돈이다. 2세대 항정신병약은 정신병 증상이나 위험한 행동에만 제한한다.
+        루이소체 치매: 운동 증상에는 레보도파를 천천히 증량하며, 도파민 작용제는 환각 악화로 권하지 않고 항콜린제는 금기다. 전형 항정신병약은 금기이고 쿠에티아핀·클로자핀만 면밀한 감시하에 쓴다(클로자핀은 첫 18주 매주 혈구 검사).
+        콜린분해효소억제제(주로 리바스티그민)는 인지와 환시·망상·무감동에 도움이 되며, 중단하면 인지가 악화될 수 있다.
+      sources:
+        - {id: PAPER-BRAZIL-DEMENTIA-TX-2022, locator: "Treatment of vascular cognitive impairment; Treatment of bvFTD; Management of DLB"}
+    verification: primary
+    conflicts:
+      - "원문은 혈관성 치매를 위험인자 조절 중심으로만 서술 — 현재 근거는 집중 혈압 조절이 치매 예방 효과 없음."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [F01, F02.0, G31.0, G31.8]}
+        recommendations:
+          - when: {all: [{any: [{dx: G31.0}, {finding: bvftd}]}, {any: [{med_class: cholinesterase_inhibitor}, {med: memantine}]}]}
+            recommend: {action: avoid, detail: "전두측두 치매 — 콜린분해효소억제제·메만틴 효과 없음"}
+            alert_level: medium
+          - when: {all: [{finding: dementia_with_lewy_bodies}, {med_class: typical_antipsychotic}]}
+            recommend: {action: avoid, detail: "루이소체 치매 — 전형 항정신병약 금기(중증 과민 반응)"}
+            alert_level: high
+          - when: {all: [{finding: dementia_with_lewy_bodies}, {any: [{med_class: dopamine_agonist}, {med_class: anticholinergic}]}]}
+            recommend: {action: avoid, detail: "도파민 작용제(환각 악화)·항콜린제(금기)"}
+            alert_level: high
+          - when: {all: [{med: clozapine}, {var: clozapine_weeks, op: "<=", value: 18}]}
+            recommend: {action: monitor, detail: "첫 18주 매주 혈구 검사(호중구감소 약 3%)"}
+            alert_level: high

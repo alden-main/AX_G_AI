@@ -1,0 +1,169 @@
+# 403장 전방 뇌하수체 종양 증후군 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 제14차 말단비대증 합의회의(Pituitary 2024, CC BY), 브라질 고프로락틴혈증 쟁점 검토(Arch Endocrinol Metab 2018, CC BY),
+#            쿠싱증후군 약물치료 최신 권고(Endocrine Reviews 2026, CC BY), openFDA(CC0) 카베르골린·오실로드로스타트.
+
+chapter: "403"
+title: 전방 뇌하수체 종양 증후군
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 403-C01
+    topic: 고프로락틴혈증 원인 평가와 거대프로락틴
+    type: workup
+    original:
+      text: "고프로락틴혈증 치료는 원인에 따라 다름. 유발 약물 중단, 갑상선저하증 보충. 특발성은 MRI 정상과 알려진 원인 배제로 진단."
+      location: {file: by_chapter/403장.md, line: 223}
+    status: 보완
+    current:
+      text: >
+        고프로락틴혈증 원인 감별에는 병력·진찰·프로락틴 수치·안장 영상과 함께 TSH, 유리 T4, 크레아티닌으로 2차 원인을 배제하고, 가임기 무월경 여성은 β-hCG를 반드시 측정한다. 거대선종은 증상이 없어도 IGF-1로 말단비대증을 확인한다.
+        무증상 고프로락틴혈증은 항상 거대프로락틴 선별(PEG 침전: 회수율 40% 미만이면 거대프로락틴 우세, 60% 초과이면 단량체 고프로락틴혈증)을 한다. 단량체 프로락틴이 정상인 거대프로락틴혈증은 영상·추적·치료가 필요 없다.
+        증상이 있고 단량체 고프로락틴혈증이 확인되면 거대프로락틴 선별은 필요 없다. 약물 유발이면 가능한 한 원인 약을 중단한다.
+      sources:
+        - {id: PAPER-BRAZIL-PROLACTINOMA-2018, locator: "Diagnostic evaluation; 1.3 Macroprolactinemia screening; Treatment"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: hyperprolactinemia}
+        tests:
+          - {lab: TSH, reason: "1차 갑상선저하증 배제"}
+          - {lab: FT4, reason: "갑상선 기능"}
+          - {lab: SCr, reason: "신부전 배제"}
+          - {lab: beta_hCG, when: "가임기 무월경 여성", reason: "임신 배제"}
+          - {lab: Macroprolactin_PEG, when: "무증상", reason: "거대프로락틴혈증 — 치료 불필요"}
+          - {review: medication_list, reason: "약물 유발 고프로락틴혈증"}
+      - kind: workup
+        trigger: {finding: pituitary_macroadenoma}
+        tests:
+          - {lab: IGF1, reason: "말단비대증 동반 확인"}
+
+  - id: 403-C02
+    topic: 프로락틴분비선종 도파민 작용제와 카베르골린 판막 감시
+    type: dose
+    original:
+      text: "카베르골린 주 0.5~1.0 mg 두 번, 브로모크립틴 0.625~1.25 mg 시작 하루 7.5 mg 이하. 미세선종에서 정상 프로락틴과 종양 감소 시 2년 후 중단 시도."
+      location: {file: by_chapter/403장.md, line: 249}
+    status: 개정
+    current:
+      text: >
+        도파민 작용제가 프로락틴분비선종의 표준 치료이며 약 80%에서 호르몬·종양 성장을 조절한다. 카베르골린이 내약성과 프로락틴 정상화·종양 축소 효과가 더 좋아 1차 약이다.
+        카베르골린(미국 허가, 2026 개정): 시작 전 심초음파를 포함한 판막질환 평가를 하고 판막질환이 있으면 투여하지 않는다. 0.25 mg 주 2회로 시작해 4주 이상 간격으로 0.25 mg 주 2회씩 늘리며 최대 1 mg 주 2회.
+        치료 중 6–12개월 간격(또는 임상적 필요 시) 심초음파로 판막병증을 감시하고 흉막·폐·후복막 섬유화 증상, 기립성 저혈압을 살핀다. 조절되지 않는 고혈압, 판막·심낭·섬유화 질환 병력은 금기다. 산후 생리적 수유 억제에는 쓰지 않는다.
+        도파민 작용제는 정신병 증상·충동조절장애를 유발·악화시킬 수 있어 정신과 병력을 확인하고 추적한다. 2년 이상 정상 프로락틴이고 MRI에 잔존 종양이 없으면 최저 용량으로 줄인 뒤 점진적 중단을 고려하며, 재발이 흔해 중단 후 추적한다.
+      sources:
+        - {id: PAPER-BRAZIL-PROLACTINOMA-2018, locator: "Treatment of hyperprolactinemia and prolactinomas; 2.3; 2.4; 2.5"}
+        - {id: OPENFDA-CABERGOLINE, locator: "2.1–2.2; 4; 5.1–5.4"}
+    verification: primary
+    conflicts:
+      - "심초음파: 미국 허가(2026)는 시작 전 + 6–12개월마다 심초음파 요구 vs 브라질 검토(2018)는 주 2 mg 이하 표준 용량에서 심초음파 불필요. 원문은 판막 감시 언급 없음."
+      - "원문 시작 용량(주 0.5–1.0 mg 두 번)은 허가 시작 용량(0.25 mg 주 2회)보다 높음."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-CABERGOLINE-HYPERPRL
+        ingredient: cabergoline
+        indication: 고프로락틴혈증(특발성·뇌하수체 선종, 성인)
+        source_priority: [OPENFDA-CABERGOLINE, PAPER-BRAZIL-PROLACTINOMA-2018]
+        starting_dose: "0.25 mg 주 2회"
+        titration: "4주 이상 간격으로 0.25 mg 주 2회씩 증량"
+        max_dose: "1 mg 주 2회"
+        monitoring: ["시작 전 심초음파", "치료 중 6–12개월마다 심초음파(허가)", "섬유화 증상", "기립 혈압"]
+        rules:
+          - {when: {any: [{finding: valvular_heart_disease}, {finding: fibrotic_disorder_history}]}, action: "카베르골린 금기", alert: contraindicated}
+          - {when: {finding: uncontrolled_hypertension}, action: "카베르골린 금기", alert: contraindicated}
+          - {when: {any: [{finding: psychotic_disorder}, {finding: bipolar_disorder}, {finding: impulse_control_disorder}]}, action: "정신병·충동조절장애 유발·악화 가능 — 추적", alert: caution}
+      - kind: workup
+        trigger: {event: cabergoline_initiation_planned}
+        tests:
+          - {exam: Echocardiography, reason: "판막질환 평가(미국 허가)"}
+
+  - id: 403-C03
+    topic: 말단비대증 진단·관해 기준
+    type: diagnosis
+    original:
+      text: "연령 보정 IGF-1 상승. 75 g 경구 당부하 1~2시간 내 GH가 0.4 μg/L 미만으로 억제되지 않으면 진단(초민감 측정법 0.05 μg/L 미만). PRL도 측정."
+      location: {file: by_chapter/403장.md, line: 300}
+    status: 개정
+    current:
+      text: >
+        새로 발견된 모든 뇌하수체 종괴는 IGF-I를 측정한다. 전형적 임상 양상에서 IGF-I가 연령 기준 상한의 1.3배를 넘으면 진단이 확정되며, 공복 무작위 GH는 예후 정보로 쓸 뿐 진단에 필요 없다. 결과가 애매하면 같은 검증된 측정법으로 IGF-I를 반복하고 경구 당부하 검사를 추가할 수 있다.
+        당부하 검사는 공복 75 g 후 30·60·90·120분 GH 최저치를 보며, 체질량지수 기준 최저 GH 절단값(BMI 25 미만 0.4 µg/L, 25 이상 0.2 µg/L)을 고려할 수 있다. 경구 에스트로겐은 4주 전 중단하면 영향을 피할 수 있다.
+        수술 후 관해는 12주에 IGF-I로 판정하고 3–6개월에 MRI를 기저로 찍는다. 첫해 3–6개월, 이후 6–12개월마다 IGF-I로 재발을 감시한다. 주사 소마토스타틴 유사체는 다음 주사 전 마지막 주에 IGF-I를 재며, 페그비소만트 치료 중에는 GH 측정이 의미 없다.
+        임상적으로 조절된 환자는 GH 결핍을 피하려 IGF-I를 연령 기준 범위 중간–상위 절반으로 유지하는 것을 고려할 수 있다.
+      sources:
+        - {id: PAPER-ACROMEGALY-CONSENSUS-2024, locator: "Table 2 Key recommendations — Diagnosis; OGTT; Criteria for remission; Follow up"}
+    verification: primary
+    conflicts:
+      - "원문은 당부하 후 GH 억제 실패를 진단 기준으로 서술 — 현재는 IGF-I >1.3×ULN이면 확정, 당부하는 애매한 경우에만."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {any: [{finding: pituitary_mass}, {finding: acromegaly_features}]}
+        tests:
+          - {lab: IGF1, reason: ">1.3×ULN이면 말단비대증 확정(전형적 임상 양상)"}
+          - {lab: OGTT_GH_nadir, when: "IGF-I 애매", reason: "BMI<25 <0.4 µg/L, ≥25 <0.2 µg/L"}
+      - kind: monitoring
+        after: {event: acromegaly_surgery}
+        check: [IGF1]
+        interval_months: [3, 6]
+        rules:
+          - {when: {always: true}, action: "수술 12주에 IGF-I로 관해 판정, 3–6개월 MRI 기저"}
+
+  - id: 403-C04
+    topic: 쿠싱증후군 약물치료
+    type: treatment
+    original:
+      text: "선택적 나비뼈 통과 수술이 쿠싱병의 일차 치료. 지속적 고코르티솔증에는 약물, 방사선 조사 또는 부신 제거술."
+      location: {file: by_chapter/403장.md, line: 405}
+    status: 개정
+    current:
+      text: >
+        모든 원인의 쿠싱증후군에서 수술이 1차 치료이며 쿠싱병의 경접형동 수술 관해율은 약 80%, 관해 후 20–30%가 재발한다. 약물치료는 중증 고코르티솔증의 수술 전, 수술 실패·재발, 방사선 효과를 기다리는 동안, 전이가 있을 때 쓴다.
+        약제: 부신 스테로이드 합성 억제제(케토코나졸, 레보케토코나졸, 메티라폰, 오실로드로스타트, 미토탄, 에토미데이트), 뇌하수체 표적(파시레오타이드, 카베르골린), 글루코코르티코이드 수용체 길항제(미페프리스톤).
+        중증은 빠르게 작용하는 약(메티라폰, 빠르게 증량한 오실로드로스타트)으로 치료한다. 중등도의 최저 시작 용량 예: 오실로드로스타트 2 mg(또는 1 mg) 1일 2회, 메티라폰 250 mg 1일 3회, 케토코나졸 200 mg 1일 2회, 카베르골린 0.5 mg 주 3회.
+        오실로드로스타트(미국 허가): 저칼륨·저마그네슘혈증을 교정하고 기저 심전도 후 2 mg 1일 2회 시작, 2주 이상 간격 1–2 mg씩 증량, 최대 30 mg 1일 2회. 1주 내 심전도 재검(QTc 연장). Child-Pugh B는 1 mg 1일 2회, C는 저녁 1 mg 1일 1회로 시작.
+        모든 코티솔 저하 치료는 부신기능부전을 일으킬 수 있으므로 증상과 응급 글루코코르티코이드 사용을 교육한다. 오실로드로스타트 중단 후에도 수년간 부신기능부전이 지속된 사례가 있어 중단 후에도 오전 코티솔을 감시한다.
+        활동성 쿠싱증후군은 정맥혈전색전증 위험이 매우 높아(OR 약 18) 진단 시부터 생화학적 관해 3개월 뒤까지 체중 기준 예방 용량 저분자량 헤파린을 고려한다(2025 국제 합의).
+      sources:
+        - {id: PAPER-CUSHING-MEDICAL-TX-2026, locator: "Essential Points; Classical therapeutic approach; Moderate/Severe hypercortisolism; Thromboprophylaxis; The Risk of Adrenal Insufficiency"}
+        - {id: OPENFDA-OSILODROSTAT, locator: "2.1–2.5; 5.1–5.3"}
+    verification: primary
+    note: "원문(2015) 이후 오실로드로스타트(2020)·레보케토코나졸(2021) 미국 승인. 케토코나졸의 간독성·박스 경고는 허가사항으로 대조하지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-OSILODROSTAT
+        ingredient: osilodrostat
+        indication: 수술 불가·실패 쿠싱증후군(성인)
+        source_priority: [OPENFDA-OSILODROSTAT, PAPER-CUSHING-MEDICAL-TX-2026]
+        starting_dose: "2 mg 1일 2회"
+        titration: "2주 이상 간격으로 1–2 mg 1일 2회씩"
+        max_dose: "30 mg 1일 2회"
+        hepatic: {child_pugh_B: "1 mg 1일 2회 시작", child_pugh_C: "저녁 1 mg 1일 1회 시작"}
+        monitoring: ["시작 전 칼륨·마그네슘 교정", "기저 및 1주 내 심전도", "UFC·오전 코티솔", "중단 후에도 오전 코티솔"]
+        rules:
+          - {when: {any: [{var: K, op: "<", value: 3.5}, {var: Mg, op: "<", value: 1.7}]}, action: "시작 전 저칼륨·저마그네슘 교정", alert: high}
+          - {when: {finding: qtc_prolongation_risk}, action: "QTc 연장 — 심전도 감시", alert: caution}
+      - kind: treatment
+        condition: {kcd: [E24]}
+        recommendations:
+          - when: {all: [{dx: E24}, {finding: active_hypercortisolism}, {not: {med_class: anticoagulant}}, {not: {finding: anticoagulation_contraindication}}]}
+            recommend: {action: consider_thromboprophylaxis, detail: "체중 기준 예방 용량 LMWH, 관해 후 3개월까지"}
+            alert_level: medium
+          - when: {all: [{any: [{med: osilodrostat}, {med: metyrapone}, {med: ketoconazole}, {med: levoketoconazole}]}, {finding: adrenal_insufficiency_symptoms}]}
+            recommend: {action: check_cortisol_and_start_glucocorticoid, detail: "약물 유발 부신기능부전"}
+            alert_level: high
+
+  - id: 403-C05
+    topic: 비기능성 뇌하수체 선종·TSH 분비 선종
+    type: treatment
+    original:
+      text: "비기능성 선종은 수술·방사선, 추적 MRI. TSH 분비선종은 수술과 소마토스타틴 유사체."
+      location: {file: by_chapter/403장.md, line: 441}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "이번 묶음에서 A등급 출처 미확보."

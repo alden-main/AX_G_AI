@@ -1,0 +1,192 @@
+# 416장 비만의 평가와 치료 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+
+chapter: "416"
+title: 비만의 평가와 치료
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 416-C01
+    topic: 비만 분류(BMI)와 비만도 측정
+    type: threshold
+    original:
+      text: "BMI(kg/m²)로 체중 상태와 위험도 분류, 아시아태평양은 더 낮은 기준. 허리둘레는 장골능 바로 위 수평면에서 측정."
+      location: {file: by_chapter/416장.md, line: 33}
+    status: 유지
+    current:
+      text: >
+        WHO 기준 BMI: 저체중 <18.5, 정상 18.5–24.9, 과체중 25.0–29.9, 비만 1단계 30.0–34.9, 2단계 35.0–39.9, 3단계 ≥40.
+        아시아인: 정상 18.5–22.9, 과체중 23.0–24.9, 비만 1단계 25.0–29.9, 2단계 30.0–34.99, 3단계 ≥35. 65세 초과는 개별 평가를 고려한다.
+        허리둘레는 장골능 바로 위 맨 복부에 줄자를 대고 정상 호기 끝에 선 자세로 잰다.
+        특정 비만도 측정법이 임상 결과 관리에 더 낫다고 권고할 근거는 불충분하다(Rec 1).
+      sources:
+        - {id: VADOD-OBE-2025, locator: "Recommendation 1; Algorithm footnotes; Appendix Table O-1"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: lab_threshold
+        lab: BMI
+        unit: kg/m²
+        context: 아시아인 기준(VA/DoD 재수록 WHO 분류)
+        population: asian
+        bands:
+          - {label: 저체중, max: 18.499}
+          - {label: 정상, min: 18.5, max: 22.999}
+          - {label: 과체중, min: 23.0, max: 24.999}
+          - {label: 비만 1단계, min: 25.0, max: 29.999}
+          - {label: 비만 2단계, min: 30.0, max: 34.999}
+          - {label: 비만 3단계, min: 35.0}
+      - kind: lab_threshold
+        lab: BMI
+        unit: kg/m²
+        context: 일반 기준(WHO)
+        population: general
+        bands:
+          - {label: 저체중, max: 18.499}
+          - {label: 정상, min: 18.5, max: 24.999}
+          - {label: 과체중, min: 25.0, max: 29.999}
+          - {label: 비만 1단계, min: 30.0, max: 34.999}
+          - {label: 비만 2단계, min: 35.0, max: 39.999}
+          - {label: 비만 3단계, min: 40.0}
+
+  - id: 416-C02
+    topic: 비만 동반질환·이차 원인 평가
+    type: workup
+    original:
+      text: >
+        모든 환자에서 공복 지질, 공복혈당, 혈압 측정. 이차 원인(다낭성 난소증후군, 갑상선기능저하, 쿠싱, 시상하부 질환)과
+        체중 증가 유발 약물(인슐린·설폰요소제·TZD, 스테로이드, 향정신성 약물, 리튬, 삼환계·MAOI·파록세틴·미르타자핀, 항전간제 등) 고려.
+      location: {file: by_chapter/416장.md, line: 25}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "VA/DoD 비만 2025 본문에서 해당 목록을 아직 대조하지 못함 — 다음 묶음에서 보강."
+
+  - id: 416-C03
+    topic: 종합 생활습관 중재
+    type: treatment
+    original:
+      text: "강도 높은 상담과 행동 교정. 동기부여 면담으로 변화 준비 평가."
+      location: {file: by_chapter/416장.md, line: 14}
+    status: 유지
+    current:
+      text: >
+        과체중·비만 환자에게 행동·식이·신체활동 요소를 모두 포함한 대면 그룹 또는 개인 종합 생활습관 중재(CLI)를 권고한다(Rec 2, Strong for).
+        감량 후 체중 유지를 위한 CLI(Rec 3), 전화 기반 CLI(Rec 4)를 제안한다. 식이는 음의 에너지 균형을 만드는 방식을 권고하고(Rec 6),
+        특정 식이법이 더 낫다고 권고할 근거는 불충분하다(Rec 7). 신체활동은 종류와 관계없이 제안하며(Rec 8), 중강도 이상 유산소+근력운동을 제안한다(Rec 9).
+        내재화된 체중 편견·낙인에는 인지행동 중재를 제안한다(Rec 10). 체중 관리용 건강기능식품·보충제는 제안하지 않는다(Rec 23).
+      sources:
+        - {id: VADOD-OBE-2025, locator: "Recommendations 2–10, 23"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E66]}
+        recommendations:
+          - when: {var: BMI, op: ">=", value: 25}
+            recommend: {intervention: comprehensive_lifestyle_intervention, components: [behavioral, dietary, physical_activity]}
+            strength: "VA/DoD Rec 2 (Strong for)"
+          - when: {finding: weight_loss_supplement_use}
+            recommend: {action: avoid, detail: "체중 관리용 보충제·건강기능식품"}
+            strength: "VA/DoD Rec 23 (Weak against)"
+
+  - id: 416-C04
+    topic: 비만 약물치료 적응증과 약제 선택
+    type: treatment
+    original:
+      text: >
+        약물치료는 BMI ≥30 또는 BMI ≥27+동반질환. 로카세린(10 mg 1일 2회), 펜터민-토피라메이트 ER, 오르리스타트 등.
+      location: {file: by_chapter/416장.md, line: 147}
+    status: 개정
+    current:
+      text: >
+        BMI ≥27이면서 비만 관련 질환이 있거나 BMI ≥30이면, CLI와 함께 체중 감량·유지를 위해 세마글루타이드 또는 터제파타이드를 권고한다(Rec 17, Strong for).
+        같은 대상에 펜터민/토피라메이트 ER 또는 리라글루타이드(Rec 18), 날트렉손/부프로피온 ER(Rec 19)을 제안한다(Weak for).
+        당뇨병 전단계나 제2형 당뇨가 동반되면 GLP-1 작용제 함유 약제를 제안한다(Rec 20).
+        오르리스타트, 메트포르민, SGLT2i, 프람린타이드의 체중 감량 목적 사용은 근거 불충분(Rec 21). 펜터민 단독 등의 체중 유지 목적 사용도 근거 불충분(Rec 22).
+        비만 약물 중단은 체중 재증가를 일으키므로 환자 특성·선호를 고려해 중단하지 않도록 제안한다(Rec 15).
+        원문의 로카세린은 2020년 2월 FDA 요청으로 미국 시장에서 철수됐다(시판 후 임상시험에서 암 발생 증가). 의료진은 처방·조제를 중단하도록 안내됐다.
+      sources:
+        - {id: VADOD-OBE-2025, locator: "Recommendations 15, 17–22"}
+        - {id: FDA-LORCASERIN-WITHDRAWAL-2020, locator: "2020-02-13 withdrawal request"}
+    verification: primary
+    conflicts:
+      - "원문의 로카세린은 2020-02 FDA 요청으로 미국 시장에서 철수(시판 후 임상에서 암 발생 증가) — 처방 근거로 쓰지 않음. 국내 허가·유통 상태는 별도 확인."
+      - "아시아인 BMI 기준(과체중 23, 비만 25)을 약물 적응증에 적용할지는 VA/DoD 권고(27/30)에 명시되지 않음 — 검수자가 국내 기준과 함께 결정."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E66]}
+        recommendations:
+          - when: {any: [{var: BMI, op: ">=", value: 30}, {all: [{var: BMI, op: ">=", value: 27}, {finding: obesity_associated_condition}]}]}
+            recommend: {ingredients_any: [semaglutide, tirzepatide], with: comprehensive_lifestyle_intervention}
+            strength: "VA/DoD Rec 17 (Strong for)"
+          - when: {any: [{var: BMI, op: ">=", value: 30}, {all: [{var: BMI, op: ">=", value: 27}, {finding: obesity_associated_condition}]}]}
+            recommend: {ingredients_any: [phentermine_topiramate_ER, liraglutide, naltrexone_bupropion_ER], with: comprehensive_lifestyle_intervention}
+            strength: "VA/DoD Rec 18, 19 (Weak for)"
+          - when: {all: [{med_class: antiobesity}, {event: considering_discontinuation}]}
+            recommend: {action: avoid_discontinuation, reason: "체중 재증가"}
+            strength: "VA/DoD Rec 15 (Weak against)"
+
+  - id: 416-C05
+    topic: 세마글루타이드·터제파타이드 용량(비만)
+    type: dose
+    original:
+      text: "(원문에 GLP-1 계열 비만 약물 없음 — 19판 이후 승인)"
+      location: {file: by_chapter/416장.md, line: 147}
+    status: 보완
+    current:
+      text: >
+        세마글루타이드(WEGOVY, 미국 허가): 주 1회 0.25 mg으로 4주 시작, 4주마다 증량해 유지 용량 2.4 mg(권장) 또는 1.7 mg 주 1회. 제2형 당뇨면 시작 전·치료 중 혈당 감시.
+        터제파타이드(ZEPBOUND, 미국 허가): 주 1회 2.5 mg으로 4주 시작(2.5 mg은 유지 용량 아님), 이후 최소 4주 간격으로 2.5 mg씩 증량, 유지 5·10·15 mg, 최대 15 mg 주 1회.
+        두 약 모두 본인·가족의 갑상선 수질암 또는 MEN2, 중대한 과민반응 병력에서 금기.
+      sources:
+        - {id: OPENFDA-SEMAGLUTIDE-WEGOVY, locator: "2 Dosage and Administration; 4 Contraindications"}
+        - {id: OPENFDA-TIRZEPATIDE-ZEPBOUND, locator: "2.1–2.2 Dosage; 4 Contraindications"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-SEMAGLUTIDE-OBESITY
+        ingredient: semaglutide
+        indication: 비만(체중 관리)
+        source_priority: [OPENFDA-SEMAGLUTIDE-WEGOVY]
+        titration: ["0.25 mg 주 1회 4주", "4주마다 증량", "유지 2.4 mg(권장) 또는 1.7 mg 주 1회"]
+        contraindications: ["MTC 개인·가족력", "MEN2", "중대한 과민반응"]
+        alert_note: "미국 허가 기준 — 국내 허가 확인 필요"
+      - kind: dose_rule
+        id: DR-TIRZEPATIDE-OBESITY
+        ingredient: tirzepatide
+        indication: 비만(체중 감량·유지)
+        source_priority: [OPENFDA-TIRZEPATIDE-ZEPBOUND]
+        titration: ["2.5 mg 주 1회 4주(유지 용량 아님)", "최소 4주 간격 2.5 mg씩 증량"]
+        maintenance_mg_weekly: [5, 10, 15]
+        max_mg_weekly: 15
+        contraindications: ["MTC 개인·가족력", "MEN2", "중대한 과민반응"]
+        alert_note: "미국 허가 기준 — 국내 허가 확인 필요"
+
+  - id: 416-C06
+    topic: 대사·비만 수술과 내시경 시술
+    type: treatment
+    original:
+      text: "베리아트릭 수술은 BMI ≥40 또는 BMI ≥35+심각한 비만 관련 합병증에서 고려."
+      location: {file: by_chapter/416장.md, line: 194}
+    status: 개정
+    current:
+      text: >
+        CLI와 함께 장기 체중 감량을 위한 대사·비만 수술을 BMI ≥30+제2형 당뇨 또는 BMI ≥35에서 제안한다(Rec 12, Weak for).
+        BMI ≥30에서 내시경 소매위성형술(ESG, Rec 13), 일시적 감량을 위한 위내 풍선(FDA 기준 준수, Rec 11)을 제안한다.
+      sources:
+        - {id: VADOD-OBE-2025, locator: "Recommendations 11–13"}
+    verification: primary
+    conflicts:
+      - "원문 기준(BMI ≥40 또는 ≥35+합병증)보다 VA/DoD 기준이 낮다(≥35 또는 ≥30+당뇨)."
+    review: {status: draft}
+    corpus:
+      - kind: referral
+        to: 대사·비만 수술
+        criteria:
+          - {var: BMI, op: ">=", value: 35}
+          - {all: [{var: BMI, op: ">=", value: 30}, {dx: E11}]}
+        strength: "VA/DoD Rec 12 (Weak for)"

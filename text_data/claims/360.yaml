@@ -1,0 +1,118 @@
+# 360장 급성 바이러스 간염 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: CDC/ACIP A형간염 예방 권고(MMWR Recomm Rep 2020), B형간염 예방 권고(MMWR Recomm Rep 2018), 성인 B형간염 보편 접종(MMWR 2022),
+#            CDC B형간염 선별 권고(2023) — 모두 CDC 퍼블릭 도메인. 미국 예방접종 체계 기준(국내 일정은 질병관리청 기준 별도 확인).
+
+chapter: "360"
+title: 급성 바이러스 간염
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 360-C01
+    topic: 급성 간염 혈청학적 진단
+    type: diagnosis
+    original:
+      text: "표 360-6 급성 간염 단순화된 진단: HBsAg, IgM anti-HAV, IgM anti-HBc, anti-HCV 조합으로 급성 A·B·C형 구분."
+      location: {file: by_chapter/360장.md, line: 302}
+    status: 유지
+    current:
+      text: >
+        급성 B형간염 검사 결과 해석과 후속 검사는 362-C02(CDC 2023 선별 권고: HBsAg·anti-HBs·총 anti-HBc 3종 검사)를 따른다. C형간염은 anti-HCV 양성이면 HCV RNA로 현재 감염을 확인한다(362-C04).
+        A형간염 진단 검사(IgM anti-HAV)의 해석은 이번 A등급 근거로 대조하지 않았다.
+      sources:
+        - {id: CDC-HBV-SCREENING-2023, locator: "Interpretation of hepatitis B test results"}
+    verification: primary
+    note: "표 360-6 조합 해석은 표준 혈청학 사실이나 IgM anti-HAV 부분은 A등급 대조 미완료."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: suspected_acute_hepatitis}
+        tests:
+          - {lab: HBsAg, reason: "B형"}
+          - {lab: Anti_HBc_IgM, reason: "급성 B형"}
+          - {lab: Anti_HAV_IgM, reason: "급성 A형"}
+          - {lab: Anti_HCV, reason: "C형 — 양성이면 HCV RNA"}
+          - {lab: ALT, reason: "간세포 손상"}
+          - {lab: INR, reason: "중증도(급성 간부전)"}
+
+  - id: 360-C02
+    topic: A형간염 백신 대상과 노출 후 예방
+    type: dose
+    original:
+      text: "밀접 접촉자 노출 후 예방 IG 0.02 mL/kg(노출 후 2주까지). 여행자 IG 0.02–0.06 mL/kg. 사백신은 1세 이상."
+      location: {file: by_chapter/360장.md, line: 381}
+    status: 개정
+    current:
+      text: >
+        ACIP(2020): 12–23개월 소아 정기 접종과 2–18세 따라잡기 접종. 성인은 감염·중증 위험군과 원하는 모든 성인에게 접종한다.
+        위험군: 1세 이상 모든 HIV 감염자, 만성 간질환(HBV·HCV, 간경변, 지방간, 알코올 간질환, 자가면역간염, ALT·AST가 지속적으로 정상 상한 2배 초과), 위험이 있는 임신부, 여행자, 주사·비주사 약물 사용자, 노숙인, 남성과 성관계하는 남성, 직업적 위험.
+        완전 접종을 마친 건강한 사람은 노출되어도 추가 예방이 필요 없다. 미접종 밀접 접촉자(가족·성 접촉, 함께 약물 사용, 보호구 없이 돌본 사람)는 노출 후 2주 안에 가능한 빨리 예방한다: 백신, 그리고 40세 초과·면역저하·만성 간질환 등에는 IG 0.1 mL/kg 근주 추가 고려.
+        2차 접종은 1차 후 최소 6개월에 해서 장기 방어를 완성한다. 혈우병 등 응고인자 혈액제제 투여자 접종은 더 이상 권하지 않는다.
+      sources:
+        - {id: PAPER-ACIP-HEPA-2020, locator: "Summary of recommendations; Postexposure prophylaxis; Table (IG dosing)"}
+    verification: primary
+    conflicts:
+      - "IG 노출 후 예방 용량: 원문 0.02 mL/kg vs 현재 0.1 mL/kg(ACIP 2020)."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [Z20.5, B15]}
+        recommendations:
+          - when: {all: [{any: [{dx: B18}, {dx: K70}, {dx: K74}, {dx: K76.0}, {dx: B20}]}, {not: {finding: hepa_vaccine_complete}}]}
+            recommend: {vaccine: hepatitis_A, detail: "만성 간질환·HIV — A형간염 백신"}
+          - when: {all: [{event: hav_close_contact_exposure}, {not: {finding: hepa_vaccine_complete}}, {var: days_since_exposure, op: "<=", value: 14}]}
+            recommend: {vaccine: hepatitis_A, add_ig_if: "40세 초과·면역저하·만성 간질환", ig_dose: "0.1 mL/kg 근주"}
+            alert_level: high
+      - kind: dose_rule
+        id: DR-HAV-IG-PEP
+        ingredient: immune_globulin_im
+        indication: A형간염 노출 후 예방
+        source_priority: [PAPER-ACIP-HEPA-2020]
+        standard_dose: "0.1 mL/kg 근주, 노출 후 2주 이내(백신과 다른 부위)"
+
+  - id: 360-C03
+    topic: B형간염 성인 보편 접종과 노출 후 예방
+    type: treatment
+    original:
+      text: "노출 전 예방은 고위험군(보건 종사자, 투석, 정맥주사 약물, 성 접촉 등)에 0·1·6개월 3회 삼각근. 고위험군만 접종하는 전략은 효과적이지 않았음."
+      location: {file: by_chapter/360장.md, line: 410}
+    status: 개정
+    current:
+      text: >
+        ACIP(2022): 19–59세 모든 성인과 위험 인자가 있는 60세 이상 성인은 B형간염 백신을 맞는다. 위험 인자가 없는 60세 이상도 맞을 수 있다. 위험 인자 선별·고지 없이 접종해 접종률을 높이기 위함이다.
+        혈액·체액 노출 시 상처는 비누와 물로 씻고 점막은 물로 헹군다(소독제 주입·짜내기는 효과 없음).
+        직업 노출: 완전 접종 후 anti-HBs ≥10 mIU/mL가 확인된 의료인은 조치가 필요 없다. 반응 미확인 접종자는 즉시 anti-HBs와 감염원 HBsAg를 검사해, 감염원 양성·미상이고 anti-HBs <10이면 HBIG 1회 + 재접종.
+        2회 완전 접종 후 무반응자는 감염원 양성·미상이면 HBIG를 1개월 간격 2회. 미접종·불완전 접종자는 감염원 양성·미상이면 HBIG 1회 + 접종 완료, 이후 접종 후 혈청 검사.
+      sources:
+        - {id: CDC-ACIP-HEPB-UNIVERSAL-2022, locator: "Recommendations (Box)"}
+        - {id: PAPER-ACIP-HEPB-2018, locator: "Postexposure Prophylaxis; Table 5"}
+    verification: primary
+    conflicts:
+      - "원문 고위험군 대상 노출 전 접종 vs 현재 19–59세 성인 보편 접종(미국 2022)."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [Z23, Z20.5]}
+        recommendations:
+          - when: {all: [{var: age, op: ">=", value: 19}, {var: age, op: "<=", value: 59}, {not: {finding: hepb_vaccine_complete}}, {not: {finding: hbv_infection_known}}]}
+            recommend: {vaccine: hepatitis_B, detail: "성인 보편 접종(ACIP 2022)"}
+          - when: {all: [{event: occupational_blood_exposure}, {finding: source_hbsag_positive_or_unknown}, {not: {finding: documented_anti_hbs_responder}}]}
+            recommend: {steps: ["anti-HBs 검사", "<10 mIU/mL이면 HBIG + (재)접종", "2회 무반응자는 HBIG 1개월 간격 2회"]}
+            alert_level: high
+
+  - id: 360-C04
+    topic: 급성 B·C형간염 치료
+    type: treatment
+    original:
+      text: "급성 B형간염 대부분 회복, 중증만 테노포비어·엔테카비어. 급성 C형간염 인터페론 단독 또는 페그인터페론+리바비린 24주."
+      location: {file: by_chapter/360장.md, line: 361}
+    status: 폐기
+    current:
+      text: >
+        원문의 급성 C형간염 인터페론·페그인터페론+리바비린 치료는 현재 쓰지 않는다. C형간염은 진단되면 범유전형 직접작용 항바이러스제로 치료한다(362-C05·C06, CDC C형간염 진료 지침).
+        중증 급성 B형간염의 핵산유사체 사용(362-C03 약제)은 이번 A등급 근거로 대조하지 않았다.
+      sources:
+        - {id: CDC-HCV-CLINICAL-CARE, locator: "Treatment"}
+    verification: primary
+    review: {status: draft}

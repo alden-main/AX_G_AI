@@ -1,0 +1,2184 @@
+# 출처 레지스트리
+# - 모든 주장(claims/*.yaml)과 말뭉치(corpus/*.jsonl)는 여기의 id로만 출처를 참조한다.
+# - checked_at: 실제로 내용을 확인한 날짜.
+# - access: primary_text  = 원문(PDF/본문)을 직접 읽어 확인
+#           secondary     = 원문을 요약한 2차 자료로만 확인(원문 접근 실패)
+#           local_db      = 프로젝트 로컬 참조 DB에서 확인(원본 발행일·버전 미상)
+#
+# ai_use (AX-G AI는 상업 서비스 — 2026-11-10 사용자 확인):
+#   A = 출처를 밝히고 상업 AI 서비스에 사용 가능 (퍼블릭 도메인, CC0, 이용허락 제한 없는 공공데이터 등)
+#   B = 비상업·변경금지 등 조건부 라이선스 (CC BY-NC, CC BY-NC-ND, 공공누리 2~4유형) → 허가 필요
+#   C = 권리자 별도 허가 필요 (저작권 보호, AI·TDM 사용 금지 명시 등)
+#   U = 이용 조건 미확인 → 확인 전까지 허가 필요로 취급
+# AI가 사용하는 주장(current)은 A등급 출처만 인용할 수 있다. B·C·U 근거는 reference에만 둔다.
+# region: 출처 국가·지역 — KR(국내) > US(미국) > EU(유럽) > INTL(그 밖·국제) 순으로 우선한다(같은 주제에 국내 기준이 있으면 국외 기준은 참고로).
+# license_basis: 등급 판단 근거. 법률 자문이 아니며 운영 전 법무 검토 대상이다.
+#   A등급은 license_basis에 라이선스(CC0 1.0 / CC BY[ x.x] / 17 U.S.C. 또는 퍼블릭 도메인 / copyright free)를 반드시 적는다.
+#   build_corpus.py가 여기서 화면 출처 표시용 license를 뽑고, 못 뽑으면 빌드를 실패시킨다. citation은 그대로 화면에 표시된다.
+
+sources:
+  # ───────────── A: 상업 AI 사용 가능 ─────────────
+  - id: VADOD-CKD-2025
+    title: VA/DoD Clinical Practice Guideline for the Primary Care Management of Chronic Kidney Disease (2025)
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/CD/ckd/CKD-CPG_2025-Guideline_final_20250509.pdf
+    published: "2025-04"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: >
+      미국 연방정부(VA·DoD) 저작물(17 U.S.C. §105). 문서에 저작권 표시 없음.
+      단 KDIGO 등에서 재수록한 그림·표(예: Sidebar 9 CKD 병기 그림)는 제3자 저작물이라 그 표현은 사용하지 않고 수치 사실만 인용.
+
+  - id: VADOD-DM-2023
+    title: VA/DoD Clinical Practice Guideline for the Management of Type 2 Diabetes Mellitus (2023)
+    type: guideline
+    url: https://www.healthquality.va.gov/guidelines/CD/diabetes/VADOD-Diabetes-CPG_Final_508.pdf
+    published: "2023-05"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 연방정부 저작물(17 U.S.C. §105). 문서에 저작권 표시 없음. 제3자 재수록 자료는 제외.
+
+  - id: NIDDK-GFR-EQUATIONS
+    title: NIDDK — Glomerular Filtration Rate Equations (Adults)
+    type: reference
+    url: https://www.niddk.nih.gov/research-funding/research-programs/kidney-clinical-research-epidemiology/laboratory/glomerular-filtration-rate-equations/adults
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 국립보건원(NIH/NIDDK) 저작물(17 U.S.C. §105).
+
+  - id: OPENFDA-METFORMIN
+    title: openFDA SPL — Metformin Hydrochloride Tablets (set_id d5228e81-9c86-4781-b984-20feaa2ae779, v3, 2026-09-09)
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=d5228e81-9c86-4781-b984-20feaa2ae779
+    location: text_data/sources/raw/openfda/metformin-ir.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA 데이터 CC0 1.0(https://open.fda.gov/license). 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-DAPAGLIFLOZIN
+    title: openFDA SPL — FARXIGA (dapagliflozin) (set_id 01f90c94-71cb-4a1f-81ff-8004b850529b, v22, 2026-07-10)
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=01f90c94-71cb-4a1f-81ff-8004b850529b
+    location: text_data/sources/raw/openfda/dapagliflozin-farxiga.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항.
+
+  - id: OPENFDA-EMPAGLIFLOZIN
+    title: openFDA SPL — JARDIANCE (empagliflozin) (set_id 59ed43d9-b4e0-72a2-e063-6394a90a327d, v1, 2026-08-26)
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=59ed43d9-b4e0-72a2-e063-6394a90a327d
+    location: text_data/sources/raw/openfda/empagliflozin-jardiance.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항.
+
+  - id: OPENFDA-FINERENONE
+    title: openFDA SPL — KERENDIA (finerenone) (set_id fc726765-5d5a-4d6e-b037-b847bda9fb7c, v13, 2025-08-28)
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=fc726765-5d5a-4d6e-b037-b847bda9fb7c
+    location: text_data/sources/raw/openfda/finerenone-kerendia.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항(HFpEF 적응증 포함 — 국내와 다름).
+
+  - id: FDA-METFORMIN-DSC-2016
+    title: FDA Drug Safety Communication — revised warnings for metformin in kidney impairment (2016)
+    type: regulatory
+    url: https://www.fda.gov/drugs/drug-safety-and-availability/fda-drug-safety-communication-fda-revises-warnings-regarding-use-diabetes-medicine-metformin-certain
+    access: secondary
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 FDA 저작물(17 U.S.C. §105).
+    note: 원문 직접 대조는 못 함(2차 요약으로 확인). 현행 라벨(OPENFDA-METFORMIN)이 우선.
+
+  - id: OPENFDA-PREGABALIN
+    title: "openFDA SPL — Pregabalin capsules (set_id ab06a36d-9a2d-4eae-8991-4eab5bc8311c, v3, 2026-09-11)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=ab06a36d-9a2d-4eae-8991-4eab5bc8311c
+    location: text_data/sources/raw/openfda/pregabalin-ir.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-DULOXETINE
+    title: "openFDA SPL — Duloxetine delayed-release capsules (set_id 79bfd6be-a1ff-4786-b4e2-abbd0a3e3932, v2, 2026-09-09)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=79bfd6be-a1ff-4786-b4e2-abbd0a3e3932
+    location: text_data/sources/raw/openfda/duloxetine.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-GLUCAGON-INJ
+    title: "openFDA SPL — Glucagon for injection (severe hypoglycemia) (set_id a0845f53-edad-e28f-e053-2995a90a31cf, v2, 2024-02-22)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=a0845f53-edad-e28f-e053-2995a90a31cf
+    location: text_data/sources/raw/openfda/glucagon-injection.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-GLUCAGON-NASAL
+    title: "openFDA SPL — BAQSIMI (glucagon) nasal powder (set_id 32ba41fa-4158-40af-8cb2-03693c248994, v1, 2026-06-19)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=32ba41fa-4158-40af-8cb2-03693c248994
+    location: text_data/sources/raw/openfda/glucagon-nasal.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: NIDDK-HYPOGLYCEMIA
+    title: NIDDK — Low Blood Glucose (Hypoglycemia)
+    type: patient_information
+    url: https://www.niddk.nih.gov/health-information/diabetes/overview/preventing-problems/low-blood-glucose-hypoglycemia
+    published: "2021-07 (last reviewed)"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 국립보건원(NIH/NIDDK) 저작물(17 U.S.C. §105).
+
+  - id: VADOD-LIPIDS-2025
+    title: VA/DoD Clinical Practice Guideline on Lipid Management for Cardiovascular Disease Risk Reduction (2025)
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/CD/lipids/Lipids-CPG_2025-Guideline_final_20260106.pdf
+    published: "2025-12 (파일 2026-01-06)"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 연방정부(VA·DoD) 저작물(17 U.S.C. §105). 본문 내 제3자 저작권 표시 자료(인용 문헌 등)는 제외.
+
+  - id: OPENFDA-SEMAGLUTIDE-WEGOVY
+    title: "openFDA SPL — WEGOVY (semaglutide) injection (set_id f5e548d0-cc79-4c34-a3f5-e20a5b8b6564, v6, 2024-04-23)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=f5e548d0-cc79-4c34-a3f5-e20a5b8b6564
+    location: text_data/sources/raw/openfda/semaglutide-wegovy.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+    note: openFDA 최신본이 재포장업체 2024-04판 — 제조사 최신 라벨(2025년 이후 적응증 추가 등)과 다를 수 있어 DailyMed에서 재확인 필요.
+
+  - id: OPENFDA-TIRZEPATIDE-ZEPBOUND
+    title: "openFDA SPL — ZEPBOUND (tirzepatide) injection (set_id 487cd7e7-434c-4925-99fa-aa80b1cc776b, v40, 2026-08-28)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=487cd7e7-434c-4925-99fa-aa80b1cc776b
+    location: text_data/sources/raw/openfda/tirzepatide-zepbound.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: VADOD-OBE-2025
+    title: VA/DoD Clinical Practice Guideline for the Management of Adult Overweight and Obesity (2025)
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/CD/obesity/OBE-CPG_2025-Guideline_final_20251105.pdf
+    published: "2025-11"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 연방정부(VA·DoD) 저작물(17 U.S.C. §105). WHO BMI 분류표 등 재수록 자료는 수치 사실만 사용.
+
+  - id: FDA-LORCASERIN-WITHDRAWAL-2020
+    title: FDA Drug Safety Communication — FDA requests withdrawal of weight-loss drug Belviq, Belviq XR (lorcaserin) (2020-02-13)
+    type: regulatory
+    url: https://www.fda.gov/drugs/drug-safety-and-availability/fda-requests-withdrawal-weight-loss-drug-belviq-belviq-xr-lorcaserin-market
+    published: "2020-02-13"
+    access: secondary
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 FDA 저작물(17 U.S.C. §105).
+
+  - id: OPENFDA-ACETYLCYSTEINE-IV
+    title: "openFDA SPL — Acetylcysteine injection (acetaminophen overdose) (set_id f811ddfc-d7c1-4637-ae81-80c38a77cb80, v3, 2026-05-06)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=f811ddfc-d7c1-4637-ae81-80c38a77cb80
+    location: text_data/sources/raw/openfda/acetylcysteine-iv.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: LIVERTOX
+    title: "LiverTox: Clinical and Research Information on Drug-Induced Liver Injury (NIDDK)"
+    type: database
+    url: https://www.ncbi.nlm.nih.gov/books/NBK547852/
+    location: "NCBI FTP pub/litarch/29/31/livertox_NBK547852.tar.gz (2026-11-05판)"
+    published: "2012– (지속 갱신, 아카이브 2026-11-05)"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: "LiverTox 표기: NIDDK 제작, copyright free. 사용 시 적절한 출처 표시 요청."
+    note: 항목별 위치는 locator에 XML 파일명(예 Acetaminophen.nxml)으로 기록.
+
+  - id: OPENFDA-ENTECAVIR
+    title: "openFDA SPL — Entecavir tablets (set_id 73dea2a4-a596-477f-b66d-5a80dd019837, v13, 2026-07-07)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=73dea2a4-a596-477f-b66d-5a80dd019837
+    location: text_data/sources/raw/openfda/entecavir.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-TAF-VEMLIDY
+    title: "openFDA SPL — VEMLIDY (tenofovir alafenamide) (set_id 72e6b33c-0351-4070-9172-eeaa186c01d2, v17, 2025-07-14)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=72e6b33c-0351-4070-9172-eeaa186c01d2
+    location: text_data/sources/raw/openfda/tenofovir-alafenamide-vemlidy.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-TDF
+    title: "openFDA SPL — Tenofovir disoproxil fumarate tablets (set_id e0ae0aa2-3baa-4b75-9e85-68b5338c3c14, v1, 2026-07-13)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=e0ae0aa2-3baa-4b75-9e85-68b5338c3c14
+    location: text_data/sources/raw/openfda/tenofovir-df.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-SOF-VEL-EPCLUSA
+    title: "openFDA SPL — EPCLUSA (sofosbuvir/velpatasvir) (set_id 7f30631a-ee3b-4cfe-866b-964df3f0a44f, v14, 2024-06-05)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=7f30631a-ee3b-4cfe-866b-964df3f0a44f
+    location: text_data/sources/raw/openfda/sofosbuvir-velpatasvir-epclusa.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-GLE-PIB-MAVYRET
+    title: "openFDA SPL — MAVYRET (glecaprevir/pibrentasvir) (set_id 7bf99777-0401-9095-8645-16c6e907fcc0, v201, 2025-06-25)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=7bf99777-0401-9095-8645-16c6e907fcc0
+    location: text_data/sources/raw/openfda/glecaprevir-pibrentasvir-mavyret.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: CDC-HBV-SCREENING-2023
+    title: "Screening and Testing for Hepatitis B Virus Infection: CDC Recommendations — United States, 2023"
+    type: guideline
+    citation: MMWR Recomm Rep 2023;72(No. RR-1):1–25
+    url: https://www.cdc.gov/mmwr/volumes/72/rr/rr7201a1.htm
+    published: "2023-03-10"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: CDC 저작물(퍼블릭 도메인, CDC 'Use of Agency Materials'). 본문 내 제3자 자료 제외.
+
+  - id: CDC-HCV-SCREENING-2020
+    title: "CDC Recommendations for Hepatitis C Screening Among Adults — United States, 2020"
+    type: guideline
+    citation: MMWR Recomm Rep 2020;69(No. RR-2):1–17. doi:10.15585/mmwr.rr6902a1
+    url: https://www.cdc.gov/mmwr/volumes/69/rr/rr6902a1.htm
+    published: "2020-04-10"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: CDC 저작물(퍼블릭 도메인).
+
+  - id: CDC-HCV-CLINICAL-CARE
+    title: CDC — Clinical Care of Hepatitis C (HCP)
+    type: reference
+    url: https://www.cdc.gov/hepatitis-c/hcp/clinical-care/index.html
+    published: "2024-05-15 (updated 2025-01-31, reviewed 2026-11-03)"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: CDC 저작물(퍼블릭 도메인).
+
+  - id: OPENFDA-DICLOFENAC-GEL
+    title: "openFDA SPL — Diclofenac sodium topical gel 1% (set_id aee20924-79ab-400e-b9b6-418978914654, v7, 2026-04-02)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=aee20924-79ab-400e-b9b6-418978914654
+    location: text_data/sources/raw/openfda/diclofenac-gel-1pct.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: VADOD-OA-2026
+    title: VA/DoD Clinical Practice Guideline for the Non-Surgical Management of Hip & Knee Osteoarthritis (2026)
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/CD/OA/Osteoarthritis-CPG_2026-Guideline_final_20260618.pdf
+    published: "2026-06"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 연방정부(VA·DoD) 저작물(17 U.S.C. §105).
+
+  - id: OPENFDA-ALLOPURINOL
+    title: "openFDA SPL — Allopurinol tablets (set_id 8f50e91e-66a7-4fd4-888a-9f1986aa661c, v3, 2026-09-10)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=8f50e91e-66a7-4fd4-888a-9f1986aa661c
+    location: text_data/sources/raw/openfda/allopurinol.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-FEBUXOSTAT
+    title: "openFDA SPL — Febuxostat tablets (set_id f2c338dc-5bab-49f4-a4ac-d8dea8afeea5, v1, 2026-04-27)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=f2c338dc-5bab-49f4-a4ac-d8dea8afeea5
+    location: text_data/sources/raw/openfda/febuxostat.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-COLCHICINE
+    title: "openFDA SPL — Colchicine tablets (gout flares) (set_id 5a0b4246-e7dd-29e5-e063-6294a90a2871, v1, 2026-08-27)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=5a0b4246-e7dd-29e5-e063-6294a90a2871
+    location: text_data/sources/raw/openfda/colchicine-tablet.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: VADOD-MENO-2026
+    title: "VA/DoD Clinical Practice Guideline for the Management of Menopause (2026)"
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/WH/menopause/Menopause-CPG_2026-Guideline_v1_20260930.pdf
+    published: "2026-09"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 연방정부(VA·DoD) 저작물(17 U.S.C. §105). 사이드바 2는 FDA 허가 문구와 지침 문구를 결합.
+
+  - id: VADOD-TOBACCO-2026
+    title: "VA/DoD Clinical Practice Guideline for Tobacco Use Treatment (2026)"
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/CD/tobacco/Tobacco-Cessation-CPG_2026-Guideline_final_20260109.pdf
+    published: "2026-01"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 연방정부(VA·DoD) 저작물(17 U.S.C. §105).
+
+  - id: VADOD-HEADACHE-2023
+    title: "VA/DoD Clinical Practice Guideline for the Management of Headache (2023)"
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/pain/headache/VA-DOD-CPG-Headache-Full-CPG.pdf
+    published: "2023"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 연방정부(VA·DoD) 저작물(17 U.S.C. §105).
+
+  - id: VADOD-MTBI-2021
+    title: "VA/DoD Clinical Practice Guideline for the Management and Rehabilitation of Post-Acute Mild Traumatic Brain Injury (2021)"
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/Rehab/mtbi/VADODmTBICPGFinal508.pdf
+    published: "2021"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 연방정부(VA·DoD) 저작물(17 U.S.C. §105).
+
+  - id: VADOD-MDD-2022
+    title: "VA/DoD Clinical Practice Guideline for the Management of Major Depressive Disorder (2022)"
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/MH/mdd/VADODMDDCPGFinal508.pdf
+    published: "2022"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 연방정부(VA·DoD) 저작물(17 U.S.C. §105).
+
+  - id: VADOD-SUD-2021
+    title: "VA/DoD Clinical Practice Guideline for the Management of Substance Use Disorders (2021)"
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/MH/sud/VA-DoD-SUD-CPG_Final_for-508_v3.pdf
+    published: "2021"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 연방정부(VA·DoD) 저작물(17 U.S.C. §105).
+
+  - id: VADOD-STROKE-REHAB-2024
+    title: "VA/DoD Clinical Practice Guideline for the Management of Stroke Rehabilitation (2024)"
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/Rehab/stroke/VADOD-2024-Stroke-Rehab-CPG-Full-CPG_final_508.pdf
+    published: "2024"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 연방정부(VA·DoD) 저작물(17 U.S.C. §105).
+
+  - id: OPENFDA-VARENICLINE
+    title: "openFDA SPL — Varenicline tablets (set_id d759167f-e0b2-46d5-a34a-3c8858e39590, v3, 2026-09-21)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=d759167f-e0b2-46d5-a34a-3c8858e39590
+    location: text_data/sources/raw/openfda/varenicline.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: VADOD-BD-2023
+    title: "VA/DoD Clinical Practice Guideline for the Management of Bipolar Disorder (2023)"
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/MH/bd/VA-DOD-CPG-BD-Full-CPGFinal508.pdf
+    published: "2023"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 연방정부(VA·DoD) 저작물(17 U.S.C. §105).
+
+  - id: VADOD-SCZ-2023
+    title: "VA/DoD Clinical Practice Guideline for the Management of First-Episode Psychosis and Schizophrenia (2023)"
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/MH/scz/VA-DOD-CPG-Schizophrenia-CPG_Finalv231924.pdf
+    published: "2023"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 연방정부(VA·DoD) 저작물(17 U.S.C. §105).
+
+  - id: OPENFDA-ACAMPROSATE
+    title: "openFDA SPL — Acamprosate calcium delayed-release tablets (set_id 1cfe4675-766f-4f1a-b1a8-96bbdacfcfa5, v1, 2026-07-14)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=1cfe4675-766f-4f1a-b1a8-96bbdacfcfa5
+    location: text_data/sources/raw/openfda/acamprosate.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-NALTREXONE-ORAL
+    title: "openFDA SPL — Naltrexone hydrochloride tablets (set_id db911559-26f5-43a0-b61f-3425176c936f, v3, 2026-09-08)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=db911559-26f5-43a0-b61f-3425176c936f
+    location: text_data/sources/raw/openfda/naltrexone-oral.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-LEVOTHYROXINE
+    title: "openFDA SPL — Levothyroxine sodium tablets (set_id 4c903249-69e9-4168-a9d1-22e6c2c1eb22, v3, 2026-09-10)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=4c903249-69e9-4168-a9d1-22e6c2c1eb22
+    location: text_data/sources/raw/openfda/levothyroxine.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-METHIMAZOLE
+    title: "openFDA SPL — Methimazole tablets (set_id f69edfa9-0efb-4fe8-aeab-50f7baeebb6a, v1, 2026-09-09)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=f69edfa9-0efb-4fe8-aeab-50f7baeebb6a
+    location: text_data/sources/raw/openfda/methimazole.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-PTU
+    title: "openFDA SPL — Propylthiouracil tablets (set_id d819e532-09ac-434a-84a6-636c4204c7aa, v7, 2026-08-27)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=d819e532-09ac-434a-84a6-636c4204c7aa
+    location: text_data/sources/raw/openfda/propylthiouracil.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-ALENDRONATE
+    title: "openFDA SPL — Alendronate sodium tablets (set_id 54d6543d-4239-58b1-e054-00144ff88e88, v6, 2026-06-23)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=54d6543d-4239-58b1-e054-00144ff88e88
+    location: text_data/sources/raw/openfda/alendronate.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-ZOLEDRONIC-OSTEO
+    title: "openFDA SPL — Zoledronic acid injection 5 mg/100 mL (osteoporosis) (set_id 8aac81ae-f92c-4f0b-b480-44badf72b5f5, v2, 2026-07-09)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=8aac81ae-f92c-4f0b-b480-44badf72b5f5
+    location: text_data/sources/raw/openfda/zoledronic-reclast.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-DENOSUMAB-PROLIA
+    title: "openFDA SPL — PROLIA (denosumab) (set_id 49e5afe9-a0c7-40c4-af9f-f287a80c5c88, v186, 2026-06-26)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=49e5afe9-a0c7-40c4-af9f-f287a80c5c88
+    location: text_data/sources/raw/openfda/denosumab-prolia.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-ROMOSOZUMAB
+    title: "openFDA SPL — EVENITY (romosozumab) (set_id 471baba2-7154-4488-9891-0db2f46791e7, v21, 2026-07-16)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=471baba2-7154-4488-9891-0db2f46791e7
+    location: text_data/sources/raw/openfda/romosozumab.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-TERIPARATIDE
+    title: "openFDA SPL — Teriparatide injection (set_id aae667c5-381f-4f92-93df-2ed6158d07b0, v44, 2026-08-03)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=aae667c5-381f-4f92-93df-2ed6158d07b0
+    location: text_data/sources/raw/openfda/teriparatide.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-VONOPRAZAN-TRIPLE
+    title: "openFDA SPL — VOQUEZNA TRIPLE PAK (vonoprazan/amoxicillin/clarithromycin) (set_id 0cb2ee04-8581-46c8-a781-7be170ab5c86, v17, 2026-07-16)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=0cb2ee04-8581-46c8-a781-7be170ab5c86
+    location: text_data/sources/raw/openfda/vonoprazan-pak.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-PYLERA
+    title: "openFDA SPL — PYLERA (bismuth subcitrate potassium/metronidazole/tetracycline) (set_id 5cdacbf5-67be-42eb-bd54-8acc32ea1abc, v4, 2026-06-29)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=5cdacbf5-67be-42eb-bd54-8acc32ea1abc
+    location: text_data/sources/raw/openfda/bismuth-quad-pylera.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-TALICIA
+    title: "openFDA SPL — TALICIA (omeprazole/amoxicillin/rifabutin) (set_id 68c4e9dc-dbcf-4151-b6f7-5e4b9922b76f, v10, 2025-12-23)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=68c4e9dc-dbcf-4151-b6f7-5e4b9922b76f
+    location: text_data/sources/raw/openfda/talicia.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: NIDDK-PUD-DIAGNOSIS
+    title: "NIDDK — Diagnosis of Peptic Ulcers (Stomach Ulcers)"
+    type: patient_information
+    url: https://www.niddk.nih.gov/health-information/digestive-diseases/peptic-ulcers-stomach-ulcers/diagnosis
+    published: "2022-09 (last reviewed)"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 국립보건원(NIH/NIDDK) 저작물(17 U.S.C. §105).
+
+  - id: NIDDK-PUD-TREATMENT
+    title: "NIDDK — Treatment for Peptic Ulcers (Stomach Ulcers)"
+    type: patient_information
+    url: https://www.niddk.nih.gov/health-information/digestive-diseases/peptic-ulcers-stomach-ulcers/treatment
+    published: "2022-09 (last reviewed)"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: 미국 국립보건원(NIH/NIDDK) 저작물(17 U.S.C. §105).
+
+  - id: OPENFDA-ALTEPLASE
+    title: "openFDA SPL — ACTIVASE (alteplase) — acute ischemic stroke (set_id c669f77c-fa48-478b-a14b-80b20a0139c2, v15, 2026-01-20)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=c669f77c-fa48-478b-a14b-80b20a0139c2
+    location: text_data/sources/raw/openfda/alteplase-stroke.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: PAPER-JSGE-CIRRHOSIS-2020
+    title: "Evidence-based clinical practice guidelines for Liver Cirrhosis 2020"
+    type: paper
+    citation: "Yoshiji H et al. Journal of gastroenterology 2021. doi:10.1007/s00535-021-01788-x"
+    url: https://europepmc.org/article/PMC/PMC8280040
+    location: text_data/sources/raw/europepmc/PMC8280040.xml
+    published: "2021"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: OPENFDA-RIFAXIMIN
+    title: "openFDA SPL — XIFAXAN (rifaximin) (set_id 7afafa63-3236-4212-9589-045db6b01c0b, v14, 2025-08-27)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=7afafa63-3236-4212-9589-045db6b01c0b
+    location: text_data/sources/raw/openfda/rifaximin.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: PAPER-EASL-EASD-EASO-MASLD-2024
+    title: "EASL-EASD-EASO Clinical Practice Guidelines on the management of metabolic dysfunction-associated steatotic liver disease (MASLD): Executive Summary"
+    type: paper
+    citation: "European Association for the Study of the Liver et al. Diabetologia 2024. doi:10.1007/s00125-024-06196-3"
+    url: https://europepmc.org/article/PMC/PMC11519095
+    location: text_data/sources/raw/europepmc/PMC11519095.xml
+    published: "2024"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: OPENFDA-RESMETIROM
+    title: "openFDA SPL — REZDIFFRA (resmetirom) (set_id e67ea09f-a840-439c-86c8-f98585f978b2, v4, 2026-07-29)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=e67ea09f-a840-439c-86c8-f98585f978b2
+    location: text_data/sources/raw/openfda/resmetirom.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: PAPER-JSGE-GERD-2021
+    title: "Evidence-based clinical practice guidelines for gastroesophageal reflux disease 2021"
+    type: paper
+    citation: "Iwakiri K et al. Journal of gastroenterology 2022. doi:10.1007/s00535-022-01861-z"
+    url: https://europepmc.org/article/PMC/PMC8938399
+    location: text_data/sources/raw/europepmc/PMC8938399.xml
+    published: "2022"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: OPENFDA-VONOPRAZAN
+    title: "openFDA SPL — VOQUEZNA (vonoprazan) tablets (set_id 0cc52ac5-77ec-4d66-a770-762a1a960914, v6, 2026-07-16)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=0cc52ac5-77ec-4d66-a770-762a1a960914
+    location: text_data/sources/raw/openfda/vonoprazan.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: PAPER-JSGE-IBD-2020
+    title: "Evidence-based clinical practice guidelines for inflammatory bowel disease 2020"
+    type: paper
+    citation: "Nakase H et al. Journal of gastroenterology 2021. doi:10.1007/s00535-021-01784-1"
+    url: https://europepmc.org/article/PMC/PMC8137635
+    location: text_data/sources/raw/europepmc/PMC8137635.xml
+    published: "2021"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-RA-CPG-SR-2023
+    title: "What are the core recommendations for rheumatoid arthritis care? Systematic review of clinical practice guidelines"
+    type: paper
+    citation: "Conley B et al. Clinical rheumatology 2023. doi:10.1007/s10067-023-06654-0"
+    url: https://europepmc.org/article/PMC/PMC10412487
+    location: text_data/sources/raw/europepmc/PMC10412487.xml
+    published: "2023"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-UK-OSTEOPOROSIS-2022
+    title: "UK clinical guideline for the prevention and treatment of osteoporosis"
+    type: paper
+    citation: "Gregson CL et al. Archives of osteoporosis 2022. doi:10.1007/s11657-022-01061-5"
+    url: https://europepmc.org/article/PMC/PMC8979902
+    location: text_data/sources/raw/europepmc/PMC8979902.xml
+    published: "2022"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-VITD-CONSENSUS-2024
+    title: "Consensus Statement on Vitamin D Status Assessment and Supplementation: Whys, Whens, and Hows"
+    type: paper
+    citation: "Giustina A et al. Endocrine reviews 2024. doi:10.1210/endrev/bnae009"
+    url: https://europepmc.org/article/PMC/PMC11405507
+    location: text_data/sources/raw/europepmc/PMC11405507.xml
+    published: "2024"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-SLE-GC-STEWARDSHIP-2024
+    title: "A path to Glucocorticoid Stewardship: a critical review of clinical recommendations for the treatment of systemic lupus erythematosus"
+    type: paper
+    citation: "Bertsias G et al. Rheumatology (Oxford, England) 2024. doi:10.1093/rheumatology/keae041"
+    url: https://europepmc.org/article/PMC/PMC11215984
+    location: text_data/sources/raw/europepmc/PMC11215984.xml
+    published: "2024"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-EGYPT-SLE-2023
+    title: "Egyptian recommendations for the management of systemic lupus erythematosus: a consensus, evidence-based, clinical practice guidelines for treat-to-target management"
+    type: paper
+    citation: "El Miedany Y et al. Egyptian Rheumatology and Rehabilitation 2023. doi:None"
+    url: https://europepmc.org/article/PMC/PMC10076815
+    location: text_data/sources/raw/europepmc/PMC10076815.xml
+    published: "2023"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: OPENFDA-HYDROXYCHLOROQUINE
+    title: "openFDA SPL — Hydroxychloroquine sulfate tablets (set_id ebe00e35-ed3d-40f4-9a93-a37b0da01ddb, v8, 2026-07-27)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=ebe00e35-ed3d-40f4-9a93-a37b0da01ddb
+    location: text_data/sources/raw/openfda/hydroxychloroquine.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: PAPER-BELGIUM-EPILEPSY-2020
+    title: "Recommendations for the treatment of epilepsy in adult and pediatric patients in Belgium: 2020 update"
+    type: paper
+    citation: "Boon P et al. Acta neurologica Belgica 2021. doi:10.1007/s13760-020-01488-y"
+    url: https://europepmc.org/article/PMC/PMC7937601
+    location: text_data/sources/raw/europepmc/PMC7937601.xml
+    published: "2021"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-SIGN-DEMENTIA-2024
+    title: "Guideline summary: assessment, diagnosis, care and support for people with dementia and their carers [Scottish Intercollegiate Guidelines Network SIGN Guideline 168]"
+    type: paper
+    citation: "Burton JK et al. Age and ageing 2024. doi:10.1093/ageing/afae147"
+    url: https://europepmc.org/article/PMC/PMC11227111
+    location: text_data/sources/raw/europepmc/PMC11227111.xml
+    published: "2024"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-BRAZIL-DEMENTIA-TX-2022
+    title: "Treatment of dementia: recommendations of the Scientific Department of Cognitive Neurology and Aging of the Brazilian Academy of Neurology"
+    type: paper
+    citation: "Caramelli P et al. Dementia & neuropsychologia 2022. doi:10.1590/1980-5764-dn-2022-s106pt"
+    url: https://europepmc.org/article/PMC/PMC9745994
+    location: text_data/sources/raw/europepmc/PMC9745994.xml
+    published: "2022"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-DGN-PARKINSON-2024
+    title: "Diagnosis and treatment of Parkinson´s disease (guideline of the German Society for Neurology)"
+    type: paper
+    citation: "Höglinger G et al. Neurological research and practice 2024. doi:10.1186/s42466-024-00325-4"
+    url: https://europepmc.org/article/PMC/PMC11157782
+    location: text_data/sources/raw/europepmc/PMC11157782.xml
+    published: "2024"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: OPENFDA-LECANEMAB
+    title: "openFDA SPL — LEQEMBI (lecanemab-irmb) (set_id 9d1ff786-e577-410a-a273-c4d7d0e4e975, v24, 2026-07-21)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=9d1ff786-e577-410a-a273-c4d7d0e4e975
+    location: text_data/sources/raw/openfda/lecanemab.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-DONANEMAB
+    title: "openFDA SPL — KISUNLA (donanemab-azbt) (set_id 190352d4-ef62-4679-b4fa-e846e2766afa, v8, 2025-12-30)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=190352d4-ef62-4679-b4fa-e846e2766afa
+    location: text_data/sources/raw/openfda/donanemab.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: PAPER-BRAZIL-HYPOPITUITARISM-2021
+    title: "Management of hypopituitarism: a perspective from the Brazilian Society of Endocrinology and Metabolism"
+    type: paper
+    citation: "Garmes HM et al. Archives of endocrinology and metabolism 2021. doi:10.20945/2359-3997000000335"
+    url: https://europepmc.org/article/PMC/PMC10065316
+    location: text_data/sources/raw/europepmc/PMC10065316.xml
+    published: "2021"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-ACROMEGALY-CONSENSUS-2024
+    title: "Consensus on criteria for acromegaly diagnosis and remission"
+    type: paper
+    citation: "Giustina A et al. Pituitary 2024. doi:10.1007/s11102-023-01360-1"
+    url: https://europepmc.org/article/PMC/PMC10837217
+    location: text_data/sources/raw/europepmc/PMC10837217.xml
+    published: "2024"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-BRAZIL-PROLACTINOMA-2018
+    title: "Controversial issues in the management of hyperprolactinemia and prolactinomas - An overview by the Neuroendocrinology Department of the Brazilian Society of Endocrinology and Metabolism"
+    type: paper
+    citation: "Vilar L et al. Archives of endocrinology and metabolism 2018. doi:10.20945/2359-3997000000032"
+    url: https://europepmc.org/article/PMC/PMC10118988
+    location: text_data/sources/raw/europepmc/PMC10118988.xml
+    published: "2018"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-CUSHING-MEDICAL-TX-2026
+    title: "Update and Practical Recommendations for the Use of Medical Treatment of Cushing Syndrome"
+    type: paper
+    citation: "Araujo-Castro M et al. Endocrine reviews 2026. doi:10.1210/endrev/bnaf042"
+    url: https://europepmc.org/article/PMC/PMC13167195
+    location: text_data/sources/raw/europepmc/PMC13167195.xml
+    published: "2026"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-AVP-DEFICIENCY-NAME-2022
+    title: "Changing the Name of Diabetes Insipidus: A Position Statement of the Working Group for Renaming Diabetes Insipidus"
+    type: paper
+    citation: "Arima H et al. The Journal of clinical endocrinology and metabolism 2022. doi:10.1210/clinem/dgac547"
+    url: https://europepmc.org/article/PMC/PMC9759163
+    location: text_data/sources/raw/europepmc/PMC9759163.xml
+    published: "2022"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-AUSTRIA-HYPONATREMIA-2024
+    title: "[Consensus recommendations on the diagnosis and treatment of hyponatremia from the Austrian Society for Nephrology 2024]"
+    type: paper
+    citation: "Schwarz C et al. Wiener klinische Wochenschrift 2024. doi:10.1007/s00508-024-02325-5"
+    url: https://europepmc.org/article/PMC/PMC10904443
+    location: text_data/sources/raw/europepmc/PMC10904443.xml
+    published: "2024"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-ADRENAL-INSUFFICIENCY-CRISIS-2021
+    title: "Therapy options for adrenal insufficiency and recommendations for the management of adrenal crisis"
+    type: paper
+    citation: "Nowotny H et al. Endocrine 2021. doi:10.1007/s12020-021-02649-6"
+    url: https://europepmc.org/article/PMC/PMC7929907
+    location: text_data/sources/raw/europepmc/PMC7929907.xml
+    published: "2021"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-ADRENAL-INCIDENTALOMA-2020
+    title: "Adrenal Incidentaloma"
+    type: paper
+    citation: "Sherlock M et al. Endocrine reviews 2020. doi:10.1210/endrev/bnaa008"
+    url: https://europepmc.org/article/PMC/PMC7431180
+    location: text_data/sources/raw/europepmc/PMC7431180.xml
+    published: "2020"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-KSH-HTN-2018-DX
+    title: "2018 Korean Society of Hypertension Guidelines for the management of hypertension: part II-diagnosis and treatment of hypertension"
+    type: paper
+    citation: "Lee HY et al. Clinical hypertension 2019. doi:10.1186/s40885-019-0124-x"
+    url: https://europepmc.org/article/PMC/PMC6670135
+    location: text_data/sources/raw/europepmc/PMC6670135.xml
+    published: "2019"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: KR
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-KSH-HTN-2022-UPDATE
+    title: "The 2022 focused update of the 2018 Korean Hypertension Society Guidelines for the management of hypertension"
+    type: paper
+    citation: "Kim HL et al. Clinical hypertension 2023. doi:10.1186/s40885-023-00234-9"
+    url: https://europepmc.org/article/PMC/PMC9930285
+    location: text_data/sources/raw/europepmc/PMC9930285.xml
+    published: "2023"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: KR
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-HYPOPARA-CONSENSUS-2019
+    title: "Standards of care for hypoparathyroidism in adults: a Canadian and International Consensus"
+    type: paper
+    citation: "Khan AA et al. European journal of endocrinology 2019. doi:10.1530/eje-18-0609"
+    url: https://europepmc.org/article/PMC/PMC6365672
+    location: text_data/sources/raw/europepmc/PMC6365672.xml
+    published: "2019"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-HYPOPARA-CONSENSUS-2025
+    title: "Consensus-Based Recommendations for the Diagnosis, Treatment, and Monitoring of Hypoparathyroidism: Insights from the DACH Region"
+    type: paper
+    citation: "Tsourdi E et al. Calcified tissue international 2025. doi:10.1007/s00223-025-01414-5"
+    url: https://europepmc.org/article/PMC/PMC12343711
+    location: text_data/sources/raw/europepmc/PMC12343711.xml
+    published: "2025"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-PHPT-REVIEW-2021
+    title: "Primary Hyperparathyroidism: A Narrative Review of Diagnosis and Medical Management"
+    type: paper
+    citation: "Dandurand K et al. Journal of clinical medicine 2021. doi:10.3390/jcm10081604"
+    url: https://europepmc.org/article/PMC/PMC8068862
+    location: text_data/sources/raw/europepmc/PMC8068862.xml
+    published: "2021"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: OPENFDA-TOLVAPTAN
+    title: "openFDA SPL — SAMSCA (tolvaptan) (set_id 5526617c-c7b9-4556-886d-729bbabbc566, v23, 2026-05-07)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=5526617c-c7b9-4556-886d-729bbabbc566
+    location: text_data/sources/raw/openfda/tolvaptan-samsca.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-CABERGOLINE
+    title: "openFDA SPL — cabergoline tablets (set_id e497366b-a124-4d7f-bd45-a883c392d4bb, v12, 2026-06-30)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=e497366b-a124-4d7f-bd45-a883c392d4bb
+    location: text_data/sources/raw/openfda/cabergoline.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-CINACALCET
+    title: "openFDA SPL — SENSIPAR (cinacalcet) (set_id 45028573-13c4-4c8b-ae62-6c75bba97c81, v136, 2025-12-07)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=45028573-13c4-4c8b-ae62-6c75bba97c81
+    location: text_data/sources/raw/openfda/cinacalcet-sensipar.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-HYDROCORTISONE-IV
+    title: "openFDA SPL — SOLU-CORTEF (hydrocortisone sodium succinate injection, ProPharma 재포장) (set_id 386942d3-c75f-25f1-e063-6394a90a5af2, v2, 2025-07-18)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=386942d3-c75f-25f1-e063-6394a90a5af2
+    location: text_data/sources/raw/openfda/hydrocortisone-solucortef.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-FLUDROCORTISONE
+    title: "openFDA SPL — fludrocortisone acetate tablets (set_id 933e28ef-05e8-419e-a786-21eab67f33a2, v3, 2026-06-24)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=933e28ef-05e8-419e-a786-21eab67f33a2
+    location: text_data/sources/raw/openfda/fludrocortisone.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-DESMOPRESSIN-ORAL
+    title: "openFDA SPL — DDAVP tablets (desmopressin) (set_id 6d55baa9-2b62-469c-93ae-3909ab249332, v7, 2021-02-03)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=6d55baa9-2b62-469c-93ae-3909ab249332
+    location: text_data/sources/raw/openfda/desmopressin-ddavp-tab.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-OSILODROSTAT
+    title: "openFDA SPL — ISTURISA (osilodrostat) (set_id f3a5ec24-63c3-4d83-b1c0-6c550fbe7ae2, v10, 2025-11-18)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=f3a5ec24-63c3-4d83-b1c0-6c550fbe7ae2
+    location: text_data/sources/raw/openfda/osilodrostat-isturisa.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-ZOLEDRONIC-HCM
+    title: "openFDA SPL — zoledronic acid injection 4 mg (hypercalcemia of malignancy) (set_id 46c3a880-3723-45cf-979e-57ef6391662e, v4, 2026-02-06)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=46c3a880-3723-45cf-979e-57ef6391662e
+    location: text_data/sources/raw/openfda/zoledronic-4mg.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: PAPER-CANADA-EOE-ADULT-2025
+    title: "Recommendations for the diagnosis and management of eosinophilic esophagitis in adults and children in Canada: a Delphi consensus project"
+    type: paper
+    citation: "Avinashi V et al. Allergy, asthma, and clinical immunology : official journal of the Canadian Society of Allergy and Clinical Immunology 2025. doi:10.1186/s13223-025-00993-0"
+    url: https://europepmc.org/article/PMC/PMC12595650
+    location: text_data/sources/raw/europepmc/PMC12595650.xml
+    published: "2025"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-KIDNEY-STONE-GUIDELINES-2024
+    title: "Urological Guidelines for Kidney Stones: Overview and Comprehensive Update"
+    type: paper
+    citation: "Akram M et al. Journal of clinical medicine 2024. doi:10.3390/jcm13041114"
+    url: https://europepmc.org/article/PMC/PMC10889283
+    location: text_data/sources/raw/europepmc/PMC10889283.xml
+    published: "2024"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-JSGE-IBS-2020
+    title: "Evidence-based clinical practice guidelines for irritable bowel syndrome 2020"
+    type: paper
+    citation: "Fukudo S et al. Journal of gastroenterology 2021. doi:10.1007/s00535-020-01746-z"
+    url: https://europepmc.org/article/PMC/PMC7932982
+    location: text_data/sources/raw/europepmc/PMC7932982.xml
+    published: "2021"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-WSES-DIVERTICULITIS-2020
+    title: "2020 update of the WSES guidelines for the management of acute colonic diverticulitis in the emergency setting"
+    type: paper
+    citation: "Sartelli M et al. World journal of emergency surgery : WJES 2020. doi:10.1186/s13017-020-00313-4"
+    url: https://europepmc.org/article/PMC/PMC7206757
+    location: text_data/sources/raw/europepmc/PMC7206757.xml
+    published: "2020"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-WSES-APPENDICITIS-2020
+    title: "Diagnosis and treatment of acute appendicitis: 2020 update of the WSES Jerusalem guidelines"
+    type: paper
+    citation: "Di Saverio S et al. World journal of emergency surgery : WJES 2020. doi:10.1186/s13017-020-00306-3"
+    url: https://europepmc.org/article/PMC/PMC7386163
+    location: text_data/sources/raw/europepmc/PMC7386163.xml
+    published: "2020"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-WSES-SBO-2021
+    title: "Diagnosis and management of small bowel obstruction in virgin abdomen: a WSES position paper"
+    type: paper
+    citation: "Amara Y et al. World journal of emergency surgery : WJES 2021. doi:10.1186/s13017-021-00379-8"
+    url: https://europepmc.org/article/PMC/PMC8254282
+    location: text_data/sources/raw/europepmc/PMC8254282.xml
+    published: "2021"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-ACIP-HEPA-2020
+    title: "Prevention of Hepatitis A Virus Infection in the United States: Recommendations of the Advisory Committee on Immunization Practices, 2020"
+    type: paper
+    citation: "Nelson NP et al. MMWR. Recommendations and reports : Morbidity and mortality weekly report. Recommendations and reports 2020. doi:10.15585/mmwr.rr6905a1"
+    url: https://europepmc.org/article/PMC/PMC8631741
+    location: text_data/sources/raw/europepmc/PMC8631741.xml
+    published: "2020"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-ACIP-HEPB-2018
+    title: "Prevention of Hepatitis B Virus Infection in the United States: Recommendations of the Advisory Committee on Immunization Practices"
+    type: paper
+    citation: "Schillie S et al. MMWR. Recommendations and reports : Morbidity and mortality weekly report. Recommendations and reports 2018. doi:10.15585/mmwr.rr6701a1"
+    url: https://europepmc.org/article/PMC/PMC5837403
+    location: text_data/sources/raw/europepmc/PMC5837403.xml
+    published: "2018"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-WSES-CHOLECYSTITIS-2020
+    title: "2020 World Society of Emergency Surgery updated guidelines for the diagnosis and treatment of acute calculus cholecystitis"
+    type: paper
+    citation: "Pisano M et al. World journal of emergency surgery : WJES 2020. doi:10.1186/s13017-020-00336-x"
+    url: https://europepmc.org/article/PMC/PMC7643471
+    location: text_data/sources/raw/europepmc/PMC7643471.xml
+    published: "2020"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-WSES-PANCREATITIS-2019
+    title: "2019 WSES guidelines for the management of severe acute pancreatitis"
+    type: paper
+    citation: "Leppäniemi A et al. World journal of emergency surgery : WJES 2019. doi:10.1186/s13017-019-0247-0"
+    url: https://europepmc.org/article/PMC/PMC6567462
+    location: text_data/sources/raw/europepmc/PMC6567462.xml
+    published: "2019"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-JSGE-CHRONIC-PANCREATITIS-2021
+    title: "Evidence-based clinical practice guidelines for chronic pancreatitis 2021"
+    type: paper
+    citation: "Shimizu K et al. Journal of gastroenterology 2022. doi:10.1007/s00535-022-01911-6"
+    url: https://europepmc.org/article/PMC/PMC9522716
+    location: text_data/sources/raw/europepmc/PMC9522716.xml
+    published: "2022"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-GERMAN-ANAPHYLAXIS-2021
+    title: "Guideline (S2k) on acute therapy and management of anaphylaxis: 2021 update: S2k-Guideline of the German Society for Allergology and Clinical Immunology (DGAKI), the Medical Association of German Allergologists (AeDA), the Society of Pediatric Allergology and Environmental Medicine (GPA), the German Academy of Allergology and Environmental Medicine (DAAU), the German Professional Association of Pediatricians (BVKJ), the Society for Neonatology and Pediatric Intensive Care (GNPI), the German Society of Dermatology (DDG), the Austrian Society for Allergology and Immunology (ÖGAI), the Swiss Society for Allergy and Immunology (SGAI), the German Society of Anaesthesiology and Intensive Care Medicine (DGAI), the German Society of Pharmacology (DGP), the German Respiratory Society (DGP), the patient organization German Allergy and Asthma Association (DAAB), the German Working Group of Anaphylaxis Training and Education (AGATE)"
+    type: paper
+    citation: "Ring J et al. Allergo journal international 2021. doi:10.1007/s40629-020-00158-y"
+    url: https://europepmc.org/article/PMC/PMC7841027
+    location: text_data/sources/raw/europepmc/PMC7841027.xml
+    published: "2021"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: CDC-OPIOID-PRESCRIBING-2022
+    title: "CDC Clinical Practice Guideline for Prescribing Opioids for Pain — United States, 2022"
+    type: guideline
+    citation: "Dowell D et al. MMWR Recomm Rep 2022;71(No. RR-3):1–95"
+    url: https://www.cdc.gov/mmwr/volumes/71/rr/rr7103a1.htm
+    location: text_data/sources/raw/cdc/rr7103a1.htm
+    published: "2022-11-04"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: CDC 저작물(퍼블릭 도메인, CDC 'Use of Agency Materials'). 본문 내 제3자 자료 제외.
+
+  - id: CDC-ACIP-HEPB-UNIVERSAL-2022
+    title: "Universal Hepatitis B Vaccination in Adults Aged 19–59 Years: Updated Recommendations of the ACIP — United States, 2022"
+    type: guideline
+    citation: "Weng MK et al. MMWR 2022;71(13):477–483"
+    url: https://www.cdc.gov/mmwr/volumes/71/wr/mm7113a1.htm
+    location: text_data/sources/raw/cdc/mm7113a1.htm
+    published: "2022-04-01"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: CDC 저작물(퍼블릭 도메인, CDC 'Use of Agency Materials'). 본문 내 제3자 자료 제외.
+
+  - id: OPENFDA-EPINEPHRINE-EPIPEN
+    title: "openFDA SPL — EPIPEN (epinephrine auto-injector) (set_id 311af6d9-20c0-4b87-b236-4185bfa49988, v1, 2023-08-29)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=311af6d9-20c0-4b87-b236-4185bfa49988
+    location: text_data/sources/raw/openfda/epinephrine-epipen.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-NALOXONE-NASAL
+    title: "openFDA SPL — NARCAN (naloxone nasal spray) (set_id a0ebc83d-2892-40de-bc0a-775ce90b30db, v4, 2026-08-17)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=a0ebc83d-2892-40de-bc0a-775ce90b30db
+    location: text_data/sources/raw/openfda/naloxone-narcan.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-TAMSULOSIN
+    title: "openFDA SPL — tamsulosin capsules (set_id f8302a6e-b8da-4931-a279-b49e37943816, v4, 2026-09-01)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=f8302a6e-b8da-4931-a279-b49e37943816
+    location: text_data/sources/raw/openfda/tamsulosin.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-EPINEPHRINE-NEFFY
+    title: "openFDA SPL — NEFFY (epinephrine nasal spray) (set_id 2052f9db-7d76-443b-b702-b6b499f9a4b8, v2, 2026-04-24)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2052f9db-7d76-443b-b702-b6b499f9a4b8
+    location: text_data/sources/raw/openfda/epinephrine-neffy.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: OPENFDA-BUPRENORPHINE-NALOXONE
+    title: "openFDA SPL — buprenorphine and naloxone sublingual (set_id 58d2c995-c0cf-a007-e063-6394a90a3f77, v1, 2026-08-12)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=58d2c995-c0cf-a007-e063-6394a90a3f77
+    location: text_data/sources/raw/openfda/buprenorphine-naloxone.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: PAPER-ANCA-GN-NDT-2023
+    title: "Management of antineutrophil cytoplasmic antibody-associated vasculitis with glomerulonephritis as proposed by the ACR 2021, EULAR 2022 and KDIGO 2021 guidelines/recommendations"
+    type: paper
+    citation: "Casal Moura M et al. Nephrology, dialysis, transplantation : official publication of the European Dialysis and Transplant Association - European Renal Association 2023. doi:10.1093/ndt/gfad090"
+    url: https://europepmc.org/article/PMC/PMC10615627
+    location: text_data/sources/raw/europepmc/PMC10615627.xml
+    published: "2023"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-NORWAY-GCA-2022
+    title: "Norwegian society of rheumatology recommendations on diagnosis and treatment of patients with giant cell arteritis"
+    type: paper
+    citation: "Haaversen AB et al. Frontiers in medicine 2022. doi:10.3389/fmed.2022.1082604"
+    url: https://europepmc.org/article/PMC/PMC9853546
+    location: text_data/sources/raw/europepmc/PMC9853546.xml
+    published: "2022"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-PPGL-MANAGEMENT-2019
+    title: "Current Management of Pheochromocytoma/Paraganglioma: A Guide for the Practicing Clinician in the Era of Precision Medicine"
+    type: paper
+    citation: "Nölting S et al. Cancers 2019. doi:10.3390/cancers11101505"
+    url: https://europepmc.org/article/PMC/PMC6827093
+    location: text_data/sources/raw/europepmc/PMC6827093.xml
+    published: "2019"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-PPGL-PREOP-2020
+    title: "Preoperative Management of Pheochromocytoma and Paraganglioma"
+    type: paper
+    citation: "Fang F et al. Frontiers in endocrinology 2020. doi:10.3389/fendo.2020.586795"
+    url: https://europepmc.org/article/PMC/PMC7551102
+    location: text_data/sources/raw/europepmc/PMC7551102.xml
+    published: "2020"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-MS-RELAPSE-2021
+    title: "Recommendations for the Diagnosis and Treatment of Multiple Sclerosis Relapses"
+    type: paper
+    citation: "Ramo-Tello C et al. Journal of personalized medicine 2021. doi:10.3390/jpm12010006"
+    url: https://europepmc.org/article/PMC/PMC8780774
+    location: text_data/sources/raw/europepmc/PMC8780774.xml
+    published: "2021"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-DGN-MS-POSITION-2021
+    title: "Controversy on the treatment of multiple sclerosis and related disorders: positional statement of the expert panel in charge of the 2021 DGN Guideline on diagnosis and treatment of multiple sclerosis, neuromyelitis optica spectrum diseases and MOG-IgG-associated disorders"
+    type: paper
+    citation: "Bayas A et al. Neurological research and practice 2021. doi:10.1186/s42466-021-00139-8"
+    url: https://europepmc.org/article/PMC/PMC8343915
+    location: text_data/sources/raw/europepmc/PMC8343915.xml
+    published: "2021"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-BELGIUM-MG-2024
+    title: "Recommendations for the management of myasthenia gravis in Belgium"
+    type: paper
+    citation: "De Bleecker JL et al. Acta neurologica Belgica 2024. doi:10.1007/s13760-024-02552-7"
+    url: https://europepmc.org/article/PMC/PMC11266451
+    location: text_data/sources/raw/europepmc/PMC11266451.xml
+    published: "2024"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: OPENFDA-TESTOSTERONE-CYPIONATE
+    title: "openFDA SPL — testosterone cypionate injection (set_id cfbb53d4-b868-4a28-8436-f9112eb01c39, v26, 2026-08-21)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=cfbb53d4-b868-4a28-8436-f9112eb01c39
+    location: text_data/sources/raw/openfda/testosterone-cypionate.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: PAPER-TAIWAN-AXSPA-2020
+    title: "Taiwan Rheumatology Association consensus recommendations for the management of axial spondyloarthritis"
+    type: paper
+    citation: "Wei JC et al. International journal of rheumatic diseases 2020. doi:10.1111/1756-185x.13752"
+    url: https://europepmc.org/article/PMC/PMC7004149
+    location: text_data/sources/raw/europepmc/PMC7004149.xml
+    published: "2020"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: OPENFDA-LEVOFLOXACIN
+    title: "openFDA SPL — levofloxacin tablets (set_id 5a65b2bc-9edc-f193-e063-6394a90a0104, v1, 2026-09-01)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=5a65b2bc-9edc-f193-e063-6394a90a0104
+    location: text_data/sources/raw/openfda/levofloxacin.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: PAPER-FRENCH-SSC-2021
+    title: "French recommendations for the management of systemic sclerosis"
+    type: paper
+    citation: "Hachulla E et al. Orphanet journal of rare diseases 2021. doi:10.1186/s13023-021-01844-y"
+    url: https://europepmc.org/article/PMC/PMC8310704
+    location: text_data/sources/raw/europepmc/PMC8310704.xml
+    published: "2021"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-BSR-SJOGREN-2025
+    title: "British Society for Rheumatology guideline on management of adult and juvenile onset Sjögren disease"
+    type: paper
+    citation: "Price EJ et al. Rheumatology (Oxford, England) 2025. doi:10.1093/rheumatology/keae152"
+    url: https://europepmc.org/article/PMC/PMC12013823
+    location: text_data/sources/raw/europepmc/PMC12013823.xml
+    published: "2025"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-APASL-HEMOCHROMATOSIS-2023
+    title: "Clinical practice guidelines on hemochromatosis: Asian Pacific Association for the Study of the Liver"
+    type: paper
+    citation: "Crawford DHG et al. Hepatology international 2023. doi:10.1007/s12072-023-10510-3"
+    url: https://europepmc.org/article/PMC/PMC10224841
+    location: text_data/sources/raw/europepmc/PMC10224841.xml
+    published: "2023"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-WILSON-REVIEW-2022
+    title: "Wilson Disease: Update on Pathophysiology and Treatment"
+    type: paper
+    citation: "Dev S et al. Frontiers in cell and developmental biology 2022. doi:10.3389/fcell.2022.871877"
+    url: https://europepmc.org/article/PMC/PMC9108485
+    location: text_data/sources/raw/europepmc/PMC9108485.xml
+    published: "2022"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-IRAN-ALS-2023
+    title: "Iranian clinical practice guideline for amyotrophic lateral sclerosis"
+    type: paper
+    citation: "Boostani R et al. Frontiers in neurology 2023. doi:10.3389/fneur.2023.1154579"
+    url: https://europepmc.org/article/PMC/PMC10272856
+    location: text_data/sources/raw/europepmc/PMC10272856.xml
+    published: "2023"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-ESID-COMPLEMENT-2020
+    title: "European Society for Immunodeficiencies (ESID) and European Reference Network on Rare Primary Immunodeficiency, Autoinflammatory and Autoimmune Diseases (ERN RITA) Complement Guideline: Deficiencies, Diagnosis, and Management"
+    type: paper
+    citation: "Brodszki N et al. Journal of clinical immunology 2020. doi:10.1007/s10875-020-00754-1"
+    url: https://europepmc.org/article/PMC/PMC7253377
+    location: text_data/sources/raw/europepmc/PMC7253377.xml
+    published: "2020"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-AUD-CLD-2023
+    title: "Management of alcohol use disorder in patients with chronic liver disease"
+    type: paper
+    citation: "Mellinger JL et al. Hepatology communications 2023. doi:10.1097/hc9.0000000000000145"
+    url: https://europepmc.org/article/PMC/PMC10270526
+    location: text_data/sources/raw/europepmc/PMC10270526.xml
+    published: "2023"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-AWS-ALD-2024
+    title: "Management of alcohol withdrawal syndrome in patients with alcohol-associated liver disease"
+    type: paper
+    citation: "Ratner JA et al. Hepatology communications 2024. doi:10.1097/hc9.0000000000000372"
+    url: https://europepmc.org/article/PMC/PMC10805424
+    location: text_data/sources/raw/europepmc/PMC10805424.xml
+    published: "2024"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: OPENFDA-TRIENTINE
+    title: "openFDA SPL — trientine hydrochloride capsules (set_id f33c1322-f7c0-4684-afc8-8caa3f4023dc, v6, 2025-10-31)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=f33c1322-f7c0-4684-afc8-8caa3f4023dc
+    location: text_data/sources/raw/openfda/trientine.json
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  - id: PAPER-GC-ALCOHOLIC-HEPATITIS-2022
+    title: "Narrative Review: Glucocorticoids in Alcoholic Hepatitis-Benefits, Side Effects, and Mechanisms"
+    type: paper
+    citation: "Lu H. et al. Journal of xenobiotics 2022. doi:10.3390/jox12040019"
+    url: https://europepmc.org/article/PMC/PMC9589945
+    location: text_data/sources/raw/europepmc/PMC9589945.xml
+    published: "2022"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-WILSON-DPEN-ZINC-SR-2022
+    title: "Comparison of the Effectiveness and Safety of d-Penicillamine and Zinc Salt Treatment for Symptomatic Wilson Disease: A Systematic Review and Meta-Analysis"
+    type: paper
+    citation: "Tang S et al. Frontiers in pharmacology 2022. doi:10.3389/fphar.2022.847436"
+    url: https://europepmc.org/article/PMC/PMC8975209
+    location: text_data/sources/raw/europepmc/PMC8975209.xml
+    published: "2022"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-UNIVERSAL-HF-DEFINITION-2022
+    title: "Clinical implications of the universal definition for the prevention and treatment of heart failure"
+    type: paper
+    citation: "Chandramouli C et al. Clinical cardiology 2022. doi:10.1002/clc.23842"
+    url: https://europepmc.org/article/PMC/PMC9254673
+    location: text_data/sources/raw/europepmc/PMC9254673.xml
+    published: "2022"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-AUSTRIA-HF-IRON-2025
+    title: "Diagnosis and treatment of iron deficiency in chronic heart failure : Position statement of the heart failure working group of the Austrian Society of Cardiology"
+    type: paper
+    citation: "Messner M et al. Wiener klinische Wochenschrift 2025. doi:10.1007/s00508-025-02521-x"
+    url: https://europepmc.org/article/PMC/PMC12055910
+    location: text_data/sources/raw/europepmc/PMC12055910.xml
+    published: "2025"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-ESC-AF-2024-SPOTLIGHT
+    title: "Spotlight on the 2024 ESC/EACTS management of atrial fibrillation guidelines: 10 novel key aspects"
+    type: paper
+    citation: "Rienstra M et al. Europace : European pacing, arrhythmias, and cardiac electrophysiology : journal of the working groups on cardiac pacing, arrhythmias, and cardiac cellular electrophysiology of the European Society of Cardiology 2024. doi:10.1093/europace/euae298"
+    url: https://europepmc.org/article/PMC/PMC11666470
+    location: text_data/sources/raw/europepmc/PMC11666470.xml
+    published: "2024"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  # ───────────── A: 국내 법령·고시(저작권법 제7조 비보호 저작물) — 2026-11-11 원문 확인 ─────────────
+  - id: KR-CANCER-ACT-DECREE-ANNEX1
+    title: "암관리법 시행령 [별표 1] 암의 종류별 검진주기와 연령 기준 등"
+    type: regulation
+    url: https://www.law.go.kr/법령/암관리법시행령
+    location: "text_data/sources/raw/kr/2024_국가암검진사업안내.pdf (부록 5, 별표 1 전재)"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: KR
+    license_basis: "저작권법 제7조 제1호(법령)에 따라 보호받지 못하는 저작물 — 출처 표시 후 자유 이용. 국가법령정보센터 원문은 스크립트 화면이라 보건복지부·국립암센터 「2024년 국가 암검진 사업안내」 부록 5의 별표 1 전재본으로 조문을 확인 — 이후 개정 여부는 국가법령정보센터에서 재확인 필요."
+
+  - id: KR-CANCER-SCREENING-NOTICE-2026
+    title: "암검진 실시기준 (보건복지부고시 제2025-220호, 2026. 1. 1. 시행) [별표 1] 암검진 검사항목·대상자·검사방법"
+    type: regulation
+    url: https://www.law.go.kr/LSW/flDownload.do?flSeq=161022281
+    location: text_data/sources/raw/kr/암검진실시기준_고시_2026-01-01시행.pdf
+    published: "2026-01-01"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: KR
+    license_basis: "저작권법 제7조 제2호(국가의 고시)에 따라 보호받지 못하는 저작물 — 출처 표시 후 자유 이용."
+
+  - id: KR-HEALTH-SCREENING-NOTICE-2026
+    title: "건강검진 실시기준 (보건복지부고시 제2026-6호) [별표 4의 별첨] 검사항목별 판정기준"
+    type: regulation
+    url: https://www.law.go.kr/LSW/flDownload.do?flSeq=160753137
+    location: text_data/sources/raw/kr/건강검진실시기준_고시_2026개정.pdf
+    published: "2026"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: KR
+    license_basis: "저작권법 제7조 제2호(국가의 고시)에 따라 보호받지 못하는 저작물 — 출처 표시 후 자유 이용."
+
+  - id: KR-HIRA-DUR-2026-06
+    title: "건강보험심사평가원_의약품안전사용서비스(DUR) 의약품 목록 (2026.6) — 병용금기·연령금기·임부금기·노인주의 품목리스트"
+    type: dataset
+    url: https://www.data.go.kr/data/15127983/fileData.do
+    location: "dur/*.csv → data/dur.sqlite (ax-g-ai-dur-db)"
+    published: "2026-06-12"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: KR
+    license_basis: "공공데이터포털 이용허락범위 '공공저작물: 출처표시(공공누리 제1유형)' — 출처 표시 후 상업 이용·변경 가능. 말뭉치가 아니라 처방 점검(services/dur_check.py)에서 직접 쓴다. 용량주의·투여기간주의 목록은 용량 단계에서 다룬다."
+
+  - id: KR-NIP-NOTICE-2026
+    title: "예방접종의 실시기준 및 방법 (질병관리청고시 제2026-13호, 2026. 10. 1. 시행) [별표 1] 국가예방접종 대상 및 표준접종시기"
+    type: regulation
+    url: https://nip.kdca.go.kr/irhp/infm/goVcntInfo.do?menuLv=1&menuCd=162
+    location: "text_data/sources/raw/kr/2026_국가예방접종지침_보건소용.pdf (부록 168–173쪽 고시 전재)"
+    published: "2026-10-01"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: KR
+    license_basis: "저작권법 제7조 제2호(국가의 고시)에 따라 보호받지 못하는 저작물 — 출처 표시 후 자유 이용. 고시 조문은 질병관리청 「2026년 국가예방접종 지침」 부록 전재본으로 확인(지침 본문은 고시가 아니므로 인용하지 않음)."
+
+  - id: KR-TB-ACT-ART11
+    title: "결핵예방법 제11조 제1항 — 결핵·잠복결핵감염 검진 의무기관"
+    type: regulation
+    url: https://www.law.go.kr/법령/결핵예방법
+    location: "text_data/sources/raw/kr/질병관리청_보도참고자료_결핵예방법_2026-10-01.pdf ([참고] 법 제11조 제1항 인용)"
+    published: "2026-10-01"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: KR
+    license_basis: "저작권법 제7조 제1호(법령)에 따라 보호받지 못하는 저작물 — 출처 표시 후 자유 이용. 조문은 질병관리청 보도참고자료(2026-10-01)의 인용으로 확인 — 같은 자료의 '의학적 고위험군' 안내는 법령이 아니어서 인용하지 않음."
+
+  - id: NHLBI-ATP3-2002
+    title: "Third Report of the NCEP Expert Panel on Detection, Evaluation, and Treatment of High Blood Cholesterol in Adults (ATP III) Final Report (NIH Publication No. 02-5215)"
+    type: guideline
+    url: https://www.nhlbi.nih.gov/sites/default/files/publications/02-5215.pdf
+    published: "2002-09"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: US
+    license_basis: "미국 국립보건원(NIH/NHLBI) 저작물(17 U.S.C. §105)."
+
+  - id: NIAAA-CORE-ALCOHOL-2025
+    title: "NIAAA Core Resource on Alcohol — The Basics: Defining How Much Alcohol is Too Much"
+    type: reference
+    url: https://www.niaaa.nih.gov/health-professionals-communities/core-resource-on-alcohol/basics-defining-how-much-alcohol-too-much
+    published: "2025-05-08"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: US
+    license_basis: "미국 국립보건원(NIH/NIAAA) 저작물(17 U.S.C. §105)."
+
+  # ───────────── A: 보충 장(19판 원문 범위 밖) 출처 — 2026-11-11 원문 확인 ─────────────
+  - id: VADOD-HTN-2026
+    title: "VA/DoD Clinical Practice Guideline for the Diagnosis and Treatment of Hypertension in Primary Care (2026)"
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/CD/htn/HTN-CPG_2026-Guideline_final_20261027.pdf
+    published: "2026-08"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: US
+    license_basis: "미국 연방정부 저작물(17 U.S.C. §105). 문서에 저작권 표시 없음. 제3자 재수록 그림·표는 제외."
+
+  - id: VADOD-COPD-2026
+    title: "VA/DoD Clinical Practice Guideline for the Management of Chronic Obstructive Pulmonary Disease (2026)"
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/CD/copd/COPD-CPG_2026-CPG_final_20261007.pdf
+    published: "2026-09"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: US
+    license_basis: "미국 연방정부 저작물(17 U.S.C. §105). 문서에 저작권 표시 없음. 제3자 재수록 그림·표는 제외."
+
+  - id: VADOD-ASTHMA-2025
+    title: "VA/DoD Clinical Practice Guideline for the Primary Care Management of Asthma (2025)"
+    type: guideline
+    url: https://www.healthquality.va.gov/HEALTHQUALITY/guidelines/CD/asthma/Asthma-CPG_2025-Guideline_final_20250528.pdf
+    published: "2025-03"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: US
+    license_basis: "미국 연방정부 저작물(17 U.S.C. §105). 문서에 저작권 표시 없음. 제3자 재수록 그림·표는 제외."
+
+  - id: CDC-STI-SCREENING-2021
+    title: "CDC — STI Treatment Guidelines, 2021: Screening Recommendations and Considerations"
+    type: guideline
+    url: https://www.cdc.gov/std/treatment-guidelines/screening-recommendations.htm
+    published: "2024-03-22"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: US
+    license_basis: "미국 질병통제예방센터(CDC) 저작물 — 퍼블릭 도메인(17 U.S.C. §105). 2021 STI 치료 지침(MMWR RR-70(4))의 선별 권고 요약 페이지(최종 검토 2024-03-22). 일부 행은 USPSTF 권고를 재수록 — USPSTF 원문은 인용하지 않음."
+
+  - id: CDC-TB-TESTING-2025
+    title: "CDC — Clinical Testing and Diagnosis for Tuberculosis"
+    type: reference
+    url: https://www.cdc.gov/tb/hcp/testing-diagnosis/index.html
+    published: "2025-04-17"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: US
+    license_basis: "미국 질병통제예방센터(CDC) 저작물 — 퍼블릭 도메인(17 U.S.C. §105)."
+
+  - id: CDC-CRC-SCREENING
+    title: "CDC — Screening for Colorectal Cancer"
+    type: reference
+    url: https://www.cdc.gov/colorectal-cancer/screening/index.html
+    published: "2026-06-17"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: US
+    license_basis: "미국 질병통제예방센터(CDC) 저작물 — 퍼블릭 도메인(17 U.S.C. §105). 본문이 USPSTF 권고를 재수록하지만 USPSTF 원문(C등급)은 인용하지 않고 CDC 문장·사실만 사용."
+
+  - id: CDC-LUNG-SCREENING
+    title: "CDC — Screening for Lung Cancer"
+    type: reference
+    url: https://www.cdc.gov/lung-cancer/screening/index.html
+    published: "2026-05-12"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: US
+    license_basis: "미국 질병통제예방센터(CDC) 저작물 — 퍼블릭 도메인(17 U.S.C. §105). 본문이 USPSTF 권고를 재수록하지만 USPSTF 원문(C등급)은 인용하지 않고 CDC 문장·사실만 사용."
+
+  - id: CDC-BREAST-SCREENING
+    title: "CDC — Screening for Breast Cancer"
+    type: reference
+    url: https://www.cdc.gov/breast-cancer/screening/index.html
+    published: "2026-09-22"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: US
+    license_basis: "미국 질병통제예방센터(CDC) 저작물 — 퍼블릭 도메인(17 U.S.C. §105). 본문이 USPSTF 권고를 재수록하지만 USPSTF 원문(C등급)은 인용하지 않고 CDC 문장·사실만 사용."
+
+  - id: CDC-CERVICAL-SCREENING
+    title: "CDC — Screening for Cervical Cancer"
+    type: reference
+    url: https://www.cdc.gov/cervical-cancer/screening/index.html
+    published: "2025-02-26"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: US
+    license_basis: "미국 질병통제예방센터(CDC) 저작물 — 퍼블릭 도메인(17 U.S.C. §105)."
+
+  - id: NCI-LUNG-SCREENING-HP
+    title: "National Cancer Institute — Lung Cancer Screening (Health Professional Version)"
+    type: reference
+    url: https://www.cancer.gov/types/lung/hp/lung-screening-pdq
+    published: "2025-04-17"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: US
+    license_basis: "미국 국립보건원(NIH) 산하 국립암연구소(NCI) 저작물 — 텍스트는 저작권 없음(17 U.S.C. §105), NCI를 출처로 표시. 발췌 사용이므로 PDQ 상표·NCI 로고는 쓰지 않음(cancer.gov/policies/copyright-reuse)."
+
+  - id: PAPER-ETA-THYROID-NODULE-2023
+    title: "2023 European Thyroid Association Clinical Practice Guidelines for thyroid nodule management"
+    type: paper
+    citation: "Durante C et al. European thyroid journal 2023. doi:10.1530/etj-23-0067"
+    url: https://europepmc.org/article/PMC/PMC10448590
+    location: text_data/sources/raw/europepmc/PMC10448590.xml
+    published: "2023"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: EU
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-APASL-AIH-2021
+    title: "The Asian Pacific Association for the Study of the Liver clinical practice guidance: the diagnosis and management of patients with autoimmune hepatitis"
+    type: paper
+    citation: "Wang G et al. Hepatology international 2021. doi:10.1007/s12072-021-10170-1"
+    url: https://europepmc.org/article/PMC/PMC8144150
+    location: text_data/sources/raw/europepmc/PMC8144150.xml
+    published: "2021"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: PAPER-HK-GOUT-2023
+    title: "The Hong Kong Society of Rheumatology consensus recommendations for the management of gout"
+    type: paper
+    citation: "Yip RM et al. Clinical rheumatology 2023. doi:10.1007/s10067-023-06578-9"
+    url: https://europepmc.org/article/PMC/PMC10345000
+    location: text_data/sources/raw/europepmc/PMC10345000.xml
+    published: "2023"
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: INTL
+    license_basis: "Europe PMC 표기 라이선스 CC BY — 출처 표시 시 상업 이용·변형 허용. 본문 내 제3자 그림·표는 별도 권리 확인."
+
+  - id: OPENFDA-CLOZAPINE
+    title: "openFDA SPL — VERSACLOZ (clozapine oral suspension) (set_id 2592c9a8-fd74-4e0d-a895-b07b014cf355, v7, 2026-09-06)"
+    type: label
+    url: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2592c9a8-fd74-4e0d-a895-b07b014cf355
+    location: text_data/sources/raw/openfda/clozapine.json
+    access: primary_text
+    checked_at: "2026-11-11"
+    ai_use: A
+    region: US
+    license_basis: openFDA CC0 1.0. 미국 허가사항 — 국내 허가와 다를 수 있음.
+
+  # ───────────── B: 비상업 조건 → 허가 필요 ─────────────
+  - id: KDIGO-ANEMIA-2026
+    title: KDIGO 2026 Clinical Practice Guideline for the Management of Anemia in CKD — Executive Summary
+    type: guideline
+    citation: Kidney Int. 2026;109:44–56. doi:10.1016/j.kint.2025.06.005
+    url: https://kdigo.org/wp-content/uploads/2026/01/KDIGO-2026-Anemia-in-CKD-Guideline-Executive-Summary.pdf
+    published: "2026-01"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: B
+    region: INTL
+    license_basis: CC BY-NC-ND 4.0 표기. 상업 이용·변형 불가. KDIGO가 지침 권리 보유 — 라이선스 문의 필요.
+
+  - id: KDIGO-CKD-2024
+    title: KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease
+    type: guideline
+    citation: Kidney Int. 2024;105(4S):S117–S314
+    url: https://kdigo.org/wp-content/uploads/2024/03/KDIGO-2024-CKD-Guideline.pdf
+    published: "2024-03"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: C
+    region: INTL
+    license_basis: KDIGO가 지침·출판물의 권리 보유(KDIGO FAQ). 재사용·변형은 KDIGO 라이선스 부서 문의 필요.
+    note: 2026-11 현재 3장 부분 개정 진행 중(KDIGO-CKD-UPDATE-NOTICE).
+
+  - id: ADA-KDIGO-DM-CKD-2022
+    title: "Diabetes management in CKD: a consensus report by ADA and KDIGO"
+    type: consensus
+    citation: Kidney Int. 2022;102:974–989. doi:10.1016/j.kint.2022.08.012
+    url: https://kdigo.org/wp-content/uploads/2023/04/Diabetes-Management-in-Chronic-Kidney-Disease-Consensus-Report-by-the-ADA-and-KDIGO.pdf
+    published: "2022"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: C
+    region: US
+    license_basis: KDIGO·ADA 권리. 허가 필요.
+
+  # ───────────── C: 별도 허가 필요 ─────────────
+  - id: HARRISON-19-KO
+    title: Harrison 내과학 19판 한국어판 (원서 Harrison's Principles of Internal Medicine, 19th ed., 2015)
+    type: textbook
+    published: "2015 (원서)"
+    location: text_data/by_chapter/
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: C
+    region: INTL
+    license_basis: 저작권 보호 교과서. AI 말뭉치에 원문·요지를 넣지 않는다(최신화 대조용으로만 사용).
+
+  - id: KDIGO-CKD-UPDATE-NOTICE
+    title: KDIGO announces update to 2024 CKD guideline (Chapter 3 focused update)
+    type: notice
+    url: https://kdigo.org/kdigo-announces-update-to-2024-ckd-guideline/
+    access: secondary
+    checked_at: "2026-11-10"
+    ai_use: C
+    region: INTL
+    license_basis: KDIGO 권리.
+
+  - id: KDIGO-DM-CKD-2026-DRAFT
+    title: KDIGO 2026 Clinical Practice Guideline for Diabetes and CKD — Public Review Draft
+    type: guideline_draft
+    url: https://kdigo.org/kdigo-2026-diabetes-and-ckd-guideline-draft-available-for-public-review/
+    published: "2026-03-24 (공개검토, 2026-04-13 마감)"
+    access: secondary
+    checked_at: "2026-11-10"
+    ai_use: C
+    region: INTL
+    license_basis: KDIGO 권리. 초안이므로 근거로도 쓰지 않음.
+
+  - id: ADA-SOC-2026-S6
+    title: "6. Glycemic Goals, Hypoglycemia, and Hyperglycemic Crises: Standards of Care in Diabetes—2026"
+    type: guideline
+    citation: Diabetes Care 2026;49(Suppl 1). doi:10.2337/dc26-S006
+    url: https://pmc.ncbi.nlm.nih.gov/articles/PMC12690178
+    published: "2025-12-08"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: C
+    region: US
+    license_basis: &ada_license ADA 표기 — 사전 서면 허가 없이 텍스트·데이터 마이닝, 머신러닝 및 유사 기술 사용 금지.
+
+  - id: ADA-SOC-2026-S9
+    title: "9. Pharmacologic Approaches to Glycemic Treatment: Standards of Care in Diabetes—2026"
+    type: guideline
+    citation: Diabetes Care 2026;49(Suppl 1):S183–S215. doi:10.2337/dc26-S009
+    url: https://pmc.ncbi.nlm.nih.gov/articles/PMC12690185
+    published: "2025-12-08"
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: C
+    region: US
+    license_basis: *ada_license
+
+  - id: ADA-SOC-2026-S10
+    title: "10. Cardiovascular Disease and Risk Management: Standards of Care in Diabetes—2026"
+    type: guideline
+    url: https://pmc.ncbi.nlm.nih.gov/articles/PMC12690187
+    published: "2025-12-08"
+    access: secondary
+    checked_at: "2026-11-10"
+    ai_use: C
+    region: US
+    license_basis: *ada_license
+    note: PMC 봇 검증으로 본문 접근 실패.
+
+  - id: ADA-SOC-2026-S12
+    title: "12. Retinopathy, Neuropathy, and Foot Care: Standards of Care in Diabetes—2026"
+    type: guideline
+    url: https://pmc.ncbi.nlm.nih.gov/articles/PMC12690177
+    published: "2025-12-08"
+    access: secondary
+    checked_at: "2026-11-10"
+    ai_use: C
+    region: US
+    license_basis: *ada_license
+    note: PMC 본문 접근 실패.
+
+  - id: ADA-SOC-2026-S16
+    title: "16. Diabetes Care in the Hospital: Standards of Care in Diabetes—2026"
+    type: guideline
+    citation: Diabetes Care 2026;49(Suppl 1):S339–S355. doi:10.2337/dc26-S016
+    url: https://pmc.ncbi.nlm.nih.gov/articles/PMC12690180
+    published: "2025-12-08"
+    access: secondary
+    checked_at: "2026-11-10"
+    ai_use: C
+    region: US
+    license_basis: *ada_license
+    note: 본문 접근 실패. 2025판 권고 16.5a/b와 2026 보도로 교차 확인.
+
+  - id: HG-CRISES-2024
+    title: "Hyperglycemic Crises in Adults With Diabetes: A Consensus Report"
+    type: consensus
+    citation: Umpierrez GE, et al. Diabetes Care 2024;47(8):1257–1275. doi:10.2337/dci24-0032
+    published: "2024-06"
+    access: secondary
+    checked_at: "2026-11-10"
+    ai_use: C
+    region: US
+    license_basis: *ada_license
+    note: 원문 대신 CCJM-HG-CRISES-2025 리뷰로 수치 확인.
+
+  - id: CCJM-HG-CRISES-2025
+    title: "Hyperglycemic crises in adults: A look at the 2024 consensus report"
+    type: review
+    citation: Cleve Clin J Med 2025;92(3):152
+    url: https://www.ccjm.org/content/92/3/152
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: C
+    region: US
+    license_basis: 학술지 저작권.
+
+  - id: NKF-CKDEPI-2021
+    title: NKF — CKD-EPI Creatinine Equation (2021)
+    type: reference
+    url: https://www.kidney.org/ckd-epi-creatinine-equation-2021-0
+    access: primary_text
+    checked_at: "2026-11-10"
+    ai_use: C
+    region: US
+    license_basis: NKF 웹사이트 저작권. 같은 식은 NIDDK-GFR-EQUATIONS(A)로 인용.
+
+  # ───────────── U: 이용 조건 미확인 ─────────────
+  - id: KDA-GUIDE-2025
+    title: 대한당뇨병학회 당뇨병 진료지침 제9판 (2025)
+    type: guideline
+    published: "2025-05"
+    url: https://www.diabetes.or.kr/
+    access: secondary
+    checked_at: "2026-11-10"
+    ai_use: U
+    region: KR
+    license_basis: 학회 저작물. 이용 조건 미확인. 원문 미확보(보도로만 확인).
+
+  - id: MFDS-LABEL-METFORMIN-IR-LOCAL
+    title: "메트포르민염산염 속방정 허가사항 (예: 엠폴민정500mg, KD 057600160)"
+    type: label
+    location: data/reference_data.sqlite medicines.kd_code=057600160
+    access: local_db
+    checked_at: "2026-11-10"
+    ai_use: U
+    region: KR
+    license_basis: >
+      medicine_dict.pkl 유래로 원 출처·발행일 미상. 2026-11-10 사용자 확인 결과 출처를 확인할 수 없어
+      AI 근거에서 제외(참고용 U 유지).
+    note: eGFR 45 미만 즉시 중단으로 기재 — 미국 라벨(30 미만 금기)과 다름.
+
+  - id: MFDS-LABEL-DAPAGLIFLOZIN-LOCAL
+    title: 다파글리플로진 허가사항 (포시가정10mg, KD 650700840)
+    type: label
+    location: data/reference_data.sqlite medicines.kd_code=650700840
+    access: local_db
+    checked_at: "2026-11-10"
+    ai_use: U
+    region: KR
+    license_basis: medicine_dict.pkl 유래, 원 출처 미상 — 2026-11-10 사용자 확인 결과 출처 미확인, AI 근거에서 제외(참고용 U 유지).
+
+  - id: MFDS-LABEL-EMPAGLIFLOZIN-LOCAL
+    title: 엠파글리플로진 허가사항 (자디앙정10mg, KD 653501460)
+    type: label
+    location: data/reference_data.sqlite medicines.kd_code=653501460
+    access: local_db
+    checked_at: "2026-11-10"
+    ai_use: U
+    region: KR
+    license_basis: medicine_dict.pkl 유래, 원 출처 미상 — 2026-11-10 사용자 확인 결과 출처 미확인, AI 근거에서 제외(참고용 U 유지).
+
+  - id: MFDS-LABEL-FINERENONE-LOCAL
+    title: 피네레논 허가사항 (케렌디아정10/20mg, KD 641106200/641106190)
+    type: label
+    location: data/reference_data.sqlite medicines.kd_code=641106190
+    access: local_db
+    checked_at: "2026-11-10"
+    ai_use: U
+    region: KR
+    license_basis: medicine_dict.pkl 유래, 원 출처 미상 — 2026-11-10 사용자 확인 결과 출처 미확인, AI 근거에서 제외(참고용 U 유지).

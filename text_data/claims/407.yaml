@@ -1,0 +1,126 @@
+# 407장 크롬친화세포종 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 크롬친화세포종·부신경절종 정밀의료 시대 관리 종설(Cancers 2019, CC BY — 국제 지침 종합), 수술 전 관리 종설(Front Endocrinol 2020, CC BY).
+# 주의: Endocrine Society 2014·ESE 지침 원문은 C·B등급 — 종설 내 인용으로만 반영.
+
+chapter: "407"
+title: 크롬친화세포종
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 407-C01
+    topic: 생화학 진단 — 메타네프린
+    type: workup
+    original:
+      text: "카테콜라민·메타네프린 혈장·요중치 증가가 진단 기본. 정상 상한 3배 이상이면 가능성 높음. 요중 VMA, 메타네프린, 카테콜라민이 초기 검사. 혈장 메타네프린이 가장 민감."
+      location: {file: by_chapter/407장.md, line: 75}
+    status: 개정
+    current:
+      text: >
+        선별·추적 검사는 혈장 유리 메타네프린·노르메타네프린·3-메톡시티라민 또는 소변 분획 메타네프린·노르메타네프린이며, 혈장 검사가 소변보다 우월하다는 근거가 확립되었다(적절한 측정법·참고범위 필요). 검사 3일 전부터 카페인, 홍차, 니코틴, 알코올, 바나나, 치즈, 견과, 초콜릿, 달걀, 바닐라를 피한다.
+        노르메타네프린 우세(노르아드레날린성) 표현형은 가성저산소 군(SDHx·VHL 등), 메타네프린 상승은 키나아제 신호 군(RET·NF1 등)과 연관된다.
+      sources:
+        - {id: PAPER-PPGL-MANAGEMENT-2019, locator: "3.1 Biochemical diagnosis"}
+    verification: primary
+    conflicts:
+      - "원문은 요중 VMA·카테콜라민을 초기 검사로 서술 — 현재는 혈장 유리 또는 소변 분획 메타네프린(VMA 비권장)."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {any: [{finding: paroxysmal_hypertension_headache_sweating}, {finding: adrenal_incidentaloma}, {finding: hereditary_ppgl_syndrome}]}
+        tests:
+          - {lab: Metanephrines_plasma_free, reason: "혈장 유리 메타네프린·노르메타네프린·3-메톡시티라민(선호)"}
+          - {lab: Metanephrines_urine_fractionated, when: "혈장 검사 불가", reason: "대안"}
+
+  - id: 407-C02
+    topic: 영상·유전 검사
+    type: workup
+    original:
+      text: "CT·MRI·MIBG 등으로 위치 확인. 유전 증후군이 의심되면 배선변이 검사, 가족력이 없어도 유용."
+      location: {file: by_chapter/407장.md, line: 141}
+    status: 개정
+    current:
+      text: >
+        메타네프린이 높으면 크롬친화세포종 위치 확인에 대개 CT(젊은 환자는 MRI)로 충분하다. 전이 위험이 낮은 경우(에피네프린 분비 3–5 cm 미만 크롬친화세포종)를 빼고는 수술 전 전신 CT·MRI 또는 핵의학 영상으로 전이·다발성을 배제한다.
+        두경부·교감 부신경절종, 전이성, SDHx 관련 종양은 [68Ga]DOTA-SSA PET/CT, 산발성 크롬친화세포종과 VHL·RET·NF1·MAX 관련은 [18F]FDOPA PET/CT를 1차 핵의학 영상으로 쓴다.
+        모든 크롬친화세포종·부신경절종 환자에게 배선변이 유전 검사를 권하고, 가능하면 종양 조직의 체세포 변이 분석도 한다. 전이 예측 인자: 크기 5–6 cm 이상, 부신 외 위치, 노르아드레날린·도파민성 표현형, SDHA/B 변이, 다발·재발, 20세 미만 발병.
+      sources:
+        - {id: PAPER-PPGL-MANAGEMENT-2019, locator: "Genetics; 3.2 Imaging; metastatic predictors"}
+    verification: primary
+    conflicts:
+      - "원문은 유전 증후군 의심 시 검사 중심 — 현재는 모든 환자에게 배선변이 검사 권고."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {dx: D35.0}
+        tests:
+          - {lab: Germline_genetic_testing_PPGL, reason: "모든 크롬친화세포종·부신경절종"}
+          - {exam: CT_or_MRI_whole_body, when: "저위험(에피네프린 분비 <3–5 cm) 제외", reason: "전이·다발성 배제"}
+
+  - id: 407-C03
+    topic: 수술 전 알파차단·혈량 회복
+    type: dose
+    original:
+      text: "수술 전 혈압 160/90 mmHg 미만. 페녹시벤자민 0.5~4 mg/kg. 자유로운 염분·수분 섭취. 베타차단제(프로프라놀롤 10 mg 하루 3~4회)는 알파차단제 투여 후 추가. 칼슘통로차단제·ACEi."
+      location: {file: by_chapter/407장.md, line: 87}
+    status: 유지
+    current:
+      text: >
+        호르몬 기능이 있는 모든 환자(정상 혈압 포함)는 수술 전후 심혈관 합병증 예방을 위해 알파차단제를 쓰며, 대개 수술 1–2주 전에 시작한다(카테콜라민 심근병증·장기 손상이 있으면 훨씬 일찍). 목표 혈압·심박에 대한 무작위 근거는 없다.
+        용량: 페녹시벤자민 10 mg 1일 2회 시작(대개 1 mg/kg/일, 수술 후 지속 저혈압 위험), 프라조신 0.5–1 mg 1일 2–3회 시작(대개 6–15 mg/일, 최대 20 mg), 독사조신 1 mg 1일 1회 시작(대개 2–8 mg/일, 최대 16 mg), 테라조신 2–10 mg/일. 메티로신(카테콜라민 합성 억제) 500 mg/일 시작, 최대 4 g/일, 최소 1–3주 전.
+        베타차단제는 반사성 빈맥이 있을 때만 충분한 알파차단 뒤에 추가하며 절대 단독·선행 투여하지 않는다(고혈압 위기). 심장 선택적 베타1 차단제를 선호한다. 칼슘통로차단제는 알파차단제와 병용하거나 정상·경증 고혈압 환자에서 대안이다.
+        알파차단만으로 혈량이 회복되는 경우는 약 60%이므로 알파차단 3일 뒤부터 고염식(예: 나트륨 5,000 mg/일)과 수분 섭취를 권한다.
+      sources:
+        - {id: PAPER-PPGL-PREOP-2020, locator: "Table (drugs); α-AR blockade; β-AR antagonists; CCB; metyrosine; volume expansion"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-PPGL-PREOP-ALPHA
+        ingredient: doxazosin
+        indication: 크롬친화세포종·부신경절종 수술 전 처치
+        source_priority: [PAPER-PPGL-PREOP-2020]
+        regimens:
+          phenoxybenzamine: "10 mg 1일 2회 시작, 대개 1 mg/kg/일"
+          doxazosin: "1 mg 1일 1회 시작, 2–8 mg/일(최대 16)"
+          prazosin: "0.5–1 mg 1일 2–3회 시작, 6–15 mg/일(최대 20)"
+        timing: "수술 1–2주 전(심근병증 시 더 일찍)"
+        rules:
+          - {when: {all: [{finding: pheochromocytoma}, {med_class: beta_blocker}, {not: {med_class: alpha_blocker}}]}, action: "알파차단 없이 베타차단제 금지(고혈압 위기)", alert: contraindicated}
+          - {when: {all: [{finding: pheochromocytoma}, {event: adrenalectomy_planned}, {not: {med_class: alpha_blocker}}]}, action: "수술 전 알파차단제 시작(정상 혈압도)", alert: high}
+
+  - id: 407-C04
+    topic: 수술 후 추적
+    type: monitoring
+    original:
+      text: "수술 후 카테콜라민 정상화 확인. 양측 부신 겉질 보존 수술 후 ACTH 검사로 코티솔 결핍 배제."
+      location: {file: by_chapter/407장.md, line: 95}
+    status: 보완
+    current:
+      text: >
+        완전 절제 후에도 모든 환자가 재발 위험이 있고 모든 종양이 전이 잠재력을 가질 수 있다(병리로 악성 여부 판정 불가). 크롬친화세포종 병력자는 최소 10년 추적을 제안한다.
+        고위험(배선변이, 20세 미만, 5–6 cm 이상, SDHB 보인자는 3–3.5 cm 이상)과 모든 부신경절종은 평생 추적하며, 최소 매년 진찰과 소변 또는 혈장 메타네프린·3-메톡시티라민 검사를 한다.
+      sources:
+        - {id: PAPER-PPGL-MANAGEMENT-2019, locator: "4. Follow-Up"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: monitoring
+        after: {event: ppgl_resection}
+        check: [Metanephrines_plasma_free]
+        interval_months: [12]
+        rules:
+          - {when: {any: [{finding: ppgl_germline_mutation}, {finding: paraganglioma}, {var: tumor_size_cm, op: ">=", value: 5}]}, action: "평생 연 1회 추적"}
+          - {when: {finding: pheochromocytoma_low_risk}, action: "최소 10년 추적"}
+
+  - id: 407-C05
+    topic: 악성(전이성) 크롬친화세포종·임신
+    type: treatment
+    original:
+      text: "악성 크롬친화세포종 치료(MIBG 치료, 항암), 임신 중 크롬친화세포종 관리."
+      location: {file: by_chapter/407장.md, line: 97}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "전이성 질환 치료(PRRT, 수니티닙 등)는 이번에 세부 대조하지 않음."

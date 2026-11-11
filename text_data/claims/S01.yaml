@@ -1,0 +1,206 @@
+# S01 순환기 보충(고혈압·심부전·심방세동) — 19판 원문 범위 밖 보충 장
+# 스키마: text_data/claims/README.md (보충 장: original 없음, status 보완만, A등급 current 필수)
+
+chapter: "S01"
+title: 순환기 보충 — 고혈압·심부전·심방세동
+original_source: SUPPLEMENT
+updated_at: "2026-11-11"
+
+claims:
+  - id: S01-C01
+    topic: 혈압 측정법과 고혈압 진단 확인
+    type: diagnosis
+    status: 보완
+    current:
+      text: >
+        진료실 혈압은 5분 기다린 뒤 30초 이상 간격으로 3회 측정해 평균을 내는 완전 자동 진료실 혈압(AOBP)으로 재는 것을 제안한다(Rec 1, Weak for).
+        AOBP가 없으면 검증된 기기로 30초 이상 간격 2회 이상 측정해 평균을 쓴다.
+        진단·관리에 정보가 더 필요하면 가정혈압(HBPM), 24시간 활동혈압(ABPM) 또는 진료실 혈압 모니터링을 제안한다(Rec 2, Weak for).
+        추적 진료실 혈압이 수축기 >130 mmHg 또는 이완기 >90 mmHg이면 고혈압으로 진단한다.
+        수축기 <130·이완기 <90이어도 표적장기 손상(뇌졸중, 심근경색, 말초동맥질환, 좌심실비대, 심부전, CKD, 망막병증)이 있으면 가면고혈압을 의심해 HBPM 또는 ABPM을 고려한다.
+      sources:
+        - {id: VADOD-HTN-2026, locator: "Recommendations 1–2, Sidebar 1 (Office BP Measurement), Sidebar 2 (Confirm Diagnosis), Sidebar 3"}
+    verification: primary
+    conflicts:
+      - "진단 기준은 VA/DoD 2026의 추적 진료실 혈압 >130/>90 mmHg. 국내·다른 지침의 진단 기준(예: 140/90 mmHg)과 다를 수 있어 서비스 기준을 검수자가 정해야 함."
+    review: {status: draft}
+    corpus:
+      - kind: diagnosis
+        condition: {name: 고혈압, kcd: [I10]}
+        logic:
+          any:
+            - {var: SBP, op: ">", value: 130}
+            - {var: DBP, op: ">", value: 90}
+        notes:
+          - "추적(반복) 진료실 혈압 기준 — EMR 혈압은 가장 최근 1회 값이므로 1회 측정만으로 확정하지 않음"
+      - kind: workup
+        trigger:
+          all:
+            - {any: [{var: SBP, op: ">", value: 130}, {var: DBP, op: ">", value: 90}]}
+            - {not: {dx: I10}}
+        tests:
+          - {exam: AOBP, reason: "반복 측정으로 고혈압 진단 확인"}
+          - {exam: HBPM, reason: "진료실 밖 혈압으로 백의고혈압 감별·진단 보조"}
+          - {exam: ABPM, reason: "진료실 밖 혈압으로 백의고혈압 감별·진단 보조"}
+      - kind: workup
+        trigger:
+          all:
+            - {var: SBP, op: "<", value: 130}
+            - {var: DBP, op: "<", value: 90}
+            - {not: {dx: I10}}
+            - any:
+                - {dx: I63}
+                - {dx: I21}
+                - {dx: I25}
+                - {dx: I70}
+                - {dx: I73}
+                - {dx: I50}
+                - {dx: N18}
+                - {dx: H35.0}
+                - {finding: left_ventricular_hypertrophy}
+        tests:
+          - {exam: HBPM, reason: "표적장기 손상이 있는데 진료실 혈압 정상 — 가면고혈압 확인"}
+          - {exam: ABPM, reason: "표적장기 손상이 있는데 진료실 혈압 정상 — 가면고혈압 확인"}
+
+  - id: S01-C02
+    topic: 고혈압 치료 목표와 목표 미달 시 점검
+    type: monitoring
+    status: 보완
+    current:
+      text: >
+        고혈압 환자는 환자 특성과 선호에 따라 수축기 혈압 <130 mmHg를 목표로 치료한다(Rec 4, Strong for).
+        30세 이상은 이완기 <90 mmHg를 목표로 제안하며(Rec 5, Weak for), <80과 <90 목표를 비교해 권고할 근거는 부족하다(Rec 6).
+        목표에 이르지 못하면 복약 순응도(처방 재조제 이력, 가정혈압 기록, 면담), 혈압을 올리는 물질(감초 등 보충제, NSAID, 알코올, 일반의약품·기호 약물), 생활습관 요인을 점검하고,
+        약물 치료를 최적화하며 진단(저항성 고혈압, 이차성 고혈압)을 다시 평가한다. 저항성 고혈압은 전문의 협진을 고려한다.
+      sources:
+        - {id: VADOD-HTN-2026, locator: "Recommendations 4–6, Sidebar 4 (BP Goals), Sidebar 8 (Optimize Treatment)"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: monitoring
+        rules:
+          - when: {all: [{dx: I10}, {var: SBP, op: ">=", value: 130}]}
+            action: "수축기 목표(<130) 미달 — 순응도·NSAID 등 혈압 상승 물질·생활습관 점검, 약물 최적화, 저항성·이차성 고혈압 재평가"
+          - when: {all: [{dx: I10}, {var: age, op: ">=", value: 30}, {var: DBP, op: ">=", value: 90}]}
+            action: "이완기 목표(<90) 미달 — 치료 최적화 점검"
+
+  - id: S01-C06
+    topic: 65세 초과 티아지드 시작 후 전해질 확인
+    type: monitoring
+    status: 보완
+    current:
+      text: >
+        65세 넘는 고혈압 환자에게는 복합 심혈관 사건을 줄이기 위해 티아지드계 이뇨제를 제안하며, 장기 전해질 이상 위험을 줄이기 위해 시작 후 1–4주 안에 검사로 확인한다.
+      sources:
+        - {id: VADOD-HTN-2026, locator: "Sidebar 7 (Initiate Drug Therapy — Specific Populations), Recommendation 12"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: monitoring
+        after: {event: start_or_uptitrate, med_class: thiazide}
+        check: [Na, K]
+        within_days: [7, 28]
+        rules:
+          - when: {var: age, op: ">", value: 65}
+            action: "65세 초과 티아지드 시작 — 1–4주 안에 전해질 확인"
+
+  - id: S01-C03
+    topic: 심부전 의심 시 NT-proBNP와 심초음파
+    type: workup
+    status: 보완
+    current:
+      text: >
+        2021 심부전 보편 정의: 심부전은 구조적·기능적 심장 이상으로 생긴 증상·징후가 있고, 나트륨이뇨펩티드 상승 또는 폐·전신 울혈의 객관적 증거로 뒷받침되는 임상 증후군이다.
+        좌심실 박출률 40% 이하를 HFrEF로 분류한다. 일차진료에서는 NT-proBNP로 먼저 선별하고 필요하면 심초음파로 의뢰하며,
+        일차진료의 신규 심부전 의심 환자에서 NT-proBNP 125 ng/L 기준이 진단 정확도가 높았다.
+        NT-proBNP는 CKD, 심방세동, 고령, 폐색전증 등에서도 오르고 비만·이뇨제 사용 시 낮아지므로 단독으로 확진하지 않는다.
+      sources:
+        - {id: PAPER-UNIVERSAL-HF-DEFINITION-2022, locator: "Universal definition (text box); LVEF classification; Implications for primary care; NT-proBNP limitations"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          any:
+            - {finding: suspected_heart_failure}
+            - {all: [{finding: dyspnea}, {finding: peripheral_edema}]}
+        tests:
+          - {lab: NT_proBNP, reason: "심부전 선별(일차진료 기준 125 ng/L)"}
+          - {exam: Echocardiography, reason: "구조적·기능적 심장 이상과 박출률 확인"}
+          - {exam: ECG, reason: "심장 이상 동반 평가"}
+        notes: ["호흡곤란+말초부종 조합은 '증상·징후'를 규칙으로 옮긴 운영 가정 — 검수 시 확정"]
+      - kind: lab_threshold
+        lab: NT_proBNP
+        unit: ng/L
+        context: "일차진료 신규 심부전 평가 기준값(나이·신기능·비만 영향 — 단독 확진 아님)"
+        bands:
+          - {label: "125 미만(신규 심부전 가능성 낮음)", max: 124.999}
+          - {label: "125 이상(심초음파 평가 고려)", min: 125}
+
+  - id: S01-C04
+    topic: 심부전 환자의 철결핍 평가
+    type: workup
+    status: 보완
+    current:
+      text: >
+        ESC 지침은 심부전 환자에서 철결핍을 확인하도록 권고한다. 혈청 페리틴 <100 μg/L이면 절대적 철결핍,
+        페리틴 100–299 μg/L이면서 트랜스페린 포화도(TSAT) <20%이면 기능적 철결핍으로 진단한다.
+        심부전의 만성 염증 때문에 일반 인구(30 μg/L)보다 높은 페리틴 기준을 쓰며, 이 기준은 심부전 환자에서 검증된 값은 아니다.
+      sources:
+        - {id: PAPER-AUSTRIA-HF-IRON-2025, locator: "Diagnosis of iron deficiency in HF; Table 2"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {dx: I50}
+        tests:
+          - {lab: Ferritin, reason: "심부전 철결핍 평가"}
+          - {lab: TSAT, reason: "심부전 기능적 철결핍 평가"}
+          - {lab: CBC, reason: "빈혈 동반 확인"}
+      - kind: diagnosis
+        condition: {name: 심부전 동반 철결핍, kcd: [E61.1]}
+        logic:
+          all:
+            - {dx: I50}
+            - any:
+                - {var: Ferritin, op: "<", value: 100}
+                - {all: [{var: Ferritin, op: ">=", value: 100}, {var: Ferritin, op: "<", value: 300}, {var: TSAT, op: "<", value: 20}]}
+
+  - id: S01-C05
+    topic: 심방세동 조기 발견과 뇌졸중 위험 평가
+    type: workup
+    status: 보완
+    current:
+      text: >
+        2024 ESC/EACTS 심방세동 지침 요약: 65세 이상은 진료 때마다 심장 리듬(맥박·심전도) 확인이 권고된다.
+        75세 이상, 또는 65세 이상이면서 CHA2DS2-VA 위험인자가 더 있으면 장시간 비침습 심전도 기반 선별을 고려한다.
+        심방세동 환자는 지역에서 검증된 점수나 CHA2DS2-VA(심부전 1, 고혈압 1, 75세 이상 2, 당뇨 1, 뇌졸중·일과성 허혈·동맥 혈전색전증 2, 혈관질환 1, 65–74세 1점)로 뇌졸중 위험을 평가한다.
+        CHA2DS2-VA ≥2이면 경구 항응고(기계판막·중등도 이상 승모판 협착이 없으면 DOAC)를 권고하고, 1점이면 고려한다.
+      sources:
+        - {id: PAPER-ESC-AF-2024-SPOTLIGHT, locator: "Stroke risk (CHA2DS2-VA); Expanded strategies for screening and early detection of AF"}
+    verification: primary
+    note: "치료(항응고) 내용은 참고 문장이며 이 장의 구조화 항목은 검사·위험 평가만 둔다."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger:
+          all:
+            - {var: age, op: ">=", value: 65}
+            - {not: {dx: I48}}
+        tests:
+          - {exam: ECG, reason: "65세 이상 진료 시 심장 리듬 확인(맥박 촉지 또는 심전도)"}
+      - kind: workup
+        trigger:
+          all:
+            - {not: {dx: I48}}
+            - any:
+                - {var: age, op: ">=", value: 75}
+                - all:
+                    - {var: age, op: ">=", value: 65}
+                    - {any: [{dx: I50}, {dx: I10}, {dx: E11}, {dx: I63}, {dx: G45}, {dx: I25}, {dx: I70}, {dx: I73}]}
+        tests:
+          - {exam: ECG, reason: "장시간 비침습 심전도 기반 심방세동 선별 고려"}
+      - kind: workup
+        trigger: {dx: I48}
+        tests:
+          - {score: CHA2DS2_VA, reason: "뇌졸중·혈전색전증 위험 평가(≥2 항응고 권고, 1 고려)"}

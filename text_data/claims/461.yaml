@@ -1,0 +1,135 @@
+# 461장 중증근무력증과 기타 신경근이음부질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 벨기에 중증근무력증 관리 권고(Acta Neurol Belg 2024, CC BY — 국제 지침 기반, 벨기에 보험 반영), openFDA(CC0) 레보플록사신 박스 경고.
+
+chapter: "461"
+title: 중증근무력증과 기타 신경근이음부질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 461-C01
+    topic: 피리도스티그민과 흉선절제
+    type: dose
+    original:
+      text: "피리도스티그민 30~60 mg 하루 3~4회 시작, 낮 동안 최대 4~6시간마다 120 mg. 흉선종은 제거. 사춘기~55세 전신형 MG는 흉선절제."
+      location: {file: by_chapter/461장.md, line: 120}
+    status: 개정
+    current:
+      text: >
+        경구 피리도스티그민이 1차 치료다(AChR 항체 양성은 약 90%가 효과). 시작 30 mg 1일 1–3회, 유지 30–90 mg 1일 3–6회(1일 최대 720 mg, 1회 최대 120 mg). 시작 전 심장 평가를 고려하고 신기능 저하 시 감량한다. 흔한 부작용은 다한·침 분비·눈물·구역·설사·다뇨·근섬유다발수축·근경련이다.
+        흉선종이나 흉선 비대가 있으면 숙련 팀의 흉선절제가 필수다. 흉선종 없는 18–50세 AChR 양성 전신형 MG는 발병 5년 안에 흉선절제를 고려한다(50세 이상은 근거 부족). 항체 음성은 면역치료 반응이 부족할 때 고려한다.
+      sources:
+        - {id: PAPER-BELGIUM-MG-2024, locator: "Symptomatic treatment (Table 1); Thymoma; AChR+; LRP4+/seronegative"}
+    verification: primary
+    conflicts:
+      - "흉선절제 연령: 원문 사춘기–55세 vs 현재 18–50세(AChR 양성, 흉선종 없음, 발병 5년 이내)."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-PYRIDOSTIGMINE-MG
+        ingredient: pyridostigmine
+        indication: 중증근무력증
+        source_priority: [PAPER-BELGIUM-MG-2024]
+        starting_dose: "30 mg 1일 1–3회"
+        maintenance: "30–90 mg 1일 3–6회(최대 720 mg/일, 1회 120 mg)"
+        rules:
+          - {when: {var: eGFR, op: "<", value: 60}, action: "신기능 저하 — 감량", alert: caution}
+          - {when: {var: pyridostigmine_single_dose_mg, op: ">", value: 120}, action: "1회 최대 120 mg 초과", alert: high}
+      - kind: referral
+        to: 흉부외과(흉선절제)
+        criteria:
+          - {all: [{dx: G70.0}, {any: [{finding: thymoma}, {finding: thymic_enlargement}]}]}
+          - {all: [{dx: G70.0}, {finding: achr_antibody_positive}, {var: age, op: ">=", value: 18}, {var: age, op: "<=", value: 50}, {var: years_since_mg_onset, op: "<=", value: 5}]}
+        purpose: ["흉선절제 평가"]
+
+  - id: 461-C02
+    topic: 면역억제 치료
+    type: dose
+    original:
+      text: "글루코코르티코이드 저용량(15~25 mg/일) 시작 후 2~3일에 5 mg씩 50~60 mg까지 증량, 1~3개월 유지 후 격일 요법. 마이코페놀레이트, 아자티오프린, 사이클로스포린, 타크로리무스."
+      location: {file: by_chapter/461장.md, line: 132}
+    status: 유지
+    current:
+      text: >
+        피리도스티그민에도 증상이 의미 있게 남으면 글루코코르티코이드와/또는 비스테로이드 면역억제제를 쓴다. 메틸프레드니솔론(또는 등가)이 작용이 빨라 1차 면역치료다: 메틸프레드니솔론 32–64 mg/일(프레드니솔론 40–80 mg/일), 효과 발현 4–8주. 고용량 시작은 일시 악화를 일으킬 수 있어 연수·호흡 침범 환자는 천천히 증량한다.
+        반응 후 9–12개월에 걸쳐 최저 유효 용량까지 천천히 줄이고, 메틸프레드니솔론 8 mg 이하에서는 더 천천히 줄인다. 비스테로이드 면역억제제 없이 스테로이드를 완전히 끊으면 재발이 흔하다.
+        비스테로이드 면역억제제(반응 불충분, 스테로이드 절감·의존·불내): 아자티오프린 50 mg/일 시작, 2–4주마다 50 mg씩 2–3 mg/kg/일(효과 6–12개월, 시작 전 TPMT 평가, 혈구·간기능), 마이코페놀레이트 250–500 mg 1일 2회 시작 주마다 500 mg씩 1,000 mg 1일 2회, 타크로리무스 3 mg/일 또는 0.1 mg/kg/일, 사이클로스포린 3–6 mg/kg/일 2회 분할(최저 농도 300 ng/mL 미만).
+        약 15–20%는 불응성이며 전문 센터로 의뢰해 FcRn 억제제(에프가티기모드 10 mg/kg 주 1회 4주 주기), 보체 C5 억제제(에쿨리주맙 900 mg 주 1회 4주 → 5주째 1,200 mg → 2주마다 1,200 mg), 리툭시맙(LRP4 양성·항체 음성·MuSK 양성)을 고려한다.
+      sources:
+        - {id: PAPER-BELGIUM-MG-2024, locator: "Immunosuppressive therapies; Advanced therapies; Table 1"}
+    verification: primary
+    note: "로자놀릭시주맙·질루코플란·라불리주맙 등 신약 일부는 벨기에 보험 기준으로 서술 범위가 다름."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-AZATHIOPRINE-MG
+        ingredient: azathioprine
+        indication: 중증근무력증(스테로이드 절감)
+        source_priority: [PAPER-BELGIUM-MG-2024]
+        starting_dose: "50 mg/일"
+        titration: "2–4주마다 50 mg씩 2–3 mg/kg/일"
+        monitoring: ["시작 전 TPMT", "혈구", "간기능", "자외선 차단"]
+        rules:
+          - {when: {med: allopurinol}, action: "알로푸리놀 병용 — 골수억제 위험, 용량 조절", alert: high}
+      - kind: treatment
+        condition: {kcd: [G70.0]}
+        recommendations:
+          - when: {all: [{dx: G70.0}, {med_class: systemic_glucocorticoid}, {event: steroid_discontinuation_planned}, {not: {med_class: nonsteroidal_immunosuppressant}}]}
+            recommend: {action: alert, detail: "면역억제제 없이 스테로이드 완전 중단 시 재발 흔함"}
+            alert_level: medium
+
+  - id: 461-C03
+    topic: 근무력증 위기
+    type: treatment
+    original:
+      text: "근무력증위기: 중환자실, 호흡 보조, 혈장교환 또는 IVIG."
+      location: {file: by_chapter/461장.md, line: 158}
+    status: 유지
+    current:
+      text: >
+        임박 위기(스테로이드 증량에도 수일–수주 내 급속 악화)에는 혈장교환과 고용량 스테로이드를 함께 시작한다(혈장교환 효과가 짧음). IVIG도 선택지다.
+        위기는 기관삽관·비침습 환기가 필요한 연수·호흡근 중증 쇠약이며 폐렴 등 감염이 흔히 유발한다. 중환자실에서 빠른 작용 치료로 다룬다. 혈장교환은 대개 격일 5회이며 단클론항체 치료와 병용할 수 없다.
+      sources:
+        - {id: PAPER-BELGIUM-MG-2024, locator: "Impending and manifesting myasthenic crisis"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G70.0]}
+        recommendations:
+          - when: {all: [{dx: G70.0}, {any: [{finding: respiratory_weakness}, {finding: bulbar_weakness_rapid}]}]}
+            recommend: {action: icu_and_fast_acting_therapy, options: ["혈장교환(격일 5회)", "IVIG", "고용량 스테로이드 병행"]}
+            alert_level: high
+
+  - id: 461-C04
+    topic: MG를 악화시키는 약물·예방접종·임신
+    type: treatment
+    original:
+      text: "표 461-4: 아미노글리코사이드, 퀴놀론, 마크로라이드, 비탈분극성 근이완제, 베타차단제, 국소마취제, 보툴리눔독소, 퀴닌 유도체, 마그네슘, 페니실라민."
+      location: {file: by_chapter/461장.md, line: 170}
+    status: 유지
+    current:
+      text: >
+        면역관문억제제, 페니실라민, 인터페론, 티로신 키나아제 억제제는 신경근이음부에 대한 자가면역을 일으켜 새 MG나 악화를 유발할 수 있다. 면역관문억제제 관련 MG는 근염·심근염 동반 시 생명을 위협하며 조기 고용량 스테로이드를 권한다.
+        일부 항생제, 항부정맥제, 마취제, 신경근 차단제는 신경근 전달을 방해해 MG를 악화시키거나 드러낼 수 있다. 플루오로퀴놀론(레보플록사신 등)은 MG 근력 약화를 악화시킬 수 있어 MG 병력자에게 피한다(미국 허가 박스 경고).
+        면역억제 치료 중인 환자는 인플루엔자·폐렴구균·코로나19 백신을 맞히고(가능하면 면역억제 시작 전), 사백신 때문에 면역억제를 중단하지 않으며 생백신은 가능한 피한다. 임신은 금기가 아니나 30–40%가 악화될 수 있고, 발병 후 2년 동안은 임신을 피하도록 권한다. 저용량 피리도스티그민·프레드니손, 아자티오프린·사이클로스포린은 임신 중 비교적 안전하다.
+      sources:
+        - {id: PAPER-BELGIUM-MG-2024, locator: "Drugs that induce or cause deterioration of MG; Vaccination; Pregnancy"}
+        - {id: OPENFDA-LEVOFLOXACIN, locator: "Boxed Warning"}
+    verification: primary
+    note: "원문 표 461-4의 개별 약제 목록은 A등급 출처로 개별 대조하지 않음 — 플루오로퀴놀론만 허가 박스 경고로 확인."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G70.0]}
+        recommendations:
+          - when: {all: [{dx: G70.0}, {any: [{med: levofloxacin}, {med: ciprofloxacin}, {med: moxifloxacin}, {med_class: fluoroquinolone}]}]}
+            recommend: {action: avoid, detail: "플루오로퀴놀론 — MG 악화(미국 허가 박스 경고)"}
+            alert_level: high
+          - when: {all: [{dx: G70.0}, {med_class: immune_checkpoint_inhibitor}]}
+            recommend: {action: alert, detail: "면역관문억제제 — MG 악화·근염/심근염 감시"}
+            alert_level: high
+          - when: {all: [{dx: G70.0}, {any: [{med_class: systemic_glucocorticoid}, {med_class: nonsteroidal_immunosuppressant}]}, {event: live_vaccine_planned}]}
+            recommend: {action: avoid, detail: "면역억제 중 생백신 회피"}
+            alert_level: medium

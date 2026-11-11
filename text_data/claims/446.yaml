@@ -1,0 +1,137 @@
+# 446장 뇌혈관 질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: openFDA(CC0), VA/DoD 뇌졸중 재활 2024·지질 2025. AHA/ASA 지침은 C등급.
+
+chapter: "446"
+title: 뇌혈관 질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 446-C01
+    topic: 급성 허혈성 뇌졸중 정맥 혈전용해(알테플라제)
+    type: dose
+    original:
+      text: >
+        NINDS: 발생 3시간 이내 정맥 rtPA 0.9 mg/kg(최대 90 mg, 10% 일시 주입 후 나머지 60분). ECASS III: 3–4.5시간에서도 효과(80세 초과·당뇨 등 제외).
+      location: {file: by_chapter/446장.md, line: 57}
+    status: 유지
+    current:
+      text: >
+        알테플라제(ACTIVASE, 미국 허가): 급성 허혈성 뇌졸중에 증상 발생 후 가능한 빨리, 3시간 이내 투여. 0.9 mg/kg(총 90 mg 이하)를 정주하되 총량의 10%를 1분간 일시 주입하고 나머지를 60분간 주입한다.
+        다른 약을 같은 수액에 섞지 않는다. 뇌졸중 치료 금기: 현재 두개내출혈, 지주막하출혈, 활동성 내부 출혈, 3개월 이내 두개내·척추 수술 또는 심한 두부 외상,
+        출혈 위험을 높이는 두개내 질환(일부 종양·동정맥기형·동맥류), 출혈 소인, 현재 조절되지 않는 중증 고혈압.
+      sources:
+        - {id: OPENFDA-ALTEPLASE, locator: "1.1, 2.1 Acute Ischemic Stroke; 4.1 Contraindications"}
+    verification: primary
+    conflicts:
+      - "원문은 ECASS III 근거로 3–4.5시간 확장을 서술 — 미국 허가는 3시간 이내. 4.5시간까지 사용은 학회 지침(C등급) 영역이라 A등급 근거 없음."
+      - "테넥테플라제의 뇌졸중 적응증은 openFDA 판에서 확인되지 않아 미반영."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-ALTEPLASE-AIS
+        ingredient: alteplase
+        indication: 급성 허혈성 뇌졸중
+        source_priority: [OPENFDA-ALTEPLASE]
+        calculation:
+          total_mg: {formula: "min(weight_kg × 0.9, 90)", unit: mg}
+          bolus_mg: {formula: "total_mg × 0.1", note: "1분간"}
+          infusion_mg: {formula: "total_mg × 0.9", note: "60분간"}
+        rules:
+          - {when: {var: hours_since_symptom_onset, op: ">", value: 3}, action: "미국 허가 시간창(3시간) 초과", alert: high}
+          - {when: {any: [{finding: intracranial_hemorrhage}, {finding: subarachnoid_hemorrhage}, {finding: active_internal_bleeding}, {event: intracranial_or_spinal_surgery_or_serious_head_trauma_within_3mo}, {finding: bleeding_diathesis}, {finding: severe_uncontrolled_hypertension}]}, action: "금기", alert: contraindicated}
+        alert_note: "응급 치료 참고값 — 병원 뇌졸중 프로토콜이 우선"
+
+  - id: 446-C02
+    topic: 혈관내 혈전제거술
+    type: treatment
+    original:
+      text: "동맥내 혈전용해(PROACT II), 기계적 혈전제거(MERCI 등) — 혈전용해 부적합·실패 시 대체·보조 치료로 연구 중."
+      location: {file: by_chapter/446장.md, line: 70}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "원문(2015) 이후 대혈관 폐색에 혈전제거술이 표준이 됐으나 A등급 출처(정부 지침·허가)로 대조하지 못함."
+
+  - id: 446-C03
+    topic: 뇌졸중 이차예방 — 지질
+    type: treatment
+    original:
+      text: "죽상경화 위험인자 조절: 고혈압, 스타틴(LDL 감소), 흡연, 당뇨."
+      location: {file: by_chapter/446장.md, line: 314}
+    status: 개정
+    current:
+      text: >
+        동맥경화성 심혈관질환(동맥경화성 뇌졸중 포함) 이차예방은 고강도 스타틴, 또는 중강도 스타틴+에제티미브, 또는 중강도 스타틴+PCSK9 억제제를 제안한다(VA/DoD 지질 Rec 13).
+        지질강하 치료 중 재발한 동맥경화성 뇌졸중 등 초고위험은 고강도 스타틴에 에제티미브 및/또는 PCSK9 억제제 병합을 제안한다(Rec 14). 폐경 후 뇌혈관 사건 일차예방 목적의 경구 호르몬 치료는 권고하지 않는다(폐경 Rec 38).
+      sources:
+        - {id: VADOD-LIPIDS-2025, locator: "Recommendations 13, 14; Sidebar 4"}
+        - {id: VADOD-MENO-2026, locator: "Recommendation 38"}
+    verification: primary
+    note: "항혈소판제(아스피린·클로피도그렐·DAPT)·심방세동 항응고·경동맥 내막절제술 기준은 A등급 근거 미확보."
+    review: {status: draft}
+
+  - id: 446-C04
+    topic: 뇌졸중 재활 — 운동·경직·연하곤란
+    type: treatment
+    original:
+      text: "뇌졸중 센터와 재활: 조기 재활, 다학제 치료."
+      location: {file: by_chapter/446장.md, line: 113}
+    status: 보완
+    current:
+      text: >
+        운동 기능·보행·자세·일상생활 개선에 과제 특이적 반복 훈련을 권고한다(Rec 5, Strong for). 거울 치료(운동·편측 무시, Rec 6–7), 리듬 청각 자극(Rec 9), 신경근 전기자극(Rec 17)을 제안한다.
+        국소 경직에 보툴리눔 독소를 제안한다(Rec 24). 연하곤란에 저항 턱 당기기 운동(Rec 28)과 기관절개가 없으면 호흡근 강화 훈련(Rec 29)을 제안한다.
+        운동 회복 목적 SSRI(Rec 12), 강제유도 운동치료(Rec 11), 로봇·가상현실(Rec 18–20), 침(Rec 16)은 근거 불충분. 퇴원 시 사례관리(Rec 1)를 제안한다.
+      sources:
+        - {id: VADOD-STROKE-REHAB-2024, locator: "Recommendations 1, 5–7, 9, 11, 12, 16–20, 24, 28, 29"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [I69]}
+        recommendations:
+          - when: {finding: post_stroke_motor_deficit}
+            recommend: {intervention: task_specific_practice}
+            strength: "VA/DoD 뇌졸중 재활 Rec 5 (Strong for)"
+          - when: {finding: focal_spasticity}
+            recommend: {ingredient: botulinum_toxin}
+            strength: "Rec 24 (Weak for)"
+
+  - id: 446-C05
+    topic: 뇌졸중 후 우울
+    type: treatment
+    original:
+      text: "(원문 해당 범위에 뇌졸중 후 우울 권고 없음)"
+      location: {file: by_chapter/446장.md, line: 113}
+    status: 보완
+    current:
+      text: >
+        뇌졸중 후 우울 예방 목적으로 항우울제를 쓰지 않도록 제안한다(Rec 39). 우울 증상에는 SSRI 또는 SNRI(Rec 40), CBT 등 정신치료(Rec 41), 마음챙김 기반 치료(Rec 42)를 제안한다.
+        환자·보호자의 우울과 가족 기능 개선을 위한 행동·정신사회 중재와 심리교육을 제안한다(Rec 2).
+      sources:
+        - {id: VADOD-STROKE-REHAB-2024, locator: "Recommendations 2, 39–42"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [I69, F32]}
+        recommendations:
+          - when: {all: [{dx: I69}, {not: {finding: depression_symptoms}}, {event: antidepressant_for_prevention}]}
+            recommend: {action: avoid, detail: "뇌졸중 후 우울 예방 목적 항우울제"}
+            strength: "Rec 39 (Weak against)"
+          - when: {all: [{dx: I69}, {finding: depression_symptoms}]}
+            recommend: {options: [SSRI, SNRI, CBT, mindfulness]}
+            strength: "Rec 40–42 (Weak for)"
+
+  - id: 446-C06
+    topic: 일과성허혈발작·경동맥 협착·항응고
+    type: treatment
+    original:
+      text: "TIA 위험 평가와 조기 치료, 경동맥 내막절제술·스텐트, 심인성 색전 항응고(와파린), 항혈소판제(아스피린·클로피도그렐·아스피린/디피리다몰)."
+      location: {file: by_chapter/446장.md, line: 275}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 출처 미확보 — 항응고제(NOAC)·항혈소판제 허가사항으로 일부 보강 가능."

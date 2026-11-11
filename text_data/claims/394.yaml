@@ -1,0 +1,148 @@
+# 394장 골관절염 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+
+chapter: "394"
+title: 골관절염
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 394-C01
+    topic: 골관절염 진단과 영상검사
+    type: workup
+    original:
+      text: "구조적 이상 또는 증상으로 진단. 방사선 소견상 관절강 협착·골극. 방사선 이상이 있어도 증상이 없는 경우가 많음."
+      location: {file: by_chapter/394장.md, line: 16}
+    status: 개정
+    current:
+      text: "고관절·무릎 골관절염 진단에 MRI, CT, 초음파를 쓰지 않도록 제안한다(Rec 1, Weak against)."
+      sources:
+        - {id: VADOD-OA-2026, locator: "Recommendation 1"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [M16, M17]}
+        recommendations:
+          - when: {any: [{event: mri_ordered_for_oa_diagnosis}, {event: ct_ordered_for_oa_diagnosis}, {event: us_ordered_for_oa_diagnosis}]}
+            recommend: {action: avoid, detail: "진단 목적 MRI·CT·초음파"}
+            strength: "VA/DoD Rec 1 (Weak against)"
+
+  - id: 394-C02
+    topic: 비약물 치료(체중 감량·운동·물리치료·보조기)
+    type: treatment
+    original:
+      text: "비약물적 치료가 근간: 체중 감량, 운동, 물리치료, 보조기 등."
+      location: {file: by_chapter/394장.md, line: 170}
+    status: 유지
+    current:
+      text: >
+        과체중·비만이 동반된 무릎 골관절염은 체중 감량을 권고(Rec 2, Strong for), 고관절은 제안(Rec 3). 무릎 골관절염 자가관리로 맞춤 교육과 신체활동(Rec 4),
+        고관절·무릎 구조화된 물리치료(Rec 5), 일부 무릎 환자에서 보조기(Rec 7)를 제안한다. 특정 물리치료 방식(Rec 6), 정형외과 깔창(Rec 8), TENS(Rec 9)는 근거 불충분.
+      sources:
+        - {id: VADOD-OA-2026, locator: "Recommendations 2–9"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [M17]}
+        recommendations:
+          - when: {all: [{dx: M17}, {var: BMI, op: ">=", value: 25}]}
+            recommend: {intervention: weight_loss}
+            strength: "VA/DoD Rec 2 (Strong for)"
+          - when: {dx: M17}
+            recommend: {intervention: [tailored_education_physical_activity, structured_physical_therapy]}
+            strength: "VA/DoD Rec 4, 5 (Weak for)"
+
+  - id: 394-C03
+    topic: 약물 치료(국소·경구)
+    type: treatment
+    original:
+      text: >
+        아세트아미노펜이 우선 진통제(최대 1 g 1일 3회). NSAID가 가장 많이 처방되며 위장관 부작용 흔함(PPI·미소프로스톨 병용 고려), 심혈관 위험.
+        국소 NSAID(디클로페낙 1% 겔 4 g 1일 4회), 캡사이신.
+      location: {file: by_chapter/394장.md, line: 206}
+    status: 개정
+    current:
+      text: >
+        무릎 골관절염에 국소 캡사이신(Rec 10)과 국소 NSAID(Rec 11)를 제안한다. 고관절·무릎에 경구 NSAID 또는 아세트아미노펜을 제안한다(Rec 12) — 원문처럼 아세트아미노펜을 '우선'으로 두지 않는다.
+        무릎 골관절염에 환자 특성·선호에 따라 둘록세틴을 제안한다(Rec 13). 오피오이드(트라마돌 포함)는 새로 시작하지 않도록 제안한다(Rec 14).
+        디클로페낙 1% 겔(미국 허가): 하지 관절 4 g 1일 4회(한 관절 하루 16 g 이하), 상지 2 g 1일 4회(한 관절 8 g 이하), 전체 하루 32 g 이하, 최저 유효 용량·최단 기간.
+        둘록세틴(미국 허가) 만성 근골격계 통증: 30 mg/일로 1주 시작 후 60 mg 1일 1회.
+      sources:
+        - {id: VADOD-OA-2026, locator: "Recommendations 10–14"}
+        - {id: OPENFDA-DICLOFENAC-GEL, locator: "2.2–2.3 Dosage"}
+        - {id: OPENFDA-DULOXETINE, locator: "2.6 Chronic Musculoskeletal Pain"}
+    verification: primary
+    conflicts:
+      - "원문: 아세트아미노펜 우선 → VA/DoD: 경구 NSAID 또는 아세트아미노펜 동등 제안."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [M16, M17]}
+        recommendations:
+          - when: {dx: M17}
+            recommend: {drug_class_any: [topical_NSAID, topical_capsaicin]}
+            strength: "VA/DoD Rec 10, 11 (Weak for)"
+          - when: {any: [{dx: M16}, {dx: M17}]}
+            recommend: {drug_class_any: [oral_NSAID, acetaminophen]}
+            strength: "VA/DoD Rec 12 (Weak for)"
+          - when: {all: [{any: [{dx: M16}, {dx: M17}]}, {event: opioid_initiation}]}
+            recommend: {action: avoid, drug_class: opioid, includes: [tramadol]}
+            strength: "VA/DoD Rec 14 (Weak against)"
+            alert_level: medium
+      - kind: dose_rule
+        id: DR-DICLOFENAC-GEL-1PCT
+        ingredient: diclofenac_sodium_topical_1pct
+        source_priority: [OPENFDA-DICLOFENAC-GEL]
+        rules:
+          - {site: lower_extremity, dose: "4 g 1일 4회", max_per_joint_g_day: 16}
+          - {site: upper_extremity, dose: "2 g 1일 4회", max_per_joint_g_day: 8}
+        max_total_g_day: 32
+
+  - id: 394-C04
+    topic: 관절강 내 주사
+    type: treatment
+    original:
+      text: "관절강 내 스테로이드 주사, 히알루론산(점탄성 보충) 주사."
+      location: {file: by_chapter/394장.md, line: 204}
+    status: 개정
+    current:
+      text: >
+        다른 치료로 조절되지 않는 지속 통증에 무릎은 관절강 스테로이드 주사(Rec 15), 고관절은 영상 유도 관절강 스테로이드 주사(Rec 16)를 제안한다.
+        무릎 점탄성 보충 주사는 근거 불충분(Rec 17), 고관절 점탄성 보충 주사는 하지 않도록 제안한다(Rec 18). 무릎에서 스테로이드와 점탄성 보충 중 우열 근거 불충분(Rec 19).
+        PRP는 근거 불충분(Rec 20–21), 아텔로콜라겐·자가단백용액·저분자 알부민·스프리페르민 관절강 주사는 하지 않도록 제안한다(Rec 23).
+        슬동맥 색전술·슬신경 차단은 하지 않도록 제안하고(Rec 24–25), 고주파 절제·체외충격파·방사선 치료는 근거 불충분(Rec 26–28).
+      sources:
+        - {id: VADOD-OA-2026, locator: "Recommendations 15–28"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [M16, M17]}
+        recommendations:
+          - when: {all: [{dx: M17}, {finding: persistent_pain_despite_other_treatment}]}
+            recommend: {procedure: intra_articular_corticosteroid}
+            strength: "VA/DoD Rec 15 (Weak for)"
+          - when: {all: [{dx: M16}, {finding: persistent_pain_despite_other_treatment}]}
+            recommend: {procedure: image_guided_intra_articular_corticosteroid}
+            strength: "VA/DoD Rec 16 (Weak for)"
+          - when: {dx: M16}
+            recommend: {action: avoid, procedure: viscosupplementation}
+            strength: "VA/DoD Rec 18 (Weak against)"
+
+  - id: 394-C05
+    topic: 건강기능식품(글루코사민·콘드로이틴 등)
+    type: treatment
+    original:
+      text: "글루코사민·콘드로이틴은 효과에 대한 근거가 일관되지 않음."
+      location: {file: by_chapter/394장.md, line: 204}
+    status: 유지
+    current:
+      text: >
+        CBD 오일은 사용하지 않도록 제안한다(Rec 29). 아보카도·대두 추출물, 보스웰리아, 콘드로이틴, 콜라겐, 커큐민, 생강, 글루코사민(단독·콘드로이틴 병용), MSM,
+        오메가-3, 피크노제놀, 로즈힙 등은 근거 불충분(Rec 30).
+      sources:
+        - {id: VADOD-OA-2026, locator: "Recommendations 29, 30"}
+    verification: primary
+    review: {status: draft}

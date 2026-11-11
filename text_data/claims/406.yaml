@@ -1,0 +1,209 @@
+# 406장 부신피질 질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 부신 우연종 종설(Endocrine Reviews 2020, CC BY — ESE/ENSAT 2016 등 지침 종합), 부신기능부전 치료·부신위기 권고(Endocrine 2021, CC BY — Endo-ERN),
+#            대한고혈압학회 진료지침 2018(Clin Hypertens 2019, CC BY), 브라질 뇌하수체저하증 관점(2021, CC BY), 쿠싱증후군 약물치료(Endocrine Reviews 2026, CC BY),
+#            openFDA(CC0) 플루드로코르티손·하이드로코르티손 주사.
+# 주의: ESE/ENSAT 2023 부신 우연종 개정 지침 원문은 이번에 대조하지 않음(2020 종설은 2016 지침 기준).
+
+chapter: "406"
+title: 부신피질 질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 406-C01
+    topic: 쿠싱증후군 선별 검사
+    type: workup
+    original:
+      text: "여러 검사결과가 일관되게 쿠싱증후군을 시사하면 진단 확실: 24시간 요중 유리 코티솔(3회), 야간 덱사메타손 억제검사, 심야 타액 코티솔."
+      location: {file: by_chapter/406장.md, line: 158}
+    status: 유지
+    current:
+      text: >
+        명백한 쿠싱증후군이 의심되면 매우 민감한 선별 검사 3가지(24시간 요중 유리 코티솔, 심야 타액 코티솔, 1 mg 야간 덱사메타손 억제 검사 후 오전 9시 코티솔) 중 2가지를 쓴다(Endocrine Society).
+        측정법 차이, 생리적 고코르티솔증을 일으키는 동반질환, 가성 쿠싱이 해석을 어렵게 한다. 활동성 쿠싱증후군은 정맥혈전색전증 예방을 고려한다(403-C04).
+      sources:
+        - {id: PAPER-ADRENAL-INCIDENTALOMA-2020, locator: "Screening for autonomous cortisol secretion"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: suspected_cushing_syndrome}
+        tests:
+          - {lab: UFC_24h, reason: "선별 3종 중 2가지"}
+          - {lab: Late_night_salivary_cortisol, reason: "선별 3종 중 2가지"}
+          - {lab: DST_1mg_cortisol, reason: "선별 3종 중 2가지"}
+
+  - id: 406-C02
+    topic: 부신 우연종 평가와 추적
+    type: workup
+    original:
+      text: "1 cm 초과 부신 종괴를 검사. 호르몬 과다(코티솔·알도스테론·카테콜라민)와 악성 여부. 부신피질암은 부신 종괴의 5%."
+      location: {file: by_chapter/406장.md, line: 308}
+    status: 개정
+    current:
+      text: >
+        부신 우연종은 일반 인구 약 2%(70세 이상 7% 넘음)이고 약 2%가 부신피질암, 10%까지 자율적 호르몬 분비를 보인다. 첫 검사는 양측 부신 비조영 CT이며 균질한 병변의 HU 10 이하는 지질이 풍부한 양성 선종에 합당하다.
+        모든 환자에서 크롬친화세포종(혈장 유리 또는 24시간 소변 분획 메타네프린; 지질 풍부 피질 선종은 생략 가능)과 자율적 코티솔 분비(1 mg 덱사메타손 억제 검사)를 배제하고, 고혈압·저칼륨혈증이 있으면 원발 알도스테론증을 선별한다.
+        1 mg 덱사메타손 후 코티솔 1.8 µg/dL(50 nmol/L) 이하는 정상, 1.9–5.0 µg/dL은 자율적 코티솔 분비 가능성, 5.0 µg/dL 초과는 확정으로 본다.
+        양성 특징의 4 cm 미만 병변은 추가 영상이 필요 없고, 첫 평가에서 호르몬 과분비가 없으면 반복 호르몬 검사도 권하지 않는다(새 증상·동반질환 악화 시만).
+        4 cm 초과나 불확정 병변으로 수술하지 않으면 6–12개월 뒤 비조영 CT나 MRI를 다시 찍고, 크기 20% 이상이면서 직경 5 mm 이상 증가하면 절제를 권한다. 4 cm 초과 불확정 병변은 수술을 제안한다.
+        자율적 코티솔 분비 환자를 수술하지 않으면 매년 코티솔 과분비와 동반질환을 재평가한다. 영상이 양성이 아니거나 호르몬 과다·의미 있는 성장·수술 고려 시 다학제 논의 대상이다.
+      sources:
+        - {id: PAPER-ADRENAL-INCIDENTALOMA-2020, locator: "Essential Points; Endocrine Work-up of AI; Imaging Evaluation; Follow-up imaging; Indications for unilateral adrenalectomy; Follow-up in patients without surgery"}
+    verification: primary
+    conflicts:
+      - "원문 부신피질암 비율 5% vs 종설 약 2%."
+      - "ESE/ENSAT 2023 개정은 자율적 코티솔 분비 용어(MACS)·추적 기준을 바꿨을 수 있음 — 개정 원문 미대조."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: adrenal_incidentaloma}
+        tests:
+          - {exam: Adrenal_CT_unenhanced, reason: "HU ≤10이면 양성 선종에 합당"}
+          - {lab: Metanephrines_plasma_or_urine, reason: "크롬친화세포종 배제"}
+          - {lab: DST_1mg_cortisol, reason: "자율적 코티솔 분비"}
+          - {lab: Aldosterone_renin_ratio, when: "고혈압 또는 저칼륨혈증", reason: "원발 알도스테론증"}
+      - kind: lab_threshold
+        lab: DST_1mg_cortisol
+        unit: µg/dL
+        context: "부신 우연종에서 1 mg 덱사메타손 억제 후 코티솔"
+        bands:
+          - {label: 정상, max: 1.8}
+          - {label: "자율적 코티솔 분비 가능성", min: 1.801, max: 5.0}
+          - {label: "자율적 코티솔 분비", min: 5.001}
+      - kind: monitoring
+        after: {finding: adrenal_incidentaloma_indeterminate_or_ge4cm}
+        check: [Adrenal_CT_unenhanced_or_MRI]
+        interval_months: [6, 12]
+        rules:
+          - {when: {all: [{var: adrenal_growth_pct, op: ">=", value: 20}, {var: adrenal_growth_mm, op: ">=", value: 5}]}, action: "의미 있는 성장 — 절제 권고"}
+
+  - id: 406-C03
+    topic: 원발 알도스테론증 선별
+    type: workup
+    original:
+      text: "선별검사는 약물 저항성, 저칼륨혈증, 부신종괴, 40세 이전 발병 고혈압에 제한. ARR 750 pmol/L per ng/mL/hr 초과 + 알도스테론 높은 정상 이상이면 양성. 표 406-4 항고혈압제의 ARR 영향."
+      location: {file: by_chapter/406장.md, line: 260}
+    status: 유지
+    current:
+      text: >
+        대한고혈압학회(2018): 근력 약화, 조기 고혈압, 조기 뇌졸중(40세 미만) 가족력, 자발적 또는 이뇨제 후 저칼륨혈증, 우연히 발견된 부신 종괴가 있으면 원발 알도스테론증을 의심한다.
+        선별은 저칼륨혈증을 교정하고 ACE 억제제·ARB 영향을 고려한 알도스테론-레닌 비(ARR)이며, 확진은 식염수 부하·플루드로코르티손·캡토프릴 억제 검사, 아형은 부신 CT와 부신정맥 채혈로 한다.
+        부신 우연종에서는 고혈압 또는 저칼륨혈증이 있으면 선별한다. 원발 알도스테론증은 본태 고혈압보다 뇌졸중(OR 2.58), 관상동맥질환, 심방세동(OR 3.52), 심부전, 사망이 많아 수술 또는 광물코르티코이드 수용체 길항제 치료가 필요하다.
+        부신 절제 후에는 고칼륨혈증을 막기 위해 스피로놀락톤·에플레레논을 중단한다.
+      sources:
+        - {id: PAPER-KSH-HTN-2018-DX, locator: "Secondary hypertension — Table (Primary aldosteronism)"}
+        - {id: PAPER-ADRENAL-INCIDENTALOMA-2020, locator: "Screening for primary aldosteronism; Perioperative care"}
+    verification: primary
+    note: "ARR 절단값(원문 750 pmol/L per ng/mL/hr)은 A등급 근거로 대조하지 않음 — 검사실·단위별로 다름. 2025 Endocrine Society 개정(모든 고혈압 선별 권고)은 C등급 원문이라 미반영."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{dx: I10}, {any: [{var: K, op: "<", value: 3.5}, {finding: adrenal_incidentaloma}, {finding: resistant_hypertension}, {finding: early_onset_hypertension}, {finding: family_history_early_stroke}]}]}
+        tests:
+          - {lab: Aldosterone_renin_ratio, reason: "저칼륨혈증 교정 후, ACEi·ARB 영향 고려"}
+      - kind: treatment
+        condition: {kcd: [E26.0]}
+        recommendations:
+          - when: {all: [{event: adrenalectomy_for_aldosteronism}, {any: [{med: spironolactone}, {med: eplerenone}]}]}
+            recommend: {action: discontinue, detail: "수술 후 MRA 중단(고칼륨혈증)"}
+            alert_level: high
+
+  - id: 406-C04
+    topic: 만성 부신기능부전 보충요법
+    type: dose
+    original:
+      text: "만성 부신기능부전: 하이드로코티손 15~25 mg 하루 2~3회 분할, 전체의 절반 이상을 아침에. 임신 마지막 분기 50% 증량. 열성 질환 시 2배. 하이드로코티손 1 mg = 프레드니솔론 0.2 mg."
+      location: {file: by_chapter/406장.md, line: 489}
+    status: 유지
+    current:
+      text: >
+        짧게 작용하는 글루코코르티코이드를 1차로 쓴다. 성인 하이드로코르티손 15–25 mg/일(코르티손 아세테이트 20–35 mg)을 2–3회 분할, 소아는 8 mg/m²/일을 3–4회 분할한다.
+        장시간 작용 합성 스테로이드는 야간 글루코코르티코이드 작용이 불리하고 용량 조절이 어려워 부작용이 많다. 과보충은 감염, 심혈관·대사 질환, 삶의 질 저하, 사망 증가와 관련된다.
+        일차성 부신기능부전은 플루드로코르티손 0.05–0.2 mg/일로 광물코르티코이드를 보충한다(미국 허가 통상 0.1 mg/일, 일시적 고혈압이 생기면 0.05 mg/일로 감량). 하이드로코르티손은 광물코르티코이드 작용이 강하고, 프레드니솔론은 약하며 덱사메타손은 없다.
+        병중 규칙(평소 용량 2–3배, 악화 시 6시간마다), 응급 근주·정주 하이드로코르티손 자가주사 키트, 응급카드, 3개월 이상 약 비축(병중용 정제 포함)을 교육한다.
+      sources:
+        - {id: PAPER-ADRENAL-INSUFFICIENCY-CRISIS-2021, locator: "Current glucocorticoid replacement therapy; Adrenal crisis"}
+        - {id: OPENFDA-FLUDROCORTISONE, locator: "Dosage & Administration — Addison's Disease"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-GC-MC-REPLACEMENT-PAI
+        ingredient: hydrocortisone
+        indication: 일차성 부신기능부전(애디슨병)
+        source_priority: [PAPER-ADRENAL-INSUFFICIENCY-CRISIS-2021, OPENFDA-FLUDROCORTISONE]
+        standard_dose: "하이드로코르티손 15–25 mg/일 2–3회 분할(소아 8 mg/m²/일 3–4회) + 플루드로코르티손 0.05–0.2 mg/일(통상 0.1 mg)"
+        sick_day: "평소 용량 2–3배, 구토·악화 시 근주·정주 하이드로코르티손"
+        rules:
+          - {when: {all: [{dx: E27.1}, {not: {med: fludrocortisone}}]}, action: "일차성 부신기능부전 — 광물코르티코이드 보충 확인", alert: medium}
+          - {when: {all: [{med: fludrocortisone}, {finding: new_hypertension}]}, action: "플루드로코르티손 0.05 mg/일로 감량(허가)", alert: caution}
+          - {when: {all: [{any: [{dx: E27.1}, {dx: E27.4}, {dx: E23.0}]}, {any: [{med: dexamethasone}, {med: prednisolone}]}]}, action: "보충요법은 짧게 작용하는 하이드로코르티손 우선", alert: info}
+
+  - id: 406-C05
+    topic: 부신위기 인지와 응급 치료
+    type: treatment
+    original:
+      text: "급성 부신기능부전: 생리식염수 시간당 1 L, 심장 감시. 하이드로코티손 100 mg 정주 후 24시간 동안 100~200 mg 지속 정주 또는 분할. 하이드로코티손 50 mg/일 미만이 되면 광물코르티코이드 시작."
+      location: {file: by_chapter/406장.md, line: 487}
+    status: 유지
+    current:
+      text: >
+        부신위기는 100 환자-년당 5–10건, 사망률 0.5/100 환자-년이며 고령자와 어린 소아에서 증상 해석이 더 어렵다. 적절한 수액과 승압제에 반응하지 않는 쇼크에서는 부신위기를 의심하고, 진단 검사 때문에 하이드로코르티손 투여를 늦추지 않는다.
+        응급 하이드로코르티손을 근주 또는 정주로 투여하며(성인은 허가 외로 피하주사도 가능), 하이드로코르티손 숙신산나트륨 주사(미국 허가)는 초기 응급 투여에 정주를 선호하고 예를 들어 100 mg을 30초에 걸쳐 정주한다.
+        고용량 투여는 대개 48–72시간 이내로 하고 안정되면 경구로 바꾼다(그 이상 지속하면 고나트륨혈증 가능). 감염 등 유발 요인을 치료하고 퇴원 전 병중 규칙을 재교육한다.
+      sources:
+        - {id: PAPER-ADRENAL-INSUFFICIENCY-CRISIS-2021, locator: "Adrenal crisis; Fig. 2–3"}
+        - {id: PAPER-BRAZIL-HYPOPITUITARISM-2021, locator: "Secondary adrenal insufficiency — adrenal crisis"}
+        - {id: OPENFDA-HYDROCORTISONE-IV, locator: "Dosage and Administration"}
+    verification: primary
+    note: "24시간 유지 용량(원문 100–200 mg/24시간)은 Endo-ERN 그림에만 있어 본문으로 대조하지 못함 — 검수 시 그림 확인."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E27.1, E27.2, E27.4, E23.0]}
+        recommendations:
+          - when: {all: [{any: [{dx: E27.1}, {dx: E27.4}, {dx: E23.0}, {med_class: systemic_glucocorticoid}]}, {any: [{finding: shock}, {finding: refractory_hypotension}, {finding: vomiting_unable_to_take_oral}]}]}
+            recommend: {action: give_parenteral_hydrocortisone_now, detail: "하이드로코르티손 100 mg 정주(또는 근주) — 검사로 지연하지 않음"}
+            alert_level: high
+          - when: {all: [{finding: refractory_shock}, {not: {med: hydrocortisone}}]}
+            recommend: {action: consider_adrenal_crisis, detail: "수액·승압제 불응 쇼크 — 부신위기 고려"}
+            alert_level: high
+
+  - id: 406-C06
+    topic: 부신 절제 주술기 관리
+    type: treatment
+    original:
+      text: "(원문 해당 범위에 수술 후 반대쪽 부신 억제 관리 별도 서술 없음)"
+      location: {file: by_chapter/406장.md, line: 199}
+    status: 보완
+    current:
+      text: >
+        쿠싱증후군이나 자율적 코티솔 분비로 한쪽 부신을 절제하면 반대쪽 부신이 억제되어 있어 수술 전후 스트레스 용량 글루코코르티코이드가 필요하고, 퇴원 전 경구 유지 용량으로 줄인다.
+        이후 정기적인 합성 ACTH 검사로 반대쪽 부신 회복을 확인한 뒤 스테로이드를 끊는다. 크롬친화세포종은 수술 전 알파차단제, 혈관 내 용적 확장, 필요하면 베타차단제(알파차단 후)를 쓰며, 종양 혈관 차단 뒤 심한 저혈압에 대비한다.
+      sources:
+        - {id: PAPER-ADRENAL-INCIDENTALOMA-2020, locator: "Perioperative care of patients for adrenalectomy"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [E24, D35.0]}
+        recommendations:
+          - when: {all: [{event: adrenalectomy_planned}, {any: [{dx: E24}, {finding: autonomous_cortisol_secretion}]}]}
+            recommend: {action: perioperative_stress_dose_glucocorticoid, detail: "반대쪽 부신 억제 — 수술 후 ACTH 검사로 회복 확인"}
+            alert_level: high
+          - when: {all: [{event: adrenalectomy_planned}, {finding: pheochromocytoma}, {not: {med_class: alpha_blocker}}]}
+            recommend: {action: preoperative_alpha_blockade}
+            alert_level: high
+
+  - id: 406-C07
+    topic: 선천부신과다형성·부신피질암
+    type: treatment
+    original:
+      text: "선천부신과다형성 글루코코르티코이드·광물코르티코이드 치료, 산전 덱사메타손. 부신피질암 수술과 미토탄."
+      location: {file: by_chapter/406장.md, line: 537}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "이번 묶음에서 A등급 출처 미확보(CAH 용량 일부만 Endo-ERN 종설에 있음)."

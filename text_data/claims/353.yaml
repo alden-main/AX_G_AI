@@ -1,0 +1,119 @@
+# 353장 게실 질환과 흔한 항문직장 질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 세계응급수술학회(WSES) 급성 좌측 결장 게실염 지침 2020(World J Emerg Surg 2020, CC BY).
+
+chapter: "353"
+title: 게실 질환과 흔한 항문직장 질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 353-C01
+    topic: 급성 게실염 진단과 영상
+    type: workup
+    original:
+      text: "게실염 진단에 가장 좋은 검사는 CT(구불결장 게실, 대장벽 4 mm 이상 비후, 주변 지방 염증). 백혈구 증가증. 대장내시경은 발생 6주 이후."
+      location: {file: by_chapter/353장.md, line: 34}
+    status: 개정
+    current:
+      text: >
+        임상 진찰만으로 진단하지 않고 병력, 징후, 염증 지표(CRP, 백혈구), 영상을 종합한다. 좌하복부에만 국한된 압통, CRP 50 mg/L 초과, 구토 없음의 세 가지가 진단 예측 규칙으로 제시된 바 있다.
+        첫 영상 검사는 조영 증강 복부 CT이며, 숙련자가 있으면 초음파로 시작하고 애매하거나 음성이면 CT로 올라가는 단계적 접근도 안전하다. 면역저하 환자는 비수술 치료 실패의 고위험군이다.
+        CT로 확인된 합병증 없는 게실염을 비수술로 치료했다면 일상적인 대장 검사를 권하지 않는다. 비수술로 치료한 게실 농양은 4–6주에 조기 대장 검사를 계획한다.
+      sources:
+        - {id: PAPER-WSES-DIVERTICULITIS-2020, locator: "Diagnosis (statements 1.1–1.4); Colonic evaluation"}
+    verification: primary
+    conflicts:
+      - "원문은 수술 전 대장내시경(6주 후)을 일반적으로 권함 — 현재는 CT로 확인된 합병증 없는 게실염에서 일상적 대장 검사 비권장, 농양은 4–6주 대장 검사."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: suspected_diverticulitis}
+        tests:
+          - {lab: CRP, reason: "염증·중증도(>50 mg/L 진단 규칙)"}
+          - {lab: CBC, reason: "백혈구"}
+          - {exam: CT_abdomen_contrast, reason: "1차 영상(숙련자 초음파 후 단계적 CT 가능)"}
+      - kind: monitoring
+        after: {event: diverticular_abscess_nonoperative}
+        check: [Colonoscopy]
+        interval_weeks: [4, 6]
+        rules:
+          - {when: {finding: uncomplicated_diverticulitis_ct_proven}, action: "합병증 없는 게실염은 일상적 대장 검사 비권장"}
+
+  - id: 353-C02
+    topic: 합병증 없는 게실염 — 항생제 없이 외래 관리
+    type: treatment
+    original:
+      text: "증상이 있는 단순 게실 질환은 항균제와 장 휴식으로 시작. TMP/SMX 또는 시프로플록사신 + 메트로니다졸, 7~10일."
+      location: {file: by_chapter/353장.md, line: 55}
+    status: 개정
+    current:
+      text: >
+        전신 염증 징후가 없는 면역 정상 환자의 합병증 없는 게실염에는 항생제를 처방하지 않는다(강한 권고, 높은 근거 1A). 동반질환이 없으면 외래에서 관리하고 7일 안에 재평가하며, 악화되면 더 일찍 재평가한다.
+        항생제가 필요하면 가능한 한 경구로 준다. 경험적 항생제는 환자 상태, 추정 병원체, 주요 내성 위험 인자에 따라 고른다. 합병증 있는 게실염 수술 후 원인 조절이 적절하면 항생제는 4일이다.
+      sources:
+        - {id: PAPER-WSES-DIVERTICULITIS-2020, locator: "Non-operative management of uncomplicated ALCD; Antimicrobial therapy"}
+    verification: primary
+    conflicts:
+      - "원문 '항생제 + 장 휴식 7–10일' vs 현재 면역 정상·전신 염증 없는 합병증 없는 게실염은 항생제 없이 외래 관리."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K57.3, K57.2]}
+        recommendations:
+          - when: {all: [{finding: uncomplicated_diverticulitis}, {not: {finding: immunocompromised}}, {not: {finding: systemic_inflammation}}, {med_class: antibiotic}]}
+            recommend: {action: review, detail: "합병증 없는 게실염 — 항생제 불필요(WSES 1A)"}
+            strength: "WSES 2020 (1A)"
+            alert_level: medium
+          - when: {all: [{finding: uncomplicated_diverticulitis}, {not: {finding: comorbidity}}]}
+            recommend: {setting: outpatient, follow_up_days: 7}
+          - when: {all: [{finding: uncomplicated_diverticulitis}, {finding: immunocompromised}]}
+            recommend: {action: treat_as_high_risk, detail: "비수술 치료 실패 고위험 — 항생제·입원 고려"}
+            alert_level: medium
+
+  - id: 353-C03
+    topic: 합병증 있는 게실염(농양·천공) 관리
+    type: treatment
+    original:
+      text: "Hinchey 분류. 합병증이 동반된 모든 게실 질환은 수술 위험이 낮으면 수술 적응. 표 353-3 Hinchey 분류별 수술법. 2회 이상 재발이라도 천공 위험이 증가하지 않으면 내과적 치료 지속 가능."
+      location: {file: by_chapter/353장.md, line: 65}
+    status: 개정
+    current:
+      text: >
+        결장 주위 공기만 있으면 항생제 비수술 치료를 시도한다. 작은 농양(4–5 cm 미만)은 항생제 단독으로 시작하고, 큰 농양은 경피 배액 + 항생제(배액 불가 시 상태가 허락하면 항생제 단독, 아니면 수술).
+        복수 없이 원거리 유리 공기만 있으면 면밀한 추적이 가능한 선택된 환자만 비수술 치료한다. 범발성 복막염에서 복강경 세척·배액은 1차가 아니다.
+        중증 환자와 다중 동반질환 환자의 범발성 복막염은 하트만 수술(강한 권고), 안정적이고 동반질환이 없으면 1차 절제·문합(± 우회 장루), 불안정하면 손상 통제 수술을 고려한다.
+        보존 치료 후 선택적 구불결장 절제는 이전 발작 횟수가 아니라 환자 요인으로 결정하며, 면역저하 환자 같은 고위험군에서 계획한다.
+      sources:
+        - {id: PAPER-WSES-DIVERTICULITIS-2020, locator: "Complicated ALCD; Operative management; Elective sigmoidectomy"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: referral
+        to: 외과(응급)
+        criteria:
+          - {finding: diverticular_perforation_generalized_peritonitis}
+          - {all: [{finding: diverticular_abscess}, {var: abscess_size_cm, op: ">=", value: 4}]}
+        purpose: ["경피 배액 또는 수술"]
+
+  - id: 353-C04
+    topic: 무증상 게실증 식이와 게실 출혈
+    type: treatment
+    original:
+      text: "무증상 게실증: 하루 30 g 식이섬유, 금연. 견과류 제한 권고는 근거 없음. 게실 출혈 진단·치료."
+      location: {file: by_chapter/353장.md, line: 53}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "WSES 2020은 급성 게실염만 다룸 — 예방 식이·게실 출혈은 A등급 출처 미확보."
+
+  - id: 353-C05
+    topic: 항문직장 질환(직장 탈출증·변실금·치핵·치열·치루)
+    type: treatment
+    original:
+      text: "직장 탈출증 수술, 변실금 식이·바이오피드백, 치핵 단계별 치료, 항문 열창 국소치료, 항문 주위 농양·치루."
+      location: {file: by_chapter/353장.md, line: 105}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "이번 묶음에서 A등급 출처 미확보."

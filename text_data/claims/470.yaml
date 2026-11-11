@@ -1,0 +1,169 @@
+# 470장 니코틴 중독 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+
+chapter: "470"
+title: 니코틴 중독
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 470-C01
+    topic: 흡연 평가와 진료 개입
+    type: treatment
+    original:
+      text: "모든 환자에게 흡연·과거 금연 경험·금연 관심을 질문. 흡연량과 기상 후 30분 내 흡연은 중독 지표. 관심 없는 사람은 동기 부여, 금연일은 수 주 이내로 협의."
+      location: {file: by_chapter/470장.md, line: 160}
+    status: 개정
+    current:
+      text: >
+        담배·니코틴 치료 참여를 늘리기 위해 동기강화 면담(Rec 1)과 능동적 연락(proactive outreach, Rec 30, Strong for)을 쓴다.
+        최소 4회 이상의 더 집중적인 행동 상담을 권고하고(Rec 13, Strong for), 문자 메시지 프로그램을 제안한다(Rec 14). 상담·약물에 병행한 수반성 관리·인센티브를 제안한다(Rec 31).
+        다시 흡연하면 즉시 약물치료와 상담을 반복하도록 제안한다(Rec 18). 30일 안에 끊을 준비가 안 됐으면 NRT(Rec 19) 또는 바레니클린(Rec 20)으로 금연 시도를 늘리도록 제안한다.
+        침, 마음챙김, 최면 단독 요법은 제안하지 않는다(Rec 28).
+      sources:
+        - {id: VADOD-TOBACCO-2026, locator: "Recommendations 1, 13, 14, 18–20, 28, 30, 31"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [F17]}
+        recommendations:
+          - when: {dx: F17}
+            recommend: {intervention: [intensive_behavioral_counseling_4plus_sessions, pharmacotherapy]}
+            strength: "VA/DoD Rec 2, 13 (Strong for)"
+          - when: {all: [{dx: F17}, {finding: not_ready_to_quit_30d}]}
+            recommend: {options: [NRT, varenicline], purpose: "금연 시도 증가"}
+            strength: "VA/DoD Rec 19, 20 (Weak for)"
+
+  - id: 470-C02
+    topic: 금연 약물 선택
+    type: treatment
+    original:
+      text: >
+        니코틴 대체요법(패치·껌·정제·비강·흡입) 3–6개월, 부프로피온 300 mg/일 분복 6개월, 바레니클린. 현행 지침은 원하는 사람에게 NRT 또는 바레니클린 약물치료와 상담 제공.
+      location: {file: by_chapter/470장.md, line: 166}
+    status: 개정
+    current:
+      text: >
+        FDA 승인 약물(서방형 부프로피온, NRT, 바레니클린)을 권고한다(Rec 2, Strong for). NRT를 쓸 때는 단일 제품보다 병용(패치+단시간 작용형)을 권고한다(Rec 3).
+        단일 약물이면 다른 단독요법보다 바레니클린을 권고한다(Rec 4). 서방형 부프로피온은 12주를 넘겨 연장하도록 제안한다(Rec 5). 안정된 정신질환이 있으면 바레니클린을 단일 NRT·부프로피온보다 권고한다(Rec 23).
+        알코올·물질사용장애 치료 중에도 흡연을 함께 치료하도록 제안한다(Rec 25). 수술 전 바레니클린 시작을 제안한다(Rec 10). 무연담배에는 바레니클린을 권고한다(Rec 9).
+        전자담배(ENDS)는 FDA 승인 제품이 아니며 금연 수단으로 제안하지 않는다(Rec 12). 전자담배 끊기에는 바레니클린 또는 NRT를 제안한다(Rec 7). 임신 중 부프로피온·NRT는 근거 불충분(Rec 27).
+      sources:
+        - {id: VADOD-TOBACCO-2026, locator: "Recommendations 2–5, 7, 9, 10, 12, 23, 25, 27"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [F17]}
+        recommendations:
+          - when: {all: [{dx: F17}, {finding: single_agent_planned}]}
+            recommend: {ingredient: varenicline, over: [bupropion_SR, single_NRT]}
+            strength: "VA/DoD Rec 4 (Strong for)"
+          - when: {all: [{dx: F17}, {med_class: NRT_single}]}
+            recommend: {regimen: "패치+단시간 작용형 NRT 병용"}
+            strength: "VA/DoD Rec 3 (Strong for)"
+          - when: {finding: ends_used_for_cessation}
+            recommend: {action: avoid, detail: "전자담배를 금연 수단으로 권하지 않음"}
+            strength: "VA/DoD Rec 12 (Weak against)"
+
+  - id: 470-C03
+    topic: 금연 약물 용량
+    type: dose
+    original:
+      text: "부프로피온 6개월간 하루 300 mg 분복. 바레니클린 0.5 mg/일로 시작해 8일째 1 mg 1일 2회, 6개월."
+      location: {file: by_chapter/470장.md, line: 162}
+    status: 유지
+    current:
+      text: >
+        바레니클린(미국 허가): 1–3일 0.5 mg 1일 1회, 4–7일 0.5 mg 1일 2회, 8일째부터 1 mg 1일 2회, 12주 치료. 12주에 금연했으면 12주 추가를 권장한다.
+        CrCl <30이면 0.5 mg 1일 1회로 시작해 최대 0.5 mg 1일 2회, 혈액투석 말기신부전은 내약 시 최대 0.5 mg 1일 1회. 간기능 저하는 조정 불필요.
+        NRT: 패치 21·14·7 mg — 니코틴 의존 중등도 이상 또는 하루 10개비 초과는 21 mg/일, 10개비 미만은 14 mg/일로 시작해 감량. 여기에 껌 2·4 mg(하루 10–12개까지), 정제(로젠지) 2·4 mg(하루 10–12개까지),
+        또는 비강 스프레이(1회=양쪽 각 1분무, 하루 10–12회, 시간당 최대 5회) 중 하나를 더한다.
+        서방형 부프로피온: 150 mg 1일 1회 3일 후 150 mg 1일 2회.
+      sources:
+        - {id: OPENFDA-VARENICLINE, locator: "2.1–2.2 Dosage and Administration"}
+        - {id: VADOD-TOBACCO-2026, locator: "Sidebar C: Pharmacotherapy"}
+    verification: primary
+    conflicts:
+      - "치료 기간: 원문 6개월(바레니클린·부프로피온) — 현행 바레니클린 12주(+성공 시 12주 추가), 부프로피온은 12주 넘게 연장 제안."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-VARENICLINE
+        ingredient: varenicline
+        indication: 금연
+        renal_param: CrCl
+        source_priority: [OPENFDA-VARENICLINE, VADOD-TOBACCO-2026]
+        titration: ["1–3일 0.5 mg 1일 1회", "4–7일 0.5 mg 1일 2회", "8일 이후 1 mg 1일 2회", "12주(+성공 시 12주 추가)"]
+        rules:
+          - {when: {all: [{var: CrCl, op: "<", value: 30}, {not: {event: chronic_hemodialysis}}]}, action: "0.5 mg 1일 1회 시작, 최대 0.5 mg 1일 2회", alert: caution}
+          - {when: {event: chronic_hemodialysis}, action: "내약 시 최대 0.5 mg 1일 1회", alert: high}
+      - kind: dose_rule
+        id: DR-NRT
+        ingredient: nicotine
+        indication: 금연
+        source_priority: [VADOD-TOBACCO-2026]
+        rules:
+          - {when: {any: [{var: cigarettes_per_day, op: ">", value: 10}, {finding: moderate_to_high_dependence}]}, action: "패치 21 mg/일 시작 후 감량 + 단시간 작용형 1종"}
+          - {when: {var: cigarettes_per_day, op: "<", value: 10}, action: "패치 14 mg/일 시작 후 감량 + 단시간 작용형 1종"}
+        short_acting: {gum: "2·4 mg, 하루 10–12개까지", lozenge: "2·4 mg, 하루 10–12개까지", nasal_spray: "1회 양쪽 각 1분무, 하루 10–12회, 시간당 최대 5회"}
+      - kind: dose_rule
+        id: DR-BUPROPION-SR-CESSATION
+        ingredient: bupropion_SR
+        indication: 금연
+        source_priority: [VADOD-TOBACCO-2026]
+        titration: ["150 mg 1일 1회 3일", "이후 150 mg 1일 2회"]
+
+  - id: 470-C04
+    topic: 바레니클린 정신신경계 이상반응
+    type: treatment
+    original:
+      text: "바레니클린에 대해 자살사고를 포함한 심각한 정신과적 증상이 보고되어 FDA 경고와 면밀한 관찰 권고. 연관성은 불확실."
+      location: {file: by_chapter/470장.md, line: 162}
+    status: 개정
+    current:
+      text: >
+        현행 미국 허가사항에는 박스 경고가 없다. 경고·주의 항목에 시판 후 보고된 정신신경계 이상반응(기분 변화, 정신병, 환각, 공격성, 초조, 불안, 자살사고·시도 등)이 있으며,
+        이런 증상이 생기면 중단하고 의료진에게 연락하도록 교육한다. 발작 병력·발작 역치를 낮추는 요인이 있으면 주의, 알코올 효과 증가, 운전·기계 조작 주의도 있다.
+        안정된 정신질환 환자에게는 바레니클린을 단일 NRT·부프로피온보다 권고한다(VA/DoD Rec 23).
+      sources:
+        - {id: OPENFDA-VARENICLINE, locator: "5 Warnings and Precautions (5.1–5.4); 박스 경고 없음"}
+        - {id: VADOD-TOBACCO-2026, locator: "Recommendation 23"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [F17]}
+        recommendations:
+          - when: {all: [{med: varenicline}, {any: [{finding: new_mood_change}, {finding: suicidal_ideation}, {finding: agitation}]}]}
+            recommend: {action: stop_and_contact_clinician}
+            alert_level: high
+          - when: {all: [{med: varenicline}, {finding: seizure_history}]}
+            recommend: {action: caution, detail: "발작 병력·역치 저하 요인"}
+            alert_level: medium
+
+  - id: 470-C05
+    topic: 흡연과 약물 상호작용
+    type: treatment
+    original:
+      text: "표 470-2: 흡연은 아미트립틸린 등 여러 약의 청소율 증가(CYP1A2 유도), 벤조디아제핀 진정효과 감소 등."
+      location: {file: by_chapter/470장.md, line: 99}
+    status: 개정
+    current:
+      text: >
+        담배 연기는 CYP1A2의 중등도 유도제다. CYP1A2·CYP3A4 유도제를 함께 쓰면 클로자핀 혈중 농도가 낮아져 효과가 떨어질 수 있고,
+        흡연처럼 CYP1A2 유도 요인을 중단하면 클로자핀 농도가 올라갈 수 있어 용량 감량을 검토한다.
+      sources:
+        - {id: OPENFDA-CLOZAPINE, locator: "7 DRUG INTERACTIONS — CYP1A2 and CYP3A4 Inducers; Discontinuation of CYP1A2 or CYP3A4 Inducers"}
+    verification: primary
+    note: "클로자핀 허가사항만 대조 — 다른 약(올란자핀·테오필린 등)의 흡연 상호작용은 개별 허가사항으로 보강 필요. 용량 수치는 3단계에서 다룬다."
+    review: {status: draft}
+    corpus:
+      - kind: monitoring
+        after: {med: clozapine}
+        rules:
+          - when: {event: smoking_cessation}
+            action: "흡연 중단 — CYP1A2 유도 소실로 클로자핀 농도 상승 가능, 용량 검토"
+          - when: {event: smoking_started}
+            action: "흡연 시작 — CYP1A2 유도로 클로자핀 효과 감소 가능"

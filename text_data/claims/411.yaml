@@ -1,0 +1,106 @@
+# 411장 고환과 남성 생식계 이상 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: openFDA(CC0) DEPO-Testosterone(테스토스테론 시피오네이트) 허가사항, 브라질 뇌하수체저하증 관점(2021, CC BY).
+# 주의: Endocrine Society 2018 테스토스테론 지침은 C등급 — 모니터링 수치는 A등급 근거 미확보.
+
+chapter: "411"
+title: 고환과 남성 생식계 이상
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 411-C01
+    topic: 남성 생식샘저하증 진단 검사
+    type: workup
+    original:
+      text: "아침 총 테스토스테론을 신뢰할 만한 측정법(LC-MS/MS)으로. <300 ng/dL 지속이면 결핍, >400 ng/dL이면 가능성 낮음, 200~400이면 반복·유리 테스토스테론. LH로 일차성·이차성 구분, LH 높으면 핵형 검사."
+      location: {file: by_chapter/411장.md, line: 315}
+    status: 유지
+    current:
+      text: >
+        테스토스테론 보충 전에 서로 다른 날 최소 2회 아침에 잰 혈청 테스토스테론이 정상 범위 미만인지 확인해 생식샘저하증 진단을 확정한다(미국 허가).
+        총 테스토스테론은 오전 10시 이전 공복에, 급성·아급성 질환이 없고 영향을 주는 약(글루코코르티코이드, 아편유사제, 케토코나졸, 바르비투르산 등)이 없을 때 재며, 경계값이면 같은 측정법으로 2회 확인한다. LH·FSH가 낮거나 부적절하게 정상이면 저생식샘자극호르몬 생식샘저하증이다.
+      sources:
+        - {id: OPENFDA-TESTOSTERONE-CYPIONATE, locator: "Dosage and Administration"}
+        - {id: PAPER-BRAZIL-HYPOPITUITARISM-2021, locator: "Hypogonadotropic hypogonadism"}
+    verification: primary
+    note: "절단값(300·400 ng/dL)은 A등급 근거로 대조하지 않음 — 검사실 참고범위 사용."
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{finding: male}, {finding: hypogonadism_symptoms}]}
+        tests:
+          - {lab: Testosterone_total, timing: "서로 다른 날 아침 2회, 공복", reason: "정상 범위 미만 확인 후 치료"}
+          - {lab: LH, reason: "일차성 vs 이차성"}
+          - {lab: FSH, reason: "일차성 vs 이차성"}
+      - kind: treatment
+        condition: {kcd: [E29.1, E23.0]}
+        recommendations:
+          - when: {all: [{event: testosterone_initiation}, {not: {finding: two_low_morning_testosterone}}]}
+            recommend: {action: confirm_diagnosis_first, detail: "서로 다른 날 아침 2회 낮은 테스토스테론 확인(허가)"}
+            alert_level: medium
+
+  - id: 411-C02
+    topic: 테스토스테론 주사 용량·금기
+    type: dose
+    original:
+      text: "표 411-3 테스토스테론 제형. 표 411-4 고위험: 전이성 전립선암, 유방암; 중등도~고위험: 전립선 결절, PSA >4, 헤마토크릿 >50%, 심한 LUTS, 조절 안 되는 심부전, 최근 6개월 MI·뇌졸중."
+      location: {file: by_chapter/411장.md, line: 393}
+    status: 유지
+    current:
+      text: >
+        테스토스테론 시피오네이트(미국 허가): 일차성(고환 부전) 또는 저생식샘자극호르몬 생식샘저하증 남성의 보충요법. 50–400 mg을 2–4주마다 둔부 깊이 근주(정주 금지)하고 반응·부작용에 따라 조절한다.
+        '나이 관련(후기 발병) 생식샘저하증'에서는 안전성·효과가 확립되지 않았다. 금기: 남성 유방암, 전립선암 확진·의심, 임신부, 중대한 심장·간·신장 질환. 이상반응으로 심근경색·뇌졸중, 체액 저류, 고용량 시 정자 감소가 보고된다.
+        임신을 원하면 테스토스테론을 중단하고(402-C04) 생식샘자극호르몬 치료를 고려한다. 목표 농도(브라질 관점): 450–600 ng/dL을 유지하는 최소 용량.
+      sources:
+        - {id: OPENFDA-TESTOSTERONE-CYPIONATE, locator: "Indications; Dosage; Contraindications; Adverse Reactions"}
+        - {id: PAPER-BRAZIL-HYPOPITUITARISM-2021, locator: "Sex steroid replacement therapy; Fertility issues"}
+    verification: primary
+    note: "허가사항이 구형(비PLR) 판이라 혈압·헤마토크릿·PSA 감시 경고가 openFDA 섹션에 없음 — 최신 제조사판 대조 필요."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-TESTOSTERONE-CYPIONATE
+        ingredient: testosterone_cypionate
+        indication: 남성 생식샘저하증(일차성·저생식샘자극호르몬)
+        source_priority: [OPENFDA-TESTOSTERONE-CYPIONATE]
+        standard_dose: "50–400 mg 근주 2–4주마다"
+        rules:
+          - {when: {any: [{dx: C61}, {finding: suspected_prostate_cancer}, {dx: C50}]}, action: "전립선암·남성 유방암 금기", alert: contraindicated}
+          - {when: {finding: desires_fertility}, action: "테스토스테론은 정자형성 억제 — 중단, 생식샘자극호르몬 고려", alert: high}
+          - {when: {finding: age_related_hypogonadism_only}, action: "나이 관련 생식샘저하증 안전성·효과 미확립", alert: caution}
+
+  - id: 411-C03
+    topic: 테스토스테론 치료 감시(헤마토크릿·PSA)
+    type: monitoring
+    original:
+      text: "표 411-5: 3~6개월 후와 매년 평가, 헤마토크릿 >54%면 중단, 40세 이상 PSA·직장수지검사, 비뇨기과 의뢰 기준."
+      location: {file: by_chapter/411장.md, line: 406}
+    status: 개정
+    current:
+      text: >
+        장기간 안드로겐을 투여하는 환자는 다혈구증을 발견하기 위해 혈색소와 적혈구용적률을 주기적으로 확인한다.
+        고령 환자는 안드로겐 치료 중 전립선 비대와 전립선암 위험이 높아질 수 있다(결정적 근거는 부족). 양성 전립선비대가 있으면 급성 요도 폐쇄가 생길 수 있다.
+      sources:
+        - {id: OPENFDA-TESTOSTERONE-CYPIONATE, locator: "PRECAUTIONS — Laboratory tests, General; WARNINGS (geriatric)"}
+    verification: primary
+    note: "헤마토크릿 중단 기준(>54%)·PSA 검사 시점은 A등급 출처에서 확인되지 않아 넣지 않았다(Endocrine Society 지침은 C등급)."
+    review: {status: draft}
+    corpus:
+      - kind: monitoring
+        after: {med: testosterone}
+        check: [Hb, Hematocrit]
+        rules:
+          - when: {var: Hematocrit, op: ">", value: 54}
+            action: "적혈구용적률 상승(다혈구증 의심) — 처방의 재검토(중단 기준 수치는 A등급 출처 미확인)"
+
+  - id: 411-C04
+    topic: 사춘기 이상·여성형유방·생식능 치료
+    type: treatment
+    original:
+      text: "성조숙·사춘기 지연 치료, 여성형유방 치료, hCG·FSH 생식능 회복."
+      location: {file: by_chapter/411장.md, line: 285}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "이번 묶음에서 A등급 출처 미확보."

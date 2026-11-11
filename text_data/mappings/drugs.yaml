@@ -1,0 +1,645 @@
+# 약제 개념 사전 — 말뭉치의 성분(med·ingredient)·약효군(med_class)을 표준 성분으로 묶는다.
+# 스키마·사용법: text_data/mappings/README.md
+#
+# ingredients
+#   id         말뭉치 성분 식별자(snake_case)
+#   rxnorm     RxNorm 성분명(생략 시 id 의 _ → 공백). tools/verify_codes.py 가 RxCUI·FDA EPC 를 확인한다.
+#   ko         국내 성분명(식약처·심평원 표기). EMR 약품명 괄호 안 성분과 앞부분 일치로 비교한다.
+#   corpus_ids 말뭉치 동의어(용법·제형이 붙은 식별자 포함)
+#   classes    소속 약효군(classes 의 id). 약효군 members 에서 자동 역산하므로 여기 적지 않는다.
+# products   복합제. components = 성분 id
+# classes
+#   members    성분 id, includes = 다른 약효군 id
+#   exhaustive true 이면 국내외 허가 성분을 모두 담았다고 본다 → 목록 밖 성분만 처방되면 '해당 없음(False)'.
+#              false 이면 목록 밖 성분이 처방됐을 때 '알 수 없음(None)'으로 둔다.
+#   derivable  false 이면 처방 목록만으로 판정할 수 없다(용량·기간·임상 판단 필요) → 사이트 매핑이 지정하지 않으면 None.
+#   systemic_only  국소 제형(크림·연고·점안·흡입·질정 등)이면 이 약효군에 넣지 않는다.
+#   derive_from + routes  상위 약효군 성분 중 해당 투여 경로인 것만(경로를 모르면 None).
+#
+# 국외 표준 코드(ATC)는 WHO 이용 조건(상업적 재배포 제한) 때문에 저장하지 않는다.
+
+ingredients:
+  # ── 신장·내분비·대사
+  - {id: metformin, ko: [메트포르민]}
+  - {id: dapagliflozin, ko: [다파글리플로진]}
+  - {id: empagliflozin, ko: [엠파글리플로진]}
+  - {id: canagliflozin, ko: [카나글리플로진]}
+  - {id: ertugliflozin, ko: [에르투글리플로진]}
+  - {id: ipragliflozin, rxnorm: null, ko: [이프라글리플로진]}
+  - {id: enavogliflozin, ko: [엔블로글리플로진, 엔바보글리플로진], rxnorm: null}
+  - {id: sitagliptin, ko: [시타글립틴]}
+  - {id: vildagliptin, ko: [빌다글립틴]}
+  - {id: saxagliptin, ko: [삭사글립틴]}
+  - {id: linagliptin, ko: [리나글립틴]}
+  - {id: alogliptin, ko: [알로글립틴]}
+  - {id: gemigliptin, ko: [제미글립틴], rxnorm: null}
+  - {id: teneligliptin, ko: [테네리글립틴], rxnorm: null}
+  - {id: evogliptin, ko: [에보글립틴], rxnorm: null}
+  - {id: anagliptin, ko: [아나글립틴], rxnorm: null}
+  - {id: exenatide, ko: [엑세나타이드, 엑세나티드]}
+  - {id: liraglutide, ko: [리라글루타이드, 리라글루티드]}
+  - {id: lixisenatide, ko: [릭시세나타이드, 릭시세나티드]}
+  - {id: dulaglutide, ko: [둘라글루타이드, 둘라글루티드]}
+  - {id: semaglutide, ko: [세마글루타이드, 세마글루티드]}
+  - {id: tirzepatide, ko: [터제파타이드, 티르제파티드, 티르제파타이드]}
+  - {id: pioglitazone, ko: [피오글리타존]}
+  - {id: rosiglitazone, ko: [로시글리타존]}
+  - {id: lobeglitazone, ko: [로베글리타존], rxnorm: null}
+  - {id: glimepiride, ko: [글리메피리드]}
+  - {id: gliclazide, ko: [글리클라지드]}
+  - {id: glipizide, ko: [글리피지드]}
+  - {id: glyburide, ko: [글리벤클라미드], corpus_ids: [glibenclamide]}
+  - {id: repaglinide, ko: [레파글리니드]}
+  - {id: nateglinide, ko: [나테글리니드]}
+  - {id: mitiglinide, ko: [미티글리니드], rxnorm: null}
+  - {id: insulin_human, rxnorm: "insulin, regular, human", ko: [인슐린휴먼, 인슐린 휴먼, 사람인슐린, 휴먼인슐린, 인슐린주사액], note: "레귤러·NPH 를 성분명으로 구분할 수 없어 식사 인슐린(prandial_insulin)에 넣지 않는다."}
+  - {id: insulin_isophane, rxnorm: "insulin isophane", ko: [이소판인슐린]}
+  - {id: insulin_aspart, ko: [인슐린아스파트]}
+  - {id: insulin_lispro, ko: [인슐린리스프로]}
+  - {id: insulin_glulisine, ko: [인슐린글루리신]}
+  - {id: insulin_glargine, ko: [인슐린글라진]}
+  - {id: insulin_detemir, ko: [인슐린디터머]}
+  - {id: insulin_degludec, ko: [인슐린데글루덱]}
+  - {id: finerenone, ko: [피네레논]}
+  - {id: spironolactone, ko: [스피로노락톤]}
+  - {id: eplerenone, ko: [에플레레논]}
+  - {id: hydrochlorothiazide, ko: [히드로클로로티아지드]}
+  - {id: chlorthalidone, ko: [클로르탈리돈]}
+  - {id: indapamide, ko: [인다파미드]}
+  - {id: metolazone, ko: [메톨라존]}
+  - {id: furosemide, ko: [푸로세미드]}
+  - {id: torsemide, ko: [토르세미드]}
+  - {id: tolvaptan, ko: [톨밥탄]}
+  - {id: desmopressin, ko: [데스모프레신]}
+  - {id: sodium_chloride, ko: [염화나트륨], corpus_ids: [sodium_chloride_3pct]}
+  - {id: potassium_citrate, ko: [구연산칼륨, 시트르산칼륨]}
+  - {id: allopurinol, ko: [알로푸리놀]}
+  - {id: febuxostat, ko: [페북소스타트]}
+  - {id: colchicine, ko: [콜키신]}
+  - {id: calcium_gluconate, rxnorm: calcium gluconate, ko: [글루콘산칼슘]}
+  - {id: calcitriol, ko: [칼시트리올]}
+  - {id: cinacalcet, ko: [시나칼세트]}
+  - {id: levothyroxine, ko: [레보티록신]}
+  - {id: methimazole, ko: [메티마졸]}
+  - {id: propylthiouracil, ko: [프로필티오우라실]}
+  - {id: hydrocortisone, ko: [히드로코르티손, 하이드로코르티손]}
+  - {id: prednisolone, ko: [프레드니솔론]}
+  - {id: prednisone, ko: [프레드니손]}
+  - {id: methylprednisolone, ko: [메틸프레드니솔론]}
+  - {id: dexamethasone, ko: [덱사메타손]}
+  - {id: deflazacort, ko: [데플라자코트]}
+  - {id: triamcinolone, ko: [트리암시놀론], note: "전신 투여(주사·경구)만 systemic_glucocorticoid — 국소 제형은 사이트 매핑에서 구분"}
+  - {id: betamethasone, ko: [베타메타손], note: "전신 투여만 systemic_glucocorticoid"}
+  - {id: fludrocortisone, ko: [플루드로코르티손]}
+  - {id: osilodrostat, ko: [오실로드로스타트]}
+  - {id: metyrapone, ko: [메티라폰]}
+  - {id: ketoconazole, ko: [케토코나졸]}
+  - {id: levoketoconazole, ko: [레보케토코나졸]}
+  - {id: cabergoline, ko: [카베르골린]}
+  - {id: bromocriptine, ko: [브로모크립틴]}
+  - {id: somatropin, ko: [소마트로핀]}
+  - {id: testosterone, ko: [테스토스테론], corpus_ids: [testosterone_cypionate]}
+  - {id: estradiol, ko: [에스트라디올], note: "질정·질크림 등 국소 제형은 estrogen_systemic 이 아니다 — 사이트 매핑에서 제형 구분"}
+  - {id: conjugated_estrogens, rxnorm: "estrogens, conjugated (USP)", ko: [결합에스트로겐, 결합형에스트로겐]}
+  - {id: estetrol, ko: [에스테트롤]}
+  - {id: tibolone, ko: [티볼론], rxnorm: null}
+  - {id: progesterone, ko: [프로게스테론]}
+  - {id: medroxyprogesterone, ko: [메드록시프로게스테론]}
+  - {id: dydrogesterone, ko: [디드로게스테론], rxnorm: null}
+  - {id: norethindrone, ko: [노르에티스테론], corpus_ids: [norethisterone]}
+  - {id: levonorgestrel, ko: [레보노르게스트렐]}
+  - {id: drospirenone, ko: [드로스피레논]}
+  - {id: desogestrel, ko: [데소게스트렐]}
+  - {id: dienogest, ko: [디에노게스트]}
+  - {id: gestodene, ko: [게스토덴], rxnorm: null}
+  - {id: ethinyl_estradiol, ko: [에티닐에스트라디올]}
+  - {id: fezolinetant, ko: [페졸리네탄트]}
+  - {id: elinzanetant, ko: [엘린자네탄트]}
+  - {id: alendronate, ko: [알렌드론산]}
+  - {id: zoledronic_acid, rxnorm: zoledronic acid, ko: [졸레드론산]}
+  - {id: denosumab, ko: [데노수맙]}
+  - {id: teriparatide, ko: [테리파라타이드]}
+  - {id: romosozumab, ko: [로모소주맙]}
+  - {id: phentermine, ko: [펜터민, 펜터민염산염]}
+  - {id: orlistat, ko: [오르리스타트]}
+  - {id: naltrexone, ko: [날트렉손], corpus_ids: [naltrexone_er, naltrexone_if_compensated]}
+  - {id: bupropion, ko: [부프로피온], corpus_ids: [bupropion_SR]}
+  # ── 지질
+  - {id: atorvastatin, ko: [아토르바스타틴]}
+  - {id: rosuvastatin, ko: [로수바스타틴]}
+  - {id: pitavastatin, ko: [피타바스타틴]}
+  - {id: simvastatin, ko: [심바스타틴]}
+  - {id: pravastatin, ko: [프라바스타틴]}
+  - {id: fluvastatin, ko: [플루바스타틴]}
+  - {id: lovastatin, ko: [로바스타틴]}
+  - {id: ezetimibe, ko: [에제티미브]}
+  - {id: evolocumab, ko: [에볼로쿠맙]}
+  - {id: alirocumab, ko: [알리로쿠맙]}
+  - {id: fenofibrate, ko: [페노피브레이트]}
+  - {id: gemfibrozil, ko: [젬피브로질, 겜피브로질]}
+  - {id: bezafibrate, ko: [베자피브레이트], rxnorm: null}
+  - {id: pemafibrate, ko: [페마피브레이트], rxnorm: null}
+  - {id: icosapent_ethyl, rxnorm: icosapent ethyl, ko: [이코사펜트에틸]}
+  - {id: omega_3_acid_ethyl_esters, rxnorm: "omega-3 acid ethyl esters (USP)", ko: [오메가-3-산에틸에스테르, 오메가3산에틸에스테르]}
+  # ── 심혈관
+  - {id: captopril, ko: [캅토프릴]}
+  - {id: enalapril, ko: [에날라프릴]}
+  - {id: lisinopril, ko: [리시노프릴]}
+  - {id: ramipril, ko: [라미프릴]}
+  - {id: perindopril, ko: [페린도프릴]}
+  - {id: fosinopril, ko: [포시노프릴]}
+  - {id: benazepril, ko: [베나제프릴]}
+  - {id: quinapril, ko: [퀴나프릴]}
+  - {id: imidapril, ko: [이미다프릴], rxnorm: null}
+  - {id: moexipril, ko: [모엑시프릴]}
+  - {id: cilazapril, ko: [실라자프릴], rxnorm: null}
+  - {id: zofenopril, ko: [조페노프릴], rxnorm: null}
+  - {id: trandolapril, ko: [트란돌라프릴]}
+  - {id: losartan, ko: [로사르탄]}
+  - {id: valsartan, ko: [발사르탄]}
+  - {id: irbesartan, ko: [이르베사르탄]}
+  - {id: candesartan, ko: [칸데사르탄]}
+  - {id: telmisartan, ko: [텔미사르탄]}
+  - {id: olmesartan, ko: [올메사르탄]}
+  - {id: eprosartan, ko: [에프로사르탄]}
+  - {id: fimasartan, ko: [피마사르탄, 피마살탄], rxnorm: null}
+  - {id: azilsartan, ko: [아질사르탄]}
+  - {id: aliskiren, ko: [알리스키렌]}
+  - {id: verapamil, ko: [베라파밀]}
+  - {id: diltiazem, ko: [딜티아젬]}
+  - {id: amlodipine, ko: [암로디핀]}
+  - {id: nifedipine, ko: [니페디핀]}
+  - {id: atenolol, ko: [아테놀올, 아테놀롤]}
+  - {id: bisoprolol, ko: [비소프롤롤]}
+  - {id: metoprolol, ko: [메토프롤롤]}
+  - {id: nebivolol, ko: [네비보롤, 네비볼롤]}
+  - {id: carvedilol, ko: [카르베딜롤]}
+  - {id: propranolol, ko: [프로프라놀롤]}
+  - {id: nadolol, ko: [나돌롤]}
+  - {id: labetalol, ko: [라베탈롤]}
+  - {id: esmolol, ko: [에스몰롤]}
+  - {id: sotalol, ko: [소타롤, 소탈롤]}
+  - {id: celiprolol, ko: [셀리프롤롤], rxnorm: null}
+  - {id: betaxolol, ko: [베탁솔롤]}
+  - {id: timolol, ko: [티몰롤], note: "점안제도 전신 β 차단 효과가 있을 수 있다"}
+  - {id: tamsulosin, ko: [탐스로신]}
+  - {id: alfuzosin, ko: [알푸조신]}
+  - {id: silodosin, ko: [실로도신]}
+  - {id: doxazosin, ko: [독사조신]}
+  - {id: terazosin, ko: [테라조신]}
+  - {id: prazosin, ko: [프라조신]}
+  - {id: phenoxybenzamine, ko: [페녹시벤자민]}
+  - {id: isosorbide_mononitrate, rxnorm: isosorbide mononitrate, ko: [이소소르비드일질산염, 이소소르비드-5-일질산염]}
+  - {id: amiodarone, ko: [아미오다론]}
+  - {id: sildenafil, ko: [실데나필]}
+  - {id: bosentan, ko: [보센탄]}
+  - {id: warfarin, ko: [와파린]}
+  - {id: apixaban, ko: [아픽사반]}
+  - {id: rivaroxaban, ko: [리바록사반]}
+  - {id: edoxaban, ko: [에독사반]}
+  - {id: dabigatran, ko: [다비가트란]}
+  - {id: heparin, ko: [헤파린]}
+  - {id: enoxaparin, ko: [에녹사파린]}
+  - {id: dalteparin, ko: [달테파린]}
+  - {id: nadroparin, ko: [나드로파린], rxnorm: null}
+  - {id: fondaparinux, ko: [폰다파리눅스]}
+  - {id: alteplase, ko: [알테플라제]}
+  - {id: epinephrine, ko: [에피네프린, 아드레날린], corpus_ids: [epinephrine_im, epinephrine_autoinjector, second_epinephrine_autoinjector]}
+  - {id: aspirin, ko: [아스피린, 아세틸살리실산]}
+  # ── 진통·마취·신경정신
+  - {id: acetaminophen, ko: [아세트아미노펜, 파라세타몰], corpus_ids: [paracetamol]}
+  - {id: ibuprofen, ko: [이부프로펜]}
+  - {id: dexibuprofen, rxnorm: null, ko: [덱시부프로펜]}
+  - {id: naproxen, ko: [나프록센]}
+  - {id: diclofenac, ko: [디클로페낙], corpus_ids: [diclofenac_sodium_topical_1pct], note: "국소 제형은 NSAID 전신 금기 판정에서 사이트 매핑으로 구분"}
+  - {id: aceclofenac, ko: [아세클로페낙]}
+  - {id: celecoxib, ko: [세레콕시브]}
+  - {id: meloxicam, ko: [멜록시캄]}
+  - {id: etodolac, ko: [에토돌락]}
+  - {id: ketorolac, ko: [케토롤락]}
+  - {id: loxoprofen, ko: [록소프로펜], rxnorm: null}
+  - {id: piroxicam, ko: [피록시캄]}
+  - {id: indomethacin, ko: [인도메타신]}
+  - {id: zaltoprofen, ko: [잘토프로펜], rxnorm: null}
+  - {id: pelubiprofen, ko: [펠루비프로펜], rxnorm: null}
+  - {id: polmacoxib, ko: [폴마콕시브], rxnorm: null}
+  - {id: morphine, ko: [모르핀]}
+  - {id: oxycodone, ko: [옥시코돈]}
+  - {id: hydromorphone, ko: [히드로모르폰, 하이드로모르폰]}
+  - {id: fentanyl, ko: [펜타닐]}
+  - {id: tapentadol, ko: [타펜타돌]}
+  - {id: tramadol, ko: [트라마돌]}
+  - {id: codeine, ko: [코데인]}
+  - {id: dihydrocodeine, ko: [디히드로코데인]}
+  - {id: hydrocodone, ko: [히드로코돈]}
+  - {id: pethidine, rxnorm: meperidine, ko: [페티딘], corpus_ids: [meperidine]}
+  - {id: methadone, ko: [메타돈], corpus_ids: [methadone_otp]}
+  - {id: buprenorphine, ko: [부프레노르핀]}
+  - {id: naloxone, ko: [날록손]}
+  - {id: ketamine, ko: [케타민]}
+  - {id: esketamine, ko: [에스케타민]}
+  - {id: dexmedetomidine, ko: [덱스메데토미딘], corpus_ids: [dexmedetomidine_adjunct]}
+  - {id: diazepam, ko: [디아제팜]}
+  - {id: lorazepam, ko: [로라제팜]}
+  - {id: alprazolam, ko: [알프라졸람]}
+  - {id: clonazepam, ko: [클로나제팜]}
+  - {id: chlordiazepoxide, ko: [클로르디아제폭시드]}
+  - {id: oxazepam, ko: [옥사제팜]}
+  - {id: midazolam, ko: [미다졸람]}
+  - {id: etizolam, ko: [에티졸람], rxnorm: null}
+  - {id: bromazepam, ko: [브로마제팜], rxnorm: null}
+  - {id: clobazam, ko: [클로바잠]}
+  - {id: triazolam, ko: [트리아졸람]}
+  - {id: flurazepam, ko: [플루라제팜]}
+  - {id: zolpidem, ko: [졸피뎀]}
+  - {id: buspirone, ko: [부스피론]}
+  - {id: acamprosate, ko: [아캄프로세이트]}
+  - {id: disulfiram, ko: [디설피람]}
+  - {id: baclofen, ko: [바클로펜]}
+  - {id: varenicline, ko: [바레니클린]}
+  - {id: nicotine, ko: [니코틴]}
+  - {id: gabapentin, ko: [가바펜틴]}
+  - {id: pregabalin, ko: [프레가발린]}
+  - {id: duloxetine, ko: [둘록세틴]}
+  - {id: venlafaxine, ko: [벤라팍신]}
+  - {id: desvenlafaxine, ko: [데스벤라팍신]}
+  - {id: milnacipran, ko: [밀나시프란]}
+  - {id: fluoxetine, ko: [플루옥세틴]}
+  - {id: sertraline, ko: [설트랄린, 서트랄린]}
+  - {id: paroxetine, ko: [파록세틴]}
+  - {id: escitalopram, ko: [에스시탈로프람]}
+  - {id: citalopram, ko: [시탈로프람]}
+  - {id: fluvoxamine, ko: [플루복사민]}
+  - {id: amitriptyline, ko: [아미트립틸린]}
+  - {id: nortriptyline, ko: [노르트립틸린]}
+  - {id: imipramine, ko: [이미프라민]}
+  - {id: clomipramine, ko: [클로미프라민]}
+  - {id: doxepin, ko: [독세핀]}
+  - {id: mirtazapine, ko: [미르타자핀]}
+  - {id: trazodone, ko: [트라조돈]}
+  - {id: vilazodone, ko: [빌라조돈]}
+  - {id: vortioxetine, ko: [보티옥세틴]}
+  - {id: agomelatine, ko: [아고멜라틴], rxnorm: null}
+  - {id: tianeptine, ko: [티아넵틴], rxnorm: null}
+  - {id: nefazodone, ko: [네파조돈]}
+  - {id: phenelzine, ko: [페넬진]}
+  - {id: tranylcypromine, ko: [트라닐시프로민]}
+  - {id: isocarboxazid, ko: [이소카르복사지드]}
+  - {id: moclobemide, ko: [모클로베미드], rxnorm: null}
+  - {id: selegiline, ko: [셀레길린]}
+  - {id: rasagiline, ko: [라사길린]}
+  - {id: safinamide, ko: [사피나미드]}
+  - {id: lithium, rxnorm: lithium carbonate, ko: [탄산리튬, 리튬]}
+  - {id: haloperidol, ko: [할로페리돌]}
+  - {id: chlorpromazine, ko: [클로르프로마진]}
+  - {id: perphenazine, ko: [퍼페나진, 페르페나진]}
+  - {id: fluphenazine, ko: [플루페나진]}
+  - {id: sulpiride, ko: [설피리드], rxnorm: null}
+  - {id: levosulpiride, ko: [레보설피리드], rxnorm: null}
+  - {id: pimozide, ko: [피모지드]}
+  - {id: risperidone, ko: [리스페리돈]}
+  - {id: paliperidone, ko: [팔리페리돈]}
+  - {id: olanzapine, ko: [올란자핀]}
+  - {id: quetiapine, ko: [쿠에티아핀]}
+  - {id: aripiprazole, ko: [아리피프라졸], corpus_ids: [aripiprazole_augmentation]}
+  - {id: ziprasidone, ko: [지프라시돈]}
+  - {id: amisulpride, ko: [아미설프라이드, 아미설프리드], rxnorm: null}
+  - {id: blonanserin, ko: [블로난세린], rxnorm: null}
+  - {id: lurasidone, ko: [루라시돈]}
+  - {id: brexpiprazole, ko: [브렉스피프라졸]}
+  - {id: cariprazine, ko: [카리프라진]}
+  - {id: clozapine, ko: [클로자핀]}
+  - {id: carbamazepine, ko: [카르바마제핀]}
+  - {id: oxcarbazepine, ko: [옥스카르바제핀]}
+  - {id: phenytoin, ko: [페니토인]}
+  - {id: phenobarbital, ko: [페노바르비탈]}
+  - {id: primidone, ko: [프리미돈]}
+  - {id: valproate, rxnorm: valproic acid, ko: [발프로산, 디발프로엑스, 발프로에이트], corpus_ids: [valproic_acid, valproate_except_childbearing]}
+  - {id: lamotrigine, ko: [라모트리진], corpus_ids: [lamotrigine_for_depressive_recurrence]}
+  - {id: levetiracetam, ko: [레비티라세탐]}
+  - {id: topiramate, ko: [토피라메이트]}
+  - {id: tiagabine, ko: [티아가빈]}
+  - {id: vigabatrin, ko: [비가바트린]}
+  - {id: ethosuximide, ko: [에토숙시미드]}
+  - {id: sumatriptan, ko: [수마트립탄]}
+  - {id: zolmitriptan, ko: [졸미트립탄]}
+  - {id: rizatriptan, ko: [리자트립탄]}
+  - {id: naratriptan, ko: [나라트립탄]}
+  - {id: eletriptan, ko: [엘레트립탄]}
+  - {id: almotriptan, ko: [알모트립탄]}
+  - {id: frovatriptan, ko: [프로바트립탄]}
+  - {id: erenumab, ko: [에레누맙]}
+  - {id: fremanezumab, ko: [프레마네주맙]}
+  - {id: galcanezumab, ko: [갈카네주맙]}
+  - {id: rimegepant, ko: [리메게판트]}
+  - {id: ubrogepant, ko: [우브로게판트]}
+  - {id: caffeine, ko: [카페인]}
+  - {id: onabotulinumtoxinA, ko: [클로스트리디움보툴리눔독소A형, 보툴리눔톡신A형, 보툴리눔독소A형], corpus_ids: [botulinum_toxin], note: "국내 A형 독소 제제(보톡스 외)를 모두 같은 개념으로 본다 — 제품 간 단위 비호환은 용량 규칙에서 다루지 않는다."}
+  - {id: donepezil, ko: [도네페질]}
+  - {id: rivastigmine, ko: [리바스티그민]}
+  - {id: galantamine, ko: [갈란타민]}
+  - {id: memantine, ko: [메만틴]}
+  - {id: pyridostigmine, ko: [피리도스티그민]}
+  - {id: levodopa, ko: [레보도파]}
+  - {id: pramipexole, ko: [프라미펙솔]}
+  - {id: ropinirole, ko: [로피니롤]}
+  - {id: rotigotine, ko: [로티고틴]}
+  - {id: apomorphine, ko: [아포모르핀]}
+  - {id: pergolide, ko: [페르골리드]}
+  - {id: tolcapone, ko: [톨카폰]}
+  - {id: trihexyphenidyl, ko: [트리헥시페니딜]}
+  - {id: benztropine, ko: [벤즈트로핀]}
+  - {id: riluzole, ko: [릴루졸]}
+  - {id: edaravone, ko: [에다라본]}
+  - {id: tofersen, ko: [토퍼센]}
+  - {id: fingolimod, ko: [핀골리모드]}
+  - {id: ozanimod, ko: [오자니모드]}
+  - {id: siponimod, ko: [시포니모드]}
+  - {id: natalizumab, ko: [나탈리주맙]}
+  - {id: ocrelizumab, ko: [오크렐리주맙]}
+  - {id: ofatumumab, ko: [오파투무맙]}
+  - {id: interferon_beta_1a, rxnorm: interferon beta-1a, ko: [인터페론베타-1a, 인터페론베타1a]}
+  - {id: glatiramer, ko: [글라티라머]}
+  - {id: teriflunomide, ko: [테리플루노마이드]}
+  - {id: dimethyl_fumarate, rxnorm: dimethyl fumarate, ko: [디메틸푸마르산염, 푸마르산디메틸]}
+  - {id: cladribine, ko: [클라드리빈]}
+  - {id: alemtuzumab, ko: [알렘투주맙]}
+  # ── 항콜린(항무스카린)
+  - {id: oxybutynin, ko: [옥시부티닌]}
+  - {id: tolterodine, ko: [톨테로딘, 톨터로딘]}
+  - {id: solifenacin, ko: [솔리페나신]}
+  - {id: darifenacin, ko: [다리페나신]}
+  - {id: trospium, ko: [트로스피움]}
+  - {id: fesoterodine, ko: [페소테로딘]}
+  - {id: propiverine, ko: [프로피베린], rxnorm: null}
+  - {id: scopolamine, ko: [스코폴라민]}
+  - {id: hyoscyamine, ko: [히오시아민]}
+  - {id: glycopyrrolate, ko: [글리코피롤레이트, 글리코피로니움]}
+  - {id: butylscopolamine, rxnorm: butylscopolamine, ko: [부틸스코폴라민]}
+  # ── 소화기
+  - {id: omeprazole, ko: [오메프라졸]}
+  - {id: esomeprazole, ko: [에스오메프라졸]}
+  - {id: lansoprazole, ko: [란소프라졸]}
+  - {id: dexlansoprazole, ko: [덱스란소프라졸]}
+  - {id: pantoprazole, ko: [판토프라졸]}
+  - {id: rabeprazole, ko: [라베프라졸]}
+  - {id: ilaprazole, ko: [일라프라졸], rxnorm: null}
+  - {id: vonoprazan, ko: [보노프라잔]}
+  - {id: tegoprazan, ko: [테고프라잔], rxnorm: null}
+  - {id: fexuprazan, ko: [펙수프라잔], rxnorm: null}
+  - {id: linaclotide, ko: [리나클로타이드]}
+  - {id: lubiprostone, ko: [루비프로스톤]}
+  - {id: rifaximin, ko: [리팍시민]}
+  - {id: lactulose, ko: [락툴로오스, 락툴로스]}
+  - {id: pancrelipase, ko: [판크레리파제], note: "국내 판크레아틴 제제는 별도 성분 — 사이트 매핑에서 판단"}
+  - {id: pentoxifylline, ko: [펜톡시필린]}
+  - {id: vitamin_e, rxnorm: "vitamin E", ko: [토코페롤, 비타민E]}
+  - {id: resmetirom, ko: [레스메티롬]}
+  - {id: entecavir, ko: [엔테카비르]}
+  - {id: tenofovir_alafenamide, rxnorm: tenofovir alafenamide, ko: [테노포비르알라페나미드]}
+  - {id: tenofovir_disoproxil, rxnorm: tenofovir disoproxil, ko: [테노포비르디소프록실], corpus_ids: [tenofovir_disoproxil_fumarate]}
+  - {id: peginterferon_alfa_2a, rxnorm: peginterferon alfa-2a, ko: [페그인터페론알파-2a, 페그인터페론알파2a], corpus_ids: [peginterferon]}
+  - {id: sofosbuvir, ko: [소포스부비르]}
+  - {id: velpatasvir, ko: [벨파타스비르]}
+  - {id: glecaprevir, ko: [글레카프레비르]}
+  - {id: pibrentasvir, ko: [피브렌타스비르]}
+  - {id: boceprevir, ko: [보세프레비르]}
+  - {id: telaprevir, ko: [텔라프레비르]}
+  - {id: atazanavir, ko: [아타자나비르]}
+  - {id: ritonavir, ko: [리토나비르]}
+  - {id: acetylcysteine, ko: [아세틸시스테인], corpus_ids: [N-acetylcysteine]}
+  - {id: iron_sucrose, rxnorm: iron sucrose, ko: [수크로스철, 철수크로스, 수산화제이철수크로오스, 수산화제2철수크로오스]}
+  - {id: ferric_carboxymaltose, rxnorm: ferric carboxymaltose, ko: [카르복시말토스철, 페릭카르복시말토스]}
+  - {id: ferrous_sulfate, rxnorm: ferrous sulfate, ko: [황산제일철, 건조황산제일철]}
+  - {id: epoetin_alfa, rxnorm: epoetin alfa, ko: [에포에틴알파]}
+  - {id: epoetin_beta, rxnorm: epoetin beta, ko: [에포에틴베타]}
+  - {id: darbepoetin_alfa, rxnorm: darbepoetin alfa, ko: [다베포에틴알파]}
+  - {id: methoxy_peg_epoetin_beta, rxnorm: methoxy polyethylene glycol-epoetin beta, ko: [메톡시폴리에틸렌글리콜-에포에틴베타]}
+  # ── 감염
+  - {id: amoxicillin, ko: [아목시실린]}
+  - {id: clavulanate, ko: [클라불란산]}
+  - {id: ampicillin, ko: [암피실린]}
+  - {id: sulbactam, ko: [설박탐]}
+  - {id: piperacillin, ko: [피페라실린]}
+  - {id: tazobactam, ko: [타조박탐]}
+  - {id: penicillin_g, rxnorm: penicillin G, ko: [벤질페니실린, 페니실린G]}
+  - {id: penicillin_v, rxnorm: penicillin V, ko: [페녹시메틸페니실린, 페니실린V]}
+  - {id: cefazolin, ko: [세파졸린]}
+  - {id: cephalexin, ko: [세팔렉신]}
+  - {id: cefaclor, ko: [세파클러]}
+  - {id: cefuroxime, ko: [세푸록심]}
+  - {id: cefotaxime, ko: [세포탁심]}
+  - {id: ceftriaxone, ko: [세프트리악손]}
+  - {id: ceftazidime, ko: [세프타지딤]}
+  - {id: cefepime, ko: [세페핌]}
+  - {id: cefixime, ko: [세픽심]}
+  - {id: cefpodoxime, ko: [세프포독심]}
+  - {id: cefditoren, ko: [세프디토렌]}
+  - {id: cefoxitin, ko: [세폭시틴]}
+  - {id: meropenem, ko: [메로페넴]}
+  - {id: imipenem, ko: [이미페넴]}
+  - {id: ertapenem, ko: [에르타페넴]}
+  - {id: ciprofloxacin, ko: [시프로플록사신]}
+  - {id: levofloxacin, ko: [레보플록사신]}
+  - {id: moxifloxacin, ko: [목시플록사신]}
+  - {id: ofloxacin, ko: [오플록사신]}
+  - {id: gemifloxacin, ko: [제미플록사신]}
+  - {id: delafloxacin, ko: [델라플록사신]}
+  - {id: azithromycin, ko: [아지스로마이신]}
+  - {id: clarithromycin, ko: [클래리스로마이신, 클라리스로마이신]}
+  - {id: erythromycin, ko: [에리스로마이신, 에리트로마이신]}
+  - {id: roxithromycin, ko: [록시스로마이신], rxnorm: null}
+  - {id: doxycycline, ko: [독시사이클린]}
+  - {id: minocycline, ko: [미노사이클린]}
+  - {id: tetracycline, ko: [테트라사이클린]}
+  - {id: gentamicin, ko: [겐타마이신]}
+  - {id: amikacin, ko: [아미카신]}
+  - {id: tobramycin, ko: [토브라마이신]}
+  - {id: vancomycin, ko: [반코마이신]}
+  - {id: teicoplanin, ko: [테이코플라닌], rxnorm: null}
+  - {id: linezolid, ko: [리네졸리드]}
+  - {id: metronidazole, ko: [메트로니다졸]}
+  - {id: clindamycin, ko: [클린다마이신]}
+  - {id: sulfamethoxazole, ko: [설파메톡사졸]}
+  - {id: trimethoprim, ko: [트리메토프림]}
+  - {id: nitrofurantoin, ko: [니트로푸란토인]}
+  - {id: fosfomycin, ko: [포스포마이신]}
+  - {id: colistin, ko: [콜리스틴]}
+  - {id: isoniazid, ko: [이소니아지드]}
+  - {id: rifampin, ko: [리팜피신], corpus_ids: [rifampicin]}
+  - {id: rifabutin, ko: [리파부틴]}
+  - {id: bismuth_subcitrate_potassium, rxnorm: bismuth subcitrate potassium, ko: [비스무트시트르산칼륨]}
+  # ── 면역·류마티스·종양
+  - {id: methotrexate, ko: [메토트렉세이트]}
+  - {id: hydroxychloroquine, ko: [히드록시클로로퀸, 하이드록시클로로퀸]}
+  - {id: sulfasalazine, ko: [설파살라진]}
+  - {id: leflunomide, ko: [레플루노미드]}
+  - {id: azathioprine, ko: [아자티오프린]}
+  - {id: mycophenolate, rxnorm: [mycophenolate mofetil, mycophenolic acid], ko: [미코페놀레이트모페틸, 미코페놀산]}
+  - {id: tacrolimus, ko: [타크로리무스], note: "국소 연고는 사이트 매핑에서 제외"}
+  - {id: cyclosporine, ko: [시클로스포린, 사이클로스포린], note: "점안제는 사이트 매핑에서 제외"}
+  - {id: cyclophosphamide, ko: [시클로포스파미드], corpus_ids: [cyclophosphamide_iv]}
+  - {id: rituximab, ko: [리툭시맙]}
+  - {id: obinutuzumab, ko: [오비누투주맙]}
+  - {id: infliximab, ko: [인플릭시맙, 인플릭시맵]}
+  - {id: adalimumab, ko: [아달리무맙]}
+  - {id: etanercept, ko: [에타너셉트]}
+  - {id: golimumab, ko: [골리무맙]}
+  - {id: certolizumab_pegol, rxnorm: certolizumab pegol, ko: [세르톨리주맙페골]}
+  - {id: tocilizumab, ko: [토실리주맙]}
+  - {id: abatacept, ko: [아바타셉트]}
+  - {id: secukinumab, ko: [세쿠키누맙]}
+  - {id: ixekizumab, ko: [익세키주맙]}
+  - {id: ustekinumab, ko: [우스테키누맙]}
+  - {id: vedolizumab, ko: [베돌리주맙]}
+  - {id: tofacitinib, ko: [토파시티닙]}
+  - {id: baricitinib, ko: [바리시티닙]}
+  - {id: upadacitinib, ko: [유파다시티닙]}
+  - {id: filgotinib, ko: [필고티닙], rxnorm: null}
+  - {id: eculizumab, ko: [에쿨리주맙]}
+  - {id: ravulizumab, ko: [라불리주맙]}
+  - {id: pegcetacoplan, ko: [페그세타코플란]}
+  - {id: iptacopan, ko: [입타코판]}
+  - {id: efgartigimod_alfa, rxnorm: efgartigimod alfa, ko: [에프가티지모드알파]}
+  - {id: nivolumab, ko: [니볼루맙]}
+  - {id: pembrolizumab, ko: [펨브롤리주맙]}
+  - {id: atezolizumab, ko: [아테졸리주맙]}
+  - {id: durvalumab, ko: [더발루맙]}
+  - {id: ipilimumab, ko: [이필리무맙]}
+  - {id: cemiplimab, ko: [세미플리맙]}
+  - {id: nintedanib, ko: [닌테다닙]}
+  - {id: immune_globulin, rxnorm: "immunoglobulin G, human", ko: [사람면역글로불린, 인면역글로불린, 면역글로불린], corpus_ids: [immune_globulin_im, IVIG]}
+  - {id: pilocarpine, ko: [필로카르핀]}
+  - {id: penicillamine, ko: [페니실라민, 디페니실라민]}
+  - {id: trientine, ko: [트리엔틴]}
+  - {id: zinc_acetate, rxnorm: zinc acetate, ko: [초산아연, 아세트산아연]}
+  # ── 기타 상호작용 약제(강한 CYP3A 억제)
+  - {id: itraconazole, ko: [이트라코나졸]}
+  - {id: voriconazole, ko: [보리코나졸]}
+  - {id: posaconazole, ko: [포사코나졸]}
+  - {id: cobicistat, ko: [코비시스타트]}
+  - {id: nirmatrelvir, ko: [니르마트렐비르]}
+  # ── 추가(말뭉치 drug_class·대안 약제)
+  - {id: patiromer, ko: [파티로머]}
+  - {id: sodium_zirconium_cyclosilicate, rxnorm: sodium zirconium cyclosilicate, ko: [지르코늄시클로규산나트륨, 소듐지르코늄사이클로실리케이트]}
+  - {id: sodium_polystyrene_sulfonate, rxnorm: sodium polystyrene sulfonate, ko: [폴리스티렌설폰산나트륨]}
+  - {id: calcium_polystyrene_sulfonate, rxnorm: null, ko: [폴리스티렌설폰산칼슘]}
+  - {id: mesalamine, ko: [메살라진, 메살라민], corpus_ids: [mesalazine]}
+  - {id: balsalazide, ko: [발살라지드]}
+  - {id: olsalazine, ko: [올살라진]}
+  - {id: ledipasvir, ko: [레디파스비르]}
+  - {id: daclatasvir, ko: [다클라타스비르]}
+  - {id: terlipressin, ko: [테를리프레신]}
+  - {id: octreotide, ko: [옥트레오티드]}
+  - {id: somatostatin, ko: [소마토스타틴]}
+  - {id: vasopressin, ko: [바소프레신]}
+  - {id: capsaicin, ko: [캡사이신]}
+  - {id: avacopan, ko: [아바코판]}
+  - {id: lacosamide, ko: [라코사미드]}
+  - {id: albumin_human, rxnorm: "albumin human, USP", ko: [사람혈청알부민, 인혈청알부민, 알부민], corpus_ids: [albumin]}
+
+products:
+  - {id: buprenorphine_naloxone, components: [buprenorphine, naloxone]}
+  - {id: amoxicillin_clavulanate, components: [amoxicillin, clavulanate]}
+  - {id: sulfamethoxazole_trimethoprim, components: [sulfamethoxazole, trimethoprim]}
+  - {id: glecaprevir_pibrentasvir, components: [glecaprevir, pibrentasvir]}
+  - {id: sofosbuvir_velpatasvir, components: [sofosbuvir, velpatasvir]}
+  - {id: aspirin_acetaminophen_caffeine, components: [aspirin, acetaminophen, caffeine]}
+  - {id: phentermine_topiramate_ER, components: [phentermine, topiramate]}
+  - {id: naltrexone_bupropion_ER, components: [naltrexone, bupropion], classes: [antiobesity]}
+
+classes:
+  # ── 대사·신장
+  - {id: ACEi, corpus_ids: [ace_inhibitor], name_ko: ACE 억제제, exhaustive: true, members: [captopril, enalapril, lisinopril, ramipril, perindopril, fosinopril, benazepril, quinapril, imidapril, moexipril, cilazapril, zofenopril, trandolapril]}
+  - {id: ARB, name_ko: 안지오텐신 수용체 차단제, exhaustive: true, members: [losartan, valsartan, irbesartan, candesartan, telmisartan, olmesartan, eprosartan, fimasartan, azilsartan]}
+  - {id: DRI, name_ko: 직접 레닌 억제제, exhaustive: true, members: [aliskiren]}
+  - {id: RASi, name_ko: RAS 억제제, exhaustive: true, includes: [ACEi, ARB, DRI]}
+  - {id: RASi_max_tolerated, name_ko: 최대 내약 용량 RAS 억제제, derivable: false, includes: [RASi], note: "최대 내약 용량 여부는 처방 목록으로 판정할 수 없다."}
+  - {id: SGLT2i, name_ko: SGLT2 억제제, exhaustive: true, members: [dapagliflozin, empagliflozin, canagliflozin, ertugliflozin, ipragliflozin, enavogliflozin]}
+  - {id: DPP4i, name_ko: DPP-4 억제제, exhaustive: true, members: [sitagliptin, vildagliptin, saxagliptin, linagliptin, alogliptin, gemigliptin, teneligliptin, evogliptin, anagliptin]}
+  - {id: GLP1RA, name_ko: GLP-1 수용체 작용제, exhaustive: true, members: [exenatide, liraglutide, lixisenatide, dulaglutide, semaglutide]}
+  - {id: GIP_GLP1RA, name_ko: GIP/GLP-1 수용체 작용제, exhaustive: true, members: [tirzepatide]}
+  - {id: TZD, name_ko: 티아졸리딘디온, exhaustive: true, members: [pioglitazone, rosiglitazone, lobeglitazone]}
+  - {id: sulfonylurea, name_ko: 설폰요소제, exhaustive: true, members: [glimepiride, gliclazide, glipizide, glyburide]}
+  - {id: meglitinide, name_ko: 메글리티나이드, exhaustive: true, members: [repaglinide, nateglinide, mitiglinide]}
+  - {id: basal_insulin, name_ko: 기저 인슐린, exhaustive: false, members: [insulin_isophane, insulin_glargine, insulin_detemir, insulin_degludec]}
+  - {id: insulin, name_ko: 인슐린, exhaustive: true, members: [insulin_human, insulin_isophane, insulin_aspart, insulin_lispro, insulin_glulisine, insulin_glargine, insulin_detemir, insulin_degludec]}
+  - {id: prandial_insulin, name_ko: 식사 인슐린, exhaustive: false, members: [insulin_aspart, insulin_lispro, insulin_glulisine], note: "레귤러 휴먼 인슐린은 성분명으로 NPH 와 구분할 수 없어 제외 — 사이트 매핑에서 지정"}
+  - {id: thiazide, name_ko: 티아지드(유사) 이뇨제, exhaustive: true, members: [hydrochlorothiazide, chlorthalidone, indapamide, metolazone]}
+  - {id: diuretic, name_ko: 이뇨제, exhaustive: false, includes: [thiazide], members: [furosemide, torsemide, spironolactone, eplerenone]}
+  - {id: nsMRA, name_ko: 비스테로이드성 MRA, exhaustive: true, members: [finerenone]}
+  - {id: ESA, name_ko: 적혈구 생성 자극제, exhaustive: true, members: [epoetin_alfa, epoetin_beta, darbepoetin_alfa, methoxy_peg_epoetin_beta]}
+  - {id: iron_supplement, name_ko: 철분 제제, exhaustive: false, members: [ferrous_sulfate, iron_sucrose, ferric_carboxymaltose]}
+  - {id: antiobesity, name_ko: 항비만제, exhaustive: false, members: [phentermine, orlistat, liraglutide, semaglutide, tirzepatide], note: "날트렉손·부프로피온·펜터민·토피라메이트 복합제는 products 에서 지정 — 단일 성분은 비만 목적이 아님"}
+  # ── 지질
+  - {id: statin, name_ko: 스타틴, exhaustive: true, members: [atorvastatin, rosuvastatin, pitavastatin, simvastatin, pravastatin, fluvastatin, lovastatin]}
+  - {id: fibrate, name_ko: 피브레이트, exhaustive: true, members: [fenofibrate, gemfibrozil, bezafibrate, pemafibrate]}
+  - {id: omega3_supplement, name_ko: 오메가-3 제제(이코사펜트 에틸 제외), exhaustive: false, members: [omega_3_acid_ethyl_esters]}
+  - {id: lipid_lowering, name_ko: 지질 강하제, exhaustive: false, includes: [statin, fibrate], members: [ezetimibe, evolocumab, alirocumab, icosapent_ethyl]}
+  # ── 심혈관
+  - {id: beta_blocker, name_ko: 베타 차단제, exhaustive: true, members: [atenolol, bisoprolol, metoprolol, nebivolol, carvedilol, propranolol, nadolol, labetalol, esmolol, sotalol, celiprolol, betaxolol, timolol]}
+  - {id: alpha_blocker, name_ko: 알파 차단제, exhaustive: true, members: [tamsulosin, alfuzosin, silodosin, doxazosin, terazosin, prazosin, phenoxybenzamine]}
+  - {id: non_dhp_ccb, name_ko: 비디하이드로피리딘 칼슘 통로 차단제, exhaustive: true, members: [verapamil, diltiazem]}
+  - {id: ccb, corpus_ids: [CCB], name_ko: 칼슘 통로 차단제, exhaustive: false, includes: [non_dhp_ccb], members: [amlodipine, nifedipine]}
+  - {id: DOAC, name_ko: 직접 경구 항응고제, exhaustive: true, members: [apixaban, rivaroxaban, edoxaban, dabigatran]}
+  - {id: anticoagulant, name_ko: 항응고제, exhaustive: true, includes: [DOAC], members: [warfarin, heparin, enoxaparin, dalteparin, nadroparin, fondaparinux]}
+  # ── 진통·신경정신
+  - {id: NSAID, corpus_ids: [nsaid, nsaid_optimal_dose], name_ko: 비스테로이드 소염제, exhaustive: false, systemic_only: true, members: [ibuprofen, dexibuprofen, naproxen, diclofenac, aceclofenac, celecoxib, meloxicam, etodolac, ketorolac, loxoprofen, piroxicam, indomethacin, zaltoprofen, pelubiprofen, polmacoxib], note: "저용량 아스피린은 제외"}
+  - {id: oral_NSAID, name_ko: 경구 NSAID, derive_from: NSAID, routes: [oral], note: "투여 경로를 알 때만 판정"}
+  - {id: topical_NSAID, name_ko: 국소 NSAID, derive_from: NSAID, routes: [topical], note: "투여 경로를 알 때만 판정"}
+  - {id: topical_capsaicin, name_ko: 국소 캡사이신, exhaustive: true, members: [capsaicin]}
+  - {id: opioid, name_ko: 아편유사제, exhaustive: false, members: [morphine, oxycodone, hydromorphone, fentanyl, tapentadol, tramadol, codeine, dihydrocodeine, hydrocodone, pethidine, methadone, buprenorphine]}
+  - {id: strong_opioid, name_ko: 강한 아편유사제, exhaustive: false, members: [morphine, oxycodone, hydromorphone, fentanyl, tapentadol, methadone, pethidine, hydrocodone]}
+  - {id: long_acting_opioid, name_ko: 장시간 작용 아편유사제, derivable: false, includes: [opioid], note: "서방형·패치 여부는 제형 정보 필요 — 사이트 매핑에서 지정"}
+  - {id: extended_release_opioid, name_ko: 서방형 아편유사제, derivable: false, includes: [opioid], note: "제형 정보 필요"}
+  - {id: long_term_opioid, name_ko: 장기 아편유사제 사용, derivable: false, includes: [opioid], note: "사용 기간(통상 3개월 이상) 판단 필요"}
+  - {id: analgesic_frequent, name_ko: 잦은 진통제 사용, derivable: false, note: "월 사용 일수 판단 필요(약물과용 두통)"}
+  - {id: benzodiazepine, name_ko: 벤조디아제핀, exhaustive: true, members: [diazepam, lorazepam, alprazolam, clonazepam, chlordiazepoxide, oxazepam, midazolam, etizolam, bromazepam, clobazam, triazolam, flurazepam]}
+  - {id: sedative_hypnotic, name_ko: 진정수면제, exhaustive: false, includes: [benzodiazepine], members: [zolpidem]}
+  - {id: anxiolytic, name_ko: 항불안제, exhaustive: false, includes: [benzodiazepine], members: [buspirone]}
+  - {id: SSRI, name_ko: 선택적 세로토닌 재흡수 억제제, exhaustive: true, members: [fluoxetine, sertraline, paroxetine, escitalopram, citalopram, fluvoxamine]}
+  - {id: SNRI, name_ko: 세로토닌·노르에피네프린 재흡수 억제제, exhaustive: true, members: [duloxetine, venlafaxine, desvenlafaxine, milnacipran]}
+  - {id: SSRI_or_SNRI, name_ko: SSRI 또는 SNRI, exhaustive: true, includes: [SSRI, SNRI]}
+  - {id: TCA, corpus_ids: [tricyclic_antidepressant], name_ko: 삼환계 항우울제, exhaustive: true, members: [amitriptyline, nortriptyline, imipramine, clomipramine, doxepin]}
+  - {id: MAOI, name_ko: 모노아민 산화효소 억제제, exhaustive: true, members: [phenelzine, tranylcypromine, isocarboxazid, moclobemide, selegiline, rasagiline, safinamide]}
+  - {id: antidepressant, name_ko: 항우울제, exhaustive: false, includes: [SSRI, SNRI, TCA, MAOI], members: [mirtazapine, trazodone, vilazodone, vortioxetine, bupropion, agomelatine, tianeptine, nefazodone]}
+  - {id: typical_antipsychotic, name_ko: 전형 항정신병약, exhaustive: false, members: [haloperidol, chlorpromazine, perphenazine, fluphenazine, sulpiride, pimozide]}
+  - {id: antipsychotic, name_ko: 항정신병약, exhaustive: false, includes: [typical_antipsychotic], members: [risperidone, paliperidone, olanzapine, quetiapine, aripiprazole, ziprasidone, amisulpride, blonanserin, lurasidone, brexpiprazole, cariprazine, clozapine, levosulpiride]}
+  - {id: anticholinergic, name_ko: 항콜린제(항무스카린), exhaustive: false, members: [trihexyphenidyl, benztropine, oxybutynin, tolterodine, solifenacin, darifenacin, trospium, fesoterodine, propiverine, scopolamine, hyoscyamine, glycopyrrolate, butylscopolamine], note: "삼환계 항우울제·1세대 항히스타민 등 항콜린 부작용 약은 포함하지 않는다."}
+  - {id: antihistamine, name_ko: 항히스타민제, exhaustive: false, members: [], note: "성분 목록 미등록 — 사이트 매핑에서 지정"}
+  - {id: dopamine_agonist, name_ko: 도파민 작용제, exhaustive: true, members: [pramipexole, ropinirole, rotigotine, apomorphine, bromocriptine, cabergoline, pergolide]}
+  - {id: cholinesterase_inhibitor, corpus_ids: [ChEI], name_ko: 콜린분해효소 억제제, exhaustive: true, members: [donepezil, rivastigmine, galantamine, pyridostigmine], note: "피리도스티그민은 말초 작용(중증근무력증) — 치매 규칙 적용 시 확인"}
+  - {id: triptan, name_ko: 트립탄, exhaustive: true, members: [sumatriptan, zolmitriptan, rizatriptan, naratriptan, eletriptan, almotriptan, frovatriptan]}
+  - {id: NRT, name_ko: 니코틴 대체요법, exhaustive: true, members: [nicotine]}
+  - {id: NRT_single, name_ko: 단일 니코틴 대체요법, derivable: false, includes: [NRT], note: "패치·단시간 작용형 병용 여부는 제형 정보 필요"}
+  - {id: ms_dmt, name_ko: 다발경화증 질병조절제, exhaustive: true, members: [interferon_beta_1a, glatiramer, teriflunomide, dimethyl_fumarate, fingolimod, ozanimod, siponimod, natalizumab, ocrelizumab, ofatumumab, cladribine, alemtuzumab]}
+  - {id: VMAT2_inhibitor, name_ko: VMAT2 억제제, exhaustive: false, members: []}
+  # ── 소화기
+  - {id: 5ASA, name_ko: 5-아미노살리실산, exhaustive: true, members: [mesalamine, sulfasalazine, balsalazide, olsalazine]}
+  - {id: potassium_binder, name_ko: 칼륨 결합제, exhaustive: true, members: [patiromer, sodium_zirconium_cyclosilicate, sodium_polystyrene_sulfonate, calcium_polystyrene_sulfonate]}
+  - {id: vasoactive, name_ko: 혈관작용제(정맥류 출혈), exhaustive: true, members: [terlipressin, octreotide, somatostatin, vasopressin]}
+  - {id: PPI, name_ko: 양성자펌프 억제제, exhaustive: true, members: [omeprazole, esomeprazole, lansoprazole, dexlansoprazole, pantoprazole, rabeprazole, ilaprazole]}
+  - {id: 5HT3_antagonist, name_ko: 5-HT3 길항제, exhaustive: false, members: []}
+  - {id: osmotic_laxative, name_ko: 삼투성 하제, exhaustive: false, members: [lactulose]}
+  - {id: nonabsorbable_disaccharide, name_ko: 비흡수 이당류, exhaustive: false, members: [lactulose]}
+  # ── 감염
+  - {id: fluoroquinolone, name_ko: 플루오로퀴놀론, exhaustive: true, members: [ciprofloxacin, levofloxacin, moxifloxacin, ofloxacin, gemifloxacin, delafloxacin]}
+  - {id: DAA, name_ko: C형간염 직접작용 항바이러스제, exhaustive: false, members: [sofosbuvir, velpatasvir, glecaprevir, pibrentasvir, ledipasvir, daclatasvir, boceprevir, telaprevir]}
+  - {id: antibiotic, corpus_ids: [antibiotics_first], name_ko: 항생제, exhaustive: false, includes: [fluoroquinolone], members: [amoxicillin, clavulanate, ampicillin, sulbactam, piperacillin, tazobactam, penicillin_g, penicillin_v, cefazolin, cephalexin, cefaclor, cefuroxime, cefotaxime, ceftriaxone, ceftazidime, cefepime, cefixime, cefpodoxime, cefditoren, cefoxitin, meropenem, imipenem, ertapenem, azithromycin, clarithromycin, erythromycin, roxithromycin, doxycycline, minocycline, tetracycline, gentamicin, amikacin, tobramycin, vancomycin, teicoplanin, linezolid, metronidazole, clindamycin, sulfamethoxazole, trimethoprim, nitrofurantoin, fosfomycin, colistin, rifaximin]}
+  - {id: strong_CYP3A_inhibitor, name_ko: 강한 CYP3A 억제제, exhaustive: false, members: [ketoconazole, itraconazole, voriconazole, posaconazole, clarithromycin, ritonavir, cobicistat, nefazodone, nirmatrelvir, boceprevir, telaprevir]}
+  # ── 면역
+  - {id: systemic_glucocorticoid, corpus_ids: [glucocorticoid], name_ko: 전신 글루코코르티코이드, exhaustive: true, systemic_only: true, members: [hydrocortisone, prednisolone, prednisone, methylprednisolone, dexamethasone, deflazacort, triamcinolone, betamethasone], note: "흡입·국소 제형은 사이트 매핑에서 제외해야 한다."}
+  - {id: csDMARD, name_ko: 전통 합성 DMARD, exhaustive: true, members: [methotrexate, hydroxychloroquine, sulfasalazine, leflunomide]}
+  - {id: TNF_inhibitor, name_ko: TNF 억제제, exhaustive: true, members: [infliximab, adalimumab, etanercept, golimumab, certolizumab_pegol]}
+  - {id: bDMARD, name_ko: 생물학적 DMARD, exhaustive: false, includes: [TNF_inhibitor], members: [tocilizumab, abatacept, rituximab, secukinumab, ixekizumab, ustekinumab]}
+  - {id: tsDMARD, name_ko: 표적 합성 DMARD(JAK 억제제), exhaustive: true, members: [tofacitinib, baricitinib, upadacitinib, filgotinib]}
+  - {id: anti_CD20, name_ko: 항 CD20 항체, exhaustive: true, members: [rituximab, obinutuzumab, ocrelizumab, ofatumumab]}
+  - {id: b_cell_depleting, name_ko: B세포 고갈 치료, exhaustive: false, includes: [anti_CD20]}
+  - {id: complement_inhibitor, name_ko: 보체 억제제, exhaustive: true, members: [eculizumab, ravulizumab, pegcetacoplan, iptacopan]}
+  - {id: immune_checkpoint_inhibitor, name_ko: 면역관문억제제, exhaustive: true, members: [nivolumab, pembrolizumab, atezolizumab, durvalumab, ipilimumab, cemiplimab]}
+  - {id: nonsteroidal_immunosuppressant, name_ko: 비스테로이드 면역억제제, exhaustive: false, members: [azathioprine, mycophenolate, tacrolimus, cyclosporine, methotrexate, cyclophosphamide]}
+  # ── 호르몬
+  - {id: estrogen_systemic, name_ko: 전신 에스트로겐, exhaustive: false, systemic_only: true, members: [estradiol, conjugated_estrogens, estetrol, ethinyl_estradiol], note: "질 국소 제형은 사이트 매핑에서 제외"}
+  - {id: estrogen_oral, name_ko: 경구 에스트로겐, derive_from: estrogen_systemic, routes: [oral], note: "투여 경로를 알 때만 판정"}
+  - {id: progestogen, name_ko: 프로게스토겐, exhaustive: false, members: [progesterone, medroxyprogesterone, dydrogesterone, norethindrone, levonorgestrel, drospirenone, desogestrel, dienogest, gestodene]}
+  - {id: hormonal_contraceptive, name_ko: 호르몬 피임제, derivable: false, includes: [estrogen_systemic, progestogen], note: "피임 목적 여부는 제품·적응증 정보 필요"}

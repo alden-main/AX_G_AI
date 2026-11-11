@@ -1,0 +1,113 @@
+# 356장 급성 충수염과 복막염 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: WSES 예루살렘 급성 충수염 지침 2020 개정(World J Emerg Surg 2020, CC BY, GRADE).
+
+chapter: "356"
+title: 급성 충수염과 복막염
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 356-C01
+    topic: 충수염 진단 — 임상 점수와 영상
+    type: workup
+    original:
+      text: "강하게 의심되면 영상 없이 응급 충수절제. 확실치 않으면 영상·추가 검사(가임기 여성 골반 초음파, CT). 6~8시간 반복 진찰."
+      location: {file: by_chapter/356장.md, line: 119}
+    status: 개정
+    current:
+      text: >
+        나이·성별·증상에 따라 위험도를 층화하는 개별화된 단계적 진단 경로를 쓴다(1B). 임상 점수(AIR, AAS, Alvarado)로 충수염을 배제하고 영상이 필요한 중간 위험군을 가린다(1A). AIR·AAS가 가장 성능이 좋고, Alvarado로 충수염을 확진하지 않는다.
+        영상이 필요하면 숙련자의 현장 초음파(POCUS)가 성인·소아 모두 1차이며(1B), 임상 점수와 초음파를 함께 써 CT 필요를 줄인다. 중간 위험군은 적시에 체계적 영상을 한다.
+        초음파 음성인 청소년·젊은 성인은 저선량 조영 CT를 표준 선량보다 우선한다(1A). 40세 미만 고위험군(AIR 9–12, Alvarado 9–10, AAS 16 이상)은 수술 전 CT를 생략할 수 있다.
+        임신부는 증상·징후만으로 진단하지 말고 검사실·염증 지표를 확인하며, 압박 초음파를 먼저, MRI를 다음으로 한다(MRI 음성이어도 의심이 크면 수술 고려). 소아는 CT 대신 MRI를 2차 영상으로 선호한다.
+      sources:
+        - {id: PAPER-WSES-APPENDICITIS-2020, locator: "Statements/Recommendations 1.1–1.15"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {finding: suspected_appendicitis}
+        tests:
+          - {score: AIR_or_AAS, reason: "저위험 배제·중간위험 영상(1A)"}
+          - {lab: CBC, reason: "백혈구·호중구"}
+          - {lab: CRP, reason: "염증"}
+          - {exam: POCUS_abdomen, reason: "1차 영상(1B)"}
+          - {exam: CT_abdomen_low_dose_contrast, when: "초음파 음성·불확실", reason: "저선량 조영 CT(1A)"}
+          - {lab: beta_hCG, when: "가임기 여성", reason: "임신 확인 — 초음파·MRI 우선"}
+
+  - id: 356-C02
+    topic: 합병증 없는 충수염 — 항생제 우선 치료와 수술 시점
+    type: treatment
+    original:
+      text: "금기가 없다면 응급 충수절제. 복강경 또는 개복 모두 만족스러운 선택(현재 약 60% 복강경)."
+      location: {file: by_chapter/356장.md, line: 119}
+    status: 개정
+    current:
+      text: >
+        대변돌이 없는 선택된 합병증 없는 충수염에서 항생제 비수술 치료를 안전한 대안으로 설명하며, 실패와 합병 충수염 오진 가능성, 5년 내 최대 39% 재발을 알린다(1A). 임신 중에는 비수술 치료를 권하지 않는다.
+        비수술 치료는 정주 항생제로 시작해 상태에 따라 경구로 바꾼다(1B). 수술이 필요하면 입원 후 24시간 넘게 지연하지 않는다(1B).
+        복강경 충수절제를 개복보다 우선하며(1A), 비만·고령·동반질환·임신부에서도 복강경이 유리하다. 3-포트 복강경을 단일 절개보다 선호하고, 성인 천공 충수염 수술 후 배액관을 쓰지 않는다. 절제 표본은 일상적으로 병리 검사한다.
+      sources:
+        - {id: PAPER-WSES-APPENDICITIS-2020, locator: "Statements/Recommendations 2.1–2.3; 3.1–3.3; 4.1–4.12; 5.1"}
+    verification: primary
+    conflicts:
+      - "원문 '응급 충수절제가 원칙' vs 현재 대변돌 없는 합병증 없는 충수염은 항생제 우선 치료도 선택지(공유 의사결정). 수술은 24시간 이내."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K35]}
+        recommendations:
+          - when: {all: [{finding: uncomplicated_appendicitis}, {not: {finding: appendicolith}}, {not: {finding: pregnancy}}]}
+            recommend: {options: [laparoscopic_appendectomy, antibiotics_first], detail: "항생제 우선은 5년 재발 최대 39% 설명(1A)"}
+          - when: {all: [{dx: K35}, {finding: pregnancy}]}
+            recommend: {action: avoid_nonoperative, detail: "임신 중 비수술 치료 비권장 — 복강경 우선"}
+            alert_level: medium
+          - when: {all: [{dx: K35}, {finding: surgery_indicated}, {var: hours_since_admission, op: ">", value: 24}]}
+            recommend: {action: avoid_delay, detail: "입원 후 24시간 넘는 지연 금지(1B)"}
+            alert_level: high
+
+  - id: 356-C03
+    topic: 충수절제 주술기 항생제와 농양·연조직염
+    type: treatment
+    original:
+      text: "연조직염·농양 종괴: 광범위 항생제, 3 cm 이상 농양 배액, 수액·장관휴식 후 6~12주 뒤 충수절제."
+      location: {file: by_chapter/356장.md, line: 121}
+    status: 개정
+    current:
+      text: >
+        충수절제 시 수술 전 광범위 항생제 1회를 투여하고, 합병증 없는 충수염은 수술 후 항생제를 쓰지 않는다(1A). 원인 조절이 적절한 합병 충수염은 수술 후 항생제를 3–5일 넘게 연장하지 않는다(1A). 소아 합병 충수염은 48시간 후 경구 전환, 총 7일 미만.
+        연조직염·농양을 동반한 천공 충수염은 비수술 치료가 합리적 1차 치료이며 가능하면 경피 배액을 보조로 하고, 숙련자에게는 복강경 수술도 안전한 1차 선택이다.
+        비수술 치료한 합병 충수염 후 40세 미만 성인과 소아의 일상적 간격 충수절제는 권하지 않고(재발 시만, 1B), 40세 이상은 대장내시경과 간격 조영 CT를 한다(종양 감별, 2C).
+      sources:
+        - {id: PAPER-WSES-APPENDICITIS-2020, locator: "Statements/Recommendations 6.1–6.4; 7.1–7.4"}
+    verification: primary
+    conflicts:
+      - "원문 '6~12주 후 간격 충수절제' vs 현재 40세 미만은 일상적 간격 충수절제 비권장, 40세 이상은 대장내시경·CT."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [K35]}
+        recommendations:
+          - when: {all: [{event: appendectomy_done}, {finding: uncomplicated_appendicitis}, {med_class: antibiotic}]}
+            recommend: {action: stop, detail: "합병증 없는 충수염 수술 후 항생제 불필요(1A)"}
+            alert_level: medium
+          - when: {all: [{event: appendectomy_done}, {finding: complicated_appendicitis}, {var: postop_antibiotic_days, op: ">", value: 5}]}
+            recommend: {action: stop, detail: "원인 조절 적절 시 3–5일 초과 금지(1A)"}
+            alert_level: medium
+      - kind: workup
+        trigger: {all: [{event: appendicitis_nonoperative_complicated}, {var: age, op: ">=", value: 40}]}
+        tests:
+          - {exam: Colonoscopy, reason: "종양 감별(2C)"}
+          - {exam: CT_abdomen_contrast, timing: "간격", reason: "종양 감별"}
+
+  - id: 356-C04
+    topic: 급성 복막염
+    type: treatment
+    original:
+      text: "이차성 세균성 복막염 원인, 임상양상, 수술적 원인 조절과 항생제."
+      location: {file: by_chapter/356장.md, line: 149}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "이번 묶음에서 A등급 출처 미확보(WSES 복강내 감염 지침 추가 검색 필요)."

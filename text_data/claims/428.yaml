@@ -1,0 +1,98 @@
+# 428장 혈색소증 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: 아시아태평양간학회(APASL) 혈색소증 진료지침(Hepatol Int 2023, CC BY, GRADE).
+
+chapter: "428"
+title: 혈색소증
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 428-C01
+    topic: 혈색소증 검사 대상과 진단 순서
+    type: workup
+    original:
+      text: "간비대, 색소침착, 당뇨병, 심장병, 관절염, 성선저하증이 있으면 혈색소증 고려. 그림 428-3 HFE 연관 혈색소증 진단 과정."
+      location: {file: by_chapter/428장.md, line: 90}
+    status: 유지
+    current:
+      text: >
+        일반 인구 선별은 권하지 않는다. 증상·징후나 철 과부하 가족력이 있는(특히 유럽계) 사람은 혈청 트랜스페린 포화도·페리틴과 유전 검사로 평가한다. 최선의 첫 검사는 페리틴과 트랜스페린 포화도이며(포화도 45% 초과), 둘 다 높으면 HFE C282Y·H63D 유전 검사를 한다(높은 근거, 강한 권고).
+        유전 검사 대상: 페리틴과 포화도가 모두 높은 사람, 다른 원인이 없는 단독 페리틴 또는 포화도 상승, HFE 혈색소증 환자의 1차 친족(사춘기 후기부터). 비유럽계의 설명되지 않는 철 과부하는 전문가 평가로 비HFE 변이를 확인한다. 30세 미만 철 과부하는 HFE·비HFE 유전 검사를 한다.
+        C282Y는 아시아태평양에서 매우 드물다(아시아계 동형접합 약 1/25,000). H63D 단독 동형접합이나 S65C는 의미 있는 철 축적과 관련이 적다. 동형접합·복합이형접합인데 페리틴이 정상이면 1–5년마다 페리틴·포화도를 다시 잰다.
+      sources:
+        - {id: PAPER-APASL-HEMOCHROMATOSIS-2023, locator: "Questions 1–5, 8, 12"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {any: [{finding: elevated_ferritin}, {finding: family_history_hemochromatosis}, {finding: suspected_iron_overload}]}
+        tests:
+          - {lab: Ferritin, reason: "첫 검사"}
+          - {lab: Transferrin_saturation, reason: ">45%"}
+          - {lab: HFE_genotype, when: "페리틴·포화도 모두 상승 또는 원인 불명 단독 상승", reason: "C282Y·H63D"}
+      - kind: lab_threshold
+        lab: Transferrin_saturation
+        unit: "%"
+        context: "철 과부하 의심(페리틴과 함께 해석)"
+        bands:
+          - {label: "상승(철 과부하 의심)", min: 45.001}
+
+  - id: 428-C02
+    topic: 간 철·섬유화 평가
+    type: workup
+    original:
+      text: "간 생검으로 철 농도·섬유화 평가."
+      location: {file: by_chapter/428장.md, line: 117}
+    status: 개정
+    current:
+      text: >
+        혈색소증이면서 페리틴 1,000 µg/L 초과이면 MRI 등 검증된 방법으로 간 철 농도를 측정한다(강한 권고). 다음 중 하나라도 넘으면 진행 섬유화 평가를 위해 간 생검을 고려한다: 페리틴 1,000 µg/L 초과, MRI 간 철 농도 200 µmol/g 초과, APRI 0.44 초과, FIB-4 1.1 초과, 동원 가능 철 9.6 g 초과, 순간 탄성도 13.9 kPa 초과.
+        진행 섬유화가 없음을 가장 잘 예측하는 비침습 지표는 탄성도 6.4 kPa 미만, 페리틴 1,000 µg/L 미만, 관절염 없음이다. 간경변이면 6개월마다 초음파(± AFP)로 간세포암을 감시한다.
+      sources:
+        - {id: PAPER-APASL-HEMOCHROMATOSIS-2023, locator: "Questions 6, 7, 14"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {all: [{dx: E83.1}, {any: [{var: Ferritin, op: ">", value: 1000}, {var: APRI, op: ">", value: 0.44}, {var: FIB4, op: ">", value: 1.1}, {var: Liver_stiffness_kPa, op: ">", value: 13.9}]}]}
+        tests:
+          - {exam: Liver_MRI_iron_quantification, reason: "간 철 농도"}
+          - {exam: Liver_biopsy, when: "진행 섬유화 평가 필요", reason: "섬유화"}
+      - kind: monitoring
+        after: {all: [{dx: E83.1}, {dx: K74.6}]}
+        check: [Abdominal_US, AFP]
+        interval_months: [6]
+        rules:
+          - {when: {always: true}, action: "간경변 동반 시 6개월마다 간세포암 감시"}
+
+  - id: 428-C03
+    topic: 정맥절개(사혈) 치료와 감시
+    type: treatment
+    original:
+      text: "1~2주 간격 500 mL 정맥절개, 페리틴 50 μg/L 미만까지, 이후 50~100 μg/L 유지(대개 3개월마다). 데페록사민은 정맥절개 불가 시. 데페라시록스는 일차성 철 과다에서 역할 미확립."
+      location: {file: by_chapter/428장.md, line: 131}
+    status: 유지
+    current:
+      text: >
+        페리틴이 높으면 사혈을 시작한다. 제철 단계 목표 페리틴 50 µg/L, 유지 단계 50–100 µg/L. 유도 단계에는 매 사혈마다 혈색소, 4회마다 페리틴을 재고 페리틴 200 µg/L에 이르면 매 사혈마다 잰다. 유지 단계에는 페리틴을 연 2–3회 재고 사혈 일정을 조정한다(높은 근거, 강한 권고).
+        저혈량 증상, 심장 질환, 저단백혈증, 혈소판 감소로 사혈이 어려우면 적혈구 성분채집술을 고려한다. 철 킬레이트는 의학적·개인적 이유로 사혈을 견디지 못하는 경우의 대안이다. 헵시딘 기반 치료는 아직 권하지 않는다.
+        체중을 정상으로 유지하고 음주를 제한한다. 식이 철 제한은 필요 없으나 철 보충제는 피한다. 임신 중에는 대개 사혈을 멈추고 철 지표를 감시한다. 비대상 간질환·간세포암은 간이식 대상이며 이식 후 재발은 매우 드물다.
+      sources:
+        - {id: PAPER-APASL-HEMOCHROMATOSIS-2023, locator: "Questions 9–11, 13, 15–17"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: monitoring
+        after: {event: phlebotomy_program_start}
+        check: [Hemoglobin, Ferritin]
+        rules:
+          - {when: {var: Ferritin, op: ">", value: 200}, action: "매 사혈 혈색소, 4회마다 페리틴"}
+          - {when: {var: Ferritin, op: "<=", value: 200}, action: "매 사혈 페리틴 — 목표 50 µg/L"}
+          - {when: {finding: maintenance_phase}, action: "페리틴 연 2–3회, 목표 50–100 µg/L"}
+      - kind: treatment
+        condition: {kcd: [E83.1]}
+        recommendations:
+          - when: {all: [{dx: E83.1}, {med_class: iron_supplement}]}
+            recommend: {action: avoid, detail: "혈색소증 — 철 보충제 회피"}
+            alert_level: medium

@@ -1,0 +1,138 @@
+# 468e장 아편 관련 질환 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+# A등급 출처: CDC 통증 아편유사제 처방 진료지침 2022(MMWR Recomm Rep, 퍼블릭 도메인), VA/DoD 물질사용장애 지침 2021(미국 연방 저작물),
+#            openFDA(CC0) 부프레노르핀/날록손 설하 필름·NARCAN 비강 분무(일반의약품 판).
+
+chapter: "468e"
+title: 아편 관련 질환
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 468e-C01
+    topic: 아편유사제 과량 복용 응급 처치와 날록손
+    type: dose
+    original:
+      text: "표 468e-2: 기도 확보, 날록손 0.4~2.0 mg 정주·근주·기관내, 반복 또는 지속 주입. 부프레노르핀 과량은 10 mg 이상 필요 가능. 날록손 작용은 수 시간."
+      location: {file: by_chapter/468e장.md, line: 72}
+    status: 보완
+    current:
+      text: >
+        날록손 비강 분무 4 mg(NARCAN, 미국 일반의약품): 과량 복용이 의심되면(깨지 않음, 매우 졸림, 호흡 불량) 한쪽 콧구멍에 1회 분무하고 즉시 응급 신고한다. 2–3분 기다려 깨지 않으면 깰 때까지 2–3분마다 새 기구로 반복하며, 깨어나도 구급대가 올 때까지 곁에 있고 다시 졸리면 추가로 준다.
+        아편유사제를 처방할 때 날록손을 제공하며, 특히 과량 복용 병력, 물질사용장애 병력, 수면 호흡장애, 50 MME/일 이상, 벤조디아제핀 병용, 내성 소실 후 고용량 복귀 위험(감량 중, 출소 직후)인 환자에게 제공한다.
+      sources:
+        - {id: OPENFDA-NALOXONE-NASAL, locator: "Directions"}
+        - {id: CDC-OPIOID-PRESCRIBING-2022, locator: "Recommendation 8 — naloxone"}
+    verification: primary
+    note: "병원 내 정주 날록손 용량(원문 0.4–2.0 mg)은 이번에 A등급 허가사항으로 대조하지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [T40.0, T40.1, T40.2, T40.3, T40.4, F11]}
+        recommendations:
+          - when: {all: [{med_class: opioid}, {any: [{var: MME_per_day, op: ">=", value: 50}, {med_class: benzodiazepine}, {finding: history_of_overdose}, {finding: substance_use_disorder}, {finding: sleep_disordered_breathing}]}, {not: {med: naloxone}}]}
+            recommend: {prescribe: naloxone, detail: "과량 복용 고위험 — 날록손 제공(CDC 2022 Rec 8)"}
+            alert_level: high
+          - when: {finding: suspected_opioid_overdose}
+            recommend: {steps: ["기도·호흡 지지", "날록손 투여(비강 4 mg 2–3분마다 반복 가능)", "날록손 작용이 짧아 재진정 감시"]}
+            alert_level: high
+
+  - id: 468e-C02
+    topic: 아편유사제 처방 원칙(급성·만성 통증)
+    type: treatment
+    original:
+      text: "(원문은 아편 사용장애 중심 — 통증 처방 원칙 서술 없음)"
+      location: {file: by_chapter/468e장.md, line: 105}
+    status: 보완
+    current:
+      text: >
+        CDC 2022(18세 이상 외래, 겸상적혈구·암·완화·임종 통증 제외): 비아편 치료가 급성 통증 다수에서 아편유사제만큼 효과적이며 아급성·만성 통증에는 비아편 치료를 우선한다. 시작할 때는 서방형·장시간 작용제 대신 속방형을, 아편 미사용자에게는 최저 유효 용량을 쓴다(A).
+        총 용량을 50 MME/일 이상으로 올리기 전에 멈추고 이득·위험을 재평가하며, 50 MME/일을 넘는 증량은 이득 체감이 커진다. 급성 통증에는 예상 기간에 필요한 양 이상을 처방하지 않는다(A).
+        아급성·만성 통증의 시작·증량 후 1–4주 안에 재평가하고(서방형 시작·증량 또는 50 MME/일 이상이면 짧은 쪽) 이후 정기적으로 재평가한다. 처방 전과 장기 치료 중 최소 3개월마다 처방 모니터링 프로그램을 확인하고, 독성 검사의 이득·위험을 고려한다(B).
+        아편유사제와 벤조디아제핀 등 중추신경 억제제 병용은 특히 주의한다(B). 이 권고들은 절대 상한이나 정책이 아니다.
+      sources:
+        - {id: CDC-OPIOID-PRESCRIBING-2022, locator: "Recommendations 1–7, 9–11"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G89, M54, R52]}
+        recommendations:
+          - when: {all: [{event: opioid_initiation}, {med_class: extended_release_opioid}]}
+            recommend: {action: review, detail: "시작은 속방형으로(CDC A)"}
+            alert_level: medium
+          - when: {all: [{med_class: opioid}, {var: MME_per_day, op: ">=", value: 50}, {event: opioid_dose_increase}]}
+            recommend: {action: pause_and_reassess, detail: "50 MME/일 이상 증량 전 재평가"}
+            alert_level: medium
+          - when: {all: [{med_class: opioid}, {med_class: benzodiazepine}]}
+            recommend: {action: caution, detail: "병용 주의 — 이득·위험 재평가, 날록손"}
+            alert_level: high
+      - kind: monitoring
+        after: {event: opioid_initiation_or_dose_increase}
+        check: [benefit_risk_review]
+        interval_weeks: [1, 4]
+        rules:
+          - {when: {med_class: long_term_opioid}, action: "처방 모니터링 프로그램 최소 3개월마다 확인"}
+
+  - id: 468e-C03
+    topic: 장기 아편유사제 감량
+    type: treatment
+    original:
+      text: "(원문 해당 범위에 통증 환자 감량 원칙 없음)"
+      location: {file: by_chapter/468e장.md, line: 79}
+    status: 보완
+    current:
+      text: >
+        이미 아편유사제를 쓰는 환자는 용량 변경 시 이득·위험을 신중히 따진다. 이득이 위험보다 크면 비아편 치료를 최적화하며 유지하고, 그렇지 않으면 점진적으로 감량하거나 필요 시 중단한다. 짧은 기간에 끊을수록 위험이 커서(금단, 통증 악화, 심한 심리적 고통, 자살 사고) 갑작스런 중단을 피한다.
+        1년 이상 복용자는 월 10% 이하 감량이 더 잘 견뎌진다. 감량이 불가능하고 아편 사용장애 기준에 맞지 않는 고용량 환자는 부프레노르핀 전환이 도움이 될 수 있다.
+      sources:
+        - {id: CDC-OPIOID-PRESCRIBING-2022, locator: "Recommendation 5 — tapering"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [G89]}
+        recommendations:
+          - when: {all: [{med_class: long_term_opioid}, {event: abrupt_discontinuation}]}
+            recommend: {action: taper_slowly, detail: "1년 이상 복용 시 월 10% 이하 감량"}
+            alert_level: high
+
+  - id: 468e-C04
+    topic: 아편 사용장애 약물치료
+    type: dose
+    original:
+      text: "메사돈 유지(80~150 mg), 부프레노르핀 설하 유지, 길항제(날트렉손), 알파-2 작용제 제독, 약물 완전중단 프로그램."
+      location: {file: by_chapter/468e장.md, line: 93}
+    status: 개정
+    current:
+      text: >
+        아편 사용장애에는 근거 기반 약물(부프레노르핀/날록손 어느 환경에서나, 또는 인증 아편치료프로그램의 메사돈·부프레노르핀/날록손)을 제공하거나 연계한다(VA/DoD Rec 16, CDC A). 서방형 날트렉손 근주도 제안한다. 지속 약물치료 계획 없는 제독(금단 관리)만 하는 것은 재발·과량 복용·사망 위험으로 권하지 않는다(VA/DoD Rec 7, CDC Rec 12).
+        금단 관리가 필요하면 부프레노르핀/날록손(어느 환경), 메사돈은 입원·인증 프로그램에서, 두 약이 불가하면 클로니딘·로펙시딘을 2차로 쓴다.
+        부프레노르핀/날록손 설하 필름(미국 허가): 단시간 작용 아편 의존 환자는 객관적 금단 징후가 뚜렷할 때 1일째 최대 8 mg/2 mg 분할, 2일째 최대 16 mg/4 mg 1회. 메사돈·장시간 작용 아편 의존은 1–2일째 부프레노르핀 단일제로 유도. 유지 4 mg/1 mg–24 mg/6 mg/일 1회.
+        시작·갱신 때 날록손 등 과량 복용 해독제를 강하게 권하고, 중단 시 점진 감량한다. 필름은 자르거나 씹거나 삼키지 않는다.
+      sources:
+        - {id: VADOD-SUD-2021, locator: "Recommendations 7–9, 16–18"}
+        - {id: CDC-OPIOID-PRESCRIBING-2022, locator: "Recommendation 12"}
+        - {id: OPENFDA-BUPRENORPHINE-NALOXONE, locator: "2.1–2.4; 2.8"}
+    verification: primary
+    conflicts:
+      - "원문 '약물 완전중단 프로그램'·제독 치료 중심 vs 현재 제독 단독 비권장, 유지 약물치료 우선."
+    review: {status: draft}
+    corpus:
+      - kind: dose_rule
+        id: DR-BUPRENORPHINE-NALOXONE-OUD
+        ingredient: buprenorphine_naloxone
+        indication: 아편 사용장애(아편 의존)
+        source_priority: [OPENFDA-BUPRENORPHINE-NALOXONE, VADOD-SUD-2021]
+        induction: "객관적 금단 징후 후 1일째 최대 8/2 mg 분할, 2일째 최대 16/4 mg"
+        maintenance: "4/1–24/6 mg/일 1회"
+        rules:
+          - {when: {not: {finding: objective_opioid_withdrawal}}, action: "유도는 객관적 금단 징후 확인 후(유발 금단 위험)", alert: high}
+          - {when: {any: [{med: methadone}, {med_class: long_acting_opioid}]}, action: "1–2일째 부프레노르핀 단일제 유도", alert: caution}
+          - {when: {not: {med: naloxone}}, action: "날록손 처방 강력 권고", alert: high}
+      - kind: treatment
+        condition: {kcd: [F11]}
+        recommendations:
+          - when: {all: [{dx: F11.2}, {not: {any: [{med: buprenorphine}, {med: buprenorphine_naloxone}, {med: methadone}, {med: naltrexone_er}]}}]}
+            recommend: {first_choice: [buprenorphine_naloxone, methadone_otp], alternative: [naltrexone_er], detail: "제독 단독 비권장"}
+            alert_level: high

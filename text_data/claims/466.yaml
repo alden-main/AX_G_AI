@@ -1,0 +1,230 @@
+# 466장 정신장애 — 주장(claim) 단위 최신화
+# 스키마: text_data/claims/README.md
+
+chapter: "466"
+title: 정신장애
+original_source: HARRISON-19-KO
+updated_at: "2026-11-10"
+
+claims:
+  - id: 466-C01
+    topic: 우울증 선별과 측정 기반 진료
+    type: workup
+    original:
+      text: "일차진료에서 기분장애·불안장애 등을 진단할 수 있음. 내과적 원인 배제 후 진단."
+      location: {file: by_chapter/466장.md, line: 16}
+    status: 보완
+    current:
+      text: >
+        현재 우울증 치료를 받지 않는 모든 환자를 우울증 선별하도록 제안한다(MDD Rec 1). 주요우울장애는 치료 계획과 정기적 경과 확인에 정량적 중증도 척도를 쓰도록 제안한다(Rec 2).
+        일차진료에서는 협력·통합 진료 모델을 권고한다(Rec 3, Strong for).
+      sources:
+        - {id: VADOD-MDD-2022, locator: "Recommendations 1–3"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: workup
+        trigger: {not: {finding: current_depression_treatment}}
+        tests:
+          - {screen: depression_screen, reason: "우울증 선별(VA/DoD MDD Rec 1)"}
+      - kind: monitoring
+        after: {event: mdd_treatment_started}
+        check: [PHQ9]
+        rules:
+          - {when: {always: true}, action: "정량 척도로 정기 경과 확인(Rec 2)"}
+
+  - id: 466-C02
+    topic: 주요우울장애 초기 치료
+    type: treatment
+    original:
+      text: "표 466-2·466-3: 항우울제 부작용 치료와 SSRI 상호작용. 항우울제 선택은 부작용·상호작용 고려."
+      location: {file: by_chapter/466장.md, line: 121}
+    status: 개정
+    current:
+      text: >
+        환자 선호에 따라 정신치료 또는 약물치료 단독으로 치료하도록 권고한다(Rec 6, Strong for). 정신치료는 수용전념치료, 행동치료·행동활성화, CBT, 대인관계치료, 마음챙김 기반 인지치료,
+        문제해결치료, 단기 정신역동치료 중 하나를 제안한다(Rec 7). 경도–중등도는 임상가 안내 컴퓨터·인터넷 CBT도 제안한다(Rec 10).
+        첫 약물로 부프로피온, 미르타자핀, SNRI, 트라조돈·빌라조돈·보티옥세틴, SSRI 중 하나를 제안하고(Rec 11), 에스케타민·케타민·MAOI·네파조돈·삼환계 항우울제는 첫 약물로 쓰지 않도록 제안한다(Rec 12).
+        약물유전체 검사는 근거 불충분(Rec 13). 운동(Rec 27), CBT 독서치료(Rec 28)를 보조로 제안하며, 오메가-3·비타민 D 치료는 제안하지 않는다(Rec 36).
+      sources:
+        - {id: VADOD-MDD-2022, locator: "Recommendations 6, 7, 10–13, 27, 28, 36"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [F32, F33]}
+        recommendations:
+          - when: {all: [{finding: mdd_initial_pharmacotherapy}]}
+            recommend: {options: [bupropion, mirtazapine, SNRI, trazodone, vilazodone, vortioxetine, SSRI]}
+            strength: "VA/DoD MDD Rec 11 (Weak for)"
+          - when: {all: [{finding: mdd_initial_pharmacotherapy}, {any: [{med_class: TCA}, {med_class: MAOI}, {med: esketamine}, {med: ketamine}, {med: nefazodone}]}]}
+            recommend: {action: avoid_as_first_line}
+            strength: "VA/DoD MDD Rec 12 (Weak against)"
+
+  - id: 466-C03
+    topic: 중증·불응 우울증과 유지 치료
+    type: treatment
+    original:
+      text: "(원문 해당 범위에 치료 단계별 권고 없음)"
+      location: {file: by_chapter/466장.md, line: 121}
+    status: 보완
+    current:
+      text: >
+        중증(예: PHQ-9 >20), 2년 넘는 지속성, 2회 이상 재발성이면 약물치료와 근거 기반 정신치료 병용을 제안한다(Rec 15).
+        첫 약물에 부분·무반응이면 다른 항우울제로 교체(삼환계·MAOI 포함), 정신치료로 교체, 정신치료 추가, 2세대 항정신병약 추가 중 하나를 제안한다(Rec 16).
+        2회 이상 적절한 약물 시도에 부분·무반응이면 반복 경두개 자기자극(Rec 17), 여러 차례 무반응이면 케타민·에스케타민 추가(Rec 19)를 제안한다.
+        긴장증, 정신병적 우울, 심한 자살 위험, 과거 좋은 반응, 빠른 반응 필요 등이 있는 중증에는 ECT를 권고한다(Rec 20).
+        관해 후 치료 용량의 항우울제를 최소 6개월 지속하도록 권고한다(Rec 21, Strong for). 재발 고위험이면 지속기에 CBT·대인관계치료·마음챙김 인지치료를 제안한다(Rec 22).
+      sources:
+        - {id: VADOD-MDD-2022, locator: "Recommendations 15–17, 19–22"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [F32, F33]}
+        recommendations:
+          - when: {any: [{var: PHQ9, op: ">", value: 20}, {finding: persistent_mdd_over_2y}, {finding: recurrent_mdd_2plus}]}
+            recommend: {regimen: "약물치료+근거 기반 정신치료 병용"}
+            strength: "VA/DoD MDD Rec 15 (Weak for)"
+          - when: {all: [{med_class: antidepressant}, {finding: mdd_remission}]}
+            recommend: {action: continue_therapeutic_dose, duration_months_min: 6}
+            strength: "VA/DoD MDD Rec 21 (Strong for)"
+
+  - id: 466-C04
+    topic: 임신·수유·고령자 우울증
+    type: treatment
+    original:
+      text: "(원문 해당 범위에 특수 집단 권고 없음)"
+      location: {file: by_chapter/466장.md, line: 121}
+    status: 보완
+    current:
+      text: >
+        경도–중등도 우울증의 임신·수유부에게 근거 기반 정신치료를 1차로 권고한다(Rec 23). 임신 전 항우울제에 반응해 안정된 경우는 위험·이득을 따져 결정한다.
+        65세 이상 경도–중등도는 1차 정신치료를 제안하며, 선호와 약물치료의 추가 안전 위험을 고려한다(Rec 24). 계절성 여부와 관계없이 경도–중등도에 광치료를 제안한다(Rec 26).
+      sources:
+        - {id: VADOD-MDD-2022, locator: "Recommendations 23, 24, 26"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [F32, F33]}
+        recommendations:
+          - when: {all: [{finding: mild_to_moderate_mdd}, {any: [{finding: pregnancy}, {finding: breastfeeding}]}]}
+            recommend: {intervention: evidence_based_psychotherapy, line: first}
+            strength: "VA/DoD MDD Rec 23 (Strong for)"
+          - when: {all: [{finding: mild_to_moderate_mdd}, {var: age, op: ">=", value: 65}]}
+            recommend: {intervention: evidence_based_psychotherapy, line: first}
+            strength: "VA/DoD MDD Rec 24 (Weak for)"
+
+  - id: 466-C05
+    topic: 양극성장애 — 급성 조증·우울
+    type: treatment
+    original:
+      text: "치료: 양극성장애 — 리튬, 발프로에이트, 카르바마제핀, 항정신병약. 표 466-9 기분안정제 임상약리."
+      location: {file: by_chapter/466장.md, line: 192}
+    status: 개정
+    current:
+      text: >
+        일반 진료 인구에서 양극성장애의 일상적 선별은 제안하지 않는다(BD Rec 1). 항우울제 치료 중인 주요우울장애에서 조증·경조증이 의심되면 검증된 도구로 평가한다(Rec 3).
+        급성 조증 단독요법으로 리튬 또는 쿠에티아핀을 제안하고(Rec 5), 단독요법에 불충분하면 리튬·발프로에이트에 할로페리돌·아세나핀·쿠에티아핀·올란자핀·리스페리돈 병용을 제안한다(Rec 8).
+        브렉스피프라졸·토피라메이트·라모트리진 단독(Rec 9)은 조증에 제안하지 않는다. 급성 양극성 우울에는 쿠에티아핀 단독을 권고하고(Rec 12, Strong for), 리튬·쿠에티아핀에 라모트리진 병용을 제안한다(Rec 15).
+        항우울제·라모트리진 단독(Rec 14)과 항우울제 추가(Rec 17)는 근거 불충분. 빠른 조절이 필요한 중증 조증에 약물+ECT를 제안한다(Rec 31).
+      sources:
+        - {id: VADOD-BD-2023, locator: "Recommendations 1, 3, 5, 8, 9, 12, 14, 15, 17, 31"}
+    verification: primary
+    note: "BD 권고 6, 7, 13, 19, 25는 PDF 추출에서 누락 — 검수 시 원문 확인."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [F31]}
+        recommendations:
+          - when: {finding: acute_mania}
+            recommend: {options: [lithium, quetiapine], mode: monotherapy}
+            strength: "VA/DoD BD Rec 5 (Weak for)"
+          - when: {finding: acute_bipolar_depression}
+            recommend: {ingredient: quetiapine, mode: monotherapy}
+            strength: "VA/DoD BD Rec 12 (Strong for)"
+
+  - id: 466-C06
+    topic: 양극성장애 — 재발 예방과 가임기 주의
+    type: treatment
+    original:
+      text: "기분안정제 장기 유지. 발프로에이트·카르바마제핀의 기형 유발."
+      location: {file: by_chapter/466장.md, line: 204}
+    status: 개정
+    current:
+      text: >
+        조증 재발 예방에 리튬 또는 쿠에티아핀을 권고하고(Rec 18, Strong for), 리튬·발프로에이트에 아리피프라졸·올란자핀·쿠에티아핀·지프라시돈 병용을 제안한다(Rec 22). 라모트리진 단독은 조증 예방에 제안하지 않는다(Rec 21).
+        양극성 우울 재발 예방에 라모트리진을 권고하고(Rec 23, Strong for), 리튬 또는 쿠에티아핀 단독(Rec 24), 리튬·발프로에이트에 올란자핀·루라시돈·쿠에티아핀 병용(Rec 26)을 제안한다.
+        가임 가능성이 있는 사람에게 발프로에이트, 카르바마제핀, 토피라메이트를 쓰지 않도록 권고한다(Rec 30, Strong against). 리튬으로 안정된 임신(예정)부는 최저 유효 용량으로 지속을 제안한다(Rec 29).
+        흡연 동반 시 우울·자살 행동을 감시하며 바레니클린을 제안한다(Rec 43).
+      sources:
+        - {id: VADOD-BD-2023, locator: "Recommendations 18, 21–24, 26, 29, 30, 43"}
+    verification: primary
+    note: "리튬 혈중농도 목표·신기능·갑상선 감시 등 약물 감시 기준은 A등급(허가사항)으로 아직 대조하지 않음."
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [F31]}
+        recommendations:
+          - when: {all: [{dx: F31}, {finding: childbearing_potential}, {any: [{med: valproate}, {med: carbamazepine}, {med: topiramate}]}]}
+            recommend: {action: avoid, detail: "가임기 양극성장애에 발프로에이트·카르바마제핀·토피라메이트"}
+            strength: "VA/DoD BD Rec 30 (Strong against)"
+            alert_level: high
+          - when: {finding: bipolar_maintenance}
+            recommend: {options: [lithium, quetiapine, lamotrigine_for_depressive_recurrence]}
+            strength: "VA/DoD BD Rec 18, 23 (Strong for)"
+
+  - id: 466-C07
+    topic: 조현병 약물치료
+    type: treatment
+    original:
+      text: "치료: 조현병 — 항정신병약물(표 466-10), 클로자핀은 치료 저항성에, 지연성 운동장애·대사 부작용 주의."
+      location: {file: by_chapter/466장.md, line: 297}
+    status: 유지
+    current:
+      text: >
+        이전에 항정신병약에 반응한 조현병·첫 삽화 정신병의 급성기에 클로자핀 외 항정신병약을 권고하고(SCZ Rec 8), 반응한 환자의 재발·입원 예방 유지 치료를 권고한다(Rec 9).
+        적절한 시도에 무반응·불내면 다른 항정신병약을 제안하고(Rec 10), 순응도 개선에 장기지속형 주사제를 제안한다(Rec 11). 치료 저항성 조현병에 클로자핀을 권고하고(Rec 12),
+        클로자핀에도 불충분하면 다른 2세대 항정신병약 추가를 제안한다(Rec 13). 대사 부작용·체중에 메트포르민·토피라메이트·아리피프라졸 추가(Rec 15)와 식이·운동·생활습관 상담(Rec 40)을 제안한다.
+        지연성 운동장애에 VMAT2 억제제(Rec 16), 클로자핀 유발 침흘림에 디펜히드라민(Rec 17)을 제안한다. 대면 맞춤형 금연 중재를 권고한다(Rec 39).
+        첫 삽화 정신병에 조기 개입 서비스와 가족 중재를 권고한다(Rec 3, 4).
+      sources:
+        - {id: VADOD-SCZ-2023, locator: "Recommendations 3, 4, 8–13, 15–17, 39, 40"}
+    verification: primary
+    review: {status: draft}
+    corpus:
+      - kind: treatment
+        condition: {kcd: [F20]}
+        recommendations:
+          - when: {finding: treatment_resistant_schizophrenia}
+            recommend: {ingredient: clozapine}
+            strength: "VA/DoD SCZ Rec 12 (Strong for)"
+          - when: {all: [{med_class: antipsychotic}, {finding: metabolic_side_effects}]}
+            recommend: {options: [metformin, topiramate, aripiprazole_augmentation, lifestyle_program]}
+            strength: "VA/DoD SCZ Rec 15, 40 (Weak for)"
+          - when: {all: [{med_class: antipsychotic}, {finding: tardive_dyskinesia}]}
+            recommend: {drug_class: VMAT2_inhibitor}
+            strength: "VA/DoD SCZ Rec 16 (Weak for)"
+
+  - id: 466-C08
+    topic: 공황장애·범불안장애
+    type: treatment
+    original:
+      text: "공황장애·범불안장애: SSRI·SNRI, 벤조디아제핀(단기), 부스피론, CBT. 표 466-4 항불안제."
+      location: {file: by_chapter/466장.md, line: 54}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 출처 미확보(VA/DoD에 불안장애 단독 지침 없음). PTSD 지침은 별도 장에서 다룰 수 있음."
+
+  - id: 466-C09
+    topic: 섭식장애·인격장애·신체증상장애
+    type: treatment
+    original:
+      text: "신경성 식욕부진·폭식증·폭식장애, 인격장애, 신체증상장애의 진단과 치료."
+      location: {file: by_chapter/466장.md, line: 233}
+    status: 확인불가
+    verification: unverified
+    review: {status: draft}
+    note: "A등급 출처 미확보."
