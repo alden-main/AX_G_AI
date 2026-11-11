@@ -19,6 +19,7 @@ from typing import Any
 
 import psycopg
 from psycopg.rows import dict_row
+from psycopg_pool import ConnectionPool
 
 from ax_g_ai.corpus_store.embedding import EmbeddingError, TeiEmbeddingClient, vector_literal
 from ax_g_ai.services.clinical_evidence import EvidenceChunk, InMemoryEvidenceIndex, concept_names, lexical_cutoff, prioritize
@@ -35,8 +36,8 @@ class PostgresEvidenceRetriever:
     def __init__(
         self, database_url: str, *, embedder: TeiEmbeddingClient | None, model_id: str, include_unreviewed: bool,
         similarity_floor: float = 0.6, candidates: int = 30, refresh_seconds: float = 60.0, require_license: bool = False,
+        pool_size: int = 10,
     ) -> None:
-        self._database_url = database_url
         self._embedder = embedder
         self._model_id = model_id
         self._include_unreviewed = include_unreviewed
@@ -45,7 +46,17 @@ class PostgresEvidenceRetriever:
         self._candidates = candidates
         self._refresh_seconds = refresh_seconds
         self._lock = threading.Lock()
-        self._release_id, self._index = self._load()
+        # Pooled connections: a question no longer pays TCP + SCRAM authentication on every search.
+        self._pool = ConnectionPool(
+            database_url, min_size=1, max_size=pool_size, timeout=3, open=False,
+            kwargs={"autocommit": True, "connect_timeout": 3, "row_factory": dict_row},
+        )
+        try:
+            self._pool.open(wait=True, timeout=3)
+            self._release_id, self._index = self._load()
+        except BaseException:
+            self._pool.close()  # stop the pool's reconnect workers before falling back to files
+            raise
         self._checked_at = time.monotonic()
 
     def __len__(self) -> int:
@@ -59,11 +70,13 @@ class PostgresEvidenceRetriever:
     def unreviewed_count(self) -> int:
         return self._index.unreviewed_count
 
-    def _connect(self) -> psycopg.Connection:
-        return psycopg.connect(self._database_url, autocommit=True, connect_timeout=3, row_factory=dict_row)
+    def close(self) -> None:
+        self._pool.close()
+        if self._embedder is not None:
+            self._embedder.close()
 
     def _load(self) -> tuple[int, InMemoryEvidenceIndex]:
-        with self._connect() as conn:
+        with self._pool.connection() as conn:
             row = conn.execute("SELECT release_id FROM corpus.corpus_release WHERE is_active").fetchone()
             if row is None:
                 raise CorpusUnavailableError("no active corpus release")
@@ -98,7 +111,7 @@ class PostgresEvidenceRetriever:
                 return
             self._checked_at = time.monotonic()
             try:
-                with self._connect() as conn:
+                with self._pool.connection() as conn:
                     row = conn.execute("SELECT release_id FROM corpus.corpus_release WHERE is_active").fetchone()
                 if row is not None and row["release_id"] != self._release_id:
                     self._release_id, self._index = self._load()
@@ -112,7 +125,7 @@ class PostgresEvidenceRetriever:
             return []
         try:
             vector = vector_literal(self._embedder.embed([question])[0])
-            with self._connect() as conn:
+            with self._pool.connection() as conn:
                 rows = conn.execute(
                     "SELECT c.chunk_id, 1 - (e.embedding <=> %(v)s::vector) AS similarity "
                     "FROM corpus.citable_evidence c JOIN corpus.evidence_embedding_1024 e "

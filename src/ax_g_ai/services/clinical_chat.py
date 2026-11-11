@@ -8,7 +8,7 @@ import json
 import logging
 from typing import Any, Mapping
 
-from ax_g_ai.adapters.openai import OpenAIProviderError, OpenAIRequest, ProviderClient
+from ax_g_ai.services.ports import OpenAIProviderError, OpenAIRequest, ProviderClient
 from ax_g_ai.errors import ClinicalChatProviderUnavailableError
 from ax_g_ai.prompts.clinical import (
     CLINICAL_INSTRUCTIONS,

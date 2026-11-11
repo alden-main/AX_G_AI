@@ -287,5 +287,21 @@ class ClinicalChatApiTest(unittest.TestCase):
         self.assertEqual(client.get("/health").json(), {"status": "ok"})
 
 
+
+class LifespanTest(unittest.TestCase):
+    def test_shutdown_closes_every_resource_even_after_a_failure(self) -> None:
+        closed: list[str] = []
+
+        def failing() -> None:
+            closed.append("failing")
+            raise RuntimeError("boom")
+
+        app = create_app(None, on_shutdown=(failing, lambda: closed.append("pool")))
+        with TestClient(app) as client:
+            self.assertEqual(client.get("/health").status_code, 200)
+            self.assertEqual(closed, [])
+        self.assertEqual(closed, ["failing", "pool"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -10,7 +10,8 @@ from fastapi.testclient import TestClient
 from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
 from ax_g_ai.api import create_app
 from ax_g_ai.services.clinical_chat import ClinicalChatService
-from ax_g_ai.services.clinical_evidence import InMemoryEvidenceIndex, is_citable
+from ax_g_ai.corpus.gate import is_citable
+from ax_g_ai.services.clinical_evidence import InMemoryEvidenceIndex
 from tests.services.test_clinical_chat import SNAPSHOT, RecordingProvider
 
 REPO_CORPUS = Path(__file__).resolve().parents[2] / "text_data" / "corpus"
@@ -91,6 +92,12 @@ class EvidenceSearchTest(unittest.TestCase):
         # A concept name alone is only a booster, never enough to cite.
         self.assertEqual(self.index.search("세파졸린", 3), ())
 
+    def test_concept_names_match_whole_latin_words_and_compact_hangul(self) -> None:
+        index = InMemoryEvidenceIndex([], {"메트포르민": frozenset({"C1"}), "metformin": frozenset({"C1", "C2"}),
+                                           "vitamin d": frozenset({"C3"})})
+        self.assertEqual(index.matched_claims("메트 포르민과 Metformin, vitamin D"), {"C1": 2, "C2": 1, "C3": 1})
+        self.assertEqual(index.matched_claims("metformins vitamin dx"), {})
+
     def test_payload_carries_review_status_sources_and_conflicts(self) -> None:
         found = self.index.search("급성 담낭염 수술 시기", 1)[0].as_dict()
         self.assertEqual(found["review_status"], "draft")
@@ -168,7 +175,7 @@ class EvidenceApiTest(unittest.TestCase):
         async def respond(request):
             answer = await original(request)
             if request.output_schema is not None:
-                from ax_g_ai.adapters.openai import ProviderAnswer
+                from ax_g_ai.services.ports import ProviderAnswer
                 return ProviderAnswer(summary)
             return answer
 

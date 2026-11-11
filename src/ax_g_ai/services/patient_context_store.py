@@ -2,10 +2,27 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Mapping
+
 from cachetools import TTLCache
 
-from ax_g_ai.adapters.main_bridge import PreparedRawEmrContext
 from ax_g_ai.errors import PatientContextNotReadyError
+from ax_g_ai.services.clinical_recommendation import RuleInput
+
+
+@dataclass(frozen=True)
+class PreparedRawEmrContext:
+    """원문에서 허용 목록만 추린, Provider에 그대로 보낼 수 있는 비식별 문맥이다.
+
+    ``adapters.main_bridge.RawEmrPayloadMapper``가 만들고 이 저장소가 보관한다.
+    """
+
+    data: Mapping[str, object]
+    updated_at: datetime
+    # Corpus concept facts for stage-2 rule evaluation (concept ids, values, KCD codes only).
+    rule_input: RuleInput | None = None
 
 
 class PatientContextStore:

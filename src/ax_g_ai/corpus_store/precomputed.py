@@ -29,8 +29,10 @@ from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+from ax_g_ai.corpus.files import CHUNKS_FILE, DEFAULT_EMBEDDING_MODEL
+from ax_g_ai.jsonl import parse_jsonl
+
 FORMAT = "ax-g-embeddings/1"
-DEFAULT_MODEL_ID = "kure-v1"
 
 
 class PrecomputedEmbeddingError(ValueError):
@@ -46,7 +48,7 @@ def embedding_key(chunk: Mapping[str, Any]) -> str:
     return hashlib.sha256(embedding_input(chunk).encode("utf-8")).hexdigest()
 
 
-def embeddings_path(corpus_dir: Path, model_id: str = DEFAULT_MODEL_ID) -> Path:
+def embeddings_path(corpus_dir: Path, model_id: str = DEFAULT_EMBEDDING_MODEL) -> Path:
     return corpus_dir / "embeddings" / f"{model_id}.jsonl"
 
 
@@ -99,11 +101,11 @@ def write_precomputed(path: Path, header: Mapping[str, Any], vectors: Mapping[st
 
 
 def chunk_keys(corpus_dir: Path) -> set[str]:
-    chunks = corpus_dir / "chunks.jsonl"
-    return {embedding_key(json.loads(line)) for line in chunks.read_text(encoding="utf-8").splitlines() if line.strip()}
+    # A missing chunks file raises (as before): the build check must not pass on an empty corpus.
+    return {embedding_key(row) for row in parse_jsonl((corpus_dir / CHUNKS_FILE).read_text(encoding="utf-8"))}
 
 
-def coverage(corpus_dir: Path, model_id: str = DEFAULT_MODEL_ID, dimensions: int = 1024) -> tuple[int, set[str], str | None]:
+def coverage(corpus_dir: Path, model_id: str = DEFAULT_EMBEDDING_MODEL, dimensions: int = 1024) -> tuple[int, set[str], str | None]:
     """(passage count, keys missing from the file, error). A missing file means every key is missing."""
     keys = chunk_keys(corpus_dir)
     path = embeddings_path(corpus_dir, model_id)
@@ -126,7 +128,7 @@ def cosine(a: Iterable[float], b: Iterable[float]) -> float:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Check precomputed passage embeddings cover the corpus.")
     parser.add_argument("--check", type=Path, required=True, metavar="CORPUS_DIR")
-    parser.add_argument("--model-id", default=DEFAULT_MODEL_ID)
+    parser.add_argument("--model-id", default=DEFAULT_EMBEDDING_MODEL)
     args = parser.parse_args(argv)
     total, missing, error = coverage(args.check, args.model_id)
     if error or missing:

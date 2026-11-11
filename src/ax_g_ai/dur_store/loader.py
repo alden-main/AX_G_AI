@@ -14,16 +14,16 @@ from __future__ import annotations
 
 import argparse
 import logging
-import os
 import sys
 from dataclasses import dataclass
-from importlib import resources
 from pathlib import Path
 
 import psycopg
 from psycopg.types.json import Jsonb
 
+from ax_g_ai.config import ConfigurationError, LoaderSettings
 from ax_g_ai.dur_store.snapshot import TABLE_COLUMNS, DurDataError, Snapshot, read_snapshot
+from ax_g_ai.pg_release import ReleaseTable
 
 logger = logging.getLogger("ax_g_ai.dur_store")
 
@@ -41,12 +41,9 @@ class DurLoadResult:
     counts: dict[str, int]
 
 
-def ensure_schema(conn: psycopg.Connection) -> None:
-    if conn.execute("SELECT to_regclass('dur.schema_version')").fetchone()[0] is None:
-        sql = resources.files("ax_g_ai.dur_store").joinpath("schema.sql").read_text(encoding="utf-8")
-        with conn.transaction():
-            conn.execute(sql)
-            conn.execute("SET search_path TO DEFAULT")
+DATASETS = ReleaseTable("dur", "dataset", "dataset_id", "ax_g_ai.dur_store", KEEP_DATASETS, DurLoadError, "dataset")
+ensure_schema = DATASETS.ensure_schema
+activate = DATASETS.activate  # also the rollback: activate an older dataset
 
 
 def load_dur(conn: psycopg.Connection, snapshot_dir: Path) -> DurLoadResult:
@@ -65,16 +62,8 @@ def load_dur(conn: psycopg.Connection, snapshot_dir: Path) -> DurLoadResult:
         reused = False
     _validate(conn, dataset_id, counts)
     activate(conn, dataset_id)
-    _prune(conn)
+    DATASETS.prune(conn)
     return DurLoadResult(dataset_id, reused, counts)
-
-
-def activate(conn: psycopg.Connection, dataset_id: int) -> None:
-    with conn.transaction():
-        if conn.execute("SELECT 1 FROM dur.dataset WHERE dataset_id = %s", (dataset_id,)).fetchone() is None:
-            raise DurLoadError(f"dataset {dataset_id} does not exist")
-        conn.execute("UPDATE dur.dataset SET is_active = false WHERE is_active AND dataset_id <> %s", (dataset_id,))
-        conn.execute("UPDATE dur.dataset SET is_active = true WHERE dataset_id = %s", (dataset_id,))
 
 
 def _insert_dataset(conn: psycopg.Connection, snapshot: Snapshot) -> int:
@@ -101,33 +90,25 @@ def _validate(conn: psycopg.Connection, dataset_id: int, counts: dict[str, int])
             raise DurLoadError(f"dataset {dataset_id}: {table} has {actual} rows, expected {expected}")
 
 
-def _prune(conn: psycopg.Connection) -> None:
-    with conn.transaction():
-        conn.execute(
-            "DELETE FROM dur.dataset WHERE NOT is_active AND dataset_id NOT IN ("
-            "  SELECT dataset_id FROM dur.dataset ORDER BY dataset_id DESC LIMIT %s)",
-            (KEEP_DATASETS,),
-        )
-
-
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Load the HIRA DUR snapshot into PostgreSQL (schema dur).")
-    parser.add_argument("--snapshot-dir", type=Path, default=Path(os.getenv("AX_G_DUR_SNAPSHOT_DIR", "data/dur")))
+    parser.add_argument("--snapshot-dir", type=Path, help="snapshot folder (default: AX_G_DUR_SNAPSHOT_DIR or data/dur)")
     parser.add_argument("--activate", type=int, metavar="DATASET_ID", help="activate an existing dataset (rollback) and exit")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
-    database_url = os.getenv("AX_G_CORPUS_DATABASE_URL")
-    if not database_url:
-        print("AX_G_CORPUS_DATABASE_URL is required", file=sys.stderr)
+    try:
+        settings = LoaderSettings.from_environment()
+    except ConfigurationError as error:  # field names and reasons only, never values
+        print(f"invalid configuration: {error}", file=sys.stderr)
         return 2
     try:
-        with psycopg.connect(database_url, autocommit=True, connect_timeout=10) as conn:
+        with psycopg.connect(settings.corpus_database_url.get_secret_value(), autocommit=True, connect_timeout=10) as conn:
             if args.activate is not None:
                 ensure_schema(conn)
                 activate(conn, args.activate)
                 print(f"activated dur dataset {args.activate}")
                 return 0
-            result = load_dur(conn, args.snapshot_dir)
+            result = load_dur(conn, args.snapshot_dir or settings.dur_snapshot_dir)
     except (psycopg.Error, DurLoadError, DurDataError, OSError) as error:
         # Error class and message only; the database URL (with credentials) is never printed.
         print(f"dur load failed: {type(error).__name__}: {error}", file=sys.stderr)

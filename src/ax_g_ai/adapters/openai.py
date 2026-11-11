@@ -14,40 +14,18 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Iterator
 from contextlib import contextmanager
-from dataclasses import dataclass
-from typing import Any, Mapping, Protocol
+from typing import Any
 
 import openai
 from openai import AsyncOpenAI
 
+# The port is defined by the service layer; re-exported here for callers that build clients.
+from ax_g_ai.services.ports import OpenAIProviderError, OpenAIRequest, ProviderAnswer, ProviderClient
 
-class OpenAIProviderError(RuntimeError):
-    """안전하게 분류된 Provider 호출 또는 응답 검증 실패다."""
-
-
-@dataclass(frozen=True)
-class OpenAIRequest:
-    """Provider에 전달할 고정 지시와 비식별 입력이다."""
-
-    instructions: str
-    input: str
-    output_schema: Mapping[str, object] | None = None
-    output_schema_name: str = "patient_context_summary"
-
-
-@dataclass(frozen=True)
-class ProviderAnswer:
-    """검증된 모델 텍스트 응답이다."""
-
-    answer: str
-
-
-class ProviderClient(Protocol):
-    """서비스 계층이 의존하는 AI Provider 호출 경계."""
-
-    async def respond(self, request: OpenAIRequest) -> ProviderAnswer: ...
-
-    def stream(self, request: OpenAIRequest) -> AsyncIterator[str]: ...
+__all__ = [
+    "OpenAICompatibleChatClient", "OpenAIProviderError", "OpenAIRequest", "OpenAIResponsesClient", "ProviderAnswer",
+    "ProviderClient",
+]
 
 
 class OpenAIResponsesClient:

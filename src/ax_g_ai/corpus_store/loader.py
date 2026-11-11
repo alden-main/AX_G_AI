@@ -18,10 +18,8 @@ import argparse
 import hashlib
 import json
 import logging
-import os
 import sys
 from dataclasses import dataclass, field
-from importlib import resources
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -32,22 +30,25 @@ from ax_g_ai.corpus_store.embedding import EMBEDDING_DIMENSIONS, EmbeddingError,
 from ax_g_ai.corpus_store.precomputed import (
     PrecomputedEmbeddingError, cosine, embedding_input, embeddings_path, read_precomputed,
 )
-from ax_g_ai.services.clinical_evidence import terms
+from ax_g_ai.config import ConfigurationError, LoaderSettings
+from ax_g_ai.corpus.files import CHUNKS_FILE, CONCEPT_FILES, DEFAULT_EMBEDDING_MODEL, RECORD_FILES
+from ax_g_ai.corpus.text import terms
+from ax_g_ai.jsonl import parse_jsonl
+from ax_g_ai.pg_release import ReleaseTable
 
 logger = logging.getLogger("ax_g_ai.corpus_store")
 
-RECORD_FILES = (
-    "diagnosis.jsonl", "workup.jsonl", "treatment.jsonl", "dose_rules.jsonl", "lab_thresholds.jsonl",
-    "formulas.jsonl", "monitoring.jsonl", "referral.jsonl",
-)
-CONCEPT_FILES = ("test_concepts.jsonl", "drug_concepts.jsonl", "drug_classes.jsonl")
-REQUIRED_FILES = ("chunks.jsonl", *RECORD_FILES, *CONCEPT_FILES)
+REQUIRED_FILES = (CHUNKS_FILE, *RECORD_FILES, *CONCEPT_FILES)
 KEEP_RELEASES = 5
-DEFAULT_MODEL_ID = "kure-v1"
 
 
 class CorpusLoadError(RuntimeError):
     """The corpus files are missing or the loaded release failed validation."""
+
+
+RELEASES = ReleaseTable("corpus", "corpus_release", "release_id", "ax_g_ai.corpus_store", KEEP_RELEASES, CorpusLoadError, "release")
+ensure_schema = RELEASES.ensure_schema
+activate = RELEASES.activate  # also the rollback: activate an older release
 
 
 @dataclass
@@ -74,24 +75,16 @@ def read_corpus(corpus_dir: Path) -> tuple[dict[str, list[dict[str, Any]]], dict
     for name in REQUIRED_FILES:
         raw = (corpus_dir / name).read_bytes()
         try:
-            rows[name] = [json.loads(line) for line in raw.decode("utf-8").splitlines() if line.strip()]
-        except json.JSONDecodeError as error:
-            raise CorpusLoadError(f"{name}: invalid JSON line ({error.msg})") from error
+            rows[name] = parse_jsonl(raw.decode("utf-8"))
+        except ValueError as error:  # json.JSONDecodeError included
+            raise CorpusLoadError(f"{name}: invalid JSON line ({error})") from error
         manifest[name] = {"count": len(rows[name]), "sha256": _sha(raw)}
     return rows, manifest, _sha(json.dumps(manifest, sort_keys=True))
 
 
-def ensure_schema(conn: psycopg.Connection) -> None:
-    if conn.execute("SELECT to_regclass('corpus.schema_version')").fetchone()[0] is None:
-        sql = resources.files("ax_g_ai.corpus_store").joinpath("schema.sql").read_text(encoding="utf-8")
-        with conn.transaction():
-            conn.execute(sql)
-            conn.execute("SET search_path TO DEFAULT")
-
-
 def load_corpus(
     conn: psycopg.Connection, corpus_dir: Path, *, embedder: TeiEmbeddingClient | None = None,
-    model_id: str = DEFAULT_MODEL_ID, source_commit: str | None = None,
+    model_id: str = DEFAULT_EMBEDDING_MODEL, source_commit: str | None = None,
 ) -> LoadResult:
     rows, manifest, manifest_sha = read_corpus(corpus_dir)
     ensure_schema(conn)
@@ -115,20 +108,12 @@ def load_corpus(
     result = LoadResult(release_id, reused, counts)
     _fill_embeddings(conn, release_id, corpus_dir, embedder, model_id, result)
     activate(conn, release_id)
-    _prune(conn)
+    RELEASES.prune(conn)
     return result
 
 
-def activate(conn: psycopg.Connection, release_id: int) -> None:
-    with conn.transaction():
-        if conn.execute("SELECT 1 FROM corpus.corpus_release WHERE release_id = %s", (release_id,)).fetchone() is None:
-            raise CorpusLoadError(f"release {release_id} does not exist")
-        conn.execute("UPDATE corpus.corpus_release SET is_active = false WHERE is_active AND release_id <> %s", (release_id,))
-        conn.execute("UPDATE corpus.corpus_release SET is_active = true WHERE release_id = %s", (release_id,))
-
-
 def _insert_release(conn: psycopg.Connection, release_id: int, rows: dict[str, list[dict[str, Any]]]) -> None:
-    chunks = rows["chunks.jsonl"]
+    chunks = rows[CHUNKS_FILE]
     records = [(name, record) for name in RECORD_FILES for record in rows[name]]
     sources: dict[str, dict[str, Any]] = {}
     for item in [*chunks, *(record for _name, record in records)]:
@@ -191,7 +176,7 @@ def _concept_rows(release_id: int, rows: dict[str, list[dict[str, Any]]]) -> tup
 
 def _validate(conn: psycopg.Connection, release_id: int, rows: dict[str, list[dict[str, Any]]]) -> None:
     expected = {
-        "evidence_chunk": len(rows["chunks.jsonl"]),
+        "evidence_chunk": len(rows[CHUNKS_FILE]),
         "corpus_record": sum(len(rows[name]) for name in RECORD_FILES),
         "concept": sum(len(rows[name]) for name in CONCEPT_FILES),
     }
@@ -291,44 +276,39 @@ def _embed_with_server(
         result.embedded += len(batch)
 
 
-def _prune(conn: psycopg.Connection) -> None:
-    with conn.transaction():
-        conn.execute(
-            "DELETE FROM corpus.corpus_release WHERE NOT is_active AND release_id NOT IN ("
-            "  SELECT release_id FROM corpus.corpus_release ORDER BY release_id DESC LIMIT %s)",
-            (KEEP_RELEASES,),
-        )
-
-
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Load the clinical corpus into PostgreSQL.")
-    parser.add_argument("--corpus-dir", type=Path, default=Path(os.getenv("AX_G_EVIDENCE_CORPUS_DIR", "text_data/corpus")))
+    parser.add_argument("--corpus-dir", type=Path, help="corpus folder (default: AX_G_EVIDENCE_CORPUS_DIR or text_data/corpus)")
     parser.add_argument("--activate", type=int, metavar="RELEASE_ID", help="activate an existing release (rollback) and exit")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)
-    database_url = os.getenv("AX_G_CORPUS_DATABASE_URL")
-    if not database_url:
-        print("AX_G_CORPUS_DATABASE_URL is required", file=sys.stderr)
-        return 2
-    embedding_url = os.getenv("AX_G_EMBEDDING_URL")
-    embedder = TeiEmbeddingClient(embedding_url, timeout_seconds=float(os.getenv("AX_G_EMBEDDING_TIMEOUT_SECONDS", "60"))) if embedding_url else None
     try:
-        with psycopg.connect(database_url, autocommit=True, connect_timeout=10) as conn:
+        settings = LoaderSettings.from_environment()
+    except ConfigurationError as error:  # field names and reasons only, never values
+        print(f"invalid configuration: {error}", file=sys.stderr)
+        return 2
+    embedder = None if settings.embedding_url is None else TeiEmbeddingClient(
+        settings.embedding_url, timeout_seconds=settings.embedding_timeout_seconds,
+    )
+    try:
+        with psycopg.connect(settings.corpus_database_url.get_secret_value(), autocommit=True, connect_timeout=10) as conn:
             if args.activate is not None:
                 ensure_schema(conn)
                 activate(conn, args.activate)
                 print(f"activated release {args.activate}")
                 return 0
-            result = load_corpus(conn, args.corpus_dir, embedder=embedder,
-                                 model_id=os.getenv("AX_G_EMBEDDING_MODEL", DEFAULT_MODEL_ID),
-                                 source_commit=os.getenv("AX_G_CORPUS_SOURCE_COMMIT"))
+            result = load_corpus(conn, args.corpus_dir or settings.evidence_corpus_dir, embedder=embedder,
+                                 model_id=settings.embedding_model, source_commit=settings.corpus_source_commit)
     except (psycopg.Error, CorpusLoadError) as error:
         # Error class and message only; the database URL (with credentials) is never printed.
         print(f"corpus load failed: {type(error).__name__}: {error}", file=sys.stderr)
         return 1
+    finally:
+        if embedder is not None:
+            embedder.close()
     print(f"release {result.release_id} active ({'reused' if result.reused else 'new'}): "
-          f"chunks {result.counts['chunks.jsonl']}, from file {result.from_file}, embedded {result.embedded}, "
+          f"chunks {result.counts[CHUNKS_FILE]}, from file {result.from_file}, embedded {result.embedded}, "
           f"missing embeddings {result.missing_embeddings}")
     for warning in result.warnings:
         print(f"warning: {warning}", file=sys.stderr)

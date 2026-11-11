@@ -13,31 +13,23 @@ is the seam for a database-backed (PostgreSQL full-text + pgvector) retriever.
 
 from __future__ import annotations
 
-import json
 import math
 import re
-import unicodedata
 from collections import Counter, defaultdict
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Protocol
 
-USABLE_VERIFICATIONS = frozenset({"primary", "local_db"})
-EXCLUDED_CLAIM_STATUSES = frozenset({"폐기", "확인불가"})
+from ax_g_ai.corpus.files import CHUNKS_FILE, CONCEPT_FILES
+from ax_g_ai.corpus.gate import is_citable
+from ax_g_ai.corpus.text import HANGUL, normalize, terms
+from ax_g_ai.jsonl import read_jsonl
+
 _K1, _B = 1.2, 0.75
 _CONCEPT_BONUS = 4.0
 _CHAPTER_WEIGHT = 0.5   # terms found elsewhere in the same chapter (e.g. "ALS" only in its diagnosis chunk)
 _MIN_SCORE = 9.0
 _RELATIVE_CUTOFF = 0.5
-_HANGUL = re.compile(r"[가-힣]+")
-_LATIN = re.compile(r"[a-z][a-z0-9]*(?:[-'][a-z0-9]+)*")
-# Common words in clinician questions that carry no topic.
-_STOP_BIGRAMS = frozenset({
-    "환자", "치료", "어떻", "떻게", "무엇", "알려", "려줘", "해줘", "있나", "인가", "경우", "관련", "확인", "가능", "하나", "나요",
-    "까요", "에서", "으로", "니다", "습니", "요약", "약해", "정리", "리해", "최근", "결과", "추이", "작성", "성해", "필요", "요할",
-    "할까", "인데", "해도", "되나", "작해", "보여", "여줘", "설명", "명해", "오늘", "현재", "지금", "상태",
-})
-_STOP_WORDS = frozenset({"the", "and", "for", "with", "of", "in", "to"})
 
 
 # Source fields shown with every cited passage or rule: enough to attribute it (CC BY needs title, author, license).
@@ -124,44 +116,17 @@ class EvidenceRetriever(Protocol):
     def search(self, question: str, limit: int) -> tuple[EvidenceChunk, ...]: ...
 
 
-def is_citable(record: Mapping[str, Any], *, include_unreviewed: bool, require_license: bool = False) -> bool:
-    """Gate for every corpus record the AI may use.
-
-    ``require_license`` (attribution-only mode) also demands that each source names its
-    license and title, i.e. that the source can actually be attributed on screen.
-    """
-    sources = record.get("sources")
-    review = record.get("review_status")
-    return (
-        record.get("ai_tier") == "A"
-        and isinstance(sources, list) and bool(sources)
-        and all(isinstance(source, Mapping) and source.get("ai_use") == "A" for source in sources)
-        and (not require_license or all(source.get("license") and source.get("title") for source in sources))
-        and record.get("verification") in USABLE_VERIFICATIONS
-        and record.get("claim_status") not in EXCLUDED_CLAIM_STATUSES
-        and (review == "approved" or (include_unreviewed and review == "draft"))
-    )
-
-
-def _normalize(text: str) -> str:
-    return unicodedata.normalize("NFKC", text).lower()
-
-
-def terms(text: str) -> list[str]:
-    lowered = _normalize(text)
-    result = [word for word in _LATIN.findall(lowered) if len(word) >= 2 and word not in _STOP_WORDS]
-    for run in _HANGUL.findall(lowered):
-        if len(run) == 1:
-            continue
-        result.extend(bigram for bigram in (run[i:i + 2] for i in range(len(run) - 1)) if bigram not in _STOP_BIGRAMS)
-    return result
-
-
 class InMemoryEvidenceIndex:
     def __init__(self, chunks: Iterable[EvidenceChunk], concept_names: Mapping[str, frozenset[str]] | None = None) -> None:
         self._chunks = tuple(mark_superseded(chunks))
         self._by_id = {chunk.chunk_id: chunk for chunk in self._chunks}
         self._concept_names = concept_names or {}   # normalized name → claim ids that use the concept
+        # Compiled once: >512 names would overflow ``re``'s pattern cache and recompile on every question.
+        self._hangul_names = tuple(name for name in self._concept_names if HANGUL.fullmatch(name))
+        self._latin_names = tuple(
+            (re.compile(r"(?<![a-z0-9])" + re.escape(name) + r"(?![a-z0-9])"), name)
+            for name in self._concept_names if not HANGUL.fullmatch(name)
+        )
         self._doc_terms: list[Counter[str]] = []
         document_frequency: Counter[str] = Counter()
         for chunk in self._chunks:
@@ -187,8 +152,8 @@ class InMemoryEvidenceIndex:
     @classmethod
     def load(cls, corpus_dir: Path, *, include_unreviewed: bool, require_license: bool = False) -> "InMemoryEvidenceIndex":
         return cls.from_records(
-            _jsonl(corpus_dir / "chunks.jsonl"),
-            concept_names(*(_jsonl(corpus_dir / name) for name in ("test_concepts.jsonl", "drug_concepts.jsonl", "drug_classes.jsonl"))),
+            read_jsonl(corpus_dir / CHUNKS_FILE, strict=False),
+            concept_names(*(read_jsonl(corpus_dir / name, strict=False) for name in CONCEPT_FILES)),
             include_unreviewed=include_unreviewed, require_license=require_license,
         )
 
@@ -202,17 +167,14 @@ class InMemoryEvidenceIndex:
 
     def matched_claims(self, question: str) -> dict[str, int]:
         """Claim id → number of distinct concepts named in the question that the claim uses."""
-        lowered = _normalize(question)
+        lowered = normalize(question)
         compact = re.sub(r"\s+", "", lowered)
+        found = [name for name in self._hangul_names if name in compact]
+        found += [name for pattern, name in self._latin_names if pattern.search(lowered)]
         hits: dict[str, int] = defaultdict(int)
-        for name, claims in self._concept_names.items():
-            if _HANGUL.fullmatch(name):
-                found = name in compact
-            else:
-                found = re.search(r"(?<![a-z0-9])" + re.escape(name) + r"(?![a-z0-9])", lowered) is not None
-            if found:
-                for claim in claims:
-                    hits[claim] += 1
+        for name in found:
+            for claim in self._concept_names[name]:
+                hits[claim] += 1
         return hits
 
     def search(self, question: str, limit: int = 3) -> tuple[EvidenceChunk, ...]:
@@ -263,22 +225,6 @@ def chunk_from_record(record: Mapping[str, Any]) -> EvidenceChunk:
     )
 
 
-def _jsonl(path: Path) -> list[dict[str, Any]]:
-    if not path.is_file():
-        return []
-    rows = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if not line.strip():
-            continue
-        try:
-            row = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(row, dict):
-            rows.append(row)
-    return rows
-
-
 def concept_names(
     tests: Iterable[Mapping[str, Any]], drugs: Iterable[Mapping[str, Any]], classes: Iterable[Mapping[str, Any]]
 ) -> dict[str, frozenset[str]]:
@@ -292,8 +238,8 @@ def concept_names(
         for raw in raw_names:
             if not isinstance(raw, str):
                 continue
-            name = _normalize(raw).strip()
-            hangul_only = _HANGUL.fullmatch(re.sub(r"\s+", "", name)) is not None
+            name = normalize(raw).strip()
+            hangul_only = HANGUL.fullmatch(re.sub(r"\s+", "", name)) is not None
             if hangul_only:
                 name = re.sub(r"\s+", "", name)
             if (hangul_only and len(name) >= 2) or (not hangul_only and len(name) >= 4 and re.fullmatch(r"[a-z0-9 \-]+", name)):

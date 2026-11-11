@@ -6,26 +6,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Mapping
 from zoneinfo import ZoneInfo
 
 from ax_g_ai.errors import PatientContextUnavailableError, PatientMismatchError
 from ax_g_ai.services.clinical_calculations import calculate_review_aids
-from ax_g_ai.services.clinical_recommendation import RuleInput
 from ax_g_ai.services.deidentified_snapshot import deidentify, is_identifier_key
+from ax_g_ai.services.patient_context_store import PreparedRawEmrContext
 from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
-
-
-@dataclass(frozen=True)
-class PreparedRawEmrContext:
-    """원문에서 허용 목록만 추린, Provider에 그대로 보낼 수 있는 비식별 문맥이다."""
-
-    data: Mapping[str, object]
-    updated_at: datetime
-    # Corpus concept facts for stage-2 rule evaluation (concept ids, values, KCD codes only).
-    rule_input: RuleInput | None = None
 
 
 def emr_source(payload: Mapping[str, Any]) -> Mapping[str, Any]:

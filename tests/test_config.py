@@ -4,7 +4,11 @@ import os
 import unittest
 from unittest.mock import patch
 
-from ax_g_ai.config import AISettings, ConfigurationError, RuntimeSettings
+import contextlib
+import io
+from pathlib import Path
+
+from ax_g_ai.config import AISettings, ConfigurationError, LoaderSettings, RuntimeSettings
 
 
 def settings(**environment: str) -> AISettings:
@@ -79,6 +83,32 @@ class RuntimeSettingsTest(unittest.TestCase):
             settings(AI_API_KEY="very-secret-key", AI_BASE_URL="http://proxy/v1")
 
         self.assertNotIn("very-secret-key", str(raised.exception))
+
+
+class LoaderSettingsTest(unittest.TestCase):
+    def test_defaults_and_shared_variable_names(self) -> None:
+        with patch.dict(os.environ, {"AX_G_CORPUS_DATABASE_URL": "postgresql://u:secret@db/x"}, clear=True):
+            result = LoaderSettings.from_environment()
+        self.assertEqual(result.corpus_database_url.get_secret_value(), "postgresql://u:secret@db/x")
+        self.assertEqual((result.embedding_url, result.embedding_model, result.embedding_timeout_seconds), (None, "kure-v1", 60))
+        self.assertEqual((result.evidence_corpus_dir, result.dur_snapshot_dir), (Path("text_data/corpus"), Path("data/dur")))
+
+    def test_errors_name_fields_without_values(self) -> None:
+        environment = {"AX_G_CORPUS_DATABASE_URL": "postgresql://u:very-secret@db/x", "AX_G_EMBEDDING_URL": "ftp://embedding"}
+        with patch.dict(os.environ, environment, clear=True), self.assertRaises(ConfigurationError) as raised:
+            LoaderSettings.from_environment()
+        self.assertIn("AX_G_EMBEDDING_URL", str(raised.exception))
+        self.assertNotIn("very-secret", str(raised.exception))
+
+    def test_cli_without_database_url_exits_2_before_connecting(self) -> None:
+        from ax_g_ai.corpus_store.loader import main as load_corpus
+        from ax_g_ai.dur_store.loader import main as load_dur
+
+        for main in (load_corpus, load_dur):
+            with self.subTest(main=main.__module__), patch.dict(os.environ, {}, clear=True), \
+                    contextlib.redirect_stderr(io.StringIO()) as err:
+                self.assertEqual(main([]), 2)
+            self.assertIn("AX_G_CORPUS_DATABASE_URL", err.getvalue())
 
 
 if __name__ == "__main__":

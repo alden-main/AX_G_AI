@@ -25,28 +25,29 @@ class TeiEmbeddingClient:
         self, base_url: str, *, timeout_seconds: float = 10.0, dimensions: int = EMBEDDING_DIMENSIONS,
         transport: httpx.BaseTransport | None = None,
     ) -> None:
-        self._base_url = base_url.rstrip("/")
-        self._timeout = timeout_seconds
         self._dimensions = dimensions
-        self._transport = transport
+        # One client per process: keep-alive connections are reused across questions (the client is thread-safe).
+        self._client = httpx.Client(base_url=base_url.rstrip("/"), timeout=timeout_seconds, transport=transport)
 
     @property
     def dimensions(self) -> int:
         return self._dimensions
 
+    def close(self) -> None:
+        self._client.close()
+
     def embed(self, texts: Sequence[str]) -> list[list[float]]:
         """Unit-normalized embeddings, one per text (TEI truncates over-long input)."""
         vectors: list[list[float]] = []
-        with httpx.Client(timeout=self._timeout, transport=self._transport) as client:
-            for start in range(0, len(texts), _BATCH):
-                batch = list(texts[start:start + _BATCH])
-                try:
-                    response = client.post(f"{self._base_url}/embed", json={"inputs": batch, "normalize": True, "truncate": True})
-                    response.raise_for_status()
-                    payload = response.json()
-                except (httpx.HTTPError, ValueError) as error:
-                    raise EmbeddingError(f"embedding request failed: {type(error).__name__}") from error
-                vectors.extend(self._validated(payload, len(batch)))
+        for start in range(0, len(texts), _BATCH):
+            batch = list(texts[start:start + _BATCH])
+            try:
+                response = self._client.post("/embed", json={"inputs": batch, "normalize": True, "truncate": True})
+                response.raise_for_status()
+                payload = response.json()
+            except (httpx.HTTPError, ValueError) as error:
+                raise EmbeddingError(f"embedding request failed: {type(error).__name__}") from error
+            vectors.extend(self._validated(payload, len(batch)))
         return vectors
 
     def _validated(self, payload: object, expected: int) -> list[list[float]]:

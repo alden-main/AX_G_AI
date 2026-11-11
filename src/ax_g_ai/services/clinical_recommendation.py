@@ -23,7 +23,6 @@ Rules that are false, or unknown with nothing anchoring them to the patient, are
 
 from __future__ import annotations
 
-import json
 import logging
 import re
 from collections import defaultdict
@@ -31,21 +30,21 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+from ax_g_ai.corpus.files import CHUNKS_FILE, CONCEPT_FILES, DOSE_FILE, RULE_FILES
+from ax_g_ai.corpus.gate import is_citable
+from ax_g_ai.jsonl import read_jsonl
 from ax_g_ai.services.clinical_corpus import CorpusRuleError, PatientFacts, evaluate
 from ax_g_ai.services.clinical_dosing import (
     MissingInput, band_daily_max_mg, evaluate_formula, formula_variables, prescribed_daily_mg, range_label, rounded,
     select_band, unit_for,
 )
 from ax_g_ai.services.clinical_evidence import (
-    REGION_LABELS, EvidenceChunk, chunk_from_record, is_citable, mark_superseded, region_of, sorted_sources,
+    REGION_LABELS, EvidenceChunk, chunk_from_record, mark_superseded, region_of, sorted_sources,
 )
 from ax_g_ai.services.emr_mapping import ConceptCatalog, EmrMapping, MedicationMatch, SiteCodeMap, map_emr
 
 logger = logging.getLogger("uvicorn.error")
 
-DOSE_FILE = "dose_rules.jsonl"
-RULE_FILES = ("diagnosis.jsonl", "workup.jsonl", "referral.jsonl", "monitoring.jsonl", "lab_thresholds.jsonl", DOSE_FILE)
-CONCEPT_FILES = ("test_concepts.jsonl", "drug_concepts.jsonl", "drug_classes.jsonl")
 FLAG_KINDS = ("finding", "event", "risk", "indication", "lab_present", "dx_history")
 _LOGICAL = ("all", "any", "not")
 _KIND_ORDER = {"diagnosis": 0, "referral": 1, "workup": 2, "monitoring": 3}
@@ -130,7 +129,7 @@ class RuleCorpus:
                     skipped += 1
             rules[name] = tuple(kept)
         chunks: dict[str, list[EvidenceChunk]] = defaultdict(list)
-        for chunk in mark_superseded(chunk_from_record(record) for record in rows.get("chunks.jsonl", ()) if citable(record)):
+        for chunk in mark_superseded(chunk_from_record(record) for record in rows.get(CHUNKS_FILE, ()) if citable(record)):
             chunks[chunk.claim_id].append(chunk)
         superseded: dict[str, list[str]] = defaultdict(list)
         for records in rules.values():
@@ -155,22 +154,7 @@ class RuleCorpus:
 
 
 def read_rows(corpus_dir: Path) -> dict[str, list[dict[str, Any]]]:
-    rows: dict[str, list[dict[str, Any]]] = {}
-    for name in (*RULE_FILES, *CONCEPT_FILES, "chunks.jsonl"):
-        path = corpus_dir / name
-        items: list[dict[str, Any]] = []
-        if path.is_file():
-            for line in path.read_text(encoding="utf-8").splitlines():
-                if not line.strip():
-                    continue
-                try:
-                    row = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                if isinstance(row, dict):
-                    items.append(row)
-        rows[name] = items
-    return rows
+    return {name: read_jsonl(corpus_dir / name, strict=False) for name in (*RULE_FILES, *CONCEPT_FILES, CHUNKS_FILE)}
 
 
 @dataclass(frozen=True)

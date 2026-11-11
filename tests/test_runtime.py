@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from ax_g_ai.adapters.main_bridge import PreparedRawEmrContext
+from ax_g_ai.services.patient_context_store import PreparedRawEmrContext
 from ax_g_ai.errors import PatientContextNotReadyError
 from ax_g_ai.runtime import create_runtime_app
 from ax_g_ai.services.patient_context_store import PatientContextStore

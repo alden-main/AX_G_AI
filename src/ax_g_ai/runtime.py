@@ -36,6 +36,7 @@ def create_runtime_app() -> FastAPI:
         database_path = None
     lookup = None if database_path is None else SqliteReferenceLookup(database_path)
     evidence = _evidence_retriever(runtime_settings)
+    close = getattr(evidence, "close", None)  # pooled DB / embedding connections (PostgreSQL backend only)
     return create_app(
         ClinicalChatService(
             build_provider_client(ai_settings), lookup, evidence, runtime_settings.evidence_max_chunks,
@@ -47,6 +48,7 @@ def create_runtime_app() -> FastAPI:
             runtime_settings.patient_context_max_entries,
         ),
         _clinical_recommender(runtime_settings),
+        on_shutdown=(close,) if close is not None else (),
     )
 
 
@@ -133,6 +135,8 @@ def _evidence_retriever(settings: RuntimeSettings) -> EvidenceRetriever | None:
                 require_license=settings.attributed_sources_only,
             )
         except (psycopg.Error, CorpusUnavailableError) as error:
+            if embedder is not None:
+                embedder.close()  # the file index has no semantic search
             logger.warning("clinical_evidence_database_unavailable error_type=%s fallback=files", type(error).__name__)
         else:
             logger.info(

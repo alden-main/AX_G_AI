@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator, Callable, Sequence
+from contextlib import asynccontextmanager
 from dataclasses import replace
 from datetime import datetime
 import json
@@ -23,7 +24,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from ax_g_ai.adapters.main_bridge import PreparedRawEmrContext, RawEmrPayloadMapper, emr_source
+from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper, emr_source
 from ax_g_ai.errors import (
     ClinicalChatProviderUnavailableError,
     PatientContextNotReadyError,
@@ -34,7 +35,7 @@ from ax_g_ai.errors import (
 from ax_g_ai.services.clinical_chat import ClinicalChatService, evidence_payload
 from ax_g_ai.services.clinical_evidence import EvidenceChunk
 from ax_g_ai.services.clinical_recommendation import Assessment, ClinicalRecommender
-from ax_g_ai.services.patient_context_store import PatientContextStore
+from ax_g_ai.services.patient_context_store import PatientContextStore, PreparedRawEmrContext
 from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
 
 
@@ -121,13 +122,25 @@ def create_app(
     mapper: RawEmrPayloadMapper | None = None,
     store: PatientContextStore | None = None,
     recommender: ClinicalRecommender | None = None,
+    *,
+    on_shutdown: Sequence[Callable[[], None]] = (),
 ) -> FastAPI:
     """새 내부 계약만 노출하는 ASGI 앱을 조립한다.
 
     ``service``가 없으면 AI 설정이 없는 fail-closed 앱이며, AI 호출이 필요한 요청은
-    ``AI_PROVIDER_UNAVAILABLE``로 거부된다.
+    ``AI_PROVIDER_UNAVAILABLE``로 거부된다. ``on_shutdown``은 종료 시 닫을 자원(DB 풀 등)이다.
     """
-    app = FastAPI(title="AX-G AI Clinical Chat API", version="1")
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        yield
+        for close in on_shutdown:
+            try:
+                close()
+            except Exception as error:  # shutdown must continue past one failing resource
+                logger.warning("resource_close_failed error_type=%s", type(error).__name__)
+
+    app = FastAPI(title="AX-G AI Clinical Chat API", version="1", lifespan=lifespan)
     mapper = mapper or RawEmrPayloadMapper()
     store = store or PatientContextStore()
 
@@ -470,18 +483,3 @@ def _error(status_code: int, code: str, message: str) -> JSONResponse:
 def _sse(event: str, data: Mapping[str, object]) -> str:
     """Serialize a single trusted SSE event without leaking provider payloads."""
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False, separators=(',', ':'))}\n\n"
-
-
-def __getattr__(name: str) -> FastAPI:
-    """Build the ``ax_g_ai.api:app`` entry point on first access.
-
-    ``runtime`` imports ``create_app`` from this module, so importing it at
-    module load would be circular; tests also avoid a configuration read.
-    """
-    if name != "app":
-        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-    from ax_g_ai.runtime import create_runtime_app
-
-    application = create_runtime_app()
-    globals()["app"] = application
-    return application

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from ax_g_ai.adapters.openai import OpenAIProviderError
+from ax_g_ai.services.ports import OpenAIProviderError
 from ax_g_ai.services.prepared_patient_summary import PATIENT_SUMMARY_OUTPUT_SCHEMA, PreparedPatientSummary
 
 

@@ -11,7 +11,7 @@ from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, ValidationError
 
-from ax_g_ai.adapters.openai import OpenAIProviderError
+from ax_g_ai.services.ports import OpenAIProviderError
 
 
 def _non_blank(value: str) -> str:

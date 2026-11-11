@@ -1,8 +1,7 @@
-"""Load the reviewed clinical corpus (``text_data/corpus/*.jsonl``) and evaluate its rules.
+"""Patient facts and the three-valued evaluator for corpus rule conditions.
 
-Only records a clinician approved and whose every cited source is licensed for
-commercial AI use (``ai_use: A``) are loaded. Every gate in the generator is
-re-checked here, so a hand-edited ``usable: true`` cannot bypass review or licensing.
+Records are gated before they reach this module (``clinical_evidence.is_citable``, applied
+by ``clinical_recommendation.RuleCorpus``).
 
 Rule conditions use three-valued logic: a fact absent from the patient context
 evaluates to ``None`` (unknown), never ``False``. Callers must treat ``None`` as
@@ -11,17 +10,9 @@ evaluates to ``None`` (unknown), never ``False``. Callers must treat ``None`` as
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Mapping
 
-USABLE_VERIFICATIONS = frozenset({"primary", "local_db"})
-EXCLUDED_CLAIM_STATUSES = frozenset({"폐기", "확인불가"})
-CORPUS_FILES = (
-    "diagnosis.jsonl", "workup.jsonl", "treatment.jsonl", "dose_rules.jsonl", "lab_thresholds.jsonl",
-    "formulas.jsonl", "monitoring.jsonl", "referral.jsonl", "chunks.jsonl",
-)
 _OPERATORS = {
     "<": lambda a, b: a < b, "<=": lambda a, b: a <= b,
     ">": lambda a, b: a > b, ">=": lambda a, b: a >= b, "==": lambda a, b: a == b,
@@ -32,13 +23,6 @@ _FLAG_KEYS = ("finding", "event", "risk", "indication", "lab_present", "dx_histo
 
 class CorpusRuleError(ValueError):
     """A corpus condition uses an operator or key this evaluator does not support."""
-
-
-@dataclass(frozen=True)
-class CorpusLoadReport:
-    loaded: Mapping[str, int]
-    skipped_unapproved: int
-    skipped_invalid: int
 
 
 @dataclass(frozen=True)
@@ -58,74 +42,6 @@ class PatientFacts:
     flags: Mapping[str, bool] | None = None
     medications_complete: bool = True
     uncertain_classes: frozenset[str] = frozenset()
-
-
-def is_approved(record: Mapping[str, Any]) -> bool:
-    """Clinician-approved and backed only by sources licensed for commercial AI use."""
-    sources = record.get("sources")
-    return (
-        record.get("usable") is True
-        and record.get("ai_tier") == "A"
-        and isinstance(sources, list)
-        and bool(sources)
-        and all(isinstance(source, Mapping) and source.get("ai_use") == "A" for source in sources)
-        and record.get("review_status") == "approved"
-        and record.get("verification") in USABLE_VERIFICATIONS
-        and record.get("claim_status") not in EXCLUDED_CLAIM_STATUSES
-    )
-
-
-class ClinicalCorpus:
-    def __init__(self, records_by_file: Mapping[str, Iterable[Mapping[str, Any]]]) -> None:
-        self._records = {name: tuple(records) for name, records in records_by_file.items()}
-        self._dose_rules = {record["id"]: record for record in self._records.get("dose_rules.jsonl", ()) if "id" in record}
-
-    @classmethod
-    def load(cls, directory: Path) -> tuple["ClinicalCorpus", CorpusLoadReport]:
-        records: dict[str, list[Mapping[str, Any]]] = {}
-        unapproved = invalid = 0
-        for name in CORPUS_FILES:
-            path = directory / name
-            records[name] = []
-            if not path.is_file():
-                continue
-            with path.open(encoding="utf-8") as handle:
-                for line in handle:
-                    if not line.strip():
-                        continue
-                    try:
-                        record = json.loads(line)
-                    except json.JSONDecodeError:
-                        invalid += 1
-                        continue
-                    if not isinstance(record, dict):
-                        invalid += 1
-                    elif is_approved(record):
-                        records[name].append(record)
-                    else:
-                        unapproved += 1
-        report = CorpusLoadReport({name: len(items) for name, items in records.items()}, unapproved, invalid)
-        return cls(records), report
-
-    def records(self, file_name: str) -> tuple[Mapping[str, Any], ...]:
-        return self._records.get(file_name, ())
-
-    def dose_rule(self, rule_id: str) -> Mapping[str, Any] | None:
-        return self._dose_rules.get(rule_id)
-
-    def classify(self, lab: str, value: float, *, sex: str | None = None) -> list[dict[str, str]]:
-        """Return matching threshold bands for ``lab`` with their record ids."""
-        matches = []
-        for record in self.records("lab_thresholds.jsonl"):
-            if record.get("lab") != lab:
-                continue
-            for band in record.get("bands", ()):
-                if "sex" in band and band["sex"] != sex:
-                    continue
-                if ("min" in band and value < band["min"]) or ("max" in band and value > band["max"]):
-                    continue
-                matches.append({"record_id": record["id"], "label": band["label"], "context": record.get("context", "")})
-        return matches
 
 
 def evaluate(condition: Mapping[str, Any], facts: PatientFacts) -> bool | None:

@@ -3,7 +3,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
-from ax_g_ai.adapters.openai import OpenAIProviderError, ProviderAnswer
+from ax_g_ai.services.ports import OpenAIProviderError, ProviderAnswer
 from ax_g_ai.api import create_app
 from ax_g_ai.services.clinical_chat import ClinicalChatService
 

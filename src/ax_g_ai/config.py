@@ -8,9 +8,11 @@ AI Provider 주소·API Key·모델과 런타임 경로는 코드에 넣지 않�
 from __future__ import annotations
 
 import os
-from typing import Any, Literal
+from pathlib import Path
+from typing import Annotated, Any, Literal
 
 from pydantic import (
+    AfterValidator,
     DirectoryPath,
     Field,
     FilePath,
@@ -24,10 +26,20 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from ax_g_ai.corpus.files import DEFAULT_EMBEDDING_MODEL
+
 
 class ConfigurationError(ValueError):
     """필수 환경 설정이 없거나 허용되지 않은 값일 때 발생한다."""
 
+
+def _require_http_url(value: str) -> str:
+    if not value.startswith(("https://", "http://")):
+        raise ValueError("must be an HTTP(S) URL")
+    return value
+
+
+HttpUrlText = Annotated[str, AfterValidator(_require_http_url)]
 
 AI_PROVIDER_OPENAI = "openai"
 AI_PROVIDER_OPENAI_COMPATIBLE = "openai_compatible"
@@ -103,9 +115,7 @@ class AISettings(_EnvironmentSettings):
     @field_validator("base_url")
     @classmethod
     def _http_url(cls, value: str) -> str:
-        if not value.startswith(("https://", "http://")):
-            raise ValueError("must be an HTTP(S) URL")
-        return value.rstrip("/")
+        return _require_http_url(value).rstrip("/")
 
     @model_validator(mode="after")
     def _openai_requirements(self) -> "AISettings":
@@ -159,8 +169,8 @@ class RuntimeSettings(_EnvironmentSettings):
     evidence_include_unreviewed: bool = False
     evidence_max_chunks: int = Field(default=3, ge=1, le=5)
     corpus_database_url: SecretStr | None = None
-    embedding_url: str | None = None
-    embedding_model: str = "kure-v1"
+    embedding_url: HttpUrlText | None = None
+    embedding_model: str = DEFAULT_EMBEDDING_MODEL
     embedding_timeout_seconds: PositiveFloat = 10
     evidence_similarity_floor: float = Field(default=0.6, ge=0, le=1)
     clinical_rules_enabled: bool = True
@@ -169,12 +179,31 @@ class RuntimeSettings(_EnvironmentSettings):
     attributed_sources_only: bool = True
     clinical_doses_enabled: bool = False
     dur_enabled: bool = True
-
-    @field_validator("embedding_url")
-    @classmethod
-    def _embedding_http_url(cls, value: str | None) -> str | None:
-        if value is not None and not value.startswith(("https://", "http://")):
-            raise ValueError("must be an HTTP(S) URL")
-        return value
     patient_context_ttl_seconds: PositiveFloat = 12 * 60 * 60
     patient_context_max_entries: PositiveInt = 1000
+
+
+class LoaderSettings(_EnvironmentSettings):
+    """적재 CLI(``ax-g-ai-load-corpus``, ``ax-g-ai-load-dur``) 설정.
+
+    런타임과 같은 ``AX_G_`` 환경 변수 이름·검증을 쓰되, 적재에 필요한 값만 읽는다
+    (``RuntimeSettings``는 참조 DB 경로 등 적재와 무관한 값까지 검증한다).
+
+    Attributes:
+        corpus_database_url: 적재 대상 PostgreSQL URL(필수). 값은 출력하지 않는다.
+        embedding_url: TEI 임베딩 서버. 없으면 미리 계산한 벡터 파일만 쓴다.
+        embedding_timeout_seconds: 문단 묶음 임베딩이라 런타임(질문 1개, 10초)보다 길게 둔다.
+        evidence_corpus_dir: 적재할 말뭉치 폴더(``--corpus-dir``가 우선).
+        corpus_source_commit: 릴리스에 기록할 말뭉치 빌드 커밋.
+        dur_snapshot_dir: 적재할 DUR 스냅샷 폴더(``--snapshot-dir``가 우선).
+    """
+
+    model_config = SettingsConfigDict(env_prefix="AX_G_")
+
+    corpus_database_url: SecretStr
+    embedding_url: HttpUrlText | None = None
+    embedding_model: str = DEFAULT_EMBEDDING_MODEL
+    embedding_timeout_seconds: PositiveFloat = 60
+    evidence_corpus_dir: Path = Path("text_data/corpus")
+    corpus_source_commit: str | None = None
+    dur_snapshot_dir: Path = Path("data/dur")

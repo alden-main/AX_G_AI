@@ -46,4 +46,5 @@ ARG ALLOW_STALE_EMBEDDINGS=0
 RUN python -m ax_g_ai.corpus_store.precomputed --check text_data/corpus || [ "$ALLOW_STALE_EMBEDDINGS" = "1" ]
 
 # The ASGI server exposes /health, /docs, and the Bridge internal API routes.
-ENTRYPOINT ["uvicorn", "ax_g_ai.api:app", "--host", "0.0.0.0", "--port", "8100"]
+# The app is built by the factory at server start (configuration is read then, not at import).
+ENTRYPOINT ["uvicorn", "--factory", "ax_g_ai.runtime:create_runtime_app", "--host", "0.0.0.0", "--port", "8100"]

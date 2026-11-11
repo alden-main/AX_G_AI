@@ -25,10 +25,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+from ax_g_ai.corpus.files import CONCEPT_FILES
+from ax_g_ai.jsonl import read_jsonl
 from ax_g_ai.services.clinical_calculations import ckd_epi_2021_egfr
 from ax_g_ai.services.clinical_corpus import PatientFacts
 
-CONCEPT_FILES = ("test_concepts.jsonl", "drug_concepts.jsonl", "drug_classes.jsonl")
 LOCAL_ROUTES = frozenset({"topical", "inhaled"})
 _SALT_PREFIXES = ("염산", "황산", "인산", "질산", "초산", "주석산", "엘주석산", "타르타르산", "말레산", "말레인산", "푸마르산", "헤미푸마르산", "숙신산", "브롬화수소산", "메실산", "베실산", "수산", "건조")
 _TOPICAL_FORM = re.compile(r"(크림|연고|겔|젤|로션|점안|안연고|외용|질정|질크림|질좌|점비|나잘|가글|cream|ointment|gel|lotion|ophthalmic|eye ?drop|vaginal|nasal)", re.I)
@@ -71,11 +72,7 @@ class ConceptCatalog:
 
     @classmethod
     def load(cls, corpus_dir: Path) -> "ConceptCatalog":
-        rows: dict[str, list[dict[str, Any]]] = {}
-        for name in CONCEPT_FILES:
-            path = corpus_dir / name
-            rows[name] = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()] if path.is_file() else []
-        return cls.from_rows(*(rows[name] for name in CONCEPT_FILES))
+        return cls.from_rows(*(read_jsonl(corpus_dir / name) for name in CONCEPT_FILES))
 
     @classmethod
     def from_rows(cls, tests: Iterable[Mapping[str, Any]], drugs: Iterable[Mapping[str, Any]], classes: Iterable[Mapping[str, Any]]) -> "ConceptCatalog":

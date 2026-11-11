@@ -30,6 +30,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator, Mapping
 
+from ax_g_ai.jsonl import parse_jsonl
+
 FORMAT = "ax-g-dur-snapshot/1"
 MANIFEST = "manifest.json"
 SOURCE = {
@@ -114,11 +116,8 @@ def _label(value: str) -> str:
 
 
 def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
     with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1 << 20), b""):
-            digest.update(block)
-    return digest.hexdigest()
+        return hashlib.file_digest(handle, "sha256").hexdigest()
 
 
 def convert(directory: Path) -> tuple[dict[str, list[dict[str, Any]]], dict[str, dict[str, str]]]:
@@ -231,7 +230,7 @@ def read_snapshot(directory: Path) -> Snapshot:
         data = (directory / info["file"]).read_bytes()
         if hashlib.sha256(data).hexdigest() != info["sha256"]:
             raise DurDataError(f"{info['file']}: SHA-256 불일치(스냅샷 손상 또는 수기 편집)")
-        rows[name] = [json.loads(line) for line in data.decode("utf-8").splitlines() if line.strip()]
+        rows[name] = parse_jsonl(data.decode("utf-8"))
         if len(rows[name]) != info["count"]:
             raise DurDataError(f"{info['file']}: {len(rows[name])}행, manifest {info['count']}행")
         if rows[name] and set(rows[name][0]) != set(columns):
