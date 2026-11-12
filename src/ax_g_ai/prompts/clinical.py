@@ -46,7 +46,9 @@ INITIAL_PATIENT_SUMMARY_REQUEST = (
 PREPARED_SNAPSHOT_DATA_RULE = (
     "[데이터 활용 규칙] 아래에 실제로 포함된 모든 비식별 임상 데이터를 답변에 활용하세요. "
     "데이터군·필드·목록의 개수는 고정되어 있지 않으므로 비어 있거나 없는 항목은 건너뛰고, "
-    "새로 들어온 임상 필드도 함께 검토하세요."
+    "새로 들어온 임상 필드도 함께 검토하세요. calculation_context는 환자의 나이·성별·체중·키 등 기본 정보입니다. "
+    "recorded_none에 있는 항목은 EMR에 빈 목록으로 기록된 것이므로 '기록상 없음'으로 다룰 수 있지만, "
+    "아예 없는 항목은 전달되지 않은 것이므로 없다고 단정하지 마세요."
 )
 
 
@@ -94,7 +96,9 @@ ASSESSMENT_RULES = (
     "medication_alerts는 현재 처방을 심평원 DUR 목록(병용금기·연령금기·임부금기·노인주의)과 대조한 결과입니다. alerts가 있으면 "
     "'처방 점검' 항목으로 약 이름·유형·사유(detail, condition_note)를 그대로 알리고 [출처: 심평원 DUR 목록]을 붙이세요. "
     "처방 변경이나 용량을 지시하지 말고 목록에 실린 사실로만 쓰세요. status가 possible인 임부금기는 '임신 여부 확인 필요'로 쓰고, "
-    "unmapped 처방은 DUR 점검에서 빠졌다고 짧게 밝히세요."
+    "unmapped 처방은 DUR 점검에서 빠졌다고 짧게 밝히세요. products의 proposed가 true인 약은 현재 처방이 아니라 의료진이 질문에서 "
+    "언급한 약(proposed 목록)이므로 '추가 시' 점검 결과로 구분해 쓰고, proposed 약에 해당 경고가 없으면 현재 DUR 목록상 해당 금기가 "
+    "확인되지 않았다고 쓰세요. findings_used의 pregnancy는 의료진 질문·메모에서 확인된 임신 여부입니다."
 )
 
 DOSE_RULES = (

@@ -27,8 +27,8 @@ Modules: ``corpus`` (gated records), ``rules`` (stage-2 decisions), ``doses`` (s
 from __future__ import annotations
 
 import logging
-from dataclasses import replace
-from typing import Any, Iterable, Mapping
+from dataclasses import dataclass, replace
+from typing import Any, Iterable, Mapping, Sequence
 
 from ax_g_ai.corpus.files import DOSE_FILE
 from ax_g_ai.services.clinical_corpus import CorpusRuleError
@@ -39,11 +39,24 @@ from ax_g_ai.services.clinical_recommendation.presentation import Presenter
 from ax_g_ai.services.clinical_recommendation.rules import (
     FLAG_KINDS, accepted_findings, derive_facts, evaluate_record, flag_vocabulary, rank_item,
 )
-from ax_g_ai.services.emr_mapping import SiteCodeMap, map_emr
+from ax_g_ai.services.emr_mapping import SiteCodeMap, map_emr, normalize_name
+from ax_g_ai.services.question_facts import has_medication_context, question_findings
 
-__all__ = ["FLAG_KINDS", "Assessment", "ClinicalRecommender", "Leaf", "RuleCorpus", "RuleInput", "prompt_view", "read_rows"]
+__all__ = ["FLAG_KINDS", "Assessment", "ClinicalRecommender", "Leaf", "QuestionInputs", "RuleCorpus", "RuleInput", "prompt_view", "read_rows"]
 
 logger = logging.getLogger("uvicorn.error")
+
+
+@dataclass(frozen=True)
+class QuestionInputs:
+    """What a chat question or clinician memo adds to the EMR for the rule, DUR and dose checks."""
+
+    findings: Mapping[str, bool]  # stated facts, e.g. {"pregnancy": True}
+    proposed_drugs: tuple[Any, ...]  # services.dur_check.ProposedDrug: drugs to add, checked against DUR
+    dose_drugs: tuple[str, ...]  # ingredient ids named in the text that have dose rules
+
+    def __bool__(self) -> bool:
+        return bool(self.findings or self.proposed_drugs or self.dose_drugs)
 
 
 class ClinicalRecommender:
@@ -69,6 +82,9 @@ class ClinicalRecommender:
         self._vocabulary = flag_vocabulary(
             record for name, records in corpus.rules.items() if name != DOSE_FILE or doses for record in records
         )
+        if dur is not None:
+            # The DUR 임부금기 check reads this finding even when no corpus rule tests it.
+            self._vocabulary.setdefault("pregnancy", ("finding",))
 
     def __len__(self) -> int:
         return len(self._corpus)
@@ -91,6 +107,24 @@ class ClinicalRecommender:
         """Finding/event keys the loaded rules can test (for clinician input or note extraction)."""
         return tuple(sorted(self._vocabulary))
 
+    def question_inputs(self, *texts: str | None) -> QuestionInputs:
+        """Pregnancy stated in the texts, drugs named in a medication context (DUR), and drugs with dose rules."""
+        text = " ".join(item for item in texts if item)
+        if not text:
+            return QuestionInputs({}, (), ())
+        proposed: tuple[Any, ...] = ()
+        if self._dur is not None and has_medication_context(text):
+            proposed = self._dur.find_drugs(text)
+        doses: tuple[str, ...] = ()
+        if self._doses:
+            catalog = self._corpus.catalog
+            normalized = normalize_name(text)
+            named = {cid for name, cid in catalog.ko_names if len(name) >= 3 and name in normalized}
+            named.update(catalog._english_all(text))
+            # Only drugs that have a dose rule: a named drug without one is not reported as unmatched.
+            doses = tuple(sorted(cid for cid in named if self._dose_stage.resolve((cid,))[0]))
+        return QuestionInputs(question_findings(*texts), tuple(proposed), doses)
+
     def prepare(self, source: Mapping[str, Any]) -> RuleInput:
         """Map the raw Bridge EMR object (not the envelope) onto corpus concepts."""
         mapping = map_emr(source, self._corpus.catalog, self._site_map)
@@ -110,7 +144,9 @@ class ClinicalRecommender:
 
     def assess(
         self, rule_input: RuleInput, findings: Mapping[str, bool] | None = None, dose_drugs: Iterable[str] = (),
+        proposed_drugs: Sequence[Any] = (),
     ) -> Assessment:
+        """``proposed_drugs``: drugs to add named in the question (``QuestionInputs``), checked with the prescriptions."""
         mapping, sex = rule_input.mapping, rule_input.sex
         accepted, unknown = accepted_findings(findings or {}, self._vocabulary)
         facts = derive_facts(mapping.facts, accepted, sex, self._vocabulary)
@@ -152,7 +188,8 @@ class ClinicalRecommender:
         alerts = None
         if self._dur is not None:
             pregnant = accepted.get("pregnancy")
-            alerts = self._dur.check(rule_input.medications, age_years=facts.values.get("age"), sex=sex, pregnant=pregnant).as_dict()
+            alerts = self._dur.check(rule_input.medications, age_years=facts.values.get("age"), sex=sex, pregnant=pregnant,
+                                     proposed=proposed_drugs).as_dict()
         doses: tuple[Mapping[str, Any], ...] | None = None
         unmatched: tuple[Mapping[str, str], ...] = ()
         if self._doses:

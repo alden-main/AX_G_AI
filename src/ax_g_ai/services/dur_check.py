@@ -12,11 +12,17 @@ unmatched codes are reported so the site can fix them. Alerts:
 - 임부금기: pregnancy recorded → ``met``; pregnancy unknown in a woman aged 15–49 → ``possible``.
 - 노인주의: age 65 or older.
 
+Drugs named in a chat question (``find_drugs``) are checked as drugs to add: matched by the Korean
+ingredient name in single-ingredient product names (salt suffixes dropped, e.g. 와파린나트륨 → 와파린) or the
+English ingredient name, against every dosage-form code of that ingredient. They carry ``proposed: true``.
+
 Dose-related DUR lists (용량주의, 투여기간주의) are not in the downloaded files yet.
 """
 
 from __future__ import annotations
 
+import json
+import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Mapping, Sequence
@@ -27,6 +33,13 @@ _WEEKS_PER_YEAR = 52.1775
 _CONDITIONS = {"미만": lambda value, limit: value < limit, "이하": lambda value, limit: value <= limit,
                "이상": lambda value, limit: value >= limit, "초과": lambda value, limit: value > limit}
 _GRADE_LABELS = {"1": "1등급", "2": "2등급"}
+# Korean ingredient name in a product name: "클로시드정250밀리그램(클래리트로마이신)_(0.25g/1정)".
+_KO_INGREDIENT = re.compile(r"\(([^()]*[가-힣][^()]*)\)_\(")
+_KO_SUFFIXES = re.compile(
+    r"(?:[\d.]+(?:밀리그람|밀리그램|마이크로그램|그램|mg|g)?|염산염|황산염|수화물|무수물|나트륨|칼륨|칼슘|베실산염|말레산염|타르타르산염"
+    r"|숙신산염|메실산염|브롬화수소산염|인산염|아세트산염|푸마르산염|시트르산염|질산염|장용과립|제피과립|장용|서방)$"
+)
+_MIN_KO, _MIN_EN = 3, 4
 
 
 class DurUnavailableError(RuntimeError):
@@ -64,20 +77,92 @@ class DurTables:
 
 
 @dataclass(frozen=True)
+class ProposedDrug:
+    """A drug named in the question: every DUR ingredient code (dosage form) of that ingredient."""
+
+    name: str  # as written in the question (Korean ingredient name or English name)
+    ingredient_name: str
+    codes: frozenset[str]
+
+
+@dataclass(frozen=True)
 class DurResult:
     alerts: tuple[Mapping[str, Any], ...] = ()
     unmapped: tuple[Mapping[str, Any], ...] = ()
     source: Mapping[str, str] = field(default_factory=dict)
+    proposed: tuple[Mapping[str, Any], ...] = ()
 
     def as_dict(self) -> dict[str, object]:
-        return {"alerts": [dict(alert) for alert in self.alerts], "unmapped": [dict(item) for item in self.unmapped],
-                "source": dict(self.source)}
+        result: dict[str, object] = {"alerts": [dict(alert) for alert in self.alerts],
+                                     "unmapped": [dict(item) for item in self.unmapped], "source": dict(self.source)}
+        if self.proposed:
+            result["proposed"] = [dict(item) for item in self.proposed]
+        return result
+
+
+def _en_base(name: str) -> str:
+    """First word of an English ingredient name: 'warfarin sodium' → 'warfarin', 'aspirin(enteric coated)' → 'aspirin'."""
+    return re.split(r"[\s(,+]", name.strip().lower(), maxsplit=1)[0]
+
+
+def _ko_bases(name: str) -> set[str]:
+    names = {name}
+    while (stripped := _KO_SUFFIXES.sub("", name)) != name and stripped:
+        name = stripped
+        names.add(name)
+    return {item for item in names if len(item) >= _MIN_KO}
+
+
+class _DrugNames:
+    """Korean and English ingredient names → English base name → ingredient codes, from the product list."""
+
+    def __init__(self, products: Iterable[Row]) -> None:
+        codes: dict[str, set[str]] = defaultdict(set)
+        labels: dict[str, str] = {}
+        ko: dict[str, str] = {}
+        for row in products:
+            english = str(row.get("ingredient_name") or "")
+            base = _en_base(english)
+            if "+" in english or not base:
+                continue
+            codes[base].add(row["ingredient_code"])
+            if base not in labels or len(english) < len(labels[base]):
+                labels[base] = english  # shortest form: "aspirin", not "aspirin(enteric coated) (as aspirin)"
+            match = _KO_INGREDIENT.search(str(row.get("product_name") or ""))
+            # Combination products ("A/B") name several ingredients but carry one code: skip them.
+            if match and not re.search(r"[,/·+]", match.group(1)):
+                for key in _ko_bases(re.sub(r"\s+", "", match.group(1))):
+                    ko.setdefault(key, base)
+        self._codes = {base: frozenset(items) for base, items in codes.items()}
+        self._labels = labels
+        self._ko = ko
+        self._ko_pattern = self._pattern(ko)
+        english_keys = [base for base in self._codes if len(base) >= _MIN_EN and base.isalpha()]
+        self._en_pattern = re.compile(
+            r"(?<![a-z])(" + "|".join(re.escape(key) for key in sorted(english_keys, key=len, reverse=True)) + r")(?![a-z])"
+        ) if english_keys else None
+
+    @staticmethod
+    def _pattern(keys: Iterable[str]) -> re.Pattern[str] | None:
+        ordered = sorted(keys, key=len, reverse=True)
+        return re.compile("|".join(re.escape(key) for key in ordered)) if ordered else None
+
+    def find(self, text: str) -> tuple[ProposedDrug, ...]:
+        found: dict[str, str] = {}
+        if self._ko_pattern is not None:
+            for match in self._ko_pattern.finditer(re.sub(r"\s+", "", text)):
+                found.setdefault(self._ko[match.group(0)], match.group(0))
+        if self._en_pattern is not None:
+            for match in self._en_pattern.finditer(text.lower()):
+                found.setdefault(match.group(1), match.group(1))
+        return tuple(ProposedDrug(name, self._labels[base], self._codes[base]) for base, name in found.items())
 
 
 class DurChecker:
     def __init__(self, tables: DurTables) -> None:
         self._tables = tables
         self.source = dict(tables.source)
+        self._names = _DrugNames(tables.products.values())
 
     def __len__(self) -> int:
         return len(self._tables.products)
@@ -86,9 +171,13 @@ class DurChecker:
     def dataset_id(self) -> int | None:
         return self._tables.dataset_id
 
+    def find_drugs(self, text: str) -> tuple[ProposedDrug, ...]:
+        """Drugs named in ``text`` (a chat question or memo), matched to DUR ingredient codes."""
+        return self._names.find(text) if text else ()
+
     def check(
         self, medications: Sequence[tuple[str | None, str | None]], *, age_years: float | None, sex: str | None,
-        pregnant: bool | None,
+        pregnant: bool | None, proposed: Sequence[ProposedDrug] = (),
     ) -> DurResult:
         prescribed: list[dict[str, Any]] = []
         unmapped: list[dict[str, Any]] = []
@@ -99,17 +188,33 @@ class DurChecker:
                 continue
             prescribed.append({"med_code": row["product_code"], "med_name": name or row["product_name"], "product_name": row["product_name"],
                                "ingredient_code": row["ingredient_code"], "ingredient_name": row["ingredient_name"]})
+        # Drugs to add, named in the question: checked like prescriptions under every dosage-form code. A drug
+        # already prescribed is checked once, as the prescription.
+        current = {_en_base(item["ingredient_name"]) for item in prescribed}
+        recognized: list[dict[str, Any]] = []
+        for drug in proposed:
+            if _en_base(drug.ingredient_name) in current:
+                continue
+            current.add(_en_base(drug.ingredient_name))
+            recognized.append({"name": drug.name, "ingredient_name": drug.ingredient_name})
+            prescribed.extend({"med_code": None, "med_name": drug.name, "product_name": None, "ingredient_code": code,
+                               "ingredient_name": drug.ingredient_name, "proposed": True} for code in sorted(drug.codes))
         alerts = [
             *self._pairs(prescribed),
             *self._ages(prescribed, age_years),
             *self._pregnancy(prescribed, age_years, sex, pregnant),
             *self._elderly(prescribed, age_years),
         ]
-        return DurResult(tuple(alerts), tuple(unmapped), dict(self.source))
+        # One alert per finding: a proposed drug's dosage forms share the same rules.
+        unique = {json.dumps(alert, ensure_ascii=False, sort_keys=True): alert for alert in alerts}
+        return DurResult(tuple(unique.values()), tuple(unmapped), dict(self.source), tuple(recognized))
 
     @staticmethod
     def _product(item: Mapping[str, Any]) -> dict[str, Any]:
-        return {key: item[key] for key in ("med_code", "med_name", "ingredient_name")}
+        product = {key: item[key] for key in ("med_code", "med_name", "ingredient_name")}
+        if item.get("proposed"):
+            product["proposed"] = True
+        return product
 
     @staticmethod
     def _notice(rule: Row) -> dict[str, Any]:
@@ -119,11 +224,13 @@ class DurChecker:
         by_ingredient: dict[str, list[dict[str, Any]]] = {}
         for item in prescribed:
             by_ingredient.setdefault(item["ingredient_code"], []).append(item)
+        seen: set[tuple[frozenset[str], str]] = set()
         for a in sorted(by_ingredient):
             for rule in self._tables.pairs_by_a.get(a, ()):
                 b = rule["ingredient_b"]
-                if b == a or b not in by_ingredient:
+                if b == a or b not in by_ingredient or (frozenset((a, b)), rule["detail"]) in seen:
                     continue
+                seen.add((frozenset((a, b)), rule["detail"]))
                 yield {
                     "type": "병용금기", "status": "met",
                     "products": [self._product(item) for item in (*by_ingredient[a], *by_ingredient[b])],

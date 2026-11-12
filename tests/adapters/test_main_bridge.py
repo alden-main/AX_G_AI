@@ -27,8 +27,36 @@ class RawEmrPayloadMapperTest(unittest.TestCase):
         self.assertEqual(context.data["lab_results"], [{"test_date": "2026-09-04T09:00:00+09:00", "value": "6.8", "exam_code": "HbA1c", "item_name": "당화혈색소"}])
         self.assertEqual(context.updated_at.isoformat(), "2026-09-04T09:00:00+09:00")
         rendered = json.dumps(context.data, ensure_ascii=False)
-        for forbidden in ("홍길동", "doc-5567", "임꺽정", "instructions", "하루 3번"):
+        for forbidden in ("홍길동", "doc-5567", "임꺽정"):
             self.assertNotIn(forbidden, rendered)
+        # Prescription fields beyond the normalized ones (복용 지시) reach the model too.
+        self.assertEqual(context.data["prescriptions"][0]["instructions"], "하루 3번 15mg 투약하세요")
+
+    def test_every_clinical_field_reaches_the_prompt_and_empty_lists_are_recorded_as_none(self) -> None:
+        context = self.mapper.map("patient-1", {
+            "patient": {"patientId": "patient-1", "patientName": "홍길동"},
+            "calculationContext": {"age_years": 34, "sex": "female", "weight_kg": 58, "serum_creatinine_mg_dl": 1.8},
+            "labResultList": [{"examCode": "2160-0", "itemName": "Creatinine", "value": "1.8", "unit": "mg/dL",
+                               "testDate": "2026-09-20T09:00:00", "referenceRange": "0.5-1.1", "abnormalFlag": "H", "doctorId": "doc-1"}],
+            "bloodPressureList": [{"measuredAt": "2026-09-20T09:00:00", "sbp": 130, "dbp": 80, "pulse": 72}],
+            "diagnosisList": [{"diagnosisCode": "E11.9", "kcdName": "제2형 당뇨병", "diagnosisDate": "2026-01-02"}],
+            "medicineDtailList": [],
+            "allergyList": [{"allergen": "penicillin"}],
+        })
+
+        data = context.data
+        self.assertEqual(data["calculation_context"], {"age_years": 34, "sex": "female", "weight_kg": 58, "serum_creatinine_mg_dl": 1.8})
+        self.assertEqual(data["lab_results"][0], {"test_date": "2026-09-20T09:00:00+09:00", "value": "1.8", "exam_code": "2160-0",
+                                                  "item_name": "Creatinine", "unit": "mg/dL", "referenceRange": "0.5-1.1", "abnormalFlag": "H"})
+        self.assertEqual(data["blood_pressure"][0]["pulse"], 72)
+        self.assertEqual(data["diagnoses"][0]["diagnosisDate"], "2026-01-02")
+        self.assertEqual(data["recorded_none"], ["처방"])  # sent empty: recorded as none, unlike a list that was not sent
+        self.assertNotIn("prescriptions", data)
+        self.assertEqual(data["additional_clinical_data"], {"allergyList": [{"allergen": "penicillin"}]})
+        rendered = json.dumps(data, ensure_ascii=False)
+        self.assertNotIn("doc-1", rendered)
+        self.assertNotIn("홍길동", rendered)
+        self.assertEqual(context.rule_source["calculationContext"]["serum_creatinine_mg_dl"], 1.8)
 
     def test_null_or_missing_lists_are_omitted_and_server_time_is_used_without_dates(self) -> None:
         context = self.mapper.map("patient-1", {"patient": {"patientId": "patient-1"}, "bloodPressureList": None}, prepared_at=datetime.fromisoformat("2026-09-22T10:30:00+09:00"))

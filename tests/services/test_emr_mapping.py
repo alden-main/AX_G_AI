@@ -113,6 +113,17 @@ class LabMappingTest(unittest.TestCase):
         self.assertAlmostEqual(mapped.facts.values["eGFR"], 86.2, delta=0.1)  # 142 × 1.111^-1.2 × 0.9938^60
         self.assertAlmostEqual(mapped.facts.values["CrCl"], 80.0, places=1)
 
+    def test_creatinine_in_calculation_context_is_used_when_no_lab_reports_it(self) -> None:
+        cat = catalog()
+        context = {"age_years": 60, "sex": "male", "weight_kg": 72, "serum_creatinine_mg_dl": 1.0}
+        mapped = map_emr({"calculationContext": context}, cat)
+        self.assertEqual(mapped.facts.values["SCr"], 1.0)
+        self.assertAlmostEqual(mapped.facts.values["CrCl"], 80.0, places=1)
+        # A creatinine lab result wins over the context value.
+        site = SiteCodeMap.from_dict({"labs": [{"code": "L001", "concept": "SCr", "unit": "mg/dL"}]}, cat)
+        lab = {"labResultList": [{"examCode": "L001", "value": "2.0", "testDate": "2026-09-01"}], "calculationContext": context}
+        self.assertEqual(map_emr(lab, cat, site).facts.values["SCr"], 2.0)
+
     def test_unknown_site_concept_is_rejected(self) -> None:
         with self.assertRaises(ConceptMapError):
             SiteCodeMap.from_dict({"labs": [{"code": "Z", "concept": "NotAConcept"}]}, catalog())

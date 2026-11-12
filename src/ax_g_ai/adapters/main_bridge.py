@@ -1,7 +1,8 @@
 """Bridge가 전달한 원문 EMR의 PoC 전용 최소 문맥 변환기.
 
-이 모듈이 Provider로 가는 환자 문맥의 유일한 비식별 경계다. 알려진 목록은 허용 필드만
-정규화하고, 새로 추가된 임상 필드는 직접 식별자를 제거한 뒤에만 보존한다.
+이 모듈이 Provider로 가는 환자 문맥의 유일한 비식별 경계다. 알려진 목록은 아는 필드를
+정규화하고, 그 밖의 필드(알려진 목록 항목 안의 새 필드 포함)는 직접 식별자를 제거한 뒤 원래 이름으로 보존한다.
+빈 목록으로 온 항목은 ``recorded_none``에 남겨 '기록 없음'과 '전달되지 않음'을 구분한다.
 """
 
 from __future__ import annotations
@@ -29,7 +30,12 @@ _RULE_LIST_FIELDS: dict[str, tuple[str, ...]] = {
     "medicineDtailList": ("medCode", "medName", "dosage", "unit", "frequency", "interval", "durationDays"),
     "diagnosisList": ("diagnosisCode", "kcdCode"),
 }
-_RULE_CONTEXT_FIELDS = ("age_years", "sex", "weight_kg", "height_cm")
+_RULE_CONTEXT_FIELDS = ("age_years", "sex", "weight_kg", "height_cm", "serum_creatinine_mg_dl")
+# Prompt names of the lists an EMR may send empty (``recorded_none``: recorded as none, not "not sent").
+_LIST_LABELS = {
+    "bloodPressureList": "혈압", "bloodSugarList": "혈당", "oxygenSaturationList": "산소포화도", "labResultList": "검사 결과",
+    "glycatedHemoglobinList": "당화혈색소", "medicineDtailList": "처방", "diagnosisList": "진단",
+}
 
 
 def rule_source(source: Mapping[str, Any]) -> dict[str, Any]:
@@ -82,6 +88,8 @@ class RawEmrPayloadMapper:
         if fallback.tzinfo is None:
             fallback = fallback.replace(tzinfo=timezone.utc)
         data: dict[str, object] = {
+            # Age, sex, weight, height, creatinine as the EMR sent them (the calculations below are derived from them).
+            "calculation_context": deidentify(source.get("calculationContext")),
             "blood_pressure": self._blood_pressure(source.get("bloodPressureList"), timestamps),
             "blood_sugar": self._single_value(source.get("bloodSugarList"), "glucoseValue", "mg/dL", timestamps, extra=("timingType", "timing_type")),
             "oxygen_saturation": self._single_value(source.get("oxygenSaturationList"), "spo2Value", "%", timestamps),
@@ -97,6 +105,10 @@ class RawEmrPayloadMapper:
                 and not is_identifier_key(key)
                 and (value := deidentify(raw_value)) is not None
             },
+            "recorded_none": [
+                _LIST_LABELS.get(key, key) for key, value in source.items()
+                if isinstance(value, list) and not value and not is_identifier_key(key)
+            ],
         }
         return PreparedRawEmrContext(
             # Empty groups add prompt tokens without clinical content.
@@ -117,7 +129,7 @@ class RawEmrPayloadMapper:
                 if (value := deidentify(item.get(key))) is not None:
                     row[key] = value
             if len(row) > 2:
-                result.append(row)
+                result.append({**row, **_extras(item, ("measuredAt", "sbp", "dbp"))})
         return result
 
     def _single_value(self, items: object, value_key: str, unit: str, timestamps: list[datetime], *, extra: tuple[str, str] | None = None) -> list[dict[str, object]]:
@@ -131,7 +143,7 @@ class RawEmrPayloadMapper:
             row: dict[str, object] = {"measured_at": measured_at.isoformat(), "value": value, "unit": unit}
             if extra is not None and (extra_value := deidentify(item.get(extra[0]))) is not None:
                 row[extra[1]] = extra_value
-            result.append(row)
+            result.append({**row, **_extras(item, ("measuredAt", value_key, *(extra[:1] if extra else ())))})
         return result
 
     def _labs(self, items: object, timestamps: list[datetime]) -> list[dict[str, object]]:
@@ -145,7 +157,8 @@ class RawEmrPayloadMapper:
             row: dict[str, object] = {"test_date": tested_at.isoformat(), "value": value}
             self._copy_non_blank(item, row, "examCode", "exam_code")
             self._copy_non_blank(item, row, "itemName", "item_name")
-            result.append(row)
+            self._copy_non_blank(item, row, "unit", "unit")
+            result.append({**row, **_extras(item, ("testDate", "value", "examCode", "itemName", "unit"))})
         return result
 
     @staticmethod
@@ -165,6 +178,8 @@ class RawEmrPayloadMapper:
                     row["reference_efficacy"] = reference.efficacy[:600]
                 if reference.precautions is not None:
                     row["reference_precautions"] = reference.precautions[:600]
+            # Fields beyond the known ones (instructions, route, start date, …) pass the same identifier boundary.
+            row.update(_extras(item, tuple(source for source, _target in allowed)))
             if row:
                 result.append(row)
         return result
@@ -184,7 +199,7 @@ class RawEmrPayloadMapper:
                 row["name_ko"] = name
             elif isinstance(item.get("kcdName"), str) and item["kcdName"].strip():
                 row["name_ko"] = item["kcdName"].strip()
-            result.append(row)
+            result.append({**row, **_extras(item, ("diagnosisCode", "kcdCode", "kcdName"))})
         return result
 
     @staticmethod
@@ -209,3 +224,11 @@ class RawEmrPayloadMapper:
         value = source.get(key)
         if isinstance(value, str) and value.strip():
             target[target_key] = value
+
+
+def _extras(item: Mapping[str, Any], handled: tuple[str, ...]) -> dict[str, object]:
+    """Fields of a known list item the mapper does not normalize, kept under their EMR names without identifiers."""
+    return {
+        key: value for key, raw in item.items()
+        if isinstance(key, str) and key not in handled and not is_identifier_key(key) and (value := deidentify(raw)) is not None
+    }

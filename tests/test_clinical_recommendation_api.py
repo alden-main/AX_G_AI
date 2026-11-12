@@ -174,6 +174,29 @@ class DurRecommendationApiTest(unittest.TestCase):
         self.assertIn("병용금기", provider.requests[-1].input)
         self.assertIn("근육병증", provider.requests[-1].input)
 
+        # Plain wording without DUR terms still gets the check.
+        api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "이 약들 같이 먹어도 괜찮아?"})
+        self.assertIn("근육병증", provider.requests[-1].input)
+
+        # A drug named in the question is checked as one to add.
+        api.post("/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": source(
+            medicineDtailList=[{"medCode": "222222222", "medName": "심바정"}])})
+        api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "clarithromycin 추가해도 될까요?"})
+        prompt = provider.requests[-1].input
+        rules = json.loads(prompt.split("[말뭉치 규칙 평가 결과", 1)[1].split("\n")[2])
+        pair = next(alert for alert in rules["medication_alerts"]["alerts"] if alert["type"] == "병용금기")
+        self.assertEqual([product.get("proposed") for product in pair["products"]], [True, None])
+        self.assertEqual(rules["medication_alerts"]["proposed"], [{"name": "clarithromycin", "ingredient_name": "clarithromycin"}])
+
+        # Pregnancy stated in the recommendation question turns 임부금기 from possible (woman aged 30) into met.
+        api.post("/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": source(
+            calculationContext={"age_years": 30, "sex": "female"}, medicineDtailList=[{"medCode": "222222222", "medName": "심바정"}])})
+        body = api.post("/internal/v1/clinical-recommendations", json={"patient_id": "pid-1", "question": "처방 점검"}).json()
+        self.assertEqual([(a["type"], a["status"]) for a in body["assessment"]["medication_alerts"]["alerts"]], [("임부금기", "possible")])
+        body = api.post("/internal/v1/clinical-recommendations", json={"patient_id": "pid-1", "question": "임신 10주 환자 처방 점검"}).json()
+        self.assertEqual(body["assessment"]["findings_used"], {"pregnancy": True})
+        self.assertEqual([(a["type"], a["status"]) for a in body["assessment"]["medication_alerts"]["alerts"]], [("임부금기", "met")])
+
 
 class DoseRecommendationApiTest(unittest.TestCase):
     def setUp(self) -> None:

@@ -155,6 +155,7 @@ class DurProduct(PayloadModel):
     med_code: str | None
     med_name: str | None
     ingredient_name: str | None
+    proposed: bool | None = Field(None, description="true: 현재 처방이 아니라 질문에서 언급한 약(추가 시 점검)")
 
 
 class DurNotice(PayloadModel):
@@ -194,12 +195,20 @@ class DurSource(PayloadModel):
     region: str | None = None
 
 
+class DurProposed(PayloadModel):
+    """질문에서 언급해 함께 점검한 약(현재 처방에 같은 성분이 있으면 처방으로만 점검)."""
+
+    name: str = Field(description="질문에 쓰인 이름")
+    ingredient_name: str
+
+
 class MedicationAlerts(PayloadModel):
     """DUR 점검 결과(공공누리 제1유형 — source로 출처 표시)."""
 
     alerts: list[DurAlert]
     unmapped: list[DurUnmapped]
     source: DurSource
+    proposed: list[DurProposed] | None = Field(None, description="질문에서 언급해 추가 시 점검한 약")
 
 
 # ── stage 3: doses ────────────────────────────────────────────────────────

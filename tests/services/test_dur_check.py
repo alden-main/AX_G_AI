@@ -244,3 +244,51 @@ class RepositoryDurTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class QuestionDrugTest(unittest.TestCase):
+    """Drugs named in a question are checked as drugs to add (``proposed``)."""
+
+    def setUp(self) -> None:
+        products = [
+            {"product_code": "100000001", "product_name": "쿠마딘정2밀리그램(와파린나트륨)_(2mg/1정)", "ingredient_code": "W1ATB", "ingredient_name": "warfarin"},
+            {"product_code": "100000002", "product_name": "와파린정5밀리그램(와파린나트륨)_(5mg/1정)", "ingredient_code": "W5ATB", "ingredient_name": "warfarin"},
+            {"product_code": "200000001", "product_name": "클로시드정250밀리그램(클래리트로마이신)_(0.25g/1정)", "ingredient_code": "C1ATB", "ingredient_name": "clarithromycin"},
+            {"product_code": "300000001", "product_name": "조코정20밀리그램(심바스타틴)_(20mg/1정)", "ingredient_code": "S1ATB", "ingredient_name": "simvastatin"},
+            # Combination product: its Korean names must not map to its single code.
+            {"product_code": "400000001", "product_name": "바이토린정(에제티미브/심바스타틴)_(1정)", "ingredient_code": "E1ATB", "ingredient_name": "ezetimibe + simvastatin"},
+        ]
+        pair = {"detail": "출혈 위험 증가", "note": "", "notice_no": "1", "notice_date": "2020-01-01"}
+        rows = {
+            "product": products,
+            "pair_rule": [{"ingredient_a": "C1ATB", "ingredient_b": "W1ATB", **pair}, {"ingredient_a": "C1ATB", "ingredient_b": "W5ATB", **pair},
+                          {"ingredient_a": "C1ATB", "ingredient_b": "S1ATB", **{**pair, "detail": "근육병증"}}],
+            "pregnancy_rule": [{"ingredient_code": "W1ATB", "grade": "1", "detail": "태아 출혈", "notice_no": "2", "notice_date": "2020-01-01"},
+                               {"ingredient_code": "W5ATB", "grade": "1", "detail": "태아 출혈", "notice_no": "2", "notice_date": "2020-01-01"}],
+        }
+        self.checker = DurChecker(DurTables.from_rows({"id": "test"}, rows))
+
+    def test_names_match_korean_without_salt_and_english(self) -> None:
+        found = {drug.ingredient_name: drug for drug in self.checker.find_drugs("와파린을 추가하려는데 클래리트로마이신이랑 괜찮아?")}
+        self.assertEqual(set(found), {"warfarin", "clarithromycin"})
+        self.assertEqual(found["warfarin"].codes, frozenset({"W1ATB", "W5ATB"}))  # every dosage form
+        self.assertEqual([drug.ingredient_name for drug in self.checker.find_drugs("Warfarin 시작")], ["warfarin"])
+        self.assertEqual(self.checker.find_drugs("혈압 추이 요약"), ())
+        self.assertEqual([drug.ingredient_name for drug in self.checker.find_drugs("에제티미브")], [])
+
+    def test_proposed_drug_is_checked_with_prescriptions_once(self) -> None:
+        proposed = self.checker.find_drugs("와파린 추가")
+        result = self.checker.check([("200000001", "클로시드정")], age_years=30, sex="female", pregnant=True, proposed=proposed).as_dict()
+        pairs = [alert for alert in result["alerts"] if alert["type"] == "병용금기"]
+        self.assertEqual(len(pairs), 1)  # two warfarin dosage forms, one alert
+        self.assertEqual([p.get("proposed") for p in pairs[0]["products"]], [None, True])
+        pregnancy = [alert for alert in result["alerts"] if alert["type"] == "임부금기"]
+        self.assertEqual([(alert["status"], alert["products"][0]["proposed"]) for alert in pregnancy], [("met", True)])
+        self.assertEqual(result["proposed"], [{"name": "와파린", "ingredient_name": "warfarin"}])
+
+    def test_a_named_drug_already_prescribed_is_checked_as_the_prescription(self) -> None:
+        proposed = self.checker.find_drugs("클래리트로마이신 계속 써도 돼?")
+        result = self.checker.check([("200000001", "클로시드정"), ("300000001", "조코정")], age_years=50, sex="male", pregnant=None,
+                                    proposed=proposed).as_dict()
+        self.assertNotIn("proposed", result)
+        self.assertEqual([alert["detail"] for alert in result["alerts"]], ["근육병증"])

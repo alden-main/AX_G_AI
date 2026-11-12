@@ -55,11 +55,13 @@ _ERROR_RESPONSES: dict[type[Exception], tuple[int, str, str]] = {
     ClinicalChatProviderUnavailableError: (502, "AI_PROVIDER_UNAVAILABLE", "AI 답변을 준비할 수 없습니다."),
     RecommendationUnavailableError: (503, "RECOMMENDATION_UNAVAILABLE", "추천 진단·검사 규칙을 사용할 수 없습니다."),
 }
-# Chat questions that ask for diagnoses or tests also get the stage-2 rule results.
+# Chat questions that ask for diagnoses, tests, medications or doses also get the stage-2 rule results (with DUR).
+# A question that names a drug, or states pregnancy, gets them as well (``ClinicalRecommender.question_inputs``).
 _RECOMMENDATION_INTENT = re.compile(
     r"추천|감별|의심|진단명|어떤\s*검사|검사가?\s*필요|필요한\s*검사|추가\s*검사|워크업|workup|work-up|협진|의뢰"
-    r"|병용|금기|상호\s*작용|DUR|처방\s*(점검|검토)|약물\s*(점검|검토)|복용\s*약"
-    r"|용량|투여량|감량|증량|mg\s*/\s*kg|신기능\s*(조정|보정)|dose|dosing", re.I,
+    r"|병용|금기|상호\s*작용|DUR|처방|복용|투약|약물|약제|(?<![요절계])약(?:을|이|은|들|과|도|\s|$|\?)"
+    r"|먹어도|먹여도|(?:같이|함께)\s*(?:먹|복용|써|쓰|사용|투여)|임신|임부|임산부"
+    r"|용량|투여량|감량|증량|mg\s*/\s*kg|신기능\s*(조정|보정)|dose|dosing|medication|drug", re.I,
 )
 _RULE_EVIDENCE_IN_CHAT = 4
 
@@ -417,9 +419,12 @@ def _chat_grounding(
         if hint:
             searched = service.find_evidence(f"{question} {hint}", snapshot.evidence)
     recommender = snapshot.recommender
-    if recommender is None or context.rule_input is None or not _RECOMMENDATION_INTENT.search(question):
+    if recommender is None or context.rule_input is None:
         return searched, None
-    assessment = recommender.assess(context.rule_input)
+    stated = recommender.question_inputs(question)
+    if not stated and not _RECOMMENDATION_INTENT.search(question):
+        return searched, None
+    assessment = recommender.assess(context.rule_input, stated.findings, stated.dose_drugs, stated.proposed_drugs)
     alerts = (assessment.medication_alerts or {}).get("alerts")
     if not assessment.items and not assessment.lab_interpretations and not alerts and not assessment.dose_assessments:
         return searched, None
@@ -442,8 +447,11 @@ async def _recommendation_inputs(
         service.extract_findings(note=body.clinical_note, vocabulary=rules.finding_vocabulary) if body.clinical_note else _value({}),
         run_in_threadpool(service.find_evidence, query, snapshot.evidence) if query else _value(()),
     )
-    findings: dict[str, bool] = {**extracted, **(body.findings or {})}  # explicit clinician input wins over extraction
-    assessment = rules.assess(context.rule_input, findings, body.dose_drugs or ())  # type: ignore[arg-type]
+    stated = rules.question_inputs(body.question, body.clinical_note)
+    # Explicit clinician input wins over the memo extraction, which wins over facts stated in the question text.
+    findings: dict[str, bool] = {**stated.findings, **extracted, **(body.findings or {})}
+    dose_drugs = tuple(dict.fromkeys((*(body.dose_drugs or ()), *stated.dose_drugs)))
+    assessment = rules.assess(context.rule_input, findings, dose_drugs, stated.proposed_drugs)  # type: ignore[arg-type]
     evidence = _merge(assessment.evidence, searched)
     logger.info(
         "clinical_recommendation_assessed items=%d met=%d findings=%d unknown_findings=%d evidence=%d unreviewed=%s doses=%d",

@@ -207,7 +207,7 @@ class LabValue:
     raw_unit: str
     test_date: str | None
     exam_code: str | None
-    matched_by: str  # site_map | loinc | emr_vital | derived
+    matched_by: str  # site_map | loinc | emr_vital | emr_context | derived
 
 
 @dataclass(frozen=True)
@@ -269,6 +269,10 @@ def map_emr(source: Mapping[str, Any], catalog: ConceptCatalog, site_map: SiteCo
         values["age"] = age
     if weight is not None and "weight_kg" not in latest:
         keep(LabValue("weight_kg", weight, "kg", weight, "kg", None, None, "emr_vital"))
+    # Creatinine the Bridge put in calculationContext (no lab row): same unit as the chat calculations (mg/dL).
+    creatinine = _bounded(context.get("serum_creatinine_mg_dl"), 0.01, 30)
+    if creatinine is not None and "SCr" not in latest:
+        keep(LabValue("SCr", creatinine, "mg/dL", creatinine, "mg/dL", None, None, "emr_context"))
     for derived in _derived(latest, age, sex):
         keep(derived)
     for concept, lab in latest.items():
