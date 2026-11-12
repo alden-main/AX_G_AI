@@ -341,6 +341,58 @@ class RuntimeFallbackTest(unittest.TestCase):
         self.assertTrue(any("fallback=files" in line for line in logs.output))
         self.assertFalse(any("nobody" in line for line in logs.output))  # credentials never logged
 
+    def test_database_starting_with_the_api_is_waited_for(self) -> None:
+        """Server reboot: postgres comes up a few seconds after the API, which must not stay on the files."""
+        from unittest import mock
+
+        import psycopg
+
+        from ax_g_ai.config import RuntimeSettings
+        from ax_g_ai.runtime import _corpus_source
+
+        pool, live = mock.Mock(), mock.Mock()
+        settings = RuntimeSettings(
+            corpus_database_url="postgresql://nobody:x@postgres:5432/none", dependency_startup_wait_seconds=60,
+        )
+        with (
+            mock.patch("ax_g_ai.corpus_store.retriever.open_pool",
+                       side_effect=[psycopg.OperationalError("starting up"), psycopg.OperationalError("starting up"), pool]),
+            mock.patch("ax_g_ai.corpus_store.live.LiveCorpus", return_value=live),
+            mock.patch("ax_g_ai.runtime.time.sleep") as sleep,
+            self.assertLogs("uvicorn.error", level="WARNING") as logs,
+        ):
+            self.assertIs(_corpus_source(settings), live)
+        self.assertEqual(sleep.call_count, 2)
+        self.assertTrue(all("startup_dependency_waiting dependency=postgres" in line for line in logs.output))
+        self.assertFalse(any("nobody" in line for line in logs.output))
+
+    def test_wait_ends_with_the_file_fallback(self) -> None:
+        from unittest import mock
+
+        import psycopg
+
+        from ax_g_ai.config import RuntimeSettings
+        from ax_g_ai.runtime import _corpus_source
+        from ax_g_ai.services.clinical_evidence import InMemoryEvidenceIndex
+
+        with tempfile.TemporaryDirectory() as raw:
+            write_corpus(Path(raw), CHUNKS)
+            settings = RuntimeSettings(
+                corpus_database_url="postgresql://nobody:x@postgres:5432/none", evidence_corpus_dir=raw,
+                evidence_include_unreviewed=True, dependency_startup_wait_seconds=5,
+            )
+            clock = iter([0.0, 0.0, 2.0, 4.0])  # deadline 5 s: attempts at 0 and 2 s retry, the one at 4 s gives up
+            with (
+                mock.patch("ax_g_ai.corpus_store.retriever.open_pool", side_effect=psycopg.OperationalError("down")) as opened,
+                mock.patch("ax_g_ai.runtime.time.monotonic", side_effect=lambda: next(clock)),
+                mock.patch("ax_g_ai.runtime.time.sleep"),
+                self.assertLogs("uvicorn.error", level="INFO") as logs,
+            ):
+                snapshot = _corpus_source(settings).current
+        self.assertEqual(opened.call_count, 3)
+        self.assertIsInstance(snapshot.evidence, InMemoryEvidenceIndex)
+        self.assertTrue(any("fallback=files" in line for line in logs.output))
+
 
 if __name__ == "__main__":
     unittest.main()

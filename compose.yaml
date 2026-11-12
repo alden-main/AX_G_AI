@@ -28,9 +28,10 @@ services:
       - --max-client-batch-size=16
     environment:
       HF_TOKEN: ${HF_TOKEN:-}
-      HF_HUB_OFFLINE: ${HF_HUB_OFFLINE:-0}
+      # 배포 압축파일에 모델이 들어 있으면 start-deployment.sh가 EMBEDDING_HF_HUB_OFFLINE=1로 둡니다(vLLM 설정과 별개).
+      HF_HUB_OFFLINE: ${EMBEDDING_HF_HUB_OFFLINE:-${HF_HUB_OFFLINE:-0}}
     volumes:
-      - ${HF_CACHE_DIR:-./hf-cache}:/data
+      - ${EMBEDDING_CACHE_DIR:-${HF_CACHE_DIR:-./hf-cache}}:/data
     # 모델 적재 때 4GB 한도에서 OOM이 나는 것을 확인했습니다. CPU 4코어 이상 권장.
     mem_limit: ${EMBEDDING_MEM_LIMIT:-6g}
     cpus: ${EMBEDDING_CPUS:-4}
@@ -87,12 +88,22 @@ services:
     ports:
       # 사내망 PC에서 테스트할 수 있도록 호스트에 API 포트를 게시합니다.
       - "8100:8100"
+    # .env: 비밀값(API 키 등)과 서버별로 바꿀 설정. 그 밖의 AX_G_*·AI_* 설정은 코드 기본값을 쓰며
+    # 바꿀 때만 .env에 적는다(항목 설명: src/ax_g_ai/config.py, docs/linux_docker_build.md).
     env_file:
       - .env
     environment:
+      # 코드 기본값과 다르게 운영하는 애플리케이션 설정. 서버별로 바꾸려면 같은 이름을 .env에 적는다.
+      # 사고량: 비워 두면(AI_REASONING_EFFORT=) Provider 기본값(medium)을 쓴다.
+      AI_REASONING_EFFORT: ${AI_REASONING_EFFORT-low}
+      # 현재 말뭉치·용량 규칙은 전부 의료진 미검수(draft)라, 끄면 근거 인용·추천 진단/검사·용량 참고가 비활성이 된다.
+      AX_G_EVIDENCE_INCLUDE_UNREVIEWED: ${AX_G_EVIDENCE_INCLUDE_UNREVIEWED:-true}
+      AX_G_CLINICAL_DOSES_ENABLED: ${AX_G_CLINICAL_DOSES_ENABLED:-true}
       AX_G_CORPUS_DATABASE_URL: postgresql://${CORPUS_DB_USER:-axg}:${CORPUS_DB_PASSWORD}@postgres:5432/${CORPUS_DB_NAME:-axg_corpus}
       AX_G_EMBEDDING_URL: http://embedding:80
       AX_G_EMBEDDING_MODEL: ${AX_G_EMBEDDING_MODEL:-kure-v1}
+      # 재부팅 때 postgres·redis와 동시에 시작되므로 연결될 때까지 기다린다(그 뒤에도 안 되면 경고 후 대체).
+      AX_G_DEPENDENCY_STARTUP_WAIT_SECONDS: ${AX_G_DEPENDENCY_STARTUP_WAIT_SECONDS:-120}
     depends_on:
       corpus-loader:
         condition: service_completed_successfully
@@ -103,6 +114,8 @@ services:
       - ai-provider-egress
       - ai-inference
       - ai-data
+    # 서버 재부팅·Docker 재시작 후에도 다시 뜹니다(docker compose stop/down으로 멈춘 경우는 제외).
+    restart: unless-stopped
 
 networks:
   # Bridge와 AI service만 연결하는 내부 네트워크입니다.

@@ -16,6 +16,7 @@ from pydantic import (
     DirectoryPath,
     Field,
     FilePath,
+    NonNegativeFloat,
     NonNegativeInt,
     PositiveFloat,
     PositiveInt,
@@ -163,6 +164,9 @@ class RuntimeSettings(_EnvironmentSettings):
             문맥을 공유할 때 설정한다. 없으면 프로세스 메모리(가장 빠름, 워커 1개)이며, 기동 시 연결할 수 없으면 경고 후 메모리를 쓴다.
             값은 로그에 쓰지 않는다.
         patient_context_store_timeout_seconds: Redis 연결·명령 제한 시간(초)이다.
+        dependency_startup_wait_seconds: 기동 시 PostgreSQL·Redis에 연결될 때까지 다시 시도하는 최대 시간(초)이다(기본 0, 한 번만 시도).
+            서버 재부팅 때처럼 DB·Redis와 API가 함께 시작되면 연결이 늦어 파일 검색·메모리 저장소로 고정되지 않게 한다.
+            시간 안에 연결되지 않으면 지금처럼 경고 후 대체한다.
         attributed_sources_only: 출처를 밝히면 쓸 수 있는 자료만 AI에 쓴다(기본 true). 켜면 (1) 근거·규칙의 모든 출처에
             라이선스(CC0·CC BY·퍼블릭 도메인)와 제목이 있어야 하고, (2) 출처·라이선스가 확인되지 않은 참조 DB
             (``reference_data_db_path``, 약품 효능·주의사항)를 쓰지 않으며, (3) 추천 의견에서 출처 없는 일반 의학 지식 제안을 막는다.
@@ -190,6 +194,7 @@ class RuntimeSettings(_EnvironmentSettings):
     patient_context_max_entries: PositiveInt = 1000
     patient_context_redis_url: SecretStr | None = None
     patient_context_store_timeout_seconds: PositiveFloat = 1.0
+    dependency_startup_wait_seconds: NonNegativeFloat = 0
 
 
 class LoaderSettings(_EnvironmentSettings):

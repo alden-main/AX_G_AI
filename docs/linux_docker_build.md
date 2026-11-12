@@ -1,342 +1,150 @@
-# Linux 대상 Docker 빌드 및 서버 배포 가이드
+# Linux 대상 Docker 이미지 빌드 및 서버 실행
 
-이 문서는 로컬 개발 PC에서 Linux용 AX-G AI 이미지를 빌드한 뒤, 이미지 파일을 Linux 서버에 전달하여 실행하는 명령을 정리한다. 로컬에서 수행하는 빌드 명령은 프로젝트 루트(`Dockerfile`이 있는 디렉터리)에서 실행한다.
+개발 PC에서 이미지를 빌드해 tar로 전달하고, 소스 코드가 없는 Linux 서버에서 Docker Compose로 실행하는 절차다. 빌드 명령은 프로젝트 루트에서 실행한다. 이미지 태그 `1.0.0`, 서버 주소와 경로는 배포 환경에 맞게 변경한다.
 
-## 사전 확인
+## 구성과 사전 준비
 
-Docker Engine이 실행 중이고 현재 사용자가 Docker 명령을 실행할 수 있는지 확인한다.
+- `compose.yaml`: OpenAI 등 외부 AI 제공자와 함께 API, PostgreSQL/pgvector, TEI 임베딩 서버 및 말뭉치·DUR 적재기를 실행한다.
+- `compose.vllm.yaml`: 위 데이터 서비스와 API를 A100 서버의 vLLM과 함께 실행한다.
+- `compose.redis.yaml`: 위 두 구성 중 하나에 추가해 Redis 환자 문맥 저장소와 다중 워커를 사용한다.
+
+개발 PC에는 Docker Engine과 Buildx가, 서버에는 Docker Engine과 Compose가 필요하다. 서버의 `uname -m`으로 아키텍처를 확인한다. `x86_64`는 `linux/amd64`, `aarch64`는 `linux/arm64`다. 서버에는 API 이미지 외에 PostgreSQL, TEI 및 선택한 Redis/vLLM 이미지를 내려받을 수 있는 연결이 필요하다. TEI 모델 최초 다운로드에는 약 2.3GB의 저장 공간과 네트워크가 필요하며 기본 메모리 한도는 6GB다. 폐쇄망에서는 필요한 이미지와 모델 캐시를 별도 준비해야 한다.
+
+`.env`에는 API 키와 비밀번호만 두며 서버에서 별도로 관리하고 이미지나 저장소에 포함하지 않는다. 나머지 설정은 Compose 파일과 코드 기본값에 있다. 코드 기본값과 다르게 운영하는 애플리케이션 설정(`AI_REASONING_EFFORT=low`, `AX_G_EVIDENCE_INCLUDE_UNREVIEWED=true`, `AX_G_CLINICAL_DOSES_ENABLED=true`)과 서버 자원·이미지·포트 값은 Compose 파일에 `${이름:-기본값}`으로 적혀 있으며, 서버별로 바꿀 때만 같은 이름을 `.env`에 적는다. 그 밖의 `AX_G_*`·`AI_*` 설정 설명은 `src/ax_g_ai/config.py`에 있다. `.dockerignore`는 `.env`와 이미지 tar를 빌드 컨텍스트에서 제외한다.
+
+## 배포 압축파일로 빌드하고 실행하기
+
+개발 PC에서 다음 스크립트를 실행하면 현재 소스로 이미지를 빌드하고 이미지, PostgreSQL(pgvector) 이미지, 임베딩 서버(TEI) 이미지와 KURE-v1 모델, Compose 파일, 환경 변수 예제, 서버 기동 스크립트를 `ax-g-ai-deploy-amd64.tar.gz`(약 3GB)에 담는다. 체크섬 파일도 함께 생성한다. 기본 대상은 `linux/amd64`이며 ARM 서버는 `AX_G_PLATFORM=linux/arm64`를 지정한다. 이미지 태그와 출력 경로는 각각 `AX_G_IMAGE_TAG`, `AX_G_PACKAGE_PATH`로 변경할 수 있다.
 
 ```bash
-docker --version
-docker info
+./scripts/build-deployment.sh
+scp ax-g-ai-deploy-amd64.tar.gz ax-g-ai-deploy-amd64.tar.gz.sha256 deploy@SERVER_HOST:/opt/ax-g/deploy/
 ```
 
-`permission denied` 오류가 나면 `sudo docker ...`를 사용하거나, 운영 정책에 따라 사용자를 `docker` 그룹에 추가한 뒤 다시 로그인한다.
-
-## 1. 환경 변수 보관 원칙
-
-운영용 `.env`에는 실제 OpenAI API 키가 들어갈 수 있으므로 배포 대상 서버에서 안전하게 관리한다. `.env`는 Git에 커밋하거나 이미지에 포함하지 않으며, 로컬 PC에서 만든 이미지 tar 파일에도 포함되지 않는다.
-
-## 2. 로컬 PC에서 Linux 대상 이미지 빌드
-
-대상 Linux 서버의 CPU 아키텍처에 맞춰 이미지를 빌드한다. 일반적인 Intel/AMD 64비트 Linux 서버는 `linux/amd64`이며, AWS Graviton 등의 ARM 서버는 `linux/arm64`이다.
-
-아래 명령은 Linux용 이미지를 Docker가 적재할 수 있는 tar 파일로 바로 생성한다. Apple Silicon Mac에서 `linux/amd64` 서버용 이미지를 만들 때도 동일하게 사용한다.
+서버에서 검증하고 압축을 푼 뒤 실행한다. 첫 실행은 `.env` 예제를 생성하고 종료한다. 비밀번호와 API 키 등 서버별 값을 입력한 후 다시 실행하면 이미지를 적재하고 Compose 서비스를 시작한다.
 
 ```bash
-# x86_64 (Intel/AMD) Linux 서버용
-docker buildx build \
-  --platform linux/amd64 \
+cd /opt/ax-g/deploy
+sha256sum --check ax-g-ai-deploy-amd64.tar.gz.sha256
+tar -xzf ax-g-ai-deploy-amd64.tar.gz
+cd ax-g-ai-deploy
+./start-deployment.sh
+vi .env
+./start-deployment.sh
+```
+
+vLLM은 `./start-deployment.sh vllm`, Redis를 추가하려면 `./start-deployment.sh openai --redis` 또는 `./start-deployment.sh vllm --redis`를 사용한다. 동일 디렉터리의 기존 `.env`는 덮어쓰지 않는다. 임베딩 서버는 압축파일의 이미지와 `hf-cache/`의 모델로 외부 접속 없이 기동한다(`EMBEDDING_CACHE_DIR`·`EMBEDDING_HF_HUB_OFFLINE`을 `.env`에 직접 지정하면 그 값을 쓴다). Redis, vLLM 이미지와 vLLM 모델은 포함되지 않으므로 사용할 경우 서버에서 별도로 확보해야 한다. 빌드 PC에 모델이 없으면 `uvx --from huggingface_hub hf download nlpai-lab/KURE-v1 --cache-dir hf-cache`로 먼저 받는다. 임베딩이나 PostgreSQL 이미지를 빼고 만들려면 `AX_G_BUNDLE_EMBEDDING=0`, `AX_G_BUNDLE_POSTGRES=0`을 지정한다. API와 DB·임베딩·Redis는 `restart: unless-stopped`라 서버 재부팅 후 Docker가 다시 띄운다(Docker 서비스가 부팅 시 시작되도록 `sudo systemctl enable docker`). 재부팅 때는 서비스가 동시에 시작되므로 API가 PostgreSQL·Redis 연결을 최대 `AX_G_DEPENDENCY_STARTUP_WAIT_SECONDS`(기본 120초) 동안 다시 시도한다. 압축 해제 후 이미지 tar와 압축파일을 모두 보관할 충분한 디스크 공간이 필요하다. 아래의 수동 절차에도 구성 및 운영 세부사항이 있다.
+
+## 1. 이미지 빌드와 전달
+
+예시는 x86_64 서버용이다. Apple Silicon에서도 Buildx를 사용해 빌드할 수 있다.
+
+```bash
+docker buildx build --platform linux/amd64 \
   --tag ax-g-ai:1.0.0 \
-  --output type=docker,dest=ax-g-ai_1.0.0_linux_amd64.tar \
-  .
-```
+  --output type=docker,dest=ax-g-ai_1.0.0_linux_amd64.tar .
 
-대상 서버가 ARM64인 경우에는 플랫폼과 tar 파일명을 바꾼다.
-
-```bash
-# ARM64 서버 (예: AWS Graviton)
-docker buildx build \
-  --platform linux/arm64 \
-  --tag ax-g-ai:1.0.0 \
-  --output type=docker,dest=ax-g-ai_1.0.0_linux_arm64.tar \
-  .
-```
-
-빌드 산출물의 무결성 검증 파일을 만들고, tar 파일과 함께 Linux 서버에 전달한다.
-
-```bash
-sha256sum ax-g-ai_1.0.0_linux_amd64.tar > ax-g-ai_1.0.0_linux_amd64.tar.sha256
-```
-
-macOS에서 `sha256sum` 명령이 없으면 다음 명령을 사용한다.
-
-```bash
+# macOS; Linux에서는 sha256sum을 사용한다.
 shasum -a 256 ax-g-ai_1.0.0_linux_amd64.tar > ax-g-ai_1.0.0_linux_amd64.tar.sha256
-```
 
-## 3. Linux 서버로 이미지 전달
-
-로컬 PC에서 이미지 tar 파일을 서버의 배포 디렉터리로 전송한다. `deploy`, `SERVER_HOST`, `/opt/ax-g/deploy`는 실제 환경 값으로 바꾼다.
-
-```bash
 scp ax-g-ai_1.0.0_linux_amd64.tar ax-g-ai_1.0.0_linux_amd64.tar.sha256 \
+  compose.yaml compose.vllm.yaml compose.redis.yaml .env.example \
   deploy@SERVER_HOST:/opt/ax-g/deploy/
 ```
 
-`.env`와 API 키는 tar 파일에 포함되지 않는다. 서버에서 별도로 생성·보관하며, 메신저나 소스 저장소에 전달하지 않는다.
+ARM 서버는 플랫폼과 파일명을 `linux/arm64`, `ax-g-ai_1.0.0_linux_arm64.tar`로 바꾼다. 서버의 배포 디렉터리는 미리 생성한다. `.env.example`에는 비밀 값이 없으며 실제 `.env`는 전송하지 않는다.
 
-## 4. Linux 서버에서 이미지 적재
+이미지에는 `data/dur` 스냅샷과 `text_data/corpus` 및 사전 계산 임베딩이 포함된다. 임베딩이 현재 말뭉치를 모두 덮지 못하면 빌드가 실패한다. 말뭉치 변경 시 `text_data/tools/build_corpus.py`와 `text_data/tools/build_embeddings.py`를 순서대로 실행해 갱신한다. 의도적으로 검사를 건너뛸 때만 `--build-arg ALLOW_STALE_EMBEDDINGS=1`을 지정한다.
 
-Linux 서버에 SSH로 접속한 뒤 tar 파일의 SHA-256 값이 로컬에서 확인한 값과 같은지 검증하고 Docker에 적재한다.
+## 2. 서버에서 이미지와 환경 설정 준비
 
 ```bash
 cd /opt/ax-g/deploy
 sha256sum --check ax-g-ai_1.0.0_linux_amd64.tar.sha256
 docker load --input ax-g-ai_1.0.0_linux_amd64.tar
 docker image inspect ax-g-ai:1.0.0 --format '{{.Os}}/{{.Architecture}}'
-```
-
-마지막 명령의 결과는 x86_64 서버에서 `linux/amd64`여야 한다. 서버의 CPU 아키텍처와 맞지 않으면 컨테이너가 실행되지 않거나 에뮬레이션으로 매우 느려질 수 있다.
-
-## 5. Linux 서버에서 환경 변수와 컨테이너 준비
-
-서버에서 `.env` 파일을 만들고 권한을 제한한다. 서버에 소스 코드가 없다면 `.env.example` 대신 아래 내용을 직접 생성한다.
-
-```bash
-cd /opt/ax-g/deploy
-vi .env
+cp .env.example .env
 chmod 600 .env
+vi .env
 ```
 
-`.env` 내용:
-
-```dotenv
-OPENAI_API_KEY=실제_키
-OPENAI_MODEL=gpt-5-mini
-OPENAI_TIMEOUT_SECONDS=30
-AI_REASONING_EFFORT=low
-AX_G_PORT=8100
-```
-
-A100 서버에서 vLLM과 함께 실행하는 경우는 아래 vLLM 절을 따른다.
-
-## 6. Linux 서버에서 컨테이너 실행
-
-호스트의 8100 포트로 API를 확인하려면 다음 명령을 사용한다.
-
-```bash
-docker run --detach \
-  --name ax-g-ai-local \
-  --env-file .env \
-  --publish 8100:8100 \
-  ax-g-ai:1.0.0
-```
-
-다른 호스트 포트를 사용하려면 `--publish 호스트포트:8100` 형식으로 바꾼다. 예를 들어 18100 포트로 공개하는 경우:
-
-```bash
-docker run --detach --name ax-g-ai-local --env-file .env --publish 18100:8100 ax-g-ai:1.0.0
-```
-
-컨테이너 상태와 로그를 확인한다.
-
-```bash
-docker ps --filter name=ax-g-ai-local
-docker logs --follow ax-g-ai-local
-```
-
-## 7. 동작 확인
-
-같은 Linux 서버에서 헬스 체크를 호출한다.
-
-```bash
-curl --fail http://127.0.0.1:8100/health
-```
-
-정상 응답:
-
-```json
-{"status":"ok"}
-```
-
-원격 서버에서 접근하는 경우에는 서버 방화벽, 클라우드 보안 그룹 및 리버스 프록시 설정에서 공개한 호스트 포트를 허용해야 한다.
-
-## 8. 재빌드 및 교체
-
-새 버전은 새 태그(예: `1.0.1`)로 로컬에서 빌드·전송·적재한 뒤, Linux 서버에서 기존 컨테이너를 교체한다.
-
-```bash
-docker stop ax-g-ai-local
-docker rm ax-g-ai-local
-docker run --detach --name ax-g-ai-local --env-file .env --publish 8100:8100 ax-g-ai:1.0.1
-```
-
-이미지를 적재하기 전에는 컨테이너를 중지·삭제하지 않는다. 새 이미지를 먼저 `docker load`하고 확인하면, 문제 발생 시 기존 컨테이너를 유지할 수 있다.
-
-## 9. 중지 및 정리
-
-컨테이너를 중지하고 제거한다.
-
-```bash
-docker stop ax-g-ai-local
-docker rm ax-g-ai-local
-```
-
-더 이상 필요 없는 이미지까지 제거하려면 이미지 ID를 확인한 후 명시적으로 삭제한다.
-
-```bash
-docker image ls ax-g-ai
-docker image rm ax-g-ai:1.0.0
-```
-
-Bridge와 같은 Docker 네트워크에서 운영할 때는 호스트 포트를 공개하지 말고 `--network`으로 전용 네트워크에 연결한다. 네트워크와 포트는 실제 Bridge 배치에 맞춰 구성한다.
-
-
-## 참조 데이터와 로컬 Compose
-
-Docker 이미지에는 참조 DB(`data/reference_data.sqlite`, 약 325MB)를 넣지 않는다. 출처·라이선스가 확인되지 않아 기본 설정(`AX_G_ATTRIBUTED_SOURCES_ONLY=true`)에서는 쓰지 않고, GitHub 파일 크기 제한(100MB)으로 git에도 없다. 그래서 git에서 받은 소스만으로 이미지를 빌드할 수 있다. 쓰려면 DB를 읽기 전용 볼륨으로 마운트하고 `AX_G_REFERENCE_DATA_DB_PATH`와 `AX_G_ATTRIBUTED_SOURCES_ONLY=false`를 설정한다. DB 생성 방법과 데이터 검증 사항은 [참조 데이터 설계](reference_data_sqlite.md)를 따른다.
-
-소스가 있는 환경에서 `.env`를 준비한 후 로컬 Compose를 실행할 수 있다. `compose.yaml`은 8100 포트를 호스트에 공개하므로 네트워크 접근 범위를 확인한다.
-
-```bash
-docker compose up --build -d
-docker compose ps
-docker compose logs -f ax-g-ai
-docker compose down
-```
-
-## A100 서버에서 vLLM 실행
-
-```
-Bridge ──(bridge-ai, internal)──> AX-G AI ──(ai-inference, internal)──> vLLM(A100)
-                                                                       └─(model-download)─> Hugging Face
-```
-
-- AX-G AI는 `AI_PROVIDER=openai_compatible`이면 `{AI_BASE_URL}/chat/completions`를 호출한다. 서비스 코드는 OpenAI와 vLLM을 구분하지 않는다.
-- EMR 프롬프트는 `ai-inference` 내부 네트워크 밖으로 나가지 않는다. 외부 네트워크에는 vLLM만 연결되며, 모델 다운로드에만 쓴다.
-
-## 서버 사전 조건
-
-```bash
-nvidia-smi                                   # A100 인식 확인
-docker run --rm --gpus all ubuntu nvidia-smi # NVIDIA Container Toolkit 확인
-docker compose version                       # Compose v2
-```
-
-## 1. 개발 PC: 이미지 빌드 및 전달
-
-```bash
-docker buildx build --platform linux/amd64 --tag ax-g-ai:1.0.0 \
-  --output type=docker,dest=ax-g-ai_1.0.0_linux_amd64.tar .
-scp ax-g-ai_1.0.0_linux_amd64.tar compose.vllm.yaml deploy@SERVER_HOST:/opt/ax-g/deploy/
-```
-
-## 2. A100 서버: 적재와 .env 준비
-
-```bash
-cd /opt/ax-g/deploy
-docker load --input ax-g-ai_1.0.0_linux_amd64.tar
-vi .env && chmod 600 .env
-```
-
-`.env` 예시:
+이미지 아키텍처가 서버와 일치하는지 확인한다. `.env`에서 적어도 다음 항목을 설정한다. 비밀번호는 URL에도 삽입되므로 아래처럼 영숫자로 된 임의 값을 사용한다(예: `openssl rand -hex 24`).
 
 ```dotenv
 AX_G_AI_IMAGE=ax-g-ai:1.0.0
+CORPUS_DB_PASSWORD=생성한_비밀번호
+OPENAI_API_KEY=실제_API_키
+```
+
+Compose 파일에는 `AX_G_EVIDENCE_INCLUDE_UNREVIEWED=true`와 `AX_G_CLINICAL_DOSES_ENABLED=true`가 설정되어 있다(Provider는 코드 기본값 `openai`, 모델 `gpt-5-mini`). 현재 말뭉치와 용량 규칙은 미검수이므로 배포 전에 해당 설정을 검토한다. 미검수 사용을 끄면 현재 말뭉치의 근거 인용 및 추천 진단·검사가 비활성화된다. 끄려면 `.env`에 `false`로 적는다. 나머지 선택 설정은 `.env.example`과 `src/ax_g_ai/config.py`를 참고한다.
+
+PostgreSQL의 사용자·DB 이름과 비밀번호는 기존 `corpus-db` 볼륨의 초기 설정과 일치해야 한다. `.env`만 바꿔도 기존 DB 계정의 비밀번호가 자동 변경되지는 않는다. ARM 서버에서는 `.env`에 `EMBEDDING_IMAGE=ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-1.9.4`를 추가한다.
+
+## 3. OpenAI 구성 실행
+
+```bash
+docker compose -f compose.yaml up -d --no-build
+docker compose -f compose.yaml ps -a
+docker compose -f compose.yaml logs corpus-loader dur-loader
+docker compose -f compose.yaml logs --tail=100 ax-g-ai
+curl --fail http://127.0.0.1:8100/health
+```
+
+`--no-build`는 서버에 소스가 없어도 적재한 이미지를 사용하도록 한다. 최초 실행 시 PostgreSQL과 임베딩 서버가 정상 상태가 된 후 적재기 두 개가 성공 종료되어야 API가 시작된다. 적재기는 성공 시 종료 상태로 남는 것이 정상이다. `/health`의 정상 응답은 `{"status":"ok"}`다. 이 응답만으로 AI 제공자, Redis 또는 데이터 기능까지 정상이라고 판단할 수 없으므로 로그와 실제 연동 요청도 확인한다. API 설정 오류나 데이터 적재 실패가 있으면 해당 서비스 로그를 확인한다.
+
+`compose.yaml`의 포트 매핑은 `8100:8100`으로 모든 호스트 인터페이스에 공개되며 `.env`의 `AX_G_PORT`는 여기에 적용되지 않는다. 서버 내부에서만 접근하려면 서버의 Compose 파일에서 `127.0.0.1:8100:8100`으로 변경한다. Bridge를 같은 `bridge-ai` 네트워크에 연결할 때는 포트 매핑과 네트워크 접근을 배포 환경에 맞게 구성한다.
+
+소스가 있는 개발 환경에서는 `.env`를 준비한 뒤 `docker compose up -d --build`를 사용할 수 있다.
+
+## 4. A100과 vLLM 구성
+
+NVIDIA 드라이버, NVIDIA Container Toolkit과 GPU 접근을 확인한다.
+
+```bash
+nvidia-smi
+docker run --rm --gpus all ubuntu nvidia-smi
+docker compose version
+```
+
+서버 `.env`에 `AX_G_AI_IMAGE`, `CORPUS_DB_PASSWORD`를 설정하고 필요하면 아래 값을 추가한다. vLLM 구성은 API 컨테이너의 `AI_PROVIDER`, `AI_BASE_URL`, `AI_MODEL`을 직접 설정하므로 `.env`의 동일 항목보다 우선한다. `OPENAI_API_KEY`는 vLLM 인증에 사용되지 않는다.
+
+```dotenv
 VLLM_MODEL=Qwen/Qwen3-32B-AWQ
 AI_MODEL=qwen3-32b-awq
 VLLM_MAX_MODEL_LEN=16384
 VLLM_GPU_MEMORY_UTILIZATION=0.90
 HF_CACHE_DIR=/opt/ax-g/hf-cache
-# 비공개(gated) 모델에만 필요
+# gated 모델에 필요한 경우 설정
 # HF_TOKEN=
-AI_TIMEOUT_SECONDS=60
-# 말뭉치 DB 비밀번호(필수). 예: openssl rand -hex 24
-CORPUS_DB_PASSWORD=임의의_긴_값
-# 미검수 근거 인용(검수 단계 운영 시에만 true)
-# AX_G_EVIDENCE_INCLUDE_UNREVIEWED=false
 ```
-
-`compose.vllm.yaml`이 `AI_PROVIDER`, `AI_BASE_URL`, `AI_MODEL`을 AX-G AI 컨테이너에 설정한다. `openai_compatible`일 때는 `.env`에 `OPENAI_API_KEY`가 남아 있어도 vLLM으로 보내지 않는다.
-
-## 3. 실행
 
 ```bash
 docker compose -f compose.vllm.yaml up -d
-docker compose -f compose.vllm.yaml logs -f vllm   # 모델 다운로드·로딩 진행 확인
+docker compose -f compose.vllm.yaml ps -a
+docker compose -f compose.vllm.yaml logs --tail=100 vllm corpus-loader dur-loader ax-g-ai
+curl --fail http://127.0.0.1:8100/health
 ```
 
-최초 기동은 모델 다운로드(약 20GB)와 로딩 때문에 수 분 이상 걸린다. vLLM health check가 통과해야 AX-G AI가 시작된다. 모델을 받은 뒤 `.env`에 `HF_HUB_OFFLINE=1`을 설정하면 외부 접속 없이 기동한다.
+vLLM과 TEI는 최초 기동 시 모델을 다운로드하므로 시간이 걸린다. 두 모델이 캐시에 준비된 뒤 `HF_HUB_OFFLINE=1`로 실행할 수 있다. 기본 vLLM 모델은 Qwen3 32B AWQ이며 A100 40GB를 대상으로 한다. 다른 모델 계열을 사용하면 `compose.vllm.yaml`의 `--reasoning-parser` 설정과 모델 호환성을 함께 확인한다. vLLM 구성의 API 포트는 기본적으로 `127.0.0.1:${AX_G_PORT:-8100}`에만 바인딩된다.
 
-### 근거 인용용 말뭉치 DB·임베딩 서버
+## 5. 선택 사항: Redis와 다중 워커
 
-같은 Compose가 다음 서비스를 함께 띄운다. 기동 순서는 `postgres`·`embedding` 정상 → `corpus-loader`·`dur-loader` 성공 종료 → `ax-g-ai`.
-
-| 서비스 | 역할 | 자원 |
-|---|---|---|
-| `postgres` | PostgreSQL 16 + pgvector. 말뭉치·검사/약제 개념·임베딩 저장. 내부망 `ai-data`에만 연결, 호스트 포트 없음 | 볼륨 `corpus-db`(수십 MB) |
-| `embedding` | TEI CPU + `nlpai-lab/KURE-v1`(MIT, 1024차원). 질문·문단 임베딩 | 메모리 6GB 한도(4GB에서는 모델 적재 중 OOM 확인), CPU 4코어, 모델 캐시 약 2.3GB |
-| `corpus-loader` | 이미지에 든 `text_data/corpus`를 새 릴리스로 적재 → 사전 계산 임베딩 파일(`corpus/embeddings/kure-v1.jsonl`)로 벡터 채움(임베딩 서버로 표본 3개 일치 확인) → 파일에 없는 문단만 서버로 계산 → 활성 전환. 같은 말뭉치면 즉시 종료 | 최초 적재 약 6초(파일 사용). 파일 없이 전부 계산하면 개발 PC CPU 기준 약 2분 20초 |
-| `dur-loader` | 이미지에 든 DUR 스냅샷(`/app/data/dur`)을 `dur` 스키마에 새 데이터셋으로 적재 → 활성 전환. 같은 내용이면 즉시 종료 | 최초 적재 약 2초, 데이터셋 1개당 DB 약 12MB |
+두 구성 중 실제 사용하는 파일에 `compose.redis.yaml`을 추가한다. `.env`에 `REDIS_PASSWORD`를 설정한다. URL에 삽입되므로 영숫자 비밀번호를 사용한다. 기본 워커 수는 2개이며 `AX_G_WORKERS`로 조절한다.
 
 ```bash
-docker compose -f compose.vllm.yaml logs corpus-loader          # "release N active (new|reused)" 확인
-docker compose -f compose.vllm.yaml logs dur-loader             # "dur dataset N active (new|reused)" 확인
-docker compose -f compose.vllm.yaml logs ax-g-ai | grep -E "clinical_evidence_loaded|dur_loaded|clinical_rules_loaded"
-# 이전 릴리스로 롤백(최근 5개 보관) / DUR 이전 데이터셋으로 롤백(최근 3개 보관) — 롤백 후 ax-g-ai 재시작
-docker compose -f compose.vllm.yaml run --rm corpus-loader --activate <release_id>
-docker compose -f compose.vllm.yaml run --rm dur-loader --activate <dataset_id>
+# OpenAI 구성 예시. vLLM이면 첫 번째 파일을 compose.vllm.yaml로 바꾼다.
+docker compose -f compose.yaml -f compose.redis.yaml up -d --no-build
+docker compose -f compose.yaml -f compose.redis.yaml ps -a
+docker compose -f compose.yaml -f compose.redis.yaml logs --tail=100 redis ax-g-ai
 ```
 
-DUR 목록 갱신(공공데이터포털에서 새 CSV를 받은 경우): CSV 5개를 `dur/`에 바꿔 넣고 스냅샷을 다시 만든 뒤 이미지를 빌드한다. 원본 CSV(약 260MB)는 이미지에 넣지 않는다.
+이후 상태 확인, 갱신 및 종료 명령에도 같은 `-f` 파일 조합을 사용한다. Redis는 내부 네트워크에서만 사용하고 디스크에 저장하지 않는다. 재시작 시 환자 문맥을 다시 준비해야 한다. Redis 없이 기본 메모리 저장소를 쓰면 문맥은 프로세스 사이에 공유되지 않으므로 단일 워커로 운영한다. 기동 시 Redis 연결에 실패하면 메모리 저장소로 대체되므로 로그에서 `patient_context_store backend=redis`를 확인한다.
 
-```bash
-uv run ax-g-ai-build-dur --input dur --output data/dur --replace   # "product 20106, pair_rule 23639, …" 출력 확인
-```
+## 운영과 갱신
 
-- 이미지 빌드는 사전 계산 임베딩이 말뭉치 전체를 덮지 않으면 실패한다. 말뭉치를 바꾼 뒤에는 `build_corpus.py` → `build_embeddings.py` 순서로 실행하고 둘 다 커밋한다(아래). 의도적으로 건너뛰려면 `--build-arg ALLOW_STALE_EMBEDDINGS=1`(그 문단들은 서버 첫 기동 때 계산된다).
-- DB나 임베딩 서버를 쓸 수 없으면 AX-G AI는 이미지 안 말뭉치 파일의 어휘 검색으로 동작한다(`backend=files`).
-- 임베딩 모델도 최초 1회 다운로드한다. 받은 뒤 `HF_HUB_OFFLINE=1`이면 외부 접속 없이 기동한다.
-- 질의당 임베딩은 개발 PC CPU에서 약 0.1초였다(첫 질의는 워밍업으로 2~3초).
-
-말뭉치를 바꾼 뒤 사전 계산 임베딩 갱신(새·변경 문단만 계산, 운영과 같은 KURE-v1 서버 필요):
-
-```bash
-uv run --with pyyaml python text_data/tools/build_corpus.py
-docker run -d --name kure -p 127.0.0.1:18080:80 -v "$PWD/hf-cache:/data" \
-  ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.4 --model-id nlpai-lab/KURE-v1   # 메모리 6GB 이상
-uv run python text_data/tools/build_embeddings.py --embedding-url http://127.0.0.1:18080 --generator "TEI cpu-1.9.4"
-uv run python text_data/tools/build_embeddings.py --check
-```
-
-## 4. 확인
-
-```bash
-# vLLM 단독 확인
-docker compose -f compose.vllm.yaml exec ax-g-ai python -c \
-  "import httpx; print(httpx.get('http://vllm:8000/v1/models').text)"
-
-# AX-G AI 첫 글자 시간 측정 (TTFB = 첫 SSE 이벤트 도착 시각)
-curl -sN -X POST http://127.0.0.1:8100/internal/v1/patient-context/stream \
-  -H 'Content-Type: application/json' \
-  -d '{"patient_id":"pid-4356","emr_payload":{"patient":{"patientId":"pid-4356"},"bloodSugarList":[{"measuredAt":"2026-09-22 10:30:00","glucoseValue":120}]}}' \
-  -w '\nTTFB=%{time_starttransfer}s total=%{time_total}s\n'
-```
-
-같은 환자에 이어서 `/internal/v1/clinical-chat/stream`을 호출하면 지시문과 EMR 부분은 vLLM prefix cache를 재사용하므로 두 번째 질문부터 첫 글자가 더 빨라진다. vLLM 로그의 `Prefix cache hit rate`로 확인한다.
-
-수동 live 테스트도 같은 설정으로 vLLM에 보낼 수 있다(소스가 있는 환경).
-
-```bash
-AI_PROVIDER=openai_compatible AI_BASE_URL=http://127.0.0.1:8000/v1 AI_MODEL=qwen3-32b-awq \
-AX_G_RUN_LIVE_SOAP_SCENARIO=true uv run python -m unittest tests.manual.test_live_soap_scenario
-```
-
-## 모델 선택 (A100 40GB)
-
-| 모델 | 메모리(가중치) | 비고 |
-|---|---|---|
-| `Qwen/Qwen3-32B-AWQ` | 약 19GB | 기본값. int4 AWQ, KV cache 여유 충분 |
-| `Qwen/Qwen3-14B` (BF16) | 약 28GB | 양자화 없음. `VLLM_MAX_MODEL_LEN=8192` 권장 |
-| `Qwen/Qwen3-14B-AWQ` | 약 10GB | 더 빠른 응답, 품질 비교용 |
-| EXAONE 계열 | 모델별 상이 | 한국어 강점. 상업 이용 라이선스 확인 필요. `VLLM_REASONING_PARSER` 행 제거 |
-
-- 32B BF16(약 64GB)은 40GB에 들어가지 않는다.
-- A100(Ampere)은 FP8 연산을 하드웨어로 지원하지 않으므로 FP8 모델은 속도 이득이 거의 없다. AWQ/GPTQ int4를 권장한다.
-- Qwen3는 기본으로 사고(thinking) 출력을 생성해 첫 글자가 늦어진다. AX-G AI는 기본으로 `enable_thinking=false`를 보낸다(`AI_DISABLE_THINKING=true`).
-- Qwen3 계열이 아니면 `compose.vllm.yaml`의 `--reasoning-parser` 행을 지운다.
-- 모델 교체 후에는 SOAP 형식·근거 반영을 수동 live 테스트와 임상 검토로 다시 확인한다. 프롬프트·모델 변경 시 적용 환경의 평가 및 승인 절차를 따른다.
-
-## 튜닝 항목
-
-| 설정 | 효과 |
-|---|---|
-| `VLLM_MAX_MODEL_LEN` | 현재 입력은 약 2~3천 토큰이다. 줄일수록 KV cache 동시 처리 여유가 커진다 |
-| `VLLM_GPU_MEMORY_UTILIZATION` | 0.90 기본. 같은 GPU에 다른 프로세스가 있으면 낮춘다 |
-| `AI_MAX_OUTPUT_TOKENS` | 응답 상한. 긴 응답의 꼬리 지연과 GPU 점유를 제한한다 |
-| `VLLM_IMAGE` | 기본 `vllm/vllm-openai:v0.11.0`. 검증된 최신 버전으로 고정해 교체한다 |
-
-## OpenAI로 되돌리기
-
-`compose.vllm.yaml` 대신 기존 방식(`docker run --env-file .env ...`)으로 실행하고 `.env`에 `AI_PROVIDER=openai`(또는 생략)와 `OPENAI_API_KEY`를 둔다. OpenAI의 첫 글자 시간은 `AI_REASONING_EFFORT=low`(또는 `minimal`)로 줄인다.
+- PostgreSQL의 `corpus-db` 볼륨은 말뭉치 및 DUR 데이터를 보관한다. `docker compose down`은 기본적으로 볼륨을 유지하며 `down -v`는 데이터를 삭제한다.
+- 새 이미지는 새 태그로 빌드·전달·적재한 후 `.env`의 `AX_G_AI_IMAGE`를 변경하고 사용 중인 Compose 파일 조합으로 `up -d --no-build`를 실행한다. 적재기 로그와 API 상태를 다시 확인한다. 이전 이미지와 DB 백업은 복구 정책에 따라 유지한다.
+- 말뭉치와 DUR 적재기는 이미지의 데이터를 DB에 적재하고 활성화한다. 이전 데이터로 전환할 때는 실제 Compose 파일 조합에 대해 각각 `docker compose ... run --rm corpus-loader --activate <release_id>`, `docker compose ... run --rm dur-loader --activate <dataset_id>`를 사용한다. 활성 데이터는 기본 60초 주기로 갱신된다. 자세한 내용은 [말뭉치 DB 문서](clinical_corpus_postgres.md)를 참고한다.
+- DB를 사용할 수 없으면 말뭉치 파일 기반 검색으로 대체될 수 있지만 DUR은 DB의 활성 데이터셋이 없으면 비활성화된다. 로그의 `clinical_evidence_loaded`, `dur_loaded`, `dur_unavailable`을 확인한다.
+- 이미지에는 `data/reference_data.sqlite`가 포함되지 않는다. 사용 시 파일을 읽기 전용으로 마운트하고 `AX_G_REFERENCE_DATA_DB_PATH`와 `AX_G_ATTRIBUTED_SOURCES_ONLY=false`를 설정해야 한다. 출처·라이선스 확인과 생성 방법은 [참조 데이터 문서](reference_data_sqlite.md)를 따른다.
+- 중지하려면 사용 중인 파일 조합으로 `docker compose -f compose.yaml down`을 실행한다. vLLM 또는 Redis를 사용했다면 해당 파일을 같은 순서로 지정한다.
