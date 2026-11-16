@@ -1,0 +1,74 @@
+# compose.yaml에 덧붙여 GPU 서버의 SGLang으로 실행합니다(Docker Compose 2.24.4 이상).
+# vLLM이 지원하지 않는 모델(learning-unit/L1-16B-A3B, GravityMoE 구조)에 씁니다.
+# 보통은 `./start-deployment.sh local`이 LLM_MODEL을 보고 이 파일을 고릅니다.
+#   docker compose -f compose.yaml -f compose.sglang.yaml up -d
+# SGLang 이미지는 docker/sglang-gravity(공식 v0.5.19 + GravityMoE 패치)로 만듭니다.
+# 배포 압축에 이미지가 없으면 서버에서 처음 한 번 빌드합니다(베이스 이미지를 내려받을 외부 접속 필요).
+services:
+  sglang:
+    build:
+      context: ./docker/sglang-gravity
+    image: ${SGLANG_IMAGE:-ax-g-sglang-gravity:0.5.19}
+    command:
+      - python3
+      - -m
+      - sglang.launch_server
+      - --model-path=${LLM_MODEL:-learning-unit/L1-16B-A3B}
+      - --served-model-name=${AI_MODEL:-l1-16b-a3b}
+      # 설정 클래스(gravity_moe)가 모델 저장소의 코드입니다.
+      - --trust-remote-code
+      - --dtype=bfloat16
+      - --tp=1
+      # 모델 최대 32768. 가중치(bf16 약 32.5GB)를 뺀 나머지가 KV 캐시이며, MLA라 토큰당 약 32KB입니다.
+      - --context-length=${SGLANG_CONTEXT_LENGTH:-16384}
+      # 가중치 + KV 캐시가 쓰는 GPU 메모리 비율입니다. A100 40GB 기준값이며 OOM이면 낮추세요.
+      - --mem-fraction-static=${SGLANG_MEM_FRACTION_STATIC:-0.88}
+      # 모델 카드 권장 커널입니다.
+      - --attention-backend=${SGLANG_ATTENTION_BACKEND:-triton}
+      - --moe-runner-backend=${SGLANG_MOE_RUNNER_BACKEND:-triton}
+      # GLM-4.5 형식 <think> 분리. AX-G AI가 보내는 enable_thinking=false를 따라 사고 없이 content로 냅니다.
+      - --reasoning-parser=${SGLANG_REASONING_PARSER:-glm45}
+      - --host=0.0.0.0
+      - --port=8000
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+      # 모델을 한 번 내려받은 뒤 1로 바꾸면 외부 접속 없이 기동합니다(vLLM과 같은 캐시·설정).
+      HF_HUB_OFFLINE: ${HF_HUB_OFFLINE:-0}
+    volumes:
+      - ${HF_CACHE_DIR:-./hf-cache}:/root/.cache/huggingface
+    ipc: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      # 최초 기동은 모델 다운로드(약 32GB)·로딩·CUDA graph 캡처로 수 분이 걸립니다.
+      start_period: 900s
+    networks:
+      - ai-inference
+      - model-download
+    restart: unless-stopped
+
+  ax-g-ai:
+    environment:
+      AI_PROVIDER: openai_compatible
+      AI_BASE_URL: http://sglang:8000/v1
+      AI_MODEL: ${AI_MODEL:-l1-16b-a3b}
+    # 서버 내부 확인용입니다. Bridge와 같은 네트워크로만 쓰려면 이 항목을 비우세요(ports: !override []).
+    ports: !override
+      - "127.0.0.1:${AX_G_PORT:-8100}:8100"
+    # 외부 AI 제공자용 네트워크(ai-provider-egress)를 뺍니다. EMR 프롬프트는 ai-inference 밖으로 나가지 않습니다.
+    networks: !override
+      - bridge-ai
+      - ai-inference
+      - ai-data
+    depends_on:
+      sglang:
+        condition: service_healthy

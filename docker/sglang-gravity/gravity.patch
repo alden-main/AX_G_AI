@@ -1,0 +1,165 @@
+# GravityMoE(learning-unit/L1-16B-A3B) 지원 패치. SGLang v0.5.19의 python/sglang에 적용한다.
+# 출처: https://github.com/trillion-labs/sglang-gravity 커밋 cac38fc0624dbc3f3352c03249e1f2f0b7571a49
+#       ("Add GravityMoE architecture support (rebased onto v0.5.19)"), Apache-2.0.
+# 같은 커밋의 pyproject.toml 변경(CUDA 12 의존성)은 공식 cu129 이미지에 이미 반영되어 있어 뺐다.
+# git apply는 첫 diff 앞의 이 주석을 무시한다.
+diff --git a/python/sglang/srt/arg_groups/attention_hook.py b/python/sglang/srt/arg_groups/attention_hook.py
+index 2825634..c9434c3 100644
+--- a/python/sglang/srt/arg_groups/attention_hook.py
++++ b/python/sglang/srt/arg_groups/attention_hook.py
+@@ -561,6 +561,7 @@ def handle_deterministic_inference(server_args: Any):
+                 is_deepseek_model = model_arch in [
+                     "DeepseekV2ForCausalLM",
+                     "DeepseekV3ForCausalLM",
++                    "GravityMoEForCausalLM",
+                     "DeepseekV32ForCausalLM",
+                     "MistralLarge3ForCausalLM",
+                     "PixtralForConditionalGeneration",
+diff --git a/python/sglang/srt/arg_groups/model_hook.py b/python/sglang/srt/arg_groups/model_hook.py
+index ad7eda7..fc7ed09 100644
+--- a/python/sglang/srt/arg_groups/model_hook.py
++++ b/python/sglang/srt/arg_groups/model_hook.py
+@@ -142,6 +142,7 @@ def handle_model_specific_adjustments(server_args: Any):
+ 
+     if model_arch in [
+         "DeepseekV3ForCausalLM",
++        "GravityMoEForCausalLM",
+         "DeepseekV32ForCausalLM",
+         "KimiK25ForConditionalGeneration",
+         "MistralLarge3ForCausalLM",
+diff --git a/python/sglang/srt/arg_groups/model_overrides/deepseek_v2.py b/python/sglang/srt/arg_groups/model_overrides/deepseek_v2.py
+index e50d65b..86c4691 100644
+--- a/python/sglang/srt/arg_groups/model_overrides/deepseek_v2.py
++++ b/python/sglang/srt/arg_groups/model_overrides/deepseek_v2.py
+@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
+ 
+ @_register_for(
+     "DeepseekV3ForCausalLM",
++    "GravityMoEForCausalLM",
+     "DeepseekV32ForCausalLM",
+     "KimiK25ForConditionalGeneration",
+     "MistralLarge3ForCausalLM",
+diff --git a/python/sglang/srt/arg_groups/overrides.py b/python/sglang/srt/arg_groups/overrides.py
+index 9debcb6..7ecc10a 100644
+--- a/python/sglang/srt/arg_groups/overrides.py
++++ b/python/sglang/srt/arg_groups/overrides.py
+@@ -757,6 +757,7 @@ def _dsa_split_backend_resolution(view: Any) -> dict:
+ _DEEPSEEK_FAMILY_ARCHS = frozenset(
+     {
+         "DeepseekV3ForCausalLM",
++        "GravityMoEForCausalLM",
+         "DeepseekV32ForCausalLM",
+         "KimiK25ForConditionalGeneration",
+         "MistralLarge3ForCausalLM",
+@@ -944,6 +945,7 @@ def _sparse_head_overlap_disable(view: Any) -> dict:
+ _FLASHINFER_ALLREDUCE_FUSION_ARCHS = frozenset(
+     {
+         "DeepseekV3ForCausalLM",
++        "GravityMoEForCausalLM",
+         "DeepseekV32ForCausalLM",
+         "DeepseekV4ForCausalLM",
+         "GptOssForCausalLM",
+@@ -1050,6 +1052,7 @@ def _deterministic_is_deepseek_model(view: Any) -> bool:
+         return hf_config.architectures[0] in [
+             "DeepseekV2ForCausalLM",
+             "DeepseekV3ForCausalLM",
++            "GravityMoEForCausalLM",
+             "DeepseekV32ForCausalLM",
+             "MistralLarge3ForCausalLM",
+             "PixtralForConditionalGeneration",
+diff --git a/python/sglang/srt/arg_groups/speculative_hook.py b/python/sglang/srt/arg_groups/speculative_hook.py
+index b7aefdc..e174c01 100644
+--- a/python/sglang/srt/arg_groups/speculative_hook.py
++++ b/python/sglang/srt/arg_groups/speculative_hook.py
+@@ -688,6 +688,7 @@ def _handle_eagle_family(server_args: ServerArgs) -> None:
+     if model_arch in [
+         "DeepseekV32ForCausalLM",
+         "DeepseekV3ForCausalLM",
++        "GravityMoEForCausalLM",
+         "DeepseekV4ForCausalLM",
+         "Glm4MoeForCausalLM",
+         "Glm4MoeLiteForCausalLM",
+@@ -977,6 +978,7 @@ def _auto_choose_speculative_params(server_args: ServerArgs, model_arch: str) ->
+     elif model_arch in [
+         "DeepseekV32ForCausalLM",
+         "DeepseekV3ForCausalLM",
++        "GravityMoEForCausalLM",
+         "DeepseekV2ForCausalLM",
+         "GptOssForCausalLM",
+         "Glm4MoeForCausalLM",
+diff --git a/python/sglang/srt/configs/model_config.py b/python/sglang/srt/configs/model_config.py
+index 1682879..28a99c9 100644
+--- a/python/sglang/srt/configs/model_config.py
++++ b/python/sglang/srt/configs/model_config.py
+@@ -124,6 +124,7 @@ def is_deepseek_dsa(config) -> bool:
+         _hf_arch(config)
+         in (
+             "DeepseekV3ForCausalLM",
++            "GravityMoEForCausalLM",
+             "DeepseekV32ForCausalLM",
+             "DeepseekV3ForCausalLMNextN",
+             "MistralLarge3ForCausalLM",
+@@ -660,6 +661,7 @@ class ModelConfig:
+ 
+         if is_draft_model and self.hf_config.architectures[0] in [
+             "DeepseekV3ForCausalLM",
++            "GravityMoEForCausalLM",
+             "DeepseekV32ForCausalLM",
+         ]:
+             self.hf_config.architectures[0] = "DeepseekV3ForCausalLMNextN"
+@@ -926,6 +928,7 @@ class ModelConfig:
+             or "DeepseekV32ForCausalLM" in self.hf_config.architectures
+             or "DeepseekV3ForCausalLM" in self.hf_config.architectures
+             or "DeepseekV3ForCausalLMNextN" in self.hf_config.architectures
++            or "GravityMoEForCausalLM" in self.hf_config.architectures
+             or "Glm4MoeLiteForCausalLM" in self.hf_config.architectures
+             or "Glm4MoeLiteForCausalLMNextN" in self.hf_config.architectures
+             or "GlmMoeDsaForCausalLM" in self.hf_config.architectures
+diff --git a/python/sglang/srt/eplb/lplb_solver.py b/python/sglang/srt/eplb/lplb_solver.py
+index 31b2493..8b5e3cc 100644
+--- a/python/sglang/srt/eplb/lplb_solver.py
++++ b/python/sglang/srt/eplb/lplb_solver.py
+@@ -38,6 +38,7 @@ _LPLB_SUPPORTED_MODEL_ARCHS: frozenset[str] = frozenset(
+     {
+         "DeepseekV2ForCausalLM",
+         "DeepseekV3ForCausalLM",
++        "GravityMoEForCausalLM",
+         "DeepseekV32ForCausalLM",
+         "MistralLarge3ForCausalLM",
+         "MistralLarge3ForCausalLMEagle",
+diff --git a/python/sglang/srt/models/gravity_moe.py b/python/sglang/srt/models/gravity_moe.py
+new file mode 100644
+index 0000000..4815eca
+--- /dev/null
++++ b/python/sglang/srt/models/gravity_moe.py
+@@ -0,0 +1,30 @@
++"""
++GravityMoE model implementation for SGLang.
++
++GravityMoE shares the same architecture as DeepSeek V3.
++"""
++
++from sglang.srt.models.deepseek_v2 import (
++    DeepseekV2AttentionMLA,
++    DeepseekV2DecoderLayer,
++    DeepseekV2ForCausalLM,
++    DeepseekV2MLP,
++    DeepseekV2MoE,
++    DeepseekV2Model,
++    MoEGate,
++)
++
++# Re-export architecture components under GravityMoE naming
++GravityMoEMLP = DeepseekV2MLP
++GravityMoEGate = MoEGate
++GravityMoEMoE = DeepseekV2MoE
++GravityMoEAttentionMLA = DeepseekV2AttentionMLA
++GravityMoEDecoderLayer = DeepseekV2DecoderLayer
++GravityMoEModel = DeepseekV2Model
++
++
++class GravityMoEForCausalLM(DeepseekV2ForCausalLM):
++    pass
++
++
++EntryClass = GravityMoEForCausalLM

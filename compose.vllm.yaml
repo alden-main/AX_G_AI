@@ -1,16 +1,16 @@
-# A100 서버에서 vLLM과 AX-G AI를 함께 실행하는 Compose 파일입니다.
-# 소스 없이 `docker load`한 AX-G AI 이미지와 .env만 있으면 실행됩니다.
-#   docker compose -f compose.vllm.yaml up -d
+# compose.yaml에 덧붙여 GPU 서버의 vLLM으로 실행합니다(Docker Compose 2.24.4 이상).
+# 보통은 `./start-deployment.sh local`이 LLM_MODEL을 보고 이 파일과 compose.sglang.yaml 중 하나를 고릅니다.
+#   docker compose -f compose.yaml -f compose.vllm.yaml up -d
 # 자세한 절차는 docs/linux_docker_build.md를 참고하세요.
 services:
   vllm:
     image: ${VLLM_IMAGE:-vllm/vllm-openai:v0.11.0}
     command:
-      - --model=${VLLM_MODEL:-Qwen/Qwen3-32B-AWQ}
+      - --model=${LLM_MODEL:-${VLLM_MODEL:-Qwen/Qwen3-32B-AWQ}}
       - --served-model-name=${AI_MODEL:-qwen3-32b-awq}
       - --max-model-len=${VLLM_MAX_MODEL_LEN:-16384}
       - --gpu-memory-utilization=${VLLM_GPU_MEMORY_UTILIZATION:-0.90}
-      # Qwen3 사고 출력이 content에 섞이지 않게 분리합니다. 다른 계열 모델은 비우세요.
+      # Qwen3 사고 출력이 content에 섞이지 않게 분리합니다. 다른 계열 모델은 그 모델의 parser로 바꾸세요.
       - --reasoning-parser=${VLLM_REASONING_PARSER:-qwen3}
       - --enable-prefix-caching
       - --host=0.0.0.0
@@ -41,138 +41,19 @@ services:
       - model-download
     restart: unless-stopped
 
-  # 말뭉치 DB(PostgreSQL + pgvector). 내부망(ai-data)에만 연결하고 호스트 포트를 열지 않습니다.
-  postgres:
-    image: ${POSTGRES_IMAGE:-pgvector/pgvector:0.8.7-pg16}
-    environment:
-      POSTGRES_DB: ${CORPUS_DB_NAME:-axg_corpus}
-      POSTGRES_USER: ${CORPUS_DB_USER:-axg}
-      POSTGRES_PASSWORD: ${CORPUS_DB_PASSWORD:?CORPUS_DB_PASSWORD를 .env에 설정하세요}
-    volumes:
-      - corpus-db:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    networks:
-      - ai-data
-    restart: unless-stopped
-
-  # 임베딩 서버(TEI CPU + nlpai-lab/KURE-v1). 질문 문장은 내부망 밖으로 나가지 않습니다.
-  # 최초 기동 시 모델(약 2.3GB)을 내려받으므로 model-download 네트워크가 필요합니다. 받은 뒤 HF_HUB_OFFLINE=1.
-  # ARM 서버는 EMBEDDING_IMAGE=ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-1.9.4
-  embedding:
-    image: ${EMBEDDING_IMAGE:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.4}
-    command:
-      - --model-id=${EMBEDDING_MODEL_ID:-nlpai-lab/KURE-v1}
-      - --max-batch-tokens=${EMBEDDING_MAX_BATCH_TOKENS:-4096}
-      - --max-client-batch-size=16
-    environment:
-      HF_TOKEN: ${HF_TOKEN:-}
-      # 배포 압축파일에 모델이 들어 있으면 start-deployment.sh가 EMBEDDING_HF_HUB_OFFLINE=1로 둡니다(vLLM 설정과 별개).
-      HF_HUB_OFFLINE: ${EMBEDDING_HF_HUB_OFFLINE:-${HF_HUB_OFFLINE:-0}}
-    volumes:
-      - ${EMBEDDING_CACHE_DIR:-${HF_CACHE_DIR:-./hf-cache}}:/data
-    # 모델 적재 때 4GB 한도에서 OOM이 나는 것을 확인했습니다. CPU 4코어 이상 권장.
-    mem_limit: ${EMBEDDING_MEM_LIMIT:-6g}
-    cpus: ${EMBEDDING_CPUS:-4}
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:80/health || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 600s
-    networks:
-      - ai-inference
-      - model-download
-    restart: unless-stopped
-
-  # 말뭉치 적재(1회 실행): 새 말뭉치면 새 릴리스로 적재 → 바뀐 문단만 임베딩 → 활성 전환. 같은 말뭉치면 바로 끝납니다.
-  # 롤백: docker compose run --rm corpus-loader --activate <release_id>
-  corpus-loader:
-    image: ${AX_G_AI_IMAGE:-ax-g-ai:1.0.0}
-    entrypoint: ["ax-g-ai-load-corpus"]
-    environment:
-      AX_G_CORPUS_DATABASE_URL: postgresql://${CORPUS_DB_USER:-axg}:${CORPUS_DB_PASSWORD}@postgres:5432/${CORPUS_DB_NAME:-axg_corpus}
-      AX_G_EMBEDDING_URL: http://embedding:80
-      AX_G_EMBEDDING_MODEL: ${AX_G_EMBEDDING_MODEL:-kure-v1}
-      AX_G_EMBEDDING_TIMEOUT_SECONDS: "120"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      embedding:
-        condition: service_healthy
-    networks:
-      - ai-data
-      - ai-inference
-    restart: "no"
-
-  # DUR 적재(1회 실행): 이미지의 /app/data/dur 스냅샷을 dur 스키마에 데이터셋으로 적재 → 활성 전환. 같은 내용이면 바로 끝납니다.
-  # 롤백: docker compose run --rm dur-loader --activate <dataset_id>
-  dur-loader:
-    image: ${AX_G_AI_IMAGE:-ax-g-ai:1.0.0}
-    entrypoint: ["ax-g-ai-load-dur"]
-    environment:
-      AX_G_CORPUS_DATABASE_URL: postgresql://${CORPUS_DB_USER:-axg}:${CORPUS_DB_PASSWORD}@postgres:5432/${CORPUS_DB_NAME:-axg_corpus}
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - ai-data
-    restart: "no"
-
   ax-g-ai:
-    image: ${AX_G_AI_IMAGE:-ax-g-ai:1.0.0}
-    # .env: 비밀값(API 키 등)과 서버별로 바꿀 설정. 그 밖의 AX_G_*·AI_* 설정은 코드 기본값을 쓰며
-    # 바꿀 때만 .env에 적는다(항목 설명: src/ax_g_ai/config.py, docs/linux_docker_build.md).
-    env_file:
-      - .env
     environment:
       AI_PROVIDER: openai_compatible
       AI_BASE_URL: http://vllm:8000/v1
       AI_MODEL: ${AI_MODEL:-qwen3-32b-awq}
-      # 코드 기본값과 다르게 운영하는 애플리케이션 설정. 서버별로 바꾸려면 같은 이름을 .env에 적는다.
-      # 사고량: 비워 두면(AI_REASONING_EFFORT=) Provider 기본값(medium)을 쓴다.
-      AI_REASONING_EFFORT: ${AI_REASONING_EFFORT-low}
-      # 현재 말뭉치·용량 규칙은 전부 의료진 미검수(draft)라, 끄면 근거 인용·추천 진단/검사·용량 참고가 비활성이 된다.
-      AX_G_EVIDENCE_INCLUDE_UNREVIEWED: ${AX_G_EVIDENCE_INCLUDE_UNREVIEWED:-true}
-      AX_G_CLINICAL_DOSES_ENABLED: ${AX_G_CLINICAL_DOSES_ENABLED:-true}
-      AX_G_CORPUS_DATABASE_URL: postgresql://${CORPUS_DB_USER:-axg}:${CORPUS_DB_PASSWORD}@postgres:5432/${CORPUS_DB_NAME:-axg_corpus}
-      AX_G_EMBEDDING_URL: http://embedding:80
-      AX_G_EMBEDDING_MODEL: ${AX_G_EMBEDDING_MODEL:-kure-v1}
-      # 재부팅 때 postgres·redis와 동시에 시작되므로 연결될 때까지 기다린다(그 뒤에도 안 되면 경고 후 대체).
-      AX_G_DEPENDENCY_STARTUP_WAIT_SECONDS: ${AX_G_DEPENDENCY_STARTUP_WAIT_SECONDS:-120}
-    expose:
-      - "8100"
-    ports:
-      # 서버 내부 확인용입니다. Bridge와 같은 네트워크로만 쓰려면 이 항목을 지우세요.
+    # 서버 내부 확인용입니다. Bridge와 같은 네트워크로만 쓰려면 이 항목을 비우세요(ports: !override []).
+    ports: !override
       - "127.0.0.1:${AX_G_PORT:-8100}:8100"
-    depends_on:
-      vllm:
-        condition: service_healthy
-      corpus-loader:
-        condition: service_completed_successfully
-      dur-loader:
-        condition: service_completed_successfully
-    networks:
+    # 외부 AI 제공자용 네트워크(ai-provider-egress)를 뺍니다. EMR 프롬프트는 ai-inference 밖으로 나가지 않습니다.
+    networks: !override
       - bridge-ai
       - ai-inference
       - ai-data
-    restart: unless-stopped
-
-networks:
-  # Bridge와 AI service만 연결하는 내부 네트워크입니다.
-  bridge-ai:
-    internal: true
-  # AX-G AI와 vLLM 사이의 내부 네트워크입니다. EMR 프롬프트는 이 네트워크 밖으로 나가지 않습니다.
-  ai-inference:
-    internal: true
-  # 말뭉치 DB 전용 내부 네트워크입니다. postgres는 이 네트워크에만 연결합니다.
-  ai-data:
-    internal: true
-  # vLLM·임베딩 서버의 모델 다운로드용 네트워크입니다. AX-G AI는 연결하지 않습니다.
-  model-download: {}
-
-volumes:
-  corpus-db: {}
+    depends_on:
+      vllm:
+        condition: service_healthy

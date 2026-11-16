@@ -20,6 +20,10 @@ case "$arch" in
   arm64) default_embedding_image=ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-1.9.4 ;;
 esac
 embedding_image=${AX_G_EMBEDDING_IMAGE:-$default_embedding_image}
+# SGLang 이미지(공식 v0.5.19 + GravityMoE 패치, 약 수십 GB)를 미리 빌드해 넣으려면 AX_G_BUNDLE_SGLANG=1.
+# 넣지 않으면 서버가 SGLang으로 처음 기동할 때 docker/sglang-gravity로 빌드한다(베이스 이미지 다운로드 필요).
+bundle_sglang=${AX_G_BUNDLE_SGLANG:-0}
+sglang_image=${AX_G_SGLANG_IMAGE:-ax-g-sglang-gravity:0.5.19}
 # Hugging Face 캐시 형식(models--<org>--<name>)의 모델 디렉터리. 없으면 아래 안내대로 먼저 받는다.
 model_cache=${AX_G_EMBEDDING_MODEL_CACHE:-"$root/hf-cache/models--nlpai-lab--KURE-v1"}
 
@@ -40,7 +44,9 @@ trap 'rm -rf "$staging"' EXIT
 mkdir -p "$staging/ax-g-ai-deploy"
 bundle="$staging/ax-g-ai-deploy"
 printf '%s\n' "$tag" > "$bundle/image-tag.txt"
-cp "$root/compose.yaml" "$root/compose.vllm.yaml" "$root/compose.redis.yaml" "$root/.env.example" "$root/scripts/start-deployment.sh" "$bundle/"
+cp "$root/compose.yaml" "$root/compose.vllm.yaml" "$root/compose.sglang.yaml" "$root/compose.redis.yaml" "$root/.env.example" "$root/scripts/start-deployment.sh" "$bundle/"
+mkdir -p "$bundle/docker"
+cp -R "$root/docker/sglang-gravity" "$bundle/docker/"
 docker buildx build --platform "$platform" --tag "$tag" --output "type=docker,dest=$bundle/image.tar" "$root"
 
 # 외부 이미지를 <이름>-image.tar로 저장하고, 서버가 같은 이름으로 쓰도록 <이름>-image.txt에 이미지 이름을 남긴다.
@@ -57,6 +63,12 @@ if [[ $bundle_embedding == 1 ]]; then
   # 스냅샷 파일은 blobs를 가리키는 상대 심볼릭 링크이므로 링크 그대로 복사한다. 내려받기용 .lock 파일은 뺀다.
   cp -RP "$model_cache" "$bundle/hf-cache/"
   find "$bundle/hf-cache" -name '*.lock' -type f -delete
+fi
+if [[ $bundle_sglang == 1 ]]; then
+  docker buildx build --platform "$platform" --tag "$sglang_image" \
+    --output "type=docker,dest=$bundle/sglang-image.tar" "$root/docker/sglang-gravity"
+  chmod 644 "$bundle/sglang-image.tar"
+  printf '%s\n' "$sglang_image" > "$bundle/sglang-image.txt"
 fi
 
 # macOS 확장 속성(._* 파일)이 섞이지 않게 한다.
