@@ -9,7 +9,8 @@ unmatched codes are reported so the site can fix them. Alerts:
 - 병용금기: two current prescriptions whose ingredients form a listed pair (the list's 비고 —
   e.g. "48시간 이내 병용금기", MTX weekly-dose conditions — is shown verbatim, never evaluated).
 - 연령금기: the patient's age meets the listed age condition (age unknown → no alert).
-- 임부금기: pregnancy recorded → ``met``; pregnancy unknown in a woman aged 15–49 → ``possible``.
+- 임부금기: pregnancy recorded → ``met``; pregnancy unknown in a woman aged 15–49, or memo and question disagreeing
+  on it (any age, unless male) → ``possible``.
 - 노인주의: age 65 or older.
 
 Drugs named in a chat question (``find_drugs``) are checked as drugs to add: matched by the Korean
@@ -177,8 +178,9 @@ class DurChecker:
 
     def check(
         self, medications: Sequence[tuple[str | None, str | None]], *, age_years: float | None, sex: str | None,
-        pregnant: bool | None, proposed: Sequence[ProposedDrug] = (),
+        pregnant: bool | None, proposed: Sequence[ProposedDrug] = (), pregnancy_conflict: bool = False,
     ) -> DurResult:
+        """``pregnancy_conflict``: the memo and the question disagree on pregnancy (``pregnant`` is then None)."""
         prescribed: list[dict[str, Any]] = []
         unmapped: list[dict[str, Any]] = []
         for code, name in medications:
@@ -202,7 +204,7 @@ class DurChecker:
         alerts = [
             *self._pairs(prescribed),
             *self._ages(prescribed, age_years),
-            *self._pregnancy(prescribed, age_years, sex, pregnant),
+            *self._pregnancy(prescribed, age_years, sex, pregnant, pregnancy_conflict),
             *self._elderly(prescribed, age_years),
         ]
         # One alert per finding: a proposed drug's dosage forms share the same rules.
@@ -254,14 +256,18 @@ class DurChecker:
 
     def _pregnancy(
         self, prescribed: list[dict[str, Any]], age_years: float | None, sex: str | None, pregnant: bool | None,
+        conflict: bool = False,
     ) -> Iterable[dict[str, Any]]:
         if pregnant is False or sex == "male":
             return
-        if pregnant is None:
+        if pregnant is None and not conflict:
             # Unknown pregnancy: only flag women of reproductive age, as a question to confirm.
             if sex != "female" or age_years is None or not REPRODUCTIVE_AGE[0] <= age_years <= REPRODUCTIVE_AGE[1]:
                 return
+        # Conflicting statements are flagged whatever the age: someone stated a pregnancy, so missing a
+        # contraindication is worse than one more question.
         status = "met" if pregnant else "possible"
+        label = "임신 여부(진료 메모와 질문이 서로 다름 — 확인 필요)" if conflict else "임신 여부(가임기 여성)"
         for item in prescribed:
             for rule in self._tables.pregnancy.get(item["ingredient_code"], ()):
                 grade = rule.get("grade")
@@ -269,7 +275,7 @@ class DurChecker:
                          "grade": _GRADE_LABELS.get(grade, grade or "미표기"), "detail": rule["detail"],
                          "notice": self._notice(rule)}
                 if status == "possible":
-                    alert["missing"] = [{"kind": "finding", "key": "pregnancy", "label": "임신 여부(가임기 여성)"}]
+                    alert["missing"] = [{"kind": "finding", "key": "pregnancy", "label": label}]
                 yield alert
 
     def _elderly(self, prescribed: list[dict[str, Any]], age_years: float | None) -> Iterable[dict[str, Any]]:

@@ -41,6 +41,7 @@ from ax_g_ai.services.clinical_recommendation.schema import AssessmentPayload
 from ax_g_ai.services.corpus_snapshot import CorpusSnapshot, CorpusSource, StaticCorpus
 from ax_g_ai.services.patient_context_store import ContextStore, PatientContextStore, PreparedRawEmrContext
 from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
+from ax_g_ai.services.question_facts import merge_question_findings, question_findings
 
 
 # Use Uvicorn's error logger so application warnings are emitted by the
@@ -447,11 +448,14 @@ async def _recommendation_inputs(
         service.extract_findings(note=body.clinical_note, vocabulary=rules.finding_vocabulary) if body.clinical_note else _value({}),
         run_in_threadpool(service.find_evidence, query, snapshot.evidence) if query else _value(()),
     )
-    stated = rules.question_inputs(body.question, body.clinical_note)
-    # Explicit clinician input wins over the memo extraction, which wins over facts stated in the question text.
-    findings: dict[str, bool] = {**stated.findings, **extracted, **(body.findings or {})}
+    stated = rules.question_inputs(body.clinical_note, body.question)
+    # Explicit clinician input wins over the memo (its extraction over the deterministic reading), which wins over
+    # the question text unless the question states a change since the memo ("출산 후"). A disagreement without such
+    # a cue is left unknown and reported as a conflict to confirm.
+    note_findings, conflicts = merge_question_findings({**question_findings(body.clinical_note), **extracted}, body.question)
+    findings: dict[str, bool] = {**note_findings, **(body.findings or {})}
     dose_drugs = tuple(dict.fromkeys((*(body.dose_drugs or ()), *stated.dose_drugs)))
-    assessment = rules.assess(context.rule_input, findings, dose_drugs, stated.proposed_drugs)  # type: ignore[arg-type]
+    assessment = rules.assess(context.rule_input, findings, dose_drugs, stated.proposed_drugs, conflicts)  # type: ignore[arg-type]
     evidence = _merge(assessment.evidence, searched)
     logger.info(
         "clinical_recommendation_assessed items=%d met=%d findings=%d unknown_findings=%d evidence=%d unreviewed=%s doses=%d",

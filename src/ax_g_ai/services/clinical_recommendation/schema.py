@@ -317,6 +317,13 @@ class UnmatchedDoseDrug(PayloadModel):
     reason: str = Field(description="성분을 확인할 수 없음 · 말뭉치에 이 약의 용량 규칙 없음")
 
 
+class FindingConflict(PayloadModel):
+    """진료 메모와 질문이 서로 다르게 적은 소견. 어느 쪽도 적용하지 않고(findings_used에서 빠짐) 확인을 요청한다."""
+
+    clinical_note: bool = Field(description="진료 메모(메모 추출 포함)의 값")
+    question: bool = Field(description="질문 텍스트의 값")
+
+
 class AssessmentPayload(PayloadModel):
     """환자 한 명의 규칙 평가 결과(2단계, DUR, 켜져 있으면 3단계 용량)."""
 
@@ -328,3 +335,6 @@ class AssessmentPayload(PayloadModel):
     medication_alerts: MedicationAlerts | None = Field(None, description="DUR 점검이 설정된 경우에만")
     dose_assessments: list[DoseAssessment] | None = Field(None, description="용량 단계(AX_G_CLINICAL_DOSES_ENABLED)가 켜진 경우에만")
     unmatched_dose_drugs: list[UnmatchedDoseDrug] | None = Field(None, description="용량 단계에서 요청 약 중 규칙이 없는 것(있을 때만)")
+    finding_conflicts: dict[str, FindingConflict] | None = Field(
+        None, description="메모와 질문이 서로 다른 소견(있을 때만). 질문에 출산·유산·새 임신 같은 상태 변화 표현이 있으면 충돌이 아니라 질문 값을 쓴다",
+    )

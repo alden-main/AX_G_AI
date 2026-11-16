@@ -124,6 +124,12 @@ class DurSnapshotTest(unittest.TestCase):
         unknown = self.checker.check([("222222222", None)], age_years=30, sex="female", pregnant=None).alerts
         self.assertEqual((unknown[0]["type"], unknown[0]["status"]), ("임부금기", "possible"))
         self.assertEqual(self.checker.check([("222222222", None)], age_years=60, sex="female", pregnant=None).alerts, ())
+        # Memo and question disagree: confirm whatever the age (unknown sex included), never for a male patient.
+        for age, sex in ((60, "female"), (None, None)):
+            conflict = self.checker.check([("222222222", None)], age_years=age, sex=sex, pregnant=None, pregnancy_conflict=True).alerts
+            self.assertEqual([(a["type"], a["status"]) for a in conflict], [("임부금기", "possible")])
+            self.assertIn("서로 다름", conflict[0]["missing"][0]["label"])
+        self.assertEqual(self.checker.check([("222222222", None)], age_years=30, sex="male", pregnant=None, pregnancy_conflict=True).alerts, ())
         self.assertEqual(self.checker.check([("222222222", None)], age_years=30, sex="female", pregnant=False).alerts, ())
 
     def test_missing_files_cli_refuses_to_overwrite_and_empty_tables_are_unavailable(self) -> None:

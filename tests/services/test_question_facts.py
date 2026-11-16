@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import unittest
 
-from ax_g_ai.services.question_facts import has_medication_context, question_findings, stated_pregnancy
+from ax_g_ai.services.question_facts import (
+    has_medication_context, merge_question_findings, pregnancy_statement, question_findings, stated_pregnancy,
+)
 
 
 class StatedPregnancyTest(unittest.TestCase):
@@ -20,6 +22,33 @@ class StatedPregnancyTest(unittest.TestCase):
         self.assertEqual(question_findings("처방 점검", "임신 8주"), {"pregnancy": True})
         self.assertEqual(question_findings("임신 아님", "임신 8주"), {"pregnancy": False})
         self.assertEqual(question_findings("요약해줘"), {})
+
+    def test_status_changes_are_marked(self) -> None:
+        for text in ("출산 후 2주인데 이 약 써도 돼?", "어제 분만했어요", "제왕절개 후 처방 점검", "산후 우울로 내원", "유산된 뒤 처방",
+                     "임신 중절 수술 후", "postpartum patient", "she gave birth last week"):
+            self.assertEqual(pregnancy_statement(text), (False, True), text)
+        for text in ("새로 임신 확인됨", "최근 임신 판정 받았어요", "출산 후 다시 임신 8주", "patient is now pregnant"):
+            self.assertEqual(pregnancy_statement(text), (True, True), text)
+        # Still pregnant or merely planned, or a question about it: not a change.
+        self.assertEqual(pregnancy_statement("임신 30주, 출산 예정일 확인"), (True, False))
+        self.assertEqual(pregnancy_statement("절박유산 진단, 임신 9주"), (True, False))
+        self.assertEqual(pregnancy_statement("최근 임신 여부 확인해줘"), (None, False))
+        self.assertEqual(pregnancy_statement("새로 임신하지 않았음"), (False, False))
+        self.assertEqual(pregnancy_statement("BMI 계산후 알려줘"), (None, False))
+
+    def test_merge_memo_and_question(self) -> None:
+        # Memo silent: the question fills it in.
+        self.assertEqual(merge_question_findings({}, "임신 8주인데"), ({"pregnancy": True}, {}))
+        # Same value, or question silent: the memo stands.
+        self.assertEqual(merge_question_findings({"pregnancy": True}, "임신 중"), ({"pregnancy": True}, {}))
+        self.assertEqual(merge_question_findings({"pregnancy": True, "fever": True}, "처방 점검"), ({"pregnancy": True, "fever": True}, {}))
+        # A status change in the question overrides the older memo, either way.
+        self.assertEqual(merge_question_findings({"pregnancy": True}, "출산 후 처방 점검"), ({"pregnancy": False}, {}))
+        self.assertEqual(merge_question_findings({"pregnancy": False}, "이번에 임신 확인됨"), ({"pregnancy": True}, {}))
+        # Disagreement without a cue: neither is applied, the conflict is reported.
+        findings, conflicts = merge_question_findings({"pregnancy": True, "fever": True}, "임신 아님")
+        self.assertEqual(findings, {"fever": True})
+        self.assertEqual(conflicts, {"pregnancy": {"clinical_note": True, "question": False}})
 
     def test_medication_context(self) -> None:
         self.assertTrue(has_medication_context("와파린 추가해도 돼?"))

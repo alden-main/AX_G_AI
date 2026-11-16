@@ -8,6 +8,8 @@ never a question about the fact ("임신 여부 확인"), which stays unknown.
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
+from typing import NamedTuple
 
 _PREGNANCY_DENIED = re.compile(
     r"비\s*임신|not\s+pregnant"
@@ -29,15 +31,45 @@ MEDICATION_CONTEXT = re.compile(
 )
 
 
+# A change of status since the memo was written: pregnancy ended (delivery, miscarriage, termination) or newly
+# confirmed. A question that says so overrides an older memo instead of conflicting with it. "절박유산"(threatened)
+# and "출산 예정" are still pregnancy, so only a completed event counts.
+_PREGNANCY_ENDED = re.compile(
+    r"(?:출산|분만|해산|제왕\s*절개)\s*(?:후|했|하였|함|완료|한\s*(?:뒤|후|지))|(?<![가-힣])산후|산욕기"
+    r"|유산\s*(?:후|했|하였|됨|되었|됐|된\s*(?:뒤|후))|임신\s*(?:중절|종결)|중절\s*(?:수술\s*)?(?:후|했|받)|사산\s*(?:후|했|됨)"
+    r"|post-?partum|after\s+(?:delivery|childbirth)|gave\s+birth|delivered\s+(?:a\s+|her\s+)?baby",
+    re.I,
+)
+_PREGNANCY_NEW = re.compile(
+    r"(?:새로|새롭게|다시|이번에|최근(?:에)?|방금)\s*임신(?!\s*(?:여부|가능성|계획))"
+    r"|임신\s*(?:사실을?\s*)?(?:알게|판정\s*받|진단\s*받)|newly\s+pregnant|now\s+pregnant|became\s+pregnant",
+    re.I,
+)
+
+
+class PregnancyStatement(NamedTuple):
+    value: bool | None  # True: pregnant, False: not, None: not stated
+    changed: bool = False  # stated as a change of status (delivery, miscarriage, newly pregnant)
+
+
+def pregnancy_statement(text: str | None) -> PregnancyStatement:
+    if not text:
+        return PregnancyStatement(None)
+    denied = _PREGNANCY_DENIED.search(text)
+    if _PREGNANCY_NEW.search(text) and not denied:
+        return PregnancyStatement(True, True)  # "출산 후 다시 임신" is a new pregnancy
+    if _PREGNANCY_ENDED.search(text):
+        return PregnancyStatement(False, True)
+    if denied:
+        return PregnancyStatement(False)
+    if _PREGNANCY_STATED.search(text):
+        return PregnancyStatement(True)
+    return PregnancyStatement(None)
+
+
 def stated_pregnancy(text: str | None) -> bool | None:
     """True when the text states the patient is pregnant, False when it states she is not, else None."""
-    if not text:
-        return None
-    if _PREGNANCY_DENIED.search(text):
-        return False
-    if _PREGNANCY_STATED.search(text):
-        return True
-    return None
+    return pregnancy_statement(text).value
 
 
 def question_findings(*texts: str | None) -> dict[str, bool]:
@@ -47,6 +79,28 @@ def question_findings(*texts: str | None) -> dict[str, bool]:
         if pregnant is not None:
             return {"pregnancy": pregnant}
     return {}
+
+
+def merge_question_findings(
+    note: Mapping[str, bool], question: str | None,
+) -> tuple[dict[str, bool], dict[str, dict[str, bool]]]:
+    """Memo findings with the facts stated in the question, and the findings on which the two disagree.
+
+    The memo (EMR record) wins over the question, except when the question states a change of status since then
+    ("출산 후", "새로 임신 확인"). When they disagree without such a cue neither is picked: the finding is left
+    unknown and returned as a conflict, so the checks ask the clinician to confirm it.
+    """
+    findings = dict(note)
+    conflicts: dict[str, dict[str, bool]] = {}
+    stated = pregnancy_statement(question)
+    if stated.value is not None:
+        recorded = findings.get("pregnancy")
+        if recorded is None or stated.changed:
+            findings["pregnancy"] = stated.value
+        elif recorded != stated.value:
+            del findings["pregnancy"]
+            conflicts["pregnancy"] = {"clinical_note": recorded, "question": stated.value}
+    return findings, conflicts
 
 
 def has_medication_context(*texts: str | None) -> bool:

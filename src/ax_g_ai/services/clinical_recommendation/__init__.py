@@ -144,9 +144,12 @@ class ClinicalRecommender:
 
     def assess(
         self, rule_input: RuleInput, findings: Mapping[str, bool] | None = None, dose_drugs: Iterable[str] = (),
-        proposed_drugs: Sequence[Any] = (),
+        proposed_drugs: Sequence[Any] = (), conflicts: Mapping[str, Mapping[str, bool]] | None = None,
     ) -> Assessment:
-        """``proposed_drugs``: drugs to add named in the question (``QuestionInputs``), checked with the prescriptions."""
+        """``proposed_drugs``: drugs to add named in the question (``QuestionInputs``), checked with the prescriptions.
+        ``conflicts``: findings the memo and the question disagree on (``question_facts.merge_question_findings``),
+        evaluated as unknown and reported for the clinician to confirm."""
+        conflicts = {key: value for key, value in (conflicts or {}).items() if key not in (findings or {})}
         mapping, sex = rule_input.mapping, rule_input.sex
         accepted, unknown = accepted_findings(findings or {}, self._vocabulary)
         facts = derive_facts(mapping.facts, accepted, sex, self._vocabulary)
@@ -189,14 +192,14 @@ class ClinicalRecommender:
         if self._dur is not None:
             pregnant = accepted.get("pregnancy")
             alerts = self._dur.check(rule_input.medications, age_years=facts.values.get("age"), sex=sex, pregnant=pregnant,
-                                     proposed=proposed_drugs).as_dict()
+                                     proposed=proposed_drugs, pregnancy_conflict="pregnancy" in conflicts).as_dict()
         doses: tuple[Mapping[str, Any], ...] | None = None
         unmatched: tuple[Mapping[str, str], ...] = ()
         if self._doses:
             requested, unmatched = self._dose_stage.resolve(dose_drugs)
             doses = tuple(self._dose_stage.assessments(mapping, facts, requested, numbering))
         return Assessment(tuple(items), tuple(labs), tuple(numbering.evidence), dict(accepted), issues, tuple(unknown), alerts,
-                          doses, unmatched)
+                          doses, unmatched, conflicts)
 
 
 def _text_or_none(value: object) -> str | None:

@@ -197,6 +197,29 @@ class DurRecommendationApiTest(unittest.TestCase):
         self.assertEqual(body["assessment"]["findings_used"], {"pregnancy": True})
         self.assertEqual([(a["type"], a["status"]) for a in body["assessment"]["medication_alerts"]["alerts"]], [("임부금기", "met")])
 
+        # Memo and question disagree without a change cue: neither is applied, 임부금기 asks to confirm.
+        request = {"patient_id": "pid-1", "clinical_note": "임신 10주", "question": "임신 아님"}
+        body = api.post("/internal/v1/clinical-recommendations", json=request).json()
+        self.assertNotIn("pregnancy", body["assessment"]["findings_used"])
+        self.assertEqual(body["assessment"]["finding_conflicts"], {"pregnancy": {"clinical_note": True, "question": False}})
+        alert = body["assessment"]["medication_alerts"]["alerts"][0]
+        self.assertEqual((alert["type"], alert["status"]), ("임부금기", "possible"))
+        self.assertIn("서로 다름", alert["missing"][0]["label"])
+        self.assertIn("finding_conflicts", provider.requests[-1].input)
+        # Explicit findings win, and there is nothing left to confirm.
+        body = api.post("/internal/v1/clinical-recommendations", json={**request, "findings": {"pregnancy": False}}).json()
+        self.assertFalse(body["assessment"]["findings_used"]["pregnancy"])
+        self.assertNotIn("finding_conflicts", body["assessment"])
+        self.assertEqual(body["assessment"]["medication_alerts"]["alerts"], [])
+        # A change of status stated in the question overrides the older memo.
+        body = api.post("/internal/v1/clinical-recommendations", json={**request, "question": "출산 후 2주, 처방 점검"}).json()
+        self.assertFalse(body["assessment"]["findings_used"]["pregnancy"])
+        self.assertNotIn("finding_conflicts", body["assessment"])
+        body = api.post("/internal/v1/clinical-recommendations", json={
+            "patient_id": "pid-1", "clinical_note": "임신 아님", "question": "이번에 임신 확인됨, 처방 점검"}).json()
+        self.assertTrue(body["assessment"]["findings_used"]["pregnancy"])
+        self.assertEqual([(a["type"], a["status"]) for a in body["assessment"]["medication_alerts"]["alerts"]], [("임부금기", "met")])
+
 
 class DoseRecommendationApiTest(unittest.TestCase):
     def setUp(self) -> None:

@@ -48,6 +48,8 @@ class Assessment:
     # Stage-3 dose results (None: dose stage disabled) and requested drugs without a dose rule
     dose_assessments: tuple[Mapping[str, Any], ...] | None = None
     unmatched_dose_drugs: tuple[Mapping[str, str], ...] = ()
+    # Findings the memo and the question state differently, left out of findings_used: {"pregnancy": {"clinical_note": True, "question": False}}
+    finding_conflicts: Mapping[str, Mapping[str, bool]] = field(default_factory=dict)
 
     @property
     def unreviewed(self) -> bool:
@@ -79,6 +81,7 @@ class Assessment:
             "mapping_issues": [dict(issue) for issue in self.mapping_issues],
             **({"medication_alerts": dict(self.medication_alerts)} if self.medication_alerts is not None else {}),
             **doses,
+            **({"finding_conflicts": {key: dict(value) for key, value in self.finding_conflicts.items()}} if self.finding_conflicts else {}),
         }
 
 

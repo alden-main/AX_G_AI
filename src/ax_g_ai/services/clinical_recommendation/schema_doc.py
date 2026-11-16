@@ -19,7 +19,7 @@ from ax_g_ai.services.clinical_recommendation import schema
 DOC = Path(__file__).resolve().parents[4] / "docs" / "assessment_schema.md"
 START, END = "<!-- schema-tables:start -->", "<!-- schema-tables:end -->"
 MODELS = (
-    "AssessmentPayload", "RecommendationItem", "LabInterpretation", "MappingIssue", "MedicationAlerts", "DurAlert", "DurProduct",
+    "AssessmentPayload", "FindingConflict", "RecommendationItem", "LabInterpretation", "MappingIssue", "MedicationAlerts", "DurAlert", "DurProduct",
     "DurNotice", "DurUnmapped", "DurSource", "DoseAssessment", "DoseDrug", "DosePrescription", "DoseCheck", "DoseCalculation",
     "DoseRenal", "RenalBand", "DoseConditionRule", "LabeledValue", "UnmatchedDoseDrug", "Diagnosis", "TestEntry", "MissingInput",
     "Source",
