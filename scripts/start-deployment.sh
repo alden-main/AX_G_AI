@@ -25,7 +25,8 @@ is_set() { [[ -n ${!1:-} ]] || grep -Eq "^[[:space:]]*(export[[:space:]]+)?$1=" 
 # 셸 값, 없으면 .env의 마지막 값(따옴표 제거)을 출력한다.
 env_value() {
   if [[ -n ${!1:-} ]]; then printf '%s' "${!1}"; return; fi
-  sed -nE "s/^[[:space:]]*(export[[:space:]]+)?$1=//p" .env | tail -n 1 | sed -E "s/^[\"'](.*)[\"'][[:space:]]*$/\1/"
+  # Windows에서 편집한 .env의 CR은 지운다.
+  sed -nE "s/^[[:space:]]*(export[[:space:]]+)?$1=//p" .env | tr -d '\r' | tail -n 1 | sed -E "s/^[\"'](.*)[\"'][[:space:]]*$/\1/"
 }
 
 # SGLang으로만 띄울 수 있는 모델(Hugging Face 모델 ID의 셸 glob). 그 밖의 모델은 vLLM으로 띄운다.
@@ -100,7 +101,8 @@ if [[ $engine == sglang ]]; then
   sglang_image=$(docker compose "${args[@]}" config --images sglang)
   if ! docker image inspect "$sglang_image" >/dev/null 2>&1; then
     printf 'SGLang 이미지(%s)가 없어 빌드합니다.\n' "$sglang_image"
-    docker compose "${args[@]}" build sglang
+    # compose build는 buildx 플러그인이 필요할 수 있어 기본 docker build를 쓴다.
+    docker build --tag "$sglang_image" docker/sglang-gravity
   fi
 fi
 docker compose "${args[@]}" up -d --no-build
