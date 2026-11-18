@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Mapping
-
+from collections.abc import Mapping
+from typing import Any
 
 CLINICAL_ROLE = "당신은 의료진이 참고용으로 사용하는 임상 정보 요약·분석 도우미입니다."
 
