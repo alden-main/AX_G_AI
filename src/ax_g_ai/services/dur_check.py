@@ -13,9 +13,14 @@ unmatched codes are reported so the site can fix them. Alerts:
   on it (any age, unless male) → ``possible``.
 - 노인주의: age 65 or older.
 
-Drugs named in a chat question (``find_drugs``) are checked as drugs to add: matched by the Korean
-ingredient name in single-ingredient product names (salt suffixes dropped, e.g. 와파린나트륨 → 와파린) or the
-English ingredient name, against every dosage-form code of that ingredient. They carry ``proposed: true``.
+Drugs named in a chat question (``find_drugs``) are checked as drugs to add, against every dosage-form code
+of that ingredient. They carry ``proposed: true``. Only single-ingredient codes are named this way: the product
+list gives a combination product one row per component under one ingredient code, so a code whose rows name
+more than one ingredient (or a name listing several) is a combination and is checked only as a prescription.
+An ingredient is its English name without salt and hydrate words ("amlodipine besylate" → "amlodipine",
+"sodium alendronate" → "alendronate"; "potassium chloride", all salt words, stays whole). It is named by that
+key, its full English names, or the Korean name in its single-ingredient product names (salt suffixes
+dropped, e.g. 와파린나트륨 → 와파린) — each Korean name linked to the codes of its own products.
 
 Dose-related DUR lists (용량주의, 투여기간주의) are not in the downloaded files yet.
 """
@@ -37,13 +42,62 @@ _WEEKS_PER_YEAR = 52.1775
 _CONDITIONS = {"미만": lambda value, limit: value < limit, "이하": lambda value, limit: value <= limit,
                "이상": lambda value, limit: value >= limit, "초과": lambda value, limit: value > limit}
 _GRADE_LABELS = {"1": "1등급", "2": "2등급"}
-# Korean ingredient name in a product name: "클로시드정250밀리그램(클래리트로마이신)_(0.25g/1정)".
-_KO_INGREDIENT = re.compile(r"\(([^()]*[가-힣][^()]*)\)_\(")
+# Korean ingredient name in a product name: "클로시드정250밀리그램(클래리트로마이신)_(0.25g/1정)". Later parentheses
+# may hold an export name or the packaging instead: "클리신정(클로닉신리시네이트)(수출명:CLICIN Tab)_(…)",
+# "트리세녹스주(삼산화비소)(바이알)_(…)"; those are skipped.
+_KO_PARENTHESES = re.compile(r"\(([^()]*[가-힣][^()]*)\)")
+_KO_NOT_INGREDIENT = frozenset({
+    "1회용", "일회용", "바이알", "앰플", "프리필드", "카트리지", "주사용", "수출용", "관납용", "군납용", "소아용", "병", "별첨",
+    "유전자재조합", "재조합", "미분화", "단클론항체",
+})
+_KO_RECOMBINANT = re.compile(r",?유전자재조합$")  # "니볼루맙,유전자재조합": a biologic, not a combination
 _KO_SUFFIXES = re.compile(
-    r"(?:[\d.]+(?:밀리그람|밀리그램|마이크로그램|그램|mg|g)?|염산염|황산염|수화물|무수물|나트륨|칼륨|칼슘|베실산염|말레산염|타르타르산염"
+    r"(?:[\d.]+(?:밀리그람|밀리그램|마이크로그램|그램|mg|g)?|염산염|황산염|수화물|무수물|나트륨|칼륨|칼슘|마그네슘|베실산염|말레산염|타르타르산염"
     r"|숙신산염|메실산염|브롬화수소산염|인산염|아세트산염|푸마르산염|시트르산염|질산염|장용과립|제피과립|장용|서방)$"
 )
 _MIN_KO, _MIN_EN = 3, 4
+# Counter-ion, hydrate, co-former and particle-form words: dropped to find the ingredient ("atorvastatin calcium" → "atorvastatin").
+# Esters (furoate, propionate, valerate) are part of the drug and stay. A name made only of these words
+# ("sodium bicarbonate", "potassium chloride") is kept whole.
+_SALT_WORDS = frozenset("""
+    hydrochloride dihydrochloride hcl hydrobromide hydroiodide hydrate monohydrate dihydrate trihydrate hemihydrate
+    sesquihydrate anhydrous sodium disodium monosodium trisodium potassium dipotassium calcium magnesium
+    besylate besilate camsylate camsilate mesylate mesilate dimesylate maleate fumarate hemifumarate tartrate
+    bitartrate succinate hemisuccinate citrate sulfate bisulfate hydrogen phosphate diphosphate dihydrogen acetate
+    oxalate tosylate tosilate napadisilate napsylate xinafoate chloride bromide iodide bicarbonate carbonate
+    hydroxide oxide nitrate lactate gluconate salt l-proline l-lysine lysine arginine l-arginine meglumine
+    tromethamine erbumine granule granules micronized esilate esylate hemitartrate strontium tetrahydrate diluted solution
+""".split())
+# One ingredient the HIRA list spells two ways (found in the 2026.6 list; reviewed as the same active ingredient).
+# Applied after the salt words are dropped. A spelling missing here only makes the variants two ingredients:
+# a code carrying both is then treated as a combination and is checked as a prescription only.
+_SAME_INGREDIENT = {
+    "esomeprazol": "esomeprazole",
+    "ibandronic acid": "ibandronate",
+    "povidone-iodine": "povidone iodine",
+    "cloazapine": "clozapine",
+    "diphenylhydantoin": "phenytoin",
+    "cyclosporin": "cyclosporine",
+    "microemulsion cyclosporine": "cyclosporine",
+    "iodised oil": "ethyl esters of the iodised fatty acids of poppyseed oil",
+    "recombinant human tissue-type plasminogen activator": "alteplase",
+    "leuprorelin": "leuprolide",
+    "methylergonovine": "methylergometrine",
+    "benedipine": "benidipine",
+    "raloxifen": "raloxifene",
+    "albendazol": "albendazole",
+    "candesartan cilexetil": "candesartan",
+    "baloxavir marboxil": "baloxavir",
+    "dexibuprofen d.c": "dexibuprofen",
+    "menotrophin h.p": "menotrophin",
+    "s-amlodipine nicotinate": "s-amlodipine",
+    "estrogen": "conjugated estrogen",  # "estrogen(conjugated)": the list's only plain "estrogen"
+    "nanoliposomal irinotecan": "irinotecan",  # same active ingredient; DUR rules are per code either way
+}
+# A name that lists several ingredients, or a product the list calls a combination ("복합체" is a complex, one drug).
+_COMBINATION = re.compile(r"[,+/·]|복합(?!체)|함유")
+# A strength or amount in a name ("24mg", "0.16g", "1KI.U", "300unit"), not a name starting with a digit ("5-fluorouracil").
+_STRENGTH = re.compile(r"(?=[\d.,]*\d)[\d.,]+[a-zμ㎍㎎%.]*(?:/[\w.]*)?\)*", re.I)
 
 
 class DurUnavailableError(RuntimeError):
@@ -64,6 +118,8 @@ class DurTables:
     pregnancy: Mapping[str, tuple[Row, ...]]
     elderly: Mapping[str, tuple[Row, ...]]
     dataset_id: int | None = None
+    # (ingredient code, ingredient name) as the rule lists write them: they can name components the product rows do not.
+    ingredient_names: tuple[tuple[str, str], ...] = ()
 
     @classmethod
     def from_rows(cls, source: Mapping[str, str], rows: Mapping[str, Iterable[Row]], *, dataset_id: int | None = None) -> DurTables:
@@ -74,19 +130,26 @@ class DurTables:
             return {code: tuple(items) for code, items in grouped.items()}
 
         products = {row["product_code"]: row for row in rows.get("product", ())}
+        names = [(row["ingredient_code"], row["ingredient_name"]) for table in ("age_rule", "pregnancy_rule", "elderly_rule")
+                 for row in rows.get(table, ()) if row.get("ingredient_name")]
+        names += [(row[code], row[name]) for row in rows.get("pair_rule", ())
+                  for code, name in (("ingredient_a", "name_a"), ("ingredient_b", "name_b")) if row.get(name)]
         if not products:
             raise DurUnavailableError("dur dataset has no products")
         return cls(dict(source), products, by("pair_rule", "ingredient_a"), by("age_rule", "ingredient_code"),
-                   by("pregnancy_rule", "ingredient_code"), by("elderly_rule", "ingredient_code"), dataset_id)
+                   by("pregnancy_rule", "ingredient_code"), by("elderly_rule", "ingredient_code"), dataset_id, tuple(names))
 
 
 @dataclass(frozen=True)
 class ProposedDrug:
-    """A drug named in the question: every DUR ingredient code (dosage form) of that ingredient."""
+    """A drug named in the question: every single-ingredient DUR code (dosage form) of that ingredient."""
 
     name: str  # as written in the question (Korean ingredient name or English name)
     ingredient_name: str
     codes: frozenset[str]
+    # Ingredient keys (``_ingredient_key``; two when the list spells one drug two ways): a drug already prescribed is
+    # checked as the prescription.
+    keys: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -104,9 +167,57 @@ class DurResult:
         return result
 
 
-def _en_base(name: str) -> str:
-    """First word of an English ingredient name: 'warfarin sodium' → 'warfarin', 'aspirin(enteric coated)' → 'aspirin'."""
-    return re.split(r"[\s(,+]", name.strip().lower(), maxsplit=1)[0]
+def _bare_words(name: str) -> list[str]:
+    """The words of a name without parentheses and strengths; separators (",", "+", "/") are kept."""
+    text = name.lower()
+    while (stripped := re.sub(r"\([^()]*\)", " ", text)) != text:
+        text = stripped
+    return [word for word in text.split() if not _STRENGTH.fullmatch(word)]
+
+
+def _english_name(name: str) -> str:
+    """'Amlodipine Besylate (as amlodipine 5mg)' → 'amlodipine besylate': no parentheses, strengths or extra spaces."""
+    words = [word.strip(".,()[]") for word in _bare_words(name)]
+    return " ".join("extract" if word == "ext" else word for word in words if word)
+
+
+def _is_combination_name(name: str) -> bool:
+    """'linagliptin, metformin hydrochloride' lists two ingredients; 'plerixafor 24mg(20mg/mL)' lists one."""
+    return _COMBINATION.search(" ".join(_bare_words(name))) is not None
+
+
+def _salt_free(name: str) -> str:
+    """An English name without its salt and hydrate words, unless nothing else is left."""
+    full = _english_name(name)
+    kept = [word for word in full.split() if word not in _SALT_WORDS]
+    return " ".join(kept) if kept else full
+
+
+def _ingredient_key(name: str) -> str:
+    """The ingredient an English name refers to (``_salt_free``, then one spelling for ``_SAME_INGREDIENT``)."""
+    key = _salt_free(name)
+    return _SAME_INGREDIENT.get(key, key)
+
+
+def _distinct_ingredients(keys: Iterable[str]) -> frozenset[str]:
+    """Keys naming different ingredients: a key extending another ("clonixin lysinate", "clonixin") is the same one."""
+    ordered = sorted(set(keys), key=len)
+    kept: list[str] = []
+    for key in ordered:
+        if not any(key.startswith(shorter) for shorter in kept):
+            kept.append(key)
+    return frozenset(kept)
+
+
+def _korean_ingredient(product_name: str) -> str | None:
+    """The Korean ingredient name in a product name (spaces removed), or None when it names none."""
+    head = product_name.split("_(", 1)[0]
+    candidates = []
+    for group in _KO_PARENTHESES.findall(head):
+        name = _KO_RECOMBINANT.sub("", re.sub(r"\s+", "", group))
+        if name and ":" not in name and name not in _KO_NOT_INGREDIENT:
+            candidates.append(name)
+    return candidates[-1] if candidates else None
 
 
 def _ko_bases(name: str) -> set[str]:
@@ -118,47 +229,93 @@ def _ko_bases(name: str) -> set[str]:
 
 
 class _DrugNames:
-    """Korean and English ingredient names → English base name → ingredient codes, from the product list."""
+    """Korean and English ingredient names → ingredient key → single-ingredient codes, from the product list."""
 
-    def __init__(self, products: Iterable[Row]) -> None:
+    def __init__(self, products: Iterable[Row], rule_names: Iterable[tuple[str, str]] = ()) -> None:
+        """``rule_names``: (ingredient code, ingredient name) from the rule lists, which may name a combination's
+        other components where every product row names only one of them."""
+        rows = list(products)
+        raw_names: dict[str, set[str]] = defaultdict(set)
+        for row in rows:
+            raw_names[row["ingredient_code"]].add(str(row.get("ingredient_name") or "").strip())
+        for code, name in rule_names:
+            if code in raw_names and name:
+                raw_names[code].add(name.strip())
+        # Ingredient keys of every code: one for a single ingredient, one per component for a combination.
+        self._components = {
+            code: _distinct_ingredients(_ingredient_key(name) for name in names if _english_name(name))
+            for code, names in raw_names.items()
+        }
+        combinations = {code for code, names in raw_names.items()
+                        if len(self._components[code]) != 1 or any(_is_combination_name(name) for name in names)}
         codes: dict[str, set[str]] = defaultdict(set)
         labels: dict[str, str] = {}
-        ko: dict[str, str] = {}
-        for row in products:
-            english = str(row.get("ingredient_name") or "")
-            base = _en_base(english)
-            if "+" in english or not base:
+        label_rank: dict[str, tuple[bool, int, str]] = {}
+        english: dict[str, str] = {}  # full English name or ingredient key → ingredient key
+        korean: dict[str, set[str]] = defaultdict(set)  # Korean name (and its salt-free bases) → ingredient keys
+        for row in rows:
+            code = row["ingredient_code"]
+            if code in combinations:
                 continue
-            codes[base].add(row["ingredient_code"])
-            if base not in labels or len(english) < len(labels[base]):
-                labels[base] = english  # shortest form: "aspirin", not "aspirin(enteric coated) (as aspirin)"
-            match = _KO_INGREDIENT.search(str(row.get("product_name") or ""))
-            # Combination products ("A/B") name several ingredients but carry one code: skip them.
-            if match and not re.search(r"[,/·+]", match.group(1)):
-                for key in _ko_bases(re.sub(r"\s+", "", match.group(1))):
-                    ko.setdefault(key, base)
-        self._codes = {base: frozenset(items) for base, items in codes.items()}
+            name = str(row.get("ingredient_name") or "").strip()
+            key = _ingredient_key(name)
+            if not key:  # no English ingredient name: it cannot be named
+                continue
+            codes[key].add(code)
+            # The usual spelling first, then the shortest form: "aspirin", not "aspirin(enteric coated) (as aspirin)".
+            rank = (_salt_free(name) != key, len(name), name)
+            if key not in labels or rank < label_rank[key]:
+                labels[key], label_rank[key] = name, rank
+            for alias in (key, _english_name(name), _salt_free(name)):  # also the list's other spelling ("diphenylhydantoin")
+                english.setdefault(alias, key)
+            korean_name = _korean_ingredient(str(row.get("product_name") or ""))
+            # A product name that lists several Korean ingredients ("A/B") is a combination even when coded alone.
+            if korean_name and not _COMBINATION.search(korean_name):
+                for base in _ko_bases(korean_name):
+                    korean[base].add(key)
+        # The first word alone ("clobetasol" for "clobetasol propionate") names an ingredient only when no other
+        # ingredient starts with it: "ethyl", "insulin" or a salt word name several and stay unmatched.
+        first_words: dict[str, set[str]] = defaultdict(set)
+        for key in codes:
+            first_words[key.split()[0]].add(key)
+        for word, keys in first_words.items():
+            if len(keys) == 1 and word not in _SALT_WORDS and word not in english:
+                english[word] = next(iter(keys))
+        self._codes = {key: frozenset(items) for key, items in codes.items()}
         self._labels = labels
         # Leftmost-longest, non-overlapping: "와파린나트륨" is one drug, not "와파린" plus a fragment.
-        self._ko_names = TermMatcher(ko.items())
+        self._ko_names = TermMatcher((name, key) for name, keys in korean.items() for key in sorted(keys))
         self._en_names = TermMatcher(
-            ((base, base) for base in self._codes if len(base) >= _MIN_EN and base.isalpha()), boundary="a-z",
+            ((alias, key) for alias, key in english.items() if len(alias) >= _MIN_EN and re.fullmatch(r"[a-z0-9][a-z0-9 -]*[a-z]", alias)),
+            boundary="a-z",
         )
 
+    def components(self, code: str) -> frozenset[str]:
+        """Ingredient keys of an ingredient code (several for a combination product)."""
+        return self._components.get(code, frozenset())
+
     def find(self, text: str) -> tuple[ProposedDrug, ...]:
-        found: dict[str, str] = {}
-        for match in self._ko_names.longest(re.sub(r"\s+", "", text)):
-            found.setdefault(match.values[0], match.term)
-        for match in self._en_names.longest(text.lower()):
-            found.setdefault(match.term, match.term)
-        return tuple(ProposedDrug(name, self._labels[base], self._codes[base]) for base, name in found.items())
+        """Drugs named in ``text``. A Korean name the list spells two ways in English ("류프로렐린": leuprolide,
+        leuprorelin) is one drug with the codes of both."""
+        found: list[ProposedDrug] = []
+        seen: set[str] = set()
+        matches = [(match.term, match.values) for match in self._ko_names.longest(re.sub(r"\s+", "", text))]
+        matches += [(match.term, match.values) for match in self._en_names.longest(text.lower())]
+        for name, keys in matches:
+            if seen.intersection(keys):
+                continue
+            seen.update(keys)
+            label = min((self._labels[key] for key in keys), key=lambda item: (len(item), item))
+            codes = frozenset(code for key in keys for code in self._codes[key])
+            found.append(ProposedDrug(name, label, codes, frozenset(keys)))
+        return tuple(found)
 
 
 class DurChecker:
     def __init__(self, tables: DurTables) -> None:
         self._tables = tables
         self.source = dict(tables.source)
-        self._names = _DrugNames(tables.products.values())
+        self._names = _DrugNames(tables.products.values(), tables.ingredient_names)
 
     def __len__(self) -> int:
         return len(self._tables.products)
@@ -187,12 +344,13 @@ class DurChecker:
                                "ingredient_code": row["ingredient_code"], "ingredient_name": row["ingredient_name"]})
         # Drugs to add, named in the question: checked like prescriptions under every dosage-form code. A drug
         # already prescribed is checked once, as the prescription.
-        current = {_en_base(item["ingredient_name"]) for item in prescribed}
+        # "Already prescribed" is by ingredient: a component of a prescribed combination counts too.
+        current = {key for item in prescribed for key in self._names.components(item["ingredient_code"])}
         recognized: list[dict[str, Any]] = []
         for drug in proposed:
-            if _en_base(drug.ingredient_name) in current:
+            if current.intersection(drug.keys):
                 continue
-            current.add(_en_base(drug.ingredient_name))
+            current.update(drug.keys)
             recognized.append({"name": drug.name, "ingredient_name": drug.ingredient_name})
             prescribed.extend({"med_code": None, "med_name": drug.name, "product_name": None, "ingredient_code": code,
                                "ingredient_name": drug.ingredient_name, "proposed": True} for code in sorted(drug.codes))

@@ -248,9 +248,6 @@ class RepositoryDurTest(unittest.TestCase):
         self.assertIn("병용금기", [alert["type"] for alert in alerts])
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 class QuestionDrugTest(unittest.TestCase):
     """Drugs named in a question are checked as drugs to add (``proposed``)."""
@@ -298,3 +295,122 @@ class QuestionDrugTest(unittest.TestCase):
                                     proposed=proposed).as_dict()
         self.assertNotIn("proposed", result)
         self.assertEqual([alert["detail"] for alert in result["alerts"]], ["근육병증"])
+
+
+def _product(code: str, name: str, ingredient_code: str, ingredient_name: str) -> dict[str, str]:
+    return {"product_code": code, "product_name": name, "ingredient_code": ingredient_code, "ingredient_name": ingredient_name}
+
+
+class IngredientIdentityTest(unittest.TestCase):
+    """Names are matched to one ingredient: not by the first English word, never to a combination product."""
+
+    def setUp(self) -> None:
+        products = [
+            _product("1", "빅손정1밀리그람(에칠로플라제페이트)_(1mg/1정)", "156201ATB", "ethyl loflazepate"),
+            _product("2", "리피오돌울트라액(아이오다이즈드오일)_(12.8g/10mL)", "156030BIJ", "ethyl esters of the iodised fatty acids of poppyseed oil"),
+            _product("3", "포사맥스정70밀리그램(알렌드론산나트륨)_(70mg/1정)", "228301ATB", "sodium alendronate (as alendronic acid)"),
+            _product("4", "알렌드로정(알렌드론산나트륨수화물)_(70mg/1정)", "228302ATB", "Alendronate"),
+            _product("5", "탄산수소나트륨정(탄산수소나트륨)_(0.5g/1정)", "222001ATB", "sodium bicarbonate"),
+            _product("6", "노바스크정5밀리그램(암로디핀베실산염)_(5mg/1정)", "107601ATB", "Amlodipine Besylate (as amlodipine 5mg)"),
+            _product("7", "애니디핀정(암로디핀캄실산염)_(5mg/1정)", "459801ATB", "amlodipine camsylate (as amlodipine)"),
+            # A combination, as in the list: its products share one code and each names one component.
+            _product("8", "엑스포지정5/80밀리그램(암로디핀베실산염)_(1정)", "490001ATB", "amlodipine besylate (as amlodipine)"),
+            _product("8b", "엑스포지정10/160밀리그램(암로디핀베실산염)_(1정)", "490001ATB", "valsartan"),
+            # A combination whose products all name one component; the rule list names the others.
+            _product("18", "콜드정(아세트아미노펜)_(1정)", "C89900ASY", "acetaminophen"),
+            # One ingredient spelled two ways on one code is still a single ingredient.
+            _product("19", "넥시움정(에스오메프라졸마그네슘)_(20mg/1정)", "367201ATB", "esomeprazole magnesium (as esomeprazol)"),
+            _product("20", "에소메졸정(에스오메프라졸마그네슘)_(20mg/1정)", "367201ATB", "esomeprazol magnesium (as esomeprazol)"),
+            _product("9", "울트라셋정(트라마돌염산염,아세트아미노펜)_(1정)", "480601ATB", "acetaminophen,tramadol hydrochloride"),
+            _product("10", "타이레놀정500밀리그람(아세트아미노펜)_(0.5g/1정)", "101001ATB", "acetaminophen"),
+            _product("11", "칼륨정(염화칼륨)_(0.6g/1정)", "211001ATB", "potassium chloride"),
+            _product("12", "나트륨주(염화나트륨)_(0.9g/100mL)", "212001BIJ", "sodium chloride"),
+            # The Korean name is in an earlier parenthesis than the packaging or export name.
+            _product("13", "트리세녹스주(삼산화비소)(바이알)_(12mg/6mL)", "523001BIJ", "arsenic trioxide"),
+            _product("14", "클리신정(클로닉신리시네이트)(수출명:CLICIN Tab)_(0.125g/1정)", "135201ATB", "clonixin lysinate"),
+            _product("15", "옵디보주100mg(니볼루맙,유전자재조합)_(0.1g/10mL)", "633001BIJ", "nivolumab"),
+            # One drug the list spells two ways in English.
+            _product("16", "루프린주(류프로렐린아세트산염)_(3.75mg/1병)", "187001BIJ", "leuprorelin"),
+            _product("17", "엘리가드주(류프로렐린아세트산염)_(7.5mg/1병)", "187002BIJ", "leuprolide acetate"),
+        ]
+        rows = {
+            "product": products,
+            "pregnancy_rule": [
+                {"ingredient_code": code, "grade": "1", "detail": detail, "notice_no": "1", "notice_date": "2020-01-01"}
+                for code, detail in (("156201ATB", "벤조디아제핀"), ("490001ATB", "ARB 복합제"), ("228301ATB", "비스포스포네이트"))
+            ],
+            "age_rule": [{"ingredient_code": "C89900ASY", "ingredient_name": "Phenylephrine", "age": "12", "unit": "세", "condition": "미만",
+                          "detail": "소아", "notice_no": "1", "notice_date": "2020-01-01"}],
+        }
+        self.checker = DurChecker(DurTables.from_rows({"id": "test"}, rows))
+
+    def found(self, text: str) -> dict[str, frozenset[str]]:
+        return {drug.ingredient_name: drug.codes for drug in self.checker.find_drugs(text)}
+
+    def test_a_shared_first_word_does_not_merge_ingredients(self) -> None:
+        self.assertEqual(self.found("아이오다이즈드오일"), {"ethyl esters of the iodised fatty acids of poppyseed oil": {"156030BIJ"}})
+        self.assertEqual(self.found("알렌드론산"), {"Alendronate": {"228301ATB", "228302ATB"}})  # both salts, not sodium bicarbonate
+        self.assertEqual(self.found("sodium alendronate"), {"Alendronate": {"228301ATB", "228302ATB"}})
+        self.assertEqual(self.found("sodium 보충"), {})  # a salt word alone names no ingredient
+        self.assertEqual(set(self.found("염화칼륨 염화나트륨")), {"potassium chloride", "sodium chloride"})
+
+    def test_combination_products_are_left_to_prescriptions(self) -> None:
+        self.assertEqual(list(self.found("암로디핀").values()), [{"107601ATB", "459801ATB"}])  # both salts, no combination
+        self.assertEqual(self.found("amlodipine"), self.found("암로디핀"))
+        self.assertEqual(self.found("아세트아미노펜"), {"acetaminophen": {"101001ATB"}})
+        self.assertEqual(self.found("트라마돌"), {})
+        self.assertEqual(self.found("valsartan"), {})  # only in the combination
+        self.assertEqual(self.found("에스오메프라졸"), {"esomeprazole magnesium (as esomeprazol)": {"367201ATB"}})
+
+    def test_korean_name_before_packaging_or_export_name_and_recombinant_biologics(self) -> None:
+        self.assertEqual(set(self.found("삼산화비소")), {"arsenic trioxide"})
+        self.assertEqual(set(self.found("클로닉신리시네이트")), {"clonixin lysinate"})
+        self.assertEqual(set(self.found("니볼루맙")), {"nivolumab"})
+        self.assertEqual(self.found("바이알 주사"), {})
+
+    def test_one_drug_spelled_two_ways_is_one_drug(self) -> None:
+        (drug,) = self.checker.find_drugs("류프로렐린 주사")
+        self.assertEqual(drug.codes, {"187001BIJ", "187002BIJ"})
+
+    def test_prescribed_ingredient_is_not_rechecked_but_one_sharing_a_word_is(self) -> None:
+        # Sodium bicarbonate prescribed; alendronate named: still checked (before, both were "sodium" and it was skipped).
+        result = self.checker.check([("5", None)], age_years=30, sex="female", pregnant=True,
+                                    proposed=self.checker.find_drugs("알렌드론산 추가")).as_dict()
+        self.assertEqual([alert["detail"] for alert in result["alerts"]], ["비스포스포네이트"])
+        self.assertEqual(result["proposed"], [{"name": "알렌드론산", "ingredient_name": "Alendronate"}])
+        # Amlodipine is in the prescribed combination: checked once, as the prescription (the combination's own rule).
+        result = self.checker.check([("8", None)], age_years=30, sex="female", pregnant=True,
+                                    proposed=self.checker.find_drugs("암로디핀 추가")).as_dict()
+        self.assertNotIn("proposed", result)
+        self.assertEqual([alert["detail"] for alert in result["alerts"]], ["ARB 복합제"])
+
+    def test_named_amlodipine_alone_gets_no_combination_rule(self) -> None:
+        result = self.checker.check([], age_years=30, sex="female", pregnant=True, proposed=self.checker.find_drugs("amlodipine")).as_dict()
+        self.assertEqual(result["alerts"], [])
+
+
+class RepositoryNameMatchingTest(unittest.TestCase):
+    """The reported cases, on the DUR snapshot in the repository."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        snapshot = read_snapshot(REPO_SNAPSHOT)
+        cls.checker = DurChecker(DurTables.from_rows(snapshot.source, snapshot.rows))
+        names: dict[str, set[str]] = {}
+        for row in snapshot.rows["product"]:
+            names.setdefault(row["ingredient_code"], set()).add(row["ingredient_name"].lower())
+        cls.names = names
+
+    def ingredients(self, text: str) -> set[str]:
+        return {name for drug in self.checker.find_drugs(text) for code in drug.codes for name in self.names[code]}
+
+    def test_reported_cases(self) -> None:
+        self.assertNotIn("ethyl loflazepate", self.ingredients("아이오다이즈드오일"))
+        self.assertFalse(any("bicarbonate" in name or "phytate" in name for name in self.ingredients("알렌드론산")))
+        self.assertTrue(all("amlodipine" in name for name in self.ingredients("amlodipine")))  # no valsartan, no combination
+        self.assertFalse(any("tramadol" in name for name in self.ingredients("acetaminophen")))
+        self.assertEqual(self.checker.find_drugs("sodium"), ())
+
+
+if __name__ == "__main__":
+    unittest.main()
