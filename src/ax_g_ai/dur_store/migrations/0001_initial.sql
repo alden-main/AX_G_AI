@@ -1,6 +1,7 @@
 -- AX-G DUR(심평원 의약품안전사용서비스 의약품 목록) 서빙 스키마 (PostgreSQL 16)
 -- 말뭉치(corpus 스키마)와 같은 DB, 별도 스키마 dur. 설계 문서: docs/clinical_corpus_postgres.md 「DUR 스키마」
--- 적용: ax_g_ai.dur_store.loader.ensure_schema() 가 dur.schema_version 이 없을 때 한 번 실행한다(한 트랜잭션).
+-- 적용: ax_g_ai.pg_release 의 마이그레이션 실행기가 한 번 실행하고 dur.schema_version 에 1을 기록한다.
+-- 이미 적용된 마이그레이션은 고치지 않는다. 스키마 변경은 다음 번호의 새 파일(0002_*.sql)로 추가한다.
 --
 -- 원칙
 --   * 작성 원천은 공공데이터포털 CSV(dur/)다. 빌드 결과(data/dur 스냅샷)를 데이터셋 단위로 싣는다.
@@ -10,12 +11,6 @@
 
 CREATE SCHEMA IF NOT EXISTS dur;
 SET search_path = dur, public;
-
-CREATE TABLE schema_version (
-    version     int PRIMARY KEY,
-    applied_at  timestamptz NOT NULL DEFAULT now()
-);
-INSERT INTO schema_version (version) VALUES (1);
 
 -- ── 데이터셋(공고 시점별 목록) ───────────────────────────────────────────
 CREATE TABLE dataset (

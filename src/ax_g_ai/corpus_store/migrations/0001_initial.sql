@@ -1,6 +1,7 @@
 -- AX-G 임상 말뭉치 서빙 스키마 (PostgreSQL 16 + pgvector 0.7 이상)
 -- 설계 문서: docs/clinical_corpus_postgres.md
--- 적용: ax_g_ai.corpus_store.loader.ensure_schema() 가 corpus.schema_version 이 없을 때 한 번 실행한다(한 트랜잭션).
+-- 적용: ax_g_ai.pg_release 의 마이그레이션 실행기가 한 번 실행하고 corpus.schema_version 에 1을 기록한다.
+-- 이미 적용된 마이그레이션은 고치지 않는다. 스키마 변경은 다음 번호의 새 파일(0002_*.sql)로 추가한다.
 --
 -- 원칙
 --   * 작성 원천은 text_data/claims·mappings(YAML)다. 이 DB는 빌드 결과(corpus/*.jsonl)를 싣는 서빙 저장소다.
@@ -12,12 +13,6 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE SCHEMA IF NOT EXISTS corpus;
 SET search_path = corpus, public;
-
-CREATE TABLE schema_version (
-    version     int PRIMARY KEY,
-    applied_at  timestamptz NOT NULL DEFAULT now()
-);
-INSERT INTO schema_version (version) VALUES (1);
 
 -- ── 릴리스 ───────────────────────────────────────────────────────────────
 CREATE TABLE corpus_release (
