@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 import json
 import os
 import unittest
+from collections.abc import Callable
 from unittest.mock import patch
 
 import httpx
@@ -17,7 +17,6 @@ from ax_g_ai.adapters.openai import (
 )
 from ax_g_ai.adapters.provider import build_provider_client
 from ax_g_ai.config import AISettings
-
 
 Handler = Callable[[httpx.Request], httpx.Response]
 

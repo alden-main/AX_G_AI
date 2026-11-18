@@ -10,15 +10,19 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import math
 
 import redis
 import redis.asyncio as aioredis
+from redis.backoff import ConstantBackoff
+from redis.retry import Retry
 
 from ax_g_ai.errors import PatientContextNotReadyError, PatientContextUnavailableError
 from ax_g_ai.services.patient_context_store import PreparedRawEmrContext, context_from_json, context_to_json
 
 logger = logging.getLogger("uvicorn.error")
 _PREFIX = "axg:patient-context:"
+STARTUP_RETRY_INTERVAL_SECONDS = 2.0
 
 
 class RedisPatientContextStore:
@@ -28,15 +32,29 @@ class RedisPatientContextStore:
         self._prefix = prefix
 
     @classmethod
-    def connect(cls, url: str, *, ttl_seconds: float, timeout_seconds: float = 1.0) -> "RedisPatientContextStore":
-        """Check the server once (synchronously, at start-up) and return a store using a pooled async client.
+    def connect(
+        cls, url: str, *, ttl_seconds: float, timeout_seconds: float = 1.0, wait_seconds: float = 0,
+    ) -> RedisPatientContextStore:
+        """Check the server (synchronously, at start-up) and return a store using a pooled async client.
 
-        Raises ``redis.RedisError`` when the server is unreachable or rejects the credentials.
+        ``wait_seconds`` (a server starting with the API): connection errors are retried every
+        ``STARTUP_RETRY_INTERVAL_SECONDS`` for about that long. Raises ``redis.RedisError`` when the server stays
+        unreachable or rejects the credentials.
         """
-        options = {"socket_timeout": timeout_seconds, "socket_connect_timeout": timeout_seconds}
-        with redis.Redis.from_url(url, **options) as probe:
+        retries = math.ceil(wait_seconds / STARTUP_RETRY_INTERVAL_SECONDS)
+        # OSError too: redis-py retries only its own errors, and a refused or unresolvable connection is an OSError
+        # until it gives up (a server still starting up).
+        probe_retry = Retry(
+            ConstantBackoff(STARTUP_RETRY_INTERVAL_SECONDS), retries,
+            supported_errors=(redis.ConnectionError, redis.TimeoutError, OSError),
+        )
+        with redis.Redis.from_url(url, socket_timeout=timeout_seconds, socket_connect_timeout=timeout_seconds,
+                                  retry=probe_retry) as probe:
             probe.ping()
-        return cls(aioredis.Redis.from_url(url, health_check_interval=30, **options), ttl_seconds=ttl_seconds)
+        client = aioredis.Redis.from_url(
+            url, health_check_interval=30, socket_timeout=timeout_seconds, socket_connect_timeout=timeout_seconds,
+        )
+        return cls(client, ttl_seconds=ttl_seconds)
 
     def _key(self, patient_id: str) -> str:
         return self._prefix + hashlib.sha256(patient_id.encode("utf-8")).hexdigest()

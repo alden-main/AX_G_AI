@@ -10,8 +10,9 @@ evaluates to ``None`` (unknown), never ``False``. Callers must treat ``None`` as
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
 
 _OPERATORS = {
     "<": lambda a, b: a < b, "<=": lambda a, b: a <= b,

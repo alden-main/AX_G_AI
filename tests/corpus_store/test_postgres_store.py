@@ -129,7 +129,12 @@ class PrecomputedFileTest(unittest.TestCase):
 
     def test_round_trip_and_coverage(self) -> None:
         from ax_g_ai.corpus_store.precomputed import (
-            coverage, embedding_input, embedding_key, embeddings_path, read_precomputed, write_precomputed,
+            coverage,
+            embedding_input,
+            embedding_key,
+            embeddings_path,
+            read_precomputed,
+            write_precomputed,
         )
 
         total, missing, error = coverage(self.dir)
@@ -144,7 +149,10 @@ class PrecomputedFileTest(unittest.TestCase):
 
     def test_rejects_other_model_and_bad_rows(self) -> None:
         from ax_g_ai.corpus_store.precomputed import (
-            PrecomputedEmbeddingError, embeddings_path, read_precomputed, write_precomputed,
+            PrecomputedEmbeddingError,
+            embeddings_path,
+            read_precomputed,
+            write_precomputed,
         )
 
         path = embeddings_path(self.dir)
@@ -312,6 +320,34 @@ class PostgresCorpusStoreTest(unittest.TestCase):
         with self.assertLogs("uvicorn.error", level="WARNING"):
             self.assertEqual(down.search("급성 담낭염 수술 시기", 1)[0].chunk_id, "369-C03-chunk")
 
+    def test_migrations_apply_once_and_record_their_version(self) -> None:
+        from ax_g_ai.corpus_store.loader import ensure_schema
+
+        self.assertEqual(ensure_schema(self.conn), [1])
+        self.assertEqual(ensure_schema(self.conn), [])  # current: nothing to do
+        versions = [row[0] for row in self.conn.execute("SELECT version FROM corpus.schema_version").fetchall()]
+        self.assertEqual(versions, [1])
+        self.assertEqual(self.conn.execute("SHOW search_path").fetchone()[0], '"$user", public')
+
+    def test_new_migration_is_applied_to_an_existing_schema_and_a_failing_one_rolls_back(self) -> None:
+        from unittest import mock
+
+        from ax_g_ai import pg_release
+        from ax_g_ai.corpus_store.loader import ensure_schema
+
+        ensure_schema(self.conn)
+        shipped = pg_release.migrations("ax_g_ai.corpus_store")
+        added = (2, "0002_note.sql", "ALTER TABLE corpus.corpus_release ADD COLUMN note text;")
+        with mock.patch.object(pg_release, "migrations", return_value=[*shipped, added]):
+            self.assertEqual(ensure_schema(self.conn), [2])
+        broken = [(3, "0003_ok.sql", "CREATE TABLE corpus.partial (id int);"), (4, "0004_bad.sql", "SELECT 1/0;")]
+        with mock.patch.object(pg_release, "migrations", return_value=[*shipped, added, *broken]):
+            with self.assertRaises(self.psycopg.errors.DivisionByZero):
+                ensure_schema(self.conn)
+        versions = [row[0] for row in self.conn.execute("SELECT version FROM corpus.schema_version ORDER BY 1").fetchall()]
+        self.assertEqual(versions, [1, 2])  # 3 and 4 rolled back together
+        self.assertIsNone(self.conn.execute("SELECT to_regclass('corpus.partial')").fetchone()[0])
+
     def test_no_active_release_raises(self) -> None:
         from ax_g_ai.corpus_store.loader import ensure_schema
         from ax_g_ai.corpus_store.retriever import CorpusUnavailableError
@@ -345,8 +381,6 @@ class RuntimeFallbackTest(unittest.TestCase):
         """Server reboot: postgres comes up a few seconds after the API, which must not stay on the files."""
         from unittest import mock
 
-        import psycopg
-
         from ax_g_ai.config import RuntimeSettings
         from ax_g_ai.runtime import _corpus_source
 
@@ -355,21 +389,28 @@ class RuntimeFallbackTest(unittest.TestCase):
             corpus_database_url="postgresql://nobody:x@postgres:5432/none", dependency_startup_wait_seconds=60,
         )
         with (
-            mock.patch("ax_g_ai.corpus_store.retriever.open_pool",
-                       side_effect=[psycopg.OperationalError("starting up"), psycopg.OperationalError("starting up"), pool]),
+            mock.patch("ax_g_ai.corpus_store.retriever.open_pool", return_value=pool) as opened,
             mock.patch("ax_g_ai.corpus_store.live.LiveCorpus", return_value=live),
-            mock.patch("ax_g_ai.runtime.time.sleep") as sleep,
-            self.assertLogs("uvicorn.error", level="WARNING") as logs,
         ):
             self.assertIs(_corpus_source(settings), live)
-        self.assertEqual(sleep.call_count, 2)
-        self.assertTrue(all("startup_dependency_waiting dependency=postgres" in line for line in logs.output))
-        self.assertFalse(any("nobody" in line for line in logs.output))
+        # The pool keeps reconnecting for the configured time instead of a retry loop of our own.
+        self.assertEqual(opened.call_args.kwargs["wait_seconds"], 60)
+
+    def test_pool_waits_up_to_the_configured_time(self) -> None:
+        from unittest import mock
+
+        from ax_g_ai.corpus_store.retriever import open_pool
+
+        with mock.patch("ax_g_ai.corpus_store.retriever.ConnectionPool") as pool_class:
+            open_pool("postgresql://db/none", wait_seconds=60)
+            pool_class.return_value.open.assert_called_once_with(wait=True, timeout=60)
+            open_pool("postgresql://db/none")
+            pool_class.return_value.open.assert_called_with(wait=True, timeout=3.0)
 
     def test_wait_ends_with_the_file_fallback(self) -> None:
         from unittest import mock
 
-        import psycopg
+        from psycopg_pool import PoolTimeout
 
         from ax_g_ai.config import RuntimeSettings
         from ax_g_ai.runtime import _corpus_source
@@ -381,18 +422,14 @@ class RuntimeFallbackTest(unittest.TestCase):
                 corpus_database_url="postgresql://nobody:x@postgres:5432/none", evidence_corpus_dir=raw,
                 evidence_include_unreviewed=True, dependency_startup_wait_seconds=5,
             )
-            clock = iter([0.0, 0.0, 2.0, 4.0])  # deadline 5 s: attempts at 0 and 2 s retry, the one at 4 s gives up
             with (
-                mock.patch("ax_g_ai.corpus_store.retriever.open_pool", side_effect=psycopg.OperationalError("down")) as opened,
-                mock.patch("ax_g_ai.runtime.time.monotonic", side_effect=lambda: next(clock)),
-                mock.patch("ax_g_ai.runtime.time.sleep"),
+                mock.patch("ax_g_ai.corpus_store.retriever.open_pool", side_effect=PoolTimeout("down")),
                 self.assertLogs("uvicorn.error", level="INFO") as logs,
             ):
                 snapshot = _corpus_source(settings).current
-        self.assertEqual(opened.call_count, 3)
         self.assertIsInstance(snapshot.evidence, InMemoryEvidenceIndex)
         self.assertTrue(any("fallback=files" in line for line in logs.output))
-
+        self.assertFalse(any("nobody" in line for line in logs.output))
 
 if __name__ == "__main__":
     unittest.main()

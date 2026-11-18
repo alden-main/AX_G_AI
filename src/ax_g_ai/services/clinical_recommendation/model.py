@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import Any, Iterable, Mapping
+from typing import Any
 
 from ax_g_ai.services.clinical_evidence import EvidenceChunk
 from ax_g_ai.services.clinical_recommendation.schema import AssessmentPayload

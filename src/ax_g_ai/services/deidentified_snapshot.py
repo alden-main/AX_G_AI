@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Mapping
-
+from collections.abc import Mapping
 
 _IDENTIFIER_KEYS = frozenset({
     "patient", "patientid", "patientname", "name", "firstname", "lastname", "fullname",

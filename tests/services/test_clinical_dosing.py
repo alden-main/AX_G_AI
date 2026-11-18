@@ -4,7 +4,13 @@ import unittest
 from pathlib import Path
 
 from ax_g_ai.services.clinical_dosing import (
-    DoseFormulaError, MissingInput, evaluate_formula, formula_variables, prescribed_daily_mg, range_label, select_band,
+    DoseFormulaError,
+    MissingInput,
+    evaluate_formula,
+    formula_variables,
+    prescribed_daily_mg,
+    range_label,
+    select_band,
 )
 from ax_g_ai.services.clinical_recommendation import ClinicalRecommender, RuleCorpus
 from tests.services.test_clinical_recommendation import GATE, RULES, TESTS

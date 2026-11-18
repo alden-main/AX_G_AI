@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Iterator, Sequence
-from contextlib import contextmanager
 import json
 import logging
-from typing import Any, Mapping
+from collections.abc import AsyncIterator, Iterator, Mapping, Sequence
+from contextlib import contextmanager
+from typing import Any
 
-from ax_g_ai.services.ports import OpenAIProviderError, OpenAIRequest, ProviderClient
 from ax_g_ai.errors import ClinicalChatProviderUnavailableError
 from ax_g_ai.prompts.clinical import (
     CLINICAL_INSTRUCTIONS,
@@ -21,12 +20,13 @@ from ax_g_ai.prompts.clinical import (
     compose_recommendation_input,
     finding_extraction_schema,
 )
+from ax_g_ai.services.clinical_evidence import EvidenceChunk, EvidenceRetriever
+from ax_g_ai.services.clinical_recommendation import prompt_view
+from ax_g_ai.services.ports import OpenAIProviderError, OpenAIRequest, ProviderClient
 from ax_g_ai.services.prepared_patient_summary import (
     PATIENT_SUMMARY_OUTPUT_SCHEMA,
     PreparedPatientSummary,
 )
-from ax_g_ai.services.clinical_evidence import EvidenceChunk, EvidenceRetriever
-from ax_g_ai.services.clinical_recommendation import prompt_view
 from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
 
 logger = logging.getLogger("uvicorn.error")

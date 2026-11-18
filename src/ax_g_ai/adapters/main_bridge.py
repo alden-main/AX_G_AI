@@ -7,8 +7,9 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any, Mapping
+from collections.abc import Mapping
+from datetime import UTC, datetime
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from ax_g_ai.errors import PatientContextUnavailableError, PatientMismatchError
@@ -16,7 +17,6 @@ from ax_g_ai.services.clinical_calculations import calculate_review_aids
 from ax_g_ai.services.deidentified_snapshot import deidentify, is_identifier_key
 from ax_g_ai.services.patient_context_store import PreparedRawEmrContext
 from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
-
 
 # EMR fields the rule mapping reads (``emr_mapping.map_emr``, ``ClinicalRecommender.prepare``). A whitelist, so
 # no identifier passes; unlike ``deidentify`` it keeps empty lists and null values, which the rules read as
@@ -84,9 +84,9 @@ class RawEmrPayloadMapper:
 
         timestamps: list[datetime] = []
         calculations, calculation_input_needed = calculate_review_aids(source.get("calculationContext"))
-        fallback = prepared_at or datetime.now(timezone.utc)
+        fallback = prepared_at or datetime.now(UTC)
         if fallback.tzinfo is None:
-            fallback = fallback.replace(tzinfo=timezone.utc)
+            fallback = fallback.replace(tzinfo=UTC)
         data: dict[str, object] = {
             # Age, sex, weight, height, creatinine as the EMR sent them (the calculations below are derived from them).
             "calculation_context": deidentify(source.get("calculationContext")),

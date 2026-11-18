@@ -8,12 +8,20 @@ reference calculations that always carry their inputs, formula and sources.
 from __future__ import annotations
 
 import logging
-from typing import Any, Iterable, Mapping
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 from ax_g_ai.services.clinical_corpus import CorpusRuleError, PatientFacts, evaluate
 from ax_g_ai.services.clinical_dosing import (
-    MissingInput, band_daily_max_mg, evaluate_formula, formula_variables, prescribed_daily_mg, range_label, rounded,
-    select_band, unit_for,
+    MissingInput,
+    band_daily_max_mg,
+    evaluate_formula,
+    formula_variables,
+    prescribed_daily_mg,
+    range_label,
+    rounded,
+    select_band,
+    unit_for,
 )
 from ax_g_ai.services.clinical_recommendation.corpus import RuleCorpus
 from ax_g_ai.services.clinical_recommendation.model import EvidenceNumbering, unique_missing

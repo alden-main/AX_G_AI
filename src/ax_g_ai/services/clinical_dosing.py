@@ -17,8 +17,9 @@ from __future__ import annotations
 import math
 import re
 import unicodedata
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
 
 from ax_g_ai.services.clinical_corpus import CorpusRuleError
 

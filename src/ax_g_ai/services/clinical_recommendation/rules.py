@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
+from collections.abc import Iterable, Mapping
 from dataclasses import replace
-from typing import Any, Iterable, Mapping
+from typing import Any
 
 from ax_g_ai.services.clinical_corpus import PatientFacts, evaluate
 from ax_g_ai.services.clinical_recommendation.model import Leaf

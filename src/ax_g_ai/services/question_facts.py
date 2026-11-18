@@ -31,6 +31,16 @@ MEDICATION_CONTEXT = re.compile(
 )
 
 
+# A chat question that asks for diagnoses, tests, medications or doses also gets the stage-2/3 rule results (with
+# DUR). A question that names a drug, or states pregnancy, gets them as well (``ClinicalRecommender.question_inputs``).
+_RECOMMENDATION_INTENT = re.compile(
+    r"추천|감별|의심|진단명|어떤\s*검사|검사가?\s*필요|필요한\s*검사|추가\s*검사|워크업|workup|work-up|협진|의뢰"
+    r"|병용|금기|상호\s*작용|DUR|처방|복용|투약|약물|약제|(?<![요절계])약(?:을|이|은|들|과|도|\s|$|\?)"
+    r"|먹어도|먹여도|(?:같이|함께)\s*(?:먹|복용|써|쓰|사용|투여)|임신|임부|임산부"
+    r"|용량|투여량|감량|증량|mg\s*/\s*kg|신기능\s*(조정|보정)|dose|dosing|medication|drug", re.I,
+)
+
+
 # A change of status since the memo was written: pregnancy ended (delivery, miscarriage, termination) or newly
 # confirmed. A question that says so overrides an older memo instead of conflicting with it. "절박유산"(threatened)
 # and "출산 예정" are still pregnancy, so only a completed event counts.
@@ -105,3 +115,8 @@ def merge_question_findings(
 
 def has_medication_context(*texts: str | None) -> bool:
     return any(text and MEDICATION_CONTEXT.search(text) for text in texts)
+
+
+def asks_for_recommendation(question: str) -> bool:
+    """The question asks about diagnoses, tests, referral, medications, pregnancy or doses."""
+    return _RECOMMENDATION_INTENT.search(question) is not None

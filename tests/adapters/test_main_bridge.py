@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime
 import json
-from pathlib import Path
 import unittest
+from datetime import datetime
+from pathlib import Path
 
 from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
 from ax_g_ai.errors import PatientContextUnavailableError, PatientMismatchError
@@ -109,8 +109,8 @@ class RawEmrPayloadMapperTest(unittest.TestCase):
         self.assertEqual(context.data["additional_clinical_data"], {"unrecognizedList": [{"value": "활용할 임상 정보"}]})
 
     def test_enriches_a_prescription_from_the_optional_sqlite_reference_data(self) -> None:
-        from tempfile import TemporaryDirectory
         import sqlite3
+        from tempfile import TemporaryDirectory
 
         with TemporaryDirectory() as directory:
             database = Path(directory) / "reference.sqlite"

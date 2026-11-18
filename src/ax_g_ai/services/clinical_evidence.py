@@ -16,14 +16,16 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter, defaultdict
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Protocol
+from typing import Any, Protocol
 
 from ax_g_ai.corpus.files import CHUNKS_FILE, CONCEPT_FILES
 from ax_g_ai.corpus.gate import is_citable
 from ax_g_ai.corpus.text import HANGUL, normalize, terms
 from ax_g_ai.jsonl import read_jsonl
+from ax_g_ai.services.term_matcher import TermMatcher
 
 _K1, _B = 1.2, 0.75
 _CONCEPT_BONUS = 4.0
@@ -121,11 +123,10 @@ class InMemoryEvidenceIndex:
         self._chunks = tuple(mark_superseded(chunks))
         self._by_id = {chunk.chunk_id: chunk for chunk in self._chunks}
         self._concept_names = concept_names or {}   # normalized name → claim ids that use the concept
-        # Compiled once: >512 names would overflow ``re``'s pattern cache and recompile on every question.
-        self._hangul_names = tuple(name for name in self._concept_names if HANGUL.fullmatch(name))
-        self._latin_names = tuple(
-            (re.compile(r"(?<![a-z0-9])" + re.escape(name) + r"(?![a-z0-9])"), name)
-            for name in self._concept_names if not HANGUL.fullmatch(name)
+        # Korean names are matched in the question with spaces removed; Latin names as whole words.
+        self._hangul_names = TermMatcher((name, name) for name in self._concept_names if HANGUL.fullmatch(name))
+        self._latin_names = TermMatcher(
+            ((name, name) for name in self._concept_names if not HANGUL.fullmatch(name)), boundary="a-z0-9",
         )
         self._doc_terms: list[Counter[str]] = []
         document_frequency: Counter[str] = Counter()
@@ -150,7 +151,7 @@ class InMemoryEvidenceIndex:
         return sum(1 for chunk in self._chunks if chunk.review_status != "approved")
 
     @classmethod
-    def load(cls, corpus_dir: Path, *, include_unreviewed: bool, require_license: bool = False) -> "InMemoryEvidenceIndex":
+    def load(cls, corpus_dir: Path, *, include_unreviewed: bool, require_license: bool = False) -> InMemoryEvidenceIndex:
         return cls.from_records(
             read_jsonl(corpus_dir / CHUNKS_FILE, strict=False),
             concept_names(*(read_jsonl(corpus_dir / name, strict=False) for name in CONCEPT_FILES)),
@@ -161,7 +162,7 @@ class InMemoryEvidenceIndex:
     def from_records(
         cls, records: Iterable[Mapping[str, Any]], names: Mapping[str, frozenset[str]], *, include_unreviewed: bool,
         require_license: bool = False,
-    ) -> "InMemoryEvidenceIndex":
+    ) -> InMemoryEvidenceIndex:
         return cls((chunk_from_record(r) for r in records
                     if is_citable(r, include_unreviewed=include_unreviewed, require_license=require_license)), names)
 
@@ -169,8 +170,7 @@ class InMemoryEvidenceIndex:
         """Claim id → number of distinct concepts named in the question that the claim uses."""
         lowered = normalize(question)
         compact = re.sub(r"\s+", "", lowered)
-        found = [name for name in self._hangul_names if name in compact]
-        found += [name for pattern, name in self._latin_names if pattern.search(lowered)]
+        found = self._hangul_names.terms_in(compact) | self._latin_names.terms_in(lowered)
         hits: dict[str, int] = defaultdict(int)
         for name in found:
             for claim in self._concept_names[name]:

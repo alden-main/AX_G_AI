@@ -25,8 +25,11 @@ from __future__ import annotations
 import json
 import re
 from collections import defaultdict
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
+
+from ax_g_ai.services.term_matcher import TermMatcher
 
 ELDERLY_AGE = 65
 REPRODUCTIVE_AGE = (15, 49)
@@ -63,7 +66,7 @@ class DurTables:
     dataset_id: int | None = None
 
     @classmethod
-    def from_rows(cls, source: Mapping[str, str], rows: Mapping[str, Iterable[Row]], *, dataset_id: int | None = None) -> "DurTables":
+    def from_rows(cls, source: Mapping[str, str], rows: Mapping[str, Iterable[Row]], *, dataset_id: int | None = None) -> DurTables:
         def by(table: str, key: str) -> dict[str, tuple[Row, ...]]:
             grouped: dict[str, list[Row]] = defaultdict(list)
             for row in rows.get(table, ()):
@@ -136,26 +139,18 @@ class _DrugNames:
                     ko.setdefault(key, base)
         self._codes = {base: frozenset(items) for base, items in codes.items()}
         self._labels = labels
-        self._ko = ko
-        self._ko_pattern = self._pattern(ko)
-        english_keys = [base for base in self._codes if len(base) >= _MIN_EN and base.isalpha()]
-        self._en_pattern = re.compile(
-            r"(?<![a-z])(" + "|".join(re.escape(key) for key in sorted(english_keys, key=len, reverse=True)) + r")(?![a-z])"
-        ) if english_keys else None
-
-    @staticmethod
-    def _pattern(keys: Iterable[str]) -> re.Pattern[str] | None:
-        ordered = sorted(keys, key=len, reverse=True)
-        return re.compile("|".join(re.escape(key) for key in ordered)) if ordered else None
+        # Leftmost-longest, non-overlapping: "와파린나트륨" is one drug, not "와파린" plus a fragment.
+        self._ko_names = TermMatcher(ko.items())
+        self._en_names = TermMatcher(
+            ((base, base) for base in self._codes if len(base) >= _MIN_EN and base.isalpha()), boundary="a-z",
+        )
 
     def find(self, text: str) -> tuple[ProposedDrug, ...]:
         found: dict[str, str] = {}
-        if self._ko_pattern is not None:
-            for match in self._ko_pattern.finditer(re.sub(r"\s+", "", text)):
-                found.setdefault(self._ko[match.group(0)], match.group(0))
-        if self._en_pattern is not None:
-            for match in self._en_pattern.finditer(text.lower()):
-                found.setdefault(match.group(1), match.group(1))
+        for match in self._ko_names.longest(re.sub(r"\s+", "", text)):
+            found.setdefault(match.values[0], match.term)
+        for match in self._en_names.longest(text.lower()):
+            found.setdefault(match.term, match.term)
         return tuple(ProposedDrug(name, self._labels[base], self._codes[base]) for base, name in found.items())
 
 

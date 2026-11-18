@@ -25,10 +25,11 @@ import os
 import shutil
 import sys
 import unicodedata
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterator, Mapping
+from typing import Any
 
 from ax_g_ai.jsonl import parse_jsonl
 
@@ -204,7 +205,7 @@ def build(directory: Path, output: Path) -> dict[str, int]:
         (temporary / f"{name}.jsonl").write_bytes(data)
         table_info[name] = {"file": f"{name}.jsonl", "count": len(tables[name]), "sha256": hashlib.sha256(data).hexdigest()}
     manifest = {
-        "format": FORMAT, "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "format": FORMAT, "built_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "source": SOURCE, "inputs": inputs, "tables": table_info, "content_sha256": _content_sha(SOURCE, table_info),
     }
     (temporary / MANIFEST).write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pickle
 import sqlite3
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
 
 from ax_g_ai.reference_data import ReferenceDataError, convert_reference_pickles
 

@@ -6,7 +6,8 @@ function runs again in Python behind it, and alone for the file-based corpus.
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 USABLE_VERIFICATIONS = frozenset({"primary", "local_db"})
 EXCLUDED_CLAIM_STATUSES = frozenset({"폐기", "확인불가"})

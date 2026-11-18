@@ -33,14 +33,18 @@ class CorpusUnavailableError(RuntimeError):
     """No active corpus release is available in the database."""
 
 
-def open_pool(database_url: str, *, max_size: int = 10) -> ConnectionPool:
-    """Connection pool for request-path queries; raises ``psycopg.Error`` (PoolTimeout) when the database is down."""
+def open_pool(database_url: str, *, max_size: int = 10, wait_seconds: float = 0) -> ConnectionPool:
+    """Connection pool for request-path queries; raises ``psycopg.Error`` (PoolTimeout) when the database is down.
+
+    ``wait_seconds`` (a database starting with the API): the pool keeps reconnecting with backoff for up to that
+    long before giving up, at least 3 s.
+    """
     pool = ConnectionPool(
         database_url, min_size=1, max_size=max_size, timeout=3, open=False,
         kwargs={"autocommit": True, "connect_timeout": 3, "row_factory": dict_row},
     )
     try:
-        pool.open(wait=True, timeout=3)
+        pool.open(wait=True, timeout=max(3.0, wait_seconds))
     except BaseException:
         pool.close()  # stop the pool's reconnect workers before the caller falls back to files
         raise
@@ -98,7 +102,7 @@ class PostgresEvidenceRetriever:
     def open(
         cls, database_url: str, *, embedder: TeiEmbeddingClient | None, model_id: str, include_unreviewed: bool,
         require_license: bool = False, **options: Any,
-    ) -> "PostgresEvidenceRetriever":
+    ) -> PostgresEvidenceRetriever:
         """A retriever for the active release with its own pool (tools and tests; the service uses ``LiveCorpus``)."""
         pool = open_pool(database_url)
         try:

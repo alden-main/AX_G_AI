@@ -8,15 +8,15 @@ string, and float values are accepted before they are loaded.
 from __future__ import annotations
 
 import argparse
-from collections.abc import Mapping
-from datetime import UTC, datetime
 import hashlib
 import math
-from pathlib import Path
 import pickle
 import pickletools
 import sqlite3
 import uuid
+from collections.abc import Mapping
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 

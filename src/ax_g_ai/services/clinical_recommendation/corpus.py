@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any
 
 from ax_g_ai.corpus.files import CHUNKS_FILE, CONCEPT_FILES, RULE_FILES
 from ax_g_ai.corpus.gate import is_citable
@@ -28,7 +29,7 @@ class RuleCorpus:
     @classmethod
     def from_rows(
         cls, rows: Mapping[str, Iterable[Mapping[str, Any]]], *, include_unreviewed: bool, require_license: bool = False,
-    ) -> "RuleCorpus":
+    ) -> RuleCorpus:
         def citable(record: Mapping[str, Any]) -> bool:
             return is_citable(record, include_unreviewed=include_unreviewed, require_license=require_license)
 
@@ -56,7 +57,7 @@ class RuleCorpus:
                    {target: tuple(claims) for target, claims in superseded.items()})
 
     @classmethod
-    def load(cls, corpus_dir: Path, *, include_unreviewed: bool, require_license: bool = False) -> "RuleCorpus":
+    def load(cls, corpus_dir: Path, *, include_unreviewed: bool, require_license: bool = False) -> RuleCorpus:
         return cls.from_rows(read_rows(corpus_dir), include_unreviewed=include_unreviewed, require_license=require_license)
 
     def __len__(self) -> int:

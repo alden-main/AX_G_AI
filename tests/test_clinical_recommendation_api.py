@@ -6,11 +6,11 @@ import unittest
 from fastapi.testclient import TestClient
 
 from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
-from ax_g_ai.services.ports import OpenAIRequest, ProviderAnswer
 from ax_g_ai.api import create_app
 from ax_g_ai.services.clinical_chat import ClinicalChatService
 from ax_g_ai.services.clinical_evidence import InMemoryEvidenceIndex
 from ax_g_ai.services.patient_context_store import PatientContextStore
+from ax_g_ai.services.ports import OpenAIRequest, ProviderAnswer
 from tests.services.test_clinical_recommendation import RULES, recommender, source
 
 

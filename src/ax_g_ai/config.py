@@ -119,7 +119,7 @@ class AISettings(_EnvironmentSettings):
         return _require_http_url(value).rstrip("/")
 
     @model_validator(mode="after")
-    def _openai_requirements(self) -> "AISettings":
+    def _openai_requirements(self) -> AISettings:
         if not self.model:
             raise ValueError("AI_MODEL is required")
         if self.provider == AI_PROVIDER_OPENAI:

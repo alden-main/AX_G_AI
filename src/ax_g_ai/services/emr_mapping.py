@@ -21,14 +21,16 @@ import json
 import math
 import re
 import unicodedata
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any
 
 from ax_g_ai.corpus.files import CONCEPT_FILES
 from ax_g_ai.jsonl import read_jsonl
 from ax_g_ai.services.clinical_calculations import ckd_epi_2021_egfr
 from ax_g_ai.services.clinical_corpus import PatientFacts
+from ax_g_ai.services.term_matcher import TermMatcher
 
 LOCAL_ROUTES = frozenset({"topical", "inhaled"})
 _SALT_PREFIXES = ("염산", "황산", "인산", "질산", "초산", "주석산", "엘주석산", "타르타르산", "말레산", "말레인산", "푸마르산", "헤미푸마르산", "숙신산", "브롬화수소산", "메실산", "베실산", "수산", "건조")
@@ -67,15 +69,18 @@ class ConceptCatalog:
     test_by_loinc: Mapping[str, str]
     test_by_alias: Mapping[str, str]
     ko_names: tuple[tuple[str, str], ...]      # (normalized Korean name, ingredient), longest first
-    en_names: tuple[tuple[re.Pattern[str], str], ...]
+    # English names (generic id, RxNorm names) → (catalog position, ingredient): results keep the catalog order.
+    en_names: TermMatcher[tuple[int, str]]
+    # Korean names of three or more characters, found anywhere in normalized text (a question or memo).
+    ko_terms: TermMatcher[str]
     drug_by_corpus_id: Mapping[str, str]
 
     @classmethod
-    def load(cls, corpus_dir: Path) -> "ConceptCatalog":
+    def load(cls, corpus_dir: Path) -> ConceptCatalog:
         return cls.from_rows(*(read_jsonl(corpus_dir / name) for name in CONCEPT_FILES))
 
     @classmethod
-    def from_rows(cls, tests: Iterable[Mapping[str, Any]], drugs: Iterable[Mapping[str, Any]], classes: Iterable[Mapping[str, Any]]) -> "ConceptCatalog":
+    def from_rows(cls, tests: Iterable[Mapping[str, Any]], drugs: Iterable[Mapping[str, Any]], classes: Iterable[Mapping[str, Any]]) -> ConceptCatalog:
         test_map = {row["id"]: row for row in tests}
         by_loinc: dict[str, str] = {}
         by_alias: dict[str, str] = {}
@@ -87,17 +92,19 @@ class ConceptCatalog:
         ingredients = {row["id"]: row for row in drugs if row.get("type") == "ingredient"}
         products = {row["id"]: row for row in drugs if row.get("type") == "product"}
         ko = sorted(((normalize_name(name), cid) for cid, row in ingredients.items() for name in row.get("ko") or ()), key=lambda item: -len(item[0]))
-        en: list[tuple[re.Pattern[str], str]] = []
-        for cid, row in ingredients.items():
-            names = {cid.replace("_", " "), *(item["name"] for item in row.get("rxnorm") or ())}
-            for name in sorted(names, key=len, reverse=True):
-                en.append((re.compile(r"(?<![a-z])" + re.escape(name.lower()) + r"(?![a-z])"), cid))
+        en = TermMatcher(
+            ((name.lower(), (position, cid))
+             for position, (cid, row) in enumerate(ingredients.items())
+             for name in {cid.replace("_", " "), *(item["name"] for item in row.get("rxnorm") or ())}),
+            boundary="a-z",
+        )
+        ko_terms = TermMatcher((name, cid) for name, cid in ko if len(name) >= 3)
         drug_ids: dict[str, str] = {}
         for row in [*ingredients.values(), *products.values()]:
             for alias in row.get("corpus_ids") or (row["id"],):
                 drug_ids.setdefault(alias, row["id"])
         return cls(test_map, ingredients, products, {row["id"]: row for row in classes},
-                   by_loinc, by_alias, tuple(ko), tuple(en), drug_ids)
+                   by_loinc, by_alias, tuple(ko), en, ko_terms, drug_ids)
 
     def suggest_test(self, *names: object) -> str | None:
         for name in names:
@@ -139,8 +146,14 @@ class ConceptCatalog:
         return next(iter(self._english_all(part)), None)
 
     def _english_all(self, text: str) -> list[str]:
+        """Ingredients whose English name occurs in ``text`` as a whole word, in catalog order."""
         lowered = unicodedata.normalize("NFKC", text).lower()
-        return [cid for pattern, cid in self.en_names if pattern.search(lowered)]
+        found = {value for match in self.en_names.matches(lowered) for value in match.values}
+        return [cid for _position, cid in sorted(found)]
+
+    def korean_named(self, normalized_text: str) -> set[str]:
+        """Ingredients whose Korean name (three or more characters) occurs in ``normalize_name`` text."""
+        return {cid for match in self.ko_terms.matches(normalized_text) for cid in match.values}
 
 
 @dataclass(frozen=True)
@@ -165,12 +178,12 @@ class SiteCodeMap:
     meds: Mapping[str, SiteMed] = field(default_factory=dict)
 
     @classmethod
-    def load(cls, path: Path, catalog: ConceptCatalog) -> "SiteCodeMap":
+    def load(cls, path: Path, catalog: ConceptCatalog) -> SiteCodeMap:
         data = json.loads(path.read_text(encoding="utf-8"))
         return cls.from_dict(data, catalog)
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any], catalog: ConceptCatalog) -> "SiteCodeMap":
+    def from_dict(cls, data: Mapping[str, Any], catalog: ConceptCatalog) -> SiteCodeMap:
         errors: list[str] = []
         labs: dict[str, SiteLab] = {}
         for item in data.get("labs") or ():

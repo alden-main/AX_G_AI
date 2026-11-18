@@ -3,7 +3,11 @@ from __future__ import annotations
 import unittest
 
 from ax_g_ai.services.question_facts import (
-    has_medication_context, merge_question_findings, pregnancy_statement, question_findings, stated_pregnancy,
+    has_medication_context,
+    merge_question_findings,
+    pregnancy_statement,
+    question_findings,
+    stated_pregnancy,
 )
 
 

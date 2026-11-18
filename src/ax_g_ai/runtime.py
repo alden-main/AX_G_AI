@@ -9,10 +9,8 @@ from __future__ import annotations
 
 import logging
 import os
-import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import TypeVar
 
 from fastapi import FastAPI
 
@@ -29,8 +27,6 @@ from ax_g_ai.services.patient_context_store import ContextStore, PatientContextS
 from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
 
 logger = logging.getLogger("uvicorn.error")
-_T = TypeVar("_T")
-_STARTUP_RETRY_INTERVAL_SECONDS = 2.0
 
 
 def create_runtime_app() -> FastAPI:
@@ -71,12 +67,10 @@ def _context_store(settings: RuntimeSettings) -> ContextStore:
 
         url = settings.patient_context_redis_url.get_secret_value()
         try:
-            store = _wait_for(
-                lambda: RedisPatientContextStore.connect(
-                    url, ttl_seconds=settings.patient_context_ttl_seconds,
-                    timeout_seconds=settings.patient_context_store_timeout_seconds,
-                ),
-                (redis.RedisError,), settings.dependency_startup_wait_seconds, "redis",
+            store = RedisPatientContextStore.connect(
+                url, ttl_seconds=settings.patient_context_ttl_seconds,
+                timeout_seconds=settings.patient_context_store_timeout_seconds,
+                wait_seconds=settings.dependency_startup_wait_seconds,
             )
         except redis.RedisError as error:
             # Error class only; the URL holds the password.
@@ -161,40 +155,20 @@ def _live_corpus(settings: RuntimeSettings) -> CorpusSource | None:
 
     closers: list[Callable[[], None]] = [embedder.close] if embedder is not None else []
     url = settings.corpus_database_url.get_secret_value()  # type: ignore[union-attr]
-    pool = None  # read by ``build``
 
-    def open_live() -> LiveCorpus:
-        nonlocal pool
-        pool = open_pool(url)
+    try:
+        # The pool itself keeps reconnecting for up to ``dependency_startup_wait_seconds`` (a database starting with the API).
+        pool = open_pool(url, wait_seconds=settings.dependency_startup_wait_seconds)
         try:
             return LiveCorpus(pool, build, refresh_seconds=settings.corpus_refresh_seconds, watch_dur=settings.dur_enabled,
                               on_close=closers)
         except BaseException:
             pool.close()
             raise
-
-    try:
-        return _wait_for(open_live, (psycopg.Error,), settings.dependency_startup_wait_seconds, "postgres")
     except (psycopg.Error, CorpusUnavailableError) as error:
         _close_all(closers)
         logger.warning("clinical_corpus_database_unavailable error_type=%s fallback=files", type(error).__name__)
         return None
-
-
-def _wait_for(connect: Callable[[], _T], errors: tuple[type[Exception], ...], wait_seconds: float, name: str) -> _T:
-    """``connect()`` retried every few seconds for up to ``wait_seconds`` (a dependency starting with the API); re-raises the last error."""
-    deadline = time.monotonic() + wait_seconds
-    attempt = 0
-    while True:
-        attempt += 1
-        try:
-            return connect()
-        except errors as error:
-            if time.monotonic() + _STARTUP_RETRY_INTERVAL_SECONDS > deadline:
-                raise
-            # Error class only: messages may carry the connection URL.
-            logger.warning("startup_dependency_waiting dependency=%s attempt=%d error_type=%s", name, attempt, type(error).__name__)
-            time.sleep(_STARTUP_RETRY_INTERVAL_SECONDS)
 
 
 def _recommender(settings: RuntimeSettings, rules: RuleCorpus | None, dur, *, backend: str) -> ClinicalRecommender | None:

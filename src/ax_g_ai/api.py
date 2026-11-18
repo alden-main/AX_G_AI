@@ -7,24 +7,22 @@
 
 from __future__ import annotations
 
-import asyncio
 import inspect
-from collections.abc import AsyncIterator, Callable, Sequence
-from contextlib import asynccontextmanager
-from dataclasses import dataclass, replace
-from datetime import datetime
 import json
 import logging
-import re
+from collections.abc import AsyncGenerator, AsyncIterator, Callable, Mapping, Sequence
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from datetime import datetime
 from time import perf_counter
-from typing import Annotated, Mapping
+from typing import Annotated, Any
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, StreamingResponse
-from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, SerializerFunctionWrapHandler, StringConstraints, model_serializer
+from starlette.concurrency import run_in_threadpool
 
 from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
 from ax_g_ai.errors import (
@@ -35,14 +33,12 @@ from ax_g_ai.errors import (
     RecommendationUnavailableError,
 )
 from ax_g_ai.services.clinical_chat import ClinicalChatService, evidence_payload
-from ax_g_ai.services.clinical_evidence import EvidenceChunk
-from ax_g_ai.services.clinical_recommendation import Assessment, ClinicalRecommender
-from ax_g_ai.services.clinical_recommendation.schema import AssessmentPayload
+from ax_g_ai.services.clinical_grounding import chat_grounding, recommendation_grounding, require_recommender, with_rule_input
+from ax_g_ai.services.clinical_recommendation import ClinicalRecommender
+from ax_g_ai.services.clinical_recommendation.schema import AssessmentPayload, Evidence
 from ax_g_ai.services.corpus_snapshot import CorpusSnapshot, CorpusSource, StaticCorpus
 from ax_g_ai.services.patient_context_store import ContextStore, PatientContextStore, PreparedRawEmrContext
 from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
-from ax_g_ai.services.question_facts import merge_question_findings, question_findings
-
 
 # Use Uvicorn's error logger so application warnings are emitted by the
 # container's standard logging configuration as well as Uvicorn's own logs.
@@ -56,16 +52,6 @@ _ERROR_RESPONSES: dict[type[Exception], tuple[int, str, str]] = {
     ClinicalChatProviderUnavailableError: (502, "AI_PROVIDER_UNAVAILABLE", "AI 답변을 준비할 수 없습니다."),
     RecommendationUnavailableError: (503, "RECOMMENDATION_UNAVAILABLE", "추천 진단·검사 규칙을 사용할 수 없습니다."),
 }
-# Chat questions that ask for diagnoses, tests, medications or doses also get the stage-2 rule results (with DUR).
-# A question that names a drug, or states pregnancy, gets them as well (``ClinicalRecommender.question_inputs``).
-_RECOMMENDATION_INTENT = re.compile(
-    r"추천|감별|의심|진단명|어떤\s*검사|검사가?\s*필요|필요한\s*검사|추가\s*검사|워크업|workup|work-up|협진|의뢰"
-    r"|병용|금기|상호\s*작용|DUR|처방|복용|투약|약물|약제|(?<![요절계])약(?:을|이|은|들|과|도|\s|$|\?)"
-    r"|먹어도|먹여도|(?:같이|함께)\s*(?:먹|복용|써|쓰|사용|투여)|임신|임부|임산부"
-    r"|용량|투여량|감량|증량|mg\s*/\s*kg|신기능\s*(조정|보정)|dose|dosing|medication|drug", re.I,
-)
-_RULE_EVIDENCE_IN_CHAT = 4
-
 NonBlankText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 
@@ -90,12 +76,33 @@ class PatientContextReadyBody(BaseModel):
     emr_updated_at: datetime
 
 
-class ClinicalChatResponseBody(BaseModel):
+class _OmitsMissingEvidence(BaseModel):
+    """Leaves out ``evidence`` when there is none. Only that key: nulls elsewhere (inside ``assessment`` or an
+    evidence passage) are part of the contract, which ``response_model_exclude_none`` would drop."""
+
+    @model_serializer(mode="wrap")
+    def _omit_missing_evidence(self, handler: SerializerFunctionWrapHandler) -> dict[str, object]:
+        data = handler(self)
+        if data.get("evidence") is None:
+            data.pop("evidence", None)
+        return data
+
+
+class ClinicalChatResponseBody(_OmitsMissingEvidence):
     answer: str
     source: str = _SOURCE
     emr_updated_at: datetime
     # 답변에 붙인 최신화 근거([근거 n] 번호와 같음). 근거가 없으면 필드를 생략한다. 검수 상태는 review_status(데이터)로만 둔다.
-    evidence: list[dict[str, object]] | None = None
+    evidence: list[Evidence] | None = None
+
+
+class EmrSummaryResponseBody(BaseModel):
+    """One-shot summary: never cites evidence, and keeps ``evidence: null`` (the published contract)."""
+
+    answer: str
+    source: str = _SOURCE
+    emr_updated_at: datetime
+    evidence: None = None
 
 
 class ClinicalRecommendationRequestBody(PatientIdBody):
@@ -110,21 +117,14 @@ class ClinicalRecommendationRequestBody(PatientIdBody):
     )
 
 
-class ClinicalRecommendationResponseBody(BaseModel):
+class ClinicalRecommendationResponseBody(_OmitsMissingEvidence):
     answer: str
     source: str = _SOURCE
     emr_updated_at: datetime
     # 규칙 평가 결과(진단·검사·협진·추적 항목, 검사값 범주, DUR, 용량). 구조는 docs/assessment_schema.md.
     # 해당 없는 키는 생략하고, 값이 없는 키는 null로 둔다(SSE meta.assessment와 같은 JSON).
     assessment: AssessmentPayload
-    evidence: list[dict[str, object]] | None = None
-
-    @model_serializer(mode="wrap")
-    def _omit_missing_evidence(self, handler: SerializerFunctionWrapHandler) -> dict[str, object]:
-        data = handler(self)
-        if data.get("evidence") is None:
-            data.pop("evidence", None)
-        return data
+    evidence: list[Evidence] | None = None
 
 
 class ErrorBody(BaseModel):
@@ -259,7 +259,10 @@ def create_app(
     async def health() -> dict[str, str]:
         return {"status": "ok"}
 
-    _responses = {status: {"model": ErrorBody} for status in (400, 403, 404, 502, 503)}
+    _responses: dict[int | str, dict[str, Any]] = {status: {"model": ErrorBody} for status in (400, 403, 404, 502, 503)}
+
+    # Each use case has a JSON endpoint and an SSE ``/stream`` twin. Both prepare the same ``_Call`` (provider
+    # arguments and the response fields besides ``answer``); the SSE ``meta`` event carries those same fields.
 
     @app.post("/internal/v1/patient-context", response_model=PatientContextReadyBody, responses=_responses, tags=["internal"])
     async def prepare_patient_context(
@@ -267,84 +270,10 @@ def create_app(
     ) -> PatientContextReadyBody:
         # A refresh starts by invalidating the old item.  Neither malformed EMR
         # data nor a failed summary may leave stale patient context available.
-        await components.store.discard(body.patient_id)
-        context = _with_rule_input(components.mapper.map(body.patient_id, body.emr_payload), snapshot)
+        context = await _prepare_context(body, components, snapshot)
         summary = await service.summarize_prepared_snapshot(snapshot=context.data)
         await components.store.put(body.patient_id, context)
         return PatientContextReadyBody(patient_id=body.patient_id, patient_summary=summary, emr_updated_at=context.updated_at)
-
-    @app.post("/internal/v1/emr-summary", response_model=ClinicalChatResponseBody, responses=_responses, tags=["internal"])
-    async def emr_summary(body: PatientContextRequestBody, components: Components, service: Service) -> ClinicalChatResponseBody:
-        """Bridge가 전달한 EMR을 저장 없이 한 번 요약한다."""
-        context = components.mapper.map(body.patient_id, body.emr_payload)
-        answer = await service.summarize_once(snapshot=context.data)
-        return ClinicalChatResponseBody(answer=answer, emr_updated_at=context.updated_at)
-
-    @app.post("/internal/v1/clinical-chat", response_model=ClinicalChatResponseBody, response_model_exclude_none=True, responses=_responses, tags=["internal"])
-    async def clinical_chat(
-        body: ClinicalChatRequestBody, components: Components, service: Service, snapshot: Snapshot,
-    ) -> ClinicalChatResponseBody:
-        context, evidence, assessment = await _chat_inputs(body, components, service, snapshot)
-        answer = await service.answer_prepared_snapshot(
-            question=body.question, reference_record=body.reference_record, snapshot=context.data, evidence=evidence,
-            assessment=assessment,
-        )
-        return ClinicalChatResponseBody(answer=answer, emr_updated_at=context.updated_at, evidence=evidence_payload(evidence) or None)
-
-    @app.post("/internal/v1/clinical-chat/stream", response_model=None, responses=_responses, tags=["internal"])
-    async def clinical_chat_stream(
-        body: ClinicalChatRequestBody, request: Request, components: Components, service: Service, snapshot: Snapshot,
-    ) -> StreamingResponse:
-        """Return the same clinical answer as SSE without exposing provider events."""
-        context, evidence, assessment = await _chat_inputs(body, components, service, snapshot)
-        return await _stream(
-            request,
-            lambda: service.stream_prepared_snapshot(
-                question=body.question, reference_record=body.reference_record, snapshot=context.data, evidence=evidence,
-                assessment=assessment,
-            ),
-            {"source": _SOURCE, "emr_updated_at": context.updated_at.isoformat(),
-             **({"evidence": evidence_payload(evidence)} if evidence else {})},
-        )
-
-    @app.get("/internal/v1/clinical-recommendations/findings", tags=["internal"])
-    async def recommendation_findings(snapshot: Snapshot) -> dict[str, object]:
-        """규칙이 사용하는 소견·사건 키 목록(``findings`` 입력용)과 용량 규칙이 있는 약(``dose_drugs`` 입력용)."""
-        rules = _require_recommender(snapshot)
-        return {"findings": list(rules.finding_vocabulary), "rules": len(rules), "unreviewed_rules": rules.unreviewed_count,
-                "dose_drugs": list(rules.dose_drugs)}
-
-    # No response_model_exclude_none: it would also drop the nulls inside ``assessment``.
-    @app.post("/internal/v1/clinical-recommendations", response_model=ClinicalRecommendationResponseBody, responses=_responses, tags=["internal"])
-    async def clinical_recommendations(
-        body: ClinicalRecommendationRequestBody, components: Components, service: Service, snapshot: Snapshot,
-    ) -> ClinicalRecommendationResponseBody:
-        """말뭉치 규칙 평가 + 근거 인용으로 의심 진단·추천 검사·협진 의견을 만든다."""
-        context, evidence, assessment_payload = await _recommendation_inputs(body, components, service, snapshot)
-        answer = await service.recommend(
-            snapshot=context.data, assessment=assessment_payload, evidence=evidence,
-            clinical_note=body.clinical_note, question=body.question,
-        )
-        return ClinicalRecommendationResponseBody(
-            answer=answer, emr_updated_at=context.updated_at, assessment=assessment_payload,
-            evidence=evidence_payload(evidence) or None,
-        )
-
-    @app.post("/internal/v1/clinical-recommendations/stream", response_model=None, responses=_responses, tags=["internal"])
-    async def clinical_recommendations_stream(
-        body: ClinicalRecommendationRequestBody, request: Request, components: Components, service: Service, snapshot: Snapshot,
-    ) -> StreamingResponse:
-        """같은 추천 의견을 SSE로 보낸다. 규칙 평가 결과·근거는 ``meta``에 먼저 담는다."""
-        context, evidence, assessment_payload = await _recommendation_inputs(body, components, service, snapshot)
-        return await _stream(
-            request,
-            lambda: service.stream_recommendation(
-                snapshot=context.data, assessment=assessment_payload, evidence=evidence,
-                clinical_note=body.clinical_note, question=body.question,
-            ),
-            {"source": _SOURCE, "emr_updated_at": context.updated_at.isoformat(), "assessment": assessment_payload,
-             **({"evidence": evidence_payload(evidence)} if evidence else {})},
-        )
 
     @app.post("/internal/v1/patient-context/stream", response_model=None, responses=_responses, tags=["internal"])
     async def prepare_patient_context_stream(
@@ -356,8 +285,7 @@ def create_app(
         fails before ``done`` discards the context, as the JSON endpoint does.
         """
         store = components.store
-        await store.discard(body.patient_id)
-        context = _with_rule_input(components.mapper.map(body.patient_id, body.emr_payload), snapshot)
+        context = await _prepare_context(body, components, snapshot)
         await store.put(body.patient_id, context)
         return await _stream(
             request,
@@ -366,129 +294,114 @@ def create_app(
             on_failure=lambda: store.discard(body.patient_id),
         )
 
+    @app.post("/internal/v1/emr-summary", response_model=EmrSummaryResponseBody, responses=_responses, tags=["internal"])
+    async def emr_summary(body: PatientContextRequestBody, components: Components, service: Service) -> EmrSummaryResponseBody:
+        """Bridge가 전달한 EMR을 저장 없이 한 번 요약한다."""
+        call = _summary_call(body, components)
+        return EmrSummaryResponseBody(answer=await service.summarize_once(**call.arguments), **call.fields)
+
     @app.post("/internal/v1/emr-summary/stream", response_model=None, responses=_responses, tags=["internal"])
     async def emr_summary_stream(
         body: PatientContextRequestBody, request: Request, components: Components, service: Service,
     ) -> StreamingResponse:
         """Stream a one-shot EMR summary without storing the chat context."""
-        context = components.mapper.map(body.patient_id, body.emr_payload)
-        return await _stream(
-            request,
-            lambda: service.stream_summary_once(snapshot=context.data),
-            {"source": _SOURCE, "emr_updated_at": context.updated_at.isoformat()},
-        )
+        call = _summary_call(body, components)
+        return await _stream(request, lambda: service.stream_summary_once(**call.arguments), call.meta)
+
+    @app.post("/internal/v1/clinical-chat", response_model=ClinicalChatResponseBody, responses=_responses, tags=["internal"])
+    async def clinical_chat(
+        body: ClinicalChatRequestBody, components: Components, service: Service, snapshot: Snapshot,
+    ) -> ClinicalChatResponseBody:
+        call = await _chat_call(body, components, service, snapshot)
+        return ClinicalChatResponseBody(answer=await service.answer_prepared_snapshot(**call.arguments), **call.fields)
+
+    @app.post("/internal/v1/clinical-chat/stream", response_model=None, responses=_responses, tags=["internal"])
+    async def clinical_chat_stream(
+        body: ClinicalChatRequestBody, request: Request, components: Components, service: Service, snapshot: Snapshot,
+    ) -> StreamingResponse:
+        """Return the same clinical answer as SSE without exposing provider events."""
+        call = await _chat_call(body, components, service, snapshot)
+        return await _stream(request, lambda: service.stream_prepared_snapshot(**call.arguments), call.meta)
+
+    @app.get("/internal/v1/clinical-recommendations/findings", tags=["internal"])
+    async def recommendation_findings(snapshot: Snapshot) -> dict[str, object]:
+        """규칙이 사용하는 소견·사건 키 목록(``findings`` 입력용)과 용량 규칙이 있는 약(``dose_drugs`` 입력용)."""
+        rules = require_recommender(snapshot)
+        return {"findings": list(rules.finding_vocabulary), "rules": len(rules), "unreviewed_rules": rules.unreviewed_count,
+                "dose_drugs": list(rules.dose_drugs)}
+
+    @app.post("/internal/v1/clinical-recommendations", response_model=ClinicalRecommendationResponseBody, responses=_responses, tags=["internal"])
+    async def clinical_recommendations(
+        body: ClinicalRecommendationRequestBody, components: Components, service: Service, snapshot: Snapshot,
+    ) -> ClinicalRecommendationResponseBody:
+        """말뭉치 규칙 평가 + 근거 인용으로 의심 진단·추천 검사·협진 의견을 만든다."""
+        call = await _recommendation_call(body, components, service, snapshot)
+        return ClinicalRecommendationResponseBody(answer=await service.recommend(**call.arguments), **call.fields)
+
+    @app.post("/internal/v1/clinical-recommendations/stream", response_model=None, responses=_responses, tags=["internal"])
+    async def clinical_recommendations_stream(
+        body: ClinicalRecommendationRequestBody, request: Request, components: Components, service: Service, snapshot: Snapshot,
+    ) -> StreamingResponse:
+        """같은 추천 의견을 SSE로 보낸다. 규칙 평가 결과·근거는 ``meta``에 먼저 담는다."""
+        call = await _recommendation_call(body, components, service, snapshot)
+        return await _stream(request, lambda: service.stream_recommendation(**call.arguments), call.meta)
 
     return app
 
 
-def _require_recommender(snapshot: CorpusSnapshot) -> ClinicalRecommender:
-    if snapshot.recommender is None or len(snapshot.recommender) == 0:
-        raise RecommendationUnavailableError()
-    return snapshot.recommender
+@dataclass(frozen=True)
+class _Call:
+    """One prepared use case: provider ``arguments`` and the response ``fields`` besides ``answer``."""
+
+    arguments: dict[str, Any]
+    fields: dict[str, Any]
+
+    @property
+    def meta(self) -> dict[str, object]:
+        """The SSE ``meta`` event: the same fields, unset ones left out and times in ISO format."""
+        return {key: value.isoformat() if isinstance(value, datetime) else value
+                for key, value in self.fields.items() if value is not None}
 
 
-def _with_rule_input(context: PreparedRawEmrContext, snapshot: CorpusSnapshot) -> PreparedRawEmrContext:
-    """Rule facts mapped with this snapshot's rules: kept when the release matches, else mapped again."""
-    recommender = snapshot.recommender
-    if recommender is None or (context.rule_input is not None and context.rule_release == snapshot.release_id):
-        return context
-    try:
-        rule_input = recommender.prepare(context.rule_source)
-    except Exception as error:  # rule facts are optional; never block EMR preparation or chat
-        logger.warning("clinical_rule_mapping_failed error_type=%s", type(error).__name__)
-        return replace(context, rule_input=None)
-    return replace(context, rule_input=rule_input, rule_release=snapshot.release_id)
+async def _prepare_context(
+    body: PatientContextRequestBody, components: AppComponents, snapshot: CorpusSnapshot,
+) -> PreparedRawEmrContext:
+    """Discard the stored context first, then map the EMR (with this snapshot's rule facts)."""
+    await components.store.discard(body.patient_id)
+    return with_rule_input(components.mapper.map(body.patient_id, body.emr_payload), snapshot)
 
 
-async def _chat_inputs(
+def _summary_call(body: PatientContextRequestBody, components: AppComponents) -> _Call:
+    context = components.mapper.map(body.patient_id, body.emr_payload)
+    return _Call({"snapshot": context.data}, {"source": _SOURCE, "emr_updated_at": context.updated_at})
+
+
+async def _chat_call(
     body: ClinicalChatRequestBody, components: AppComponents, service: ClinicalChatService, snapshot: CorpusSnapshot,
-) -> tuple[PreparedRawEmrContext, tuple[EvidenceChunk, ...], dict[str, object] | None]:
-    context = _with_rule_input(await components.store.get(body.patient_id), snapshot)
+) -> _Call:
+    context = with_rule_input(await components.store.get(body.patient_id), snapshot)
     # Retrieval may call the embedding server and database; keep it off the event loop.
-    evidence, assessment = await run_in_threadpool(_chat_grounding, body.question, context, service, snapshot)
-    return context, evidence, assessment
+    grounding = await run_in_threadpool(chat_grounding, body.question, context, service, snapshot)
+    return _Call(
+        {"question": body.question, "reference_record": body.reference_record, "snapshot": context.data,
+         "evidence": grounding.evidence, "assessment": grounding.assessment},
+        {"source": _SOURCE, "emr_updated_at": context.updated_at, "evidence": evidence_payload(grounding.evidence) or None},
+    )
 
 
-def _chat_grounding(
-    question: str, context: PreparedRawEmrContext, service: ClinicalChatService, snapshot: CorpusSnapshot,
-) -> tuple[tuple[EvidenceChunk, ...], dict[str, object] | None]:
-    """Evidence (and, for diagnosis/test questions, rule results) for one chat question."""
-    searched = service.find_evidence(question, snapshot.evidence)
-    if not searched:
-        # A generic question ("추천 검사는?") has no topic words: add the recorded diagnoses.
-        hint = _diagnosis_hint(context)
-        if hint:
-            searched = service.find_evidence(f"{question} {hint}", snapshot.evidence)
-    recommender = snapshot.recommender
-    if recommender is None or context.rule_input is None:
-        return searched, None
-    stated = recommender.question_inputs(question)
-    if not stated and not _RECOMMENDATION_INTENT.search(question):
-        return searched, None
-    assessment = recommender.assess(context.rule_input, stated.findings, stated.dose_drugs, stated.proposed_drugs)
-    alerts = (assessment.medication_alerts or {}).get("alerts")
-    if not assessment.items and not assessment.lab_interpretations and not alerts and not assessment.dose_assessments:
-        return searched, None
-    rule_chunks = assessment.evidence[:_RULE_EVIDENCE_IN_CHAT]
-    return _merge(rule_chunks, searched), _renumber(assessment, len(rule_chunks))
-
-
-async def _recommendation_inputs(
+async def _recommendation_call(
     body: ClinicalRecommendationRequestBody, components: AppComponents, service: ClinicalChatService, snapshot: CorpusSnapshot,
-) -> tuple[PreparedRawEmrContext, tuple[EvidenceChunk, ...], dict[str, object]]:
-    context = await components.store.get(body.patient_id)
-    rules = _require_recommender(snapshot)
-    context = _with_rule_input(context, snapshot)
-    if context.rule_input is None:
-        # EMR mapping failed: evaluate with no EMR facts.
-        context = replace(context, rule_input=rules.prepare({}))
-    query = " ".join(part for part in (body.question, body.clinical_note, _diagnosis_hint(context)) if part)
-    # The note extraction (an LLM call) and the evidence search do not depend on each other: run them together.
-    extracted, searched = await asyncio.gather(
-        service.extract_findings(note=body.clinical_note, vocabulary=rules.finding_vocabulary) if body.clinical_note else _value({}),
-        run_in_threadpool(service.find_evidence, query, snapshot.evidence) if query else _value(()),
+) -> _Call:
+    context, grounding = await recommendation_grounding(
+        await components.store.get(body.patient_id), service, snapshot,
+        clinical_note=body.clinical_note, question=body.question, findings=body.findings, dose_drugs=body.dose_drugs,
     )
-    stated = rules.question_inputs(body.clinical_note, body.question)
-    # Explicit clinician input wins over the memo (its extraction over the deterministic reading), which wins over
-    # the question text unless the question states a change since the memo ("출산 후"). A disagreement without such
-    # a cue is left unknown and reported as a conflict to confirm.
-    note_findings, conflicts = merge_question_findings({**question_findings(body.clinical_note), **extracted}, body.question)
-    findings: dict[str, bool] = {**note_findings, **(body.findings or {})}
-    dose_drugs = tuple(dict.fromkeys((*(body.dose_drugs or ()), *stated.dose_drugs)))
-    assessment = rules.assess(context.rule_input, findings, dose_drugs, stated.proposed_drugs, conflicts)  # type: ignore[arg-type]
-    evidence = _merge(assessment.evidence, searched)
-    logger.info(
-        "clinical_recommendation_assessed items=%d met=%d findings=%d unknown_findings=%d evidence=%d unreviewed=%s doses=%d",
-        len(assessment.items), sum(1 for item in assessment.items if item.get("status") == "met"),
-        len(assessment.findings_used), len(assessment.unknown_findings), len(evidence), assessment.unreviewed,
-        len(assessment.dose_assessments or ()),
+    return _Call(
+        {"snapshot": context.data, "assessment": grounding.assessment, "evidence": grounding.evidence,
+         "clinical_note": body.clinical_note, "question": body.question},
+        {"source": _SOURCE, "emr_updated_at": context.updated_at, "assessment": grounding.assessment,
+         "evidence": evidence_payload(grounding.evidence) or None},
     )
-    return context, evidence, assessment.as_dict()
-
-
-async def _value(value):
-    return value
-
-
-def _diagnosis_hint(context: PreparedRawEmrContext) -> str:
-    diagnoses = context.data.get("diagnoses")
-    names = [item.get("name_ko") for item in diagnoses if isinstance(item, Mapping)] if isinstance(diagnoses, list) else []
-    return " ".join(name for name in names if isinstance(name, str))[:300]
-
-
-def _merge(first: Sequence[EvidenceChunk], second: Sequence[EvidenceChunk]) -> tuple[EvidenceChunk, ...]:
-    """Concatenate keeping ``first``'s numbering (rule evidence refs point into it)."""
-    seen = {chunk.chunk_id for chunk in first}
-    return (*first, *(chunk for chunk in second if chunk.chunk_id not in seen))
-
-
-def _renumber(assessment: Assessment, kept: int) -> dict[str, object]:
-    """Assessment payload whose evidence refs only point at the first ``kept`` passages."""
-    payload = assessment.as_dict()
-    for group in ("items", "lab_interpretations", "dose_assessments"):
-        for item in payload.get(group) or ():  # type: ignore[union-attr]
-            item["evidence_refs"] = [ref for ref in item.get("evidence_refs", ()) if ref <= kept]
-    return payload
 
 
 async def _stream(
@@ -529,7 +442,8 @@ async def _stream(
         else:
             yield _sse("done", {})
         finally:
-            await deltas.aclose()
+            if isinstance(deltas, AsyncGenerator):  # the service methods are async generators
+                await deltas.aclose()
 
     return StreamingResponse(
         events(),

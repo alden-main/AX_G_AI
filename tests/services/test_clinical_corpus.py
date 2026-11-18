@@ -4,8 +4,8 @@ import json
 import unittest
 from pathlib import Path
 
-from ax_g_ai.services.clinical_corpus import CorpusRuleError, PatientFacts, evaluate
 from ax_g_ai.corpus.gate import is_citable
+from ax_g_ai.services.clinical_corpus import CorpusRuleError, PatientFacts, evaluate
 
 REPO_CORPUS = Path(__file__).resolve().parents[2] / "text_data" / "corpus"
 

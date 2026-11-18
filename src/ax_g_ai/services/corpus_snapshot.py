@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 @dataclass(frozen=True)
 class CorpusSnapshot:
     evidence: EvidenceRetriever | None = None
-    recommender: "ClinicalRecommender | None" = None
+    recommender: ClinicalRecommender | None = None
     # Corpus release in PostgreSQL (None: file corpus). Prepared patient contexts record it so their
     # rule facts are re-mapped when a newer release is active.
     release_id: int | None = None

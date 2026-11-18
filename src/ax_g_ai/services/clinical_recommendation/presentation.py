@@ -5,7 +5,8 @@ Korean labels live here (and in ``doses`` for dose fields); evaluation code neve
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from ax_g_ai.services.clinical_corpus import PatientFacts
 from ax_g_ai.services.clinical_evidence import REGION_LABELS, region_of, sorted_sources

@@ -50,7 +50,7 @@ class PreparedPatientSummary(BaseModel):
         return self.model_dump(mode="json")
 
     @classmethod
-    def from_provider_text(cls, text: str) -> "PreparedPatientSummary":
+    def from_provider_text(cls, text: str) -> PreparedPatientSummary:
         """Structured Output을 검증해 내부 DTO로 바꾼다."""
         try:
             return cls.model_validate_json(text)

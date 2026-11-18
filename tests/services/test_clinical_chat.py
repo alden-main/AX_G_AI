@@ -3,10 +3,10 @@ from __future__ import annotations
 import unittest
 
 from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
-from ax_g_ai.services.ports import OpenAIProviderError, OpenAIRequest, ProviderAnswer
 from ax_g_ai.errors import ClinicalChatProviderUnavailableError
 from ax_g_ai.prompts.clinical import CLINICAL_INSTRUCTIONS, compose_prepared_snapshot_question
 from ax_g_ai.services.clinical_chat import ClinicalChatService
+from ax_g_ai.services.ports import OpenAIProviderError, OpenAIRequest, ProviderAnswer
 from ax_g_ai.services.prepared_patient_summary import PATIENT_SUMMARY_OUTPUT_SCHEMA
 
 

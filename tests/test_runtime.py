@@ -1,18 +1,17 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
 import os
 import time
+from datetime import datetime
 from unittest import TestCase
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from ax_g_ai.services.patient_context_store import PreparedRawEmrContext
 from ax_g_ai.errors import PatientContextNotReadyError
 from ax_g_ai.runtime import create_runtime_app
-from ax_g_ai.services.patient_context_store import PatientContextStore
+from ax_g_ai.services.patient_context_store import PatientContextStore, PreparedRawEmrContext
 
 
 def context() -> PreparedRawEmrContext:

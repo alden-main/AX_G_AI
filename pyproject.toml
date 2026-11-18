@@ -10,6 +10,7 @@ dependencies = [
     "httpx>=0.27,<1",
     "openai>=1.99,<3",
     "psycopg[binary,pool]>=3.2,<4",
+    "pyahocorasick>=2.1,<3",
     "pydantic-settings>=2.4,<3",
     "redis>=5.2,<7",
     "uvicorn[standard]>=0.30,<1",
@@ -17,7 +18,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "httpx>=0.27,<1",
+    "mypy>=1.11",
+    "pytest>=8",
+    "ruff>=0.6",
 ]
 
 [project.scripts]
@@ -30,3 +33,22 @@ ax-g-ai-load-dur = "ax_g_ai.dur_store.loader:main"
 [build-system]
 requires = ["uv_build>=0.12.13,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 140
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+# Existing long lines are kept (no formatter is enforced); zip() lengths are checked by the callers.
+ignore = ["E501", "B905"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.12"
+packages = ["ax_g_ai"]
+mypy_path = "src"
+ignore_missing_imports = true
+check_untyped_defs = true

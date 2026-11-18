@@ -27,8 +27,9 @@ Modules: ``corpus`` (gated records), ``rules`` (stage-2 decisions), ``doses`` (s
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 from ax_g_ai.corpus.files import DOSE_FILE
 from ax_g_ai.services.clinical_corpus import CorpusRuleError
@@ -37,7 +38,12 @@ from ax_g_ai.services.clinical_recommendation.doses import DoseStage
 from ax_g_ai.services.clinical_recommendation.model import Assessment, EvidenceNumbering, Leaf, RuleInput, prompt_view
 from ax_g_ai.services.clinical_recommendation.presentation import Presenter
 from ax_g_ai.services.clinical_recommendation.rules import (
-    FLAG_KINDS, accepted_findings, derive_facts, evaluate_record, flag_vocabulary, rank_item,
+    FLAG_KINDS,
+    accepted_findings,
+    derive_facts,
+    evaluate_record,
+    flag_vocabulary,
+    rank_item,
 )
 from ax_g_ai.services.emr_mapping import SiteCodeMap, map_emr, normalize_name
 from ax_g_ai.services.question_facts import has_medication_context, question_findings
@@ -119,7 +125,7 @@ class ClinicalRecommender:
         if self._doses:
             catalog = self._corpus.catalog
             normalized = normalize_name(text)
-            named = {cid for name, cid in catalog.ko_names if len(name) >= 3 and name in normalized}
+            named = catalog.korean_named(normalized)
             named.update(catalog._english_all(text))
             # Only drugs that have a dose rule: a named drug without one is not reported as unmatched.
             doses = tuple(sorted(cid for cid in named if self._dose_stage.resolve((cid,))[0]))

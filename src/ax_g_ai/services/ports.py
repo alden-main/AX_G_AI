@@ -6,9 +6,9 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping
 from dataclasses import dataclass
-from typing import Mapping, Protocol
+from typing import Protocol
 
 
 class OpenAIProviderError(RuntimeError):

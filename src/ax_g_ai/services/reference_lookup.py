@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import sqlite3
 from collections import Counter
 from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
-import sqlite3
 
+from ax_g_ai.services.term_matcher import TermMatcher
 
 _MAX_MATCHES = 5
 _MIN_NAME_LENGTH = 2
@@ -32,20 +33,20 @@ class SqliteReferenceLookup:
 
     def __init__(self, database_path: Path) -> None:
         self._uri = f"file:{database_path}?mode=ro"
-        self._diseases = [
-            (code, name)
+        self._diseases: TermMatcher[str] = TermMatcher(
+            (name, code)
             for code, name in self._rows("SELECT code, name_ko FROM diseases")
             if len(name) >= _MIN_NAME_LENGTH
-        ]
+        )
         medicines = self._rows("SELECT kd_code, name_ko FROM medicines")
         # A normalized legacy code can map to more than one source record.
         # Do not choose arbitrarily in that case.
         code_counts = Counter(code for code, _name in medicines)
-        self._medicines = [
-            (code, name)
+        self._medicines: TermMatcher[str] = TermMatcher(
+            (name, code)
             for code, name in medicines
             if code_counts[code] == 1 and len(name) >= _MIN_NAME_LENGTH
-        ]
+        )
         self._metadata: dict[str, str] = dict(self._rows("SELECT key, value FROM metadata"))
 
     def medicine(self, code: object) -> MedicineReference | None:
@@ -109,7 +110,8 @@ class SqliteReferenceLookup:
             return []
 
 
-def _named_in(entries: list[tuple[str, str]], question: str) -> list[tuple[str, str]]:
-    """Return the longest names that appear in the question, as the old SQL ordered them."""
-    matches = [(code, name) for code, name in entries if name in question]
+def _named_in(names: TermMatcher[str], question: str) -> list[tuple[str, str]]:
+    """(code, name) of the longest names that appear in the question, as the old SQL ordered them."""
+    found = {match.term: match.values for match in names.matches(question)}
+    matches = [(code, name) for name, codes in found.items() for code in codes]
     return sorted(matches, key=lambda entry: (-len(entry[1]), entry[0]))[:_MAX_MATCHES]

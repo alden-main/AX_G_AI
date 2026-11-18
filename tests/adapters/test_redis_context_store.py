@@ -34,6 +34,30 @@ class ContextCodecTest(unittest.TestCase):
             context_from_json(b'{"v": 99}')
 
 
+class RedisStartupWaitTest(unittest.TestCase):
+    def test_unreachable_server_is_retried_for_the_wait_time_then_raises(self) -> None:
+        from unittest import mock
+
+        import redis
+
+        from ax_g_ai.adapters.redis_context_store import RedisPatientContextStore
+
+        with mock.patch("redis.retry.sleep") as sleep, self.assertRaises(redis.ConnectionError):
+            RedisPatientContextStore.connect("redis://127.0.0.1:1/0", ttl_seconds=60, timeout_seconds=0.2, wait_seconds=6)
+        self.assertEqual([call.args[0] for call in sleep.call_args_list], [2.0, 2.0, 2.0])  # 6 s at a 2 s interval
+
+    def test_no_wait_tries_once(self) -> None:
+        from unittest import mock
+
+        import redis
+
+        from ax_g_ai.adapters.redis_context_store import RedisPatientContextStore
+
+        with mock.patch("redis.retry.sleep") as sleep, self.assertRaises(redis.ConnectionError):
+            RedisPatientContextStore.connect("redis://127.0.0.1:1/0", ttl_seconds=60, timeout_seconds=0.2)
+        sleep.assert_not_called()
+
+
 @unittest.skipUnless(TEST_REDIS_URL, "AX_G_TEST_REDIS_URL not set (needs a disposable Redis)")
 class RedisContextStoreTest(unittest.TestCase):
     def setUp(self) -> None:

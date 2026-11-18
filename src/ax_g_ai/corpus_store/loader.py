@@ -19,20 +19,25 @@ import hashlib
 import json
 import logging
 import sys
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import psycopg
 from psycopg.types.json import Jsonb
 
-from ax_g_ai.corpus_store.embedding import EMBEDDING_DIMENSIONS, EmbeddingError, TeiEmbeddingClient, vector_literal
-from ax_g_ai.corpus_store.precomputed import (
-    PrecomputedEmbeddingError, cosine, embedding_input, embeddings_path, read_precomputed,
-)
 from ax_g_ai.config import ConfigurationError, LoaderSettings
 from ax_g_ai.corpus.files import CHUNKS_FILE, CONCEPT_FILES, DEFAULT_EMBEDDING_MODEL, RECORD_FILES
 from ax_g_ai.corpus.text import terms
+from ax_g_ai.corpus_store.embedding import EMBEDDING_DIMENSIONS, EmbeddingError, TeiEmbeddingClient, vector_literal
+from ax_g_ai.corpus_store.precomputed import (
+    PrecomputedEmbeddingError,
+    cosine,
+    embedding_input,
+    embeddings_path,
+    read_precomputed,
+)
 from ax_g_ai.jsonl import parse_jsonl
 from ax_g_ai.pg_release import ReleaseTable
 

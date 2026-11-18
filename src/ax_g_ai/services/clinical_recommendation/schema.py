@@ -17,7 +17,13 @@ from collections.abc import Mapping
 from typing import Any, Literal, Self
 
 from pydantic import (
-    BaseModel, ConfigDict, Field, ModelWrapValidatorHandler, PrivateAttr, SerializerFunctionWrapHandler, model_serializer,
+    BaseModel,
+    ConfigDict,
+    Field,
+    ModelWrapValidatorHandler,
+    PrivateAttr,
+    SerializerFunctionWrapHandler,
+    model_serializer,
     model_validator,
 )
 
@@ -322,6 +328,19 @@ class FindingConflict(PayloadModel):
 
     clinical_note: bool = Field(description="진료 메모(메모 추출 포함)의 값")
     question: bool = Field(description="질문 텍스트의 값")
+
+
+class Evidence(Provenance):
+    """인용한 최신화 근거 문단 하나(채팅·추천 응답의 ``evidence``, SSE ``meta.evidence``). ``n``은 답변의 ``[근거 n]``."""
+
+    n: int = Field(description="답변의 [근거 n]·평가 항목의 evidence_refs 번호")
+    chunk_id: str
+    claim_id: str
+    title: str
+    text: str
+    review_status: str = Field(description="approved · draft (데이터로만 둔다)")
+    conflicts: list[str] = Field(description="이 문단과 내용이 충돌하는 claim ID")
+    updated_at: str | None = None
 
 
 class AssessmentPayload(PayloadModel):
