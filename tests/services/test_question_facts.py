@@ -18,6 +18,12 @@ class StatedPregnancyTest(unittest.TestCase):
         for text in ("임신 아님", "임신은 아닌데 병용금기 확인", "임신하지 않았다고 함", "임신 가능성 없음", "비임신 여성", "임신 중이 아님",
                      "not pregnant"):
             self.assertIs(stated_pregnancy(text), False, text)
+        # Polite and casual endings of the same denial.
+        for text in ("임신은 아닙니다", "임신이 아닙니다", "임신 아닙니다", "임신 중은 아닙니다", "임신한 상태가 아닙니다",
+                     "임신 상태는 아니에요", "임신 아냐", "임신은 아녜요"):
+            self.assertIs(stated_pregnancy(text), False, text)
+        self.assertEqual(merge_question_findings({"pregnancy": True}, "임신은 아닙니다. 처방 점검해 주세요"),
+                         ({}, {"pregnancy": {"clinical_note": True, "question": False}}))
         # A question about the fact, or the DUR list name, is not a statement.
         for text in ("임신 여부 확인해줘", "임부금기 약 있어?", "혈압 추이 요약", "", None):
             self.assertIsNone(stated_pregnancy(text), text)
