@@ -169,17 +169,13 @@ class EvidenceApiTest(unittest.TestCase):
         self.client.post("/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": payload})
 
     def provider_answer_for_summary(self) -> None:
-        original = self.provider.respond
         summary = json.dumps({"message": "요약", "sections": [], "guidance": "확인"}, ensure_ascii=False)
 
-        async def respond(request):
-            answer = await original(request)
-            if request.output_schema is not None:
-                from ax_g_ai.services.ports import ProviderAnswer
-                return ProviderAnswer(summary)
-            return answer
+        async def respond_structured(request, output_type):
+            self.provider.requests.append(request)
+            return output_type.model_validate_json(summary)
 
-        self.provider.respond = respond  # type: ignore[method-assign]
+        self.provider.respond_structured = respond_structured  # type: ignore[method-assign]
 
     def test_chat_response_and_stream_meta_list_the_cited_evidence(self) -> None:
         body = {"patient_id": "pid-1", "question": "급성 담낭염 수술 시기"}

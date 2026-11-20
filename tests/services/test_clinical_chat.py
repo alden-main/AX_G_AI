@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import unittest
 
+from pydantic import ValidationError
+
 from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
 from ax_g_ai.errors import ClinicalChatProviderUnavailableError
 from ax_g_ai.prompts.clinical import CLINICAL_INSTRUCTIONS, compose_prepared_snapshot_question
 from ax_g_ai.services.clinical_chat import ClinicalChatService
-from ax_g_ai.services.ports import OpenAIProviderError, OpenAIRequest, ProviderAnswer
-from ax_g_ai.services.prepared_patient_summary import PATIENT_SUMMARY_OUTPUT_SCHEMA
+from ax_g_ai.services.ports import OpenAIProviderError, OpenAIRequest, ProviderAnswer, ProviderOutputError
+from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
 
 
 class RecordingProvider:
@@ -16,12 +18,22 @@ class RecordingProvider:
         self.deltas = deltas
         self.fail_after = fail_after
         self.requests: list[OpenAIRequest] = []
+        self.output_types: list[type] = []
 
     async def respond(self, request: OpenAIRequest) -> ProviderAnswer:
         self.requests.append(request)
         if self.fail_after == 0:
             raise OpenAIProviderError("provider failed")
         return ProviderAnswer(self.answer)
+
+    async def respond_structured(self, request: OpenAIRequest, output_type):
+        """Validate the scripted answer like the real adapter does."""
+        self.output_types.append(output_type)
+        answer = await self.respond(request)
+        try:
+            return output_type.model_validate_json(answer.answer)
+        except ValidationError as error:
+            raise ProviderOutputError("invalid structured answer") from error
 
     async def stream(self, request: OpenAIRequest):
         self.requests.append(request)
@@ -61,7 +73,9 @@ class ClinicalChatServiceTest(unittest.IsolatedAsyncioTestCase):
         summary = await ClinicalChatService(provider).summarize_prepared_snapshot(snapshot=SNAPSHOT)
 
         self.assertEqual(summary.sections[0].label, "혈당")
-        self.assertEqual(provider.requests[0].output_schema, PATIENT_SUMMARY_OUTPUT_SCHEMA)
+        self.assertEqual(provider.output_types, [PreparedPatientSummary])
+        self.assertEqual(provider.requests[0].operation, "patient_context_summary")
+        self.assertTrue(provider.requests[0].prompt_version)
         self.assertIn("message에 EMR에서 확인되는 환자 상태를 한 문장", provider.requests[0].input)
         self.assertIn("추가 요약 4~5줄", provider.requests[0].input)
         self.assertIn("새로운 추정 진단이나 감별 진단은 제시하지 마세요", provider.requests[0].input)

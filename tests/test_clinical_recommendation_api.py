@@ -4,13 +4,14 @@ import json
 import unittest
 
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
 from ax_g_ai.api import create_app
 from ax_g_ai.services.clinical_chat import ClinicalChatService
 from ax_g_ai.services.clinical_evidence import InMemoryEvidenceIndex
 from ax_g_ai.services.patient_context_store import PatientContextStore
-from ax_g_ai.services.ports import OpenAIRequest, ProviderAnswer
+from ax_g_ai.services.ports import OpenAIRequest, ProviderAnswer, ProviderOutputError
 from tests.services.test_clinical_recommendation import RULES, recommender, source
 
 
@@ -20,14 +21,20 @@ class ScriptedProvider:
     def __init__(self, extraction: str = '{"present":["hematochezia"],"absent":["prior_hbv_triple_panel"]}') -> None:
         self.extraction = extraction
         self.requests: list[OpenAIRequest] = []
+        self.output_types: dict[str, type] = {}
 
     async def respond(self, request: OpenAIRequest) -> ProviderAnswer:
         self.requests.append(request)
-        if request.output_schema_name == "clinical_findings":
-            return ProviderAnswer(self.extraction)
-        if request.output_schema is not None:
-            return ProviderAnswer('{"message":"로드됨","sections":[],"guidance":"확인"}')
         return ProviderAnswer("의심 진단: 만성 콩팥병 가능성 [근거 1: VA/DoD CKD 2025]")
+
+    async def respond_structured(self, request: OpenAIRequest, output_type):
+        self.requests.append(request)
+        self.output_types[request.operation] = output_type
+        text = self.extraction if request.operation == "finding_extraction" else '{"message":"로드됨","sections":[],"guidance":"확인"}'
+        try:
+            return output_type.model_validate_json(text)
+        except ValidationError as error:
+            raise ProviderOutputError("invalid structured answer") from error
 
     async def stream(self, request: OpenAIRequest):
         self.requests.append(request)
@@ -70,7 +77,9 @@ class ClinicalRecommendationApiTest(unittest.TestCase):
         self.assertNotIn("review_label", body["evidence"][0])
 
         extraction, answer = provider.requests[-2], provider.requests[-1]
-        self.assertIn("hematochezia", extraction.output_schema["properties"]["present"]["items"]["enum"])  # type: ignore[index]
+        self.assertEqual(extraction.operation, "finding_extraction")
+        schema = provider.output_types["finding_extraction"].model_json_schema()
+        self.assertIn("hematochezia", schema["properties"]["present"]["items"]["enum"])
         self.assertIn("[말뭉치 규칙 평가 결과", answer.input)
         # Attribution-only by default: no unsourced suggestions.
         self.assertNotIn("[AI 일반 지식·출처 없음]", answer.input)

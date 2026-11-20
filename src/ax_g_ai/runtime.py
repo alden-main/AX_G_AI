@@ -16,6 +16,7 @@ from fastapi import FastAPI
 
 from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
 from ax_g_ai.adapters.provider import build_provider_client
+from ax_g_ai.adapters.telemetry import instrumentation_from_environment
 from ax_g_ai.api import create_app
 from ax_g_ai.config import AISettings, ConfigurationError, RuntimeSettings
 from ax_g_ai.services.clinical_chat import ClinicalChatService
@@ -45,9 +46,11 @@ def create_runtime_app() -> FastAPI:
         database_path = None
     lookup = None if database_path is None else SqliteReferenceLookup(database_path)
     corpus = _corpus_source(runtime_settings)
+    instrumentation = instrumentation_from_environment(include_content=ai_settings.trace_content)
+    logger.info("ai_tracing enabled=%s content=%s", instrumentation is not None, instrumentation is not None and ai_settings.trace_content)
     return create_app(
         ClinicalChatService(
-            build_provider_client(ai_settings), lookup, None, runtime_settings.evidence_max_chunks,
+            build_provider_client(ai_settings, instrumentation=instrumentation), lookup, None, runtime_settings.evidence_max_chunks,
             allow_general_knowledge=not runtime_settings.attributed_sources_only,
         ),
         RawEmrPayloadMapper(lookup),

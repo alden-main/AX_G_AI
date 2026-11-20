@@ -2,18 +2,16 @@
 
 from .main_bridge import RawEmrPayloadMapper
 from .openai import (
-    OpenAICompatibleChatClient,
     OpenAIProviderError,
     OpenAIRequest,
-    OpenAIResponsesClient,
     ProviderClient,
+    PydanticAIProviderClient,
 )
 
 __all__ = [
-    "OpenAICompatibleChatClient",
     "OpenAIProviderError",
     "OpenAIRequest",
-    "OpenAIResponsesClient",
     "ProviderClient",
+    "PydanticAIProviderClient",
     "RawEmrPayloadMapper",
 ]

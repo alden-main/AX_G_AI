@@ -2,9 +2,17 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Mapping
-from typing import Any
+from pathlib import Path
+from typing import Any, Literal
+
+from pydantic import BaseModel, ConfigDict, create_model
+
+# Fingerprint of this module (every template and the code that composes them): recorded on each
+# provider call's trace so an answer or a benchmark score can be tied to the prompt that produced it.
+PROMPT_VERSION = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()[:12]
 
 CLINICAL_ROLE = "당신은 의료진이 참고용으로 사용하는 임상 정보 요약·분석 도우미입니다."
 
@@ -184,14 +192,19 @@ def prompt_evidence(evidence: list[dict[str, object]]) -> list[dict[str, object]
     return result
 
 
-def finding_extraction_schema(vocabulary: list[str] | tuple[str, ...]) -> dict[str, object]:
-    keys = {"type": "array", "items": {"type": "string", "enum": list(vocabulary)}}
-    return {
-        "type": "object",
-        "properties": {"present": keys, "absent": keys},
-        "required": ["present", "absent"],
-        "additionalProperties": False,
-    }
+class FindingExtraction(BaseModel):
+    """Memo findings as rule keys; ``finding_extraction_output`` narrows the keys to the rule vocabulary."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    present: list[str]
+    absent: list[str]
+
+
+def finding_extraction_output(vocabulary: list[str] | tuple[str, ...]) -> type[FindingExtraction]:
+    """Output model whose keys are an enum of ``vocabulary`` (strict JSON Schema / guided decoding keeps the model to it)."""
+    keys: Any = list[Literal[tuple(vocabulary)]]  # type: ignore[misc, valid-type]
+    return create_model("ClinicalFindings", __base__=FindingExtraction, present=(keys, ...), absent=(keys, ...))
 
 
 def compose_finding_extraction(note: str, vocabulary: list[str] | tuple[str, ...]) -> str:

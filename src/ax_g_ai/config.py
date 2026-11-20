@@ -81,6 +81,9 @@ class AISettings(_EnvironmentSettings):
         disable_thinking: Qwen3 계열처럼 chat template에서 사고 모드를 끌 수 있는
             모델에 ``enable_thinking=false``를 전달할지 여부다.
         max_retries: 첫 토큰 전 연결 오류·429·5xx의 SDK 재시도 횟수다.
+        trace_content: OpenTelemetry 추적(``OTEL_EXPORTER_OTLP_ENDPOINT`` 설정 시)에 프롬프트·지시문·응답 본문을
+            담을지 여부다(기본 끔). 끄면 모델·토큰 수·소요 시간·종료 사유만 남는다. 비식별 EMR도 추적 저장소에
+            쌓이므로 운영에서 켜려면 별도 승인이 필요하다.
     """
 
     model_config = SettingsConfigDict(env_prefix="AI_")
@@ -94,6 +97,7 @@ class AISettings(_EnvironmentSettings):
     disable_thinking: bool = True
     max_output_tokens: PositiveInt | None = None
     max_retries: NonNegativeInt = 2
+    trace_content: bool = False
 
     @model_validator(mode="before")
     @classmethod

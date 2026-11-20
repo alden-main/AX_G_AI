@@ -1,7 +1,7 @@
 """환자 EMR 준비 완료 메시지의 화면용 구조화 계약.
 
-같은 Pydantic 모델이 Provider에 보내는 Structured Output JSON Schema, 응답 검증, API 응답
-본문을 모두 정의한다. 문자열 공백 검증은 ``AfterValidator``로 두어 OpenAI strict 모드가
+같은 Pydantic 모델이 Provider에 보내는 Structured Output JSON Schema(Pydantic AI가 생성), 응답 검증,
+API 응답 본문을 모두 정의한다. 문자열 공백 검증은 ``AfterValidator``로 두어 OpenAI strict 모드가
 지원하지 않는 ``minLength`` 키워드가 스키마에 들어가지 않게 한다.
 """
 
@@ -9,9 +9,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, ValidationError
-
-from ax_g_ai.services.ports import OpenAIProviderError
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
 
 def _non_blank(value: str) -> str:
@@ -48,14 +46,3 @@ class PreparedPatientSummary(BaseModel):
 
     def as_dict(self) -> dict[str, object]:
         return self.model_dump(mode="json")
-
-    @classmethod
-    def from_provider_text(cls, text: str) -> PreparedPatientSummary:
-        """Structured Output을 검증해 내부 DTO로 바꾼다."""
-        try:
-            return cls.model_validate_json(text)
-        except ValidationError as error:
-            raise OpenAIProviderError("Provider returned an invalid patient summary") from error
-
-
-PATIENT_SUMMARY_OUTPUT_SCHEMA: dict[str, object] = PreparedPatientSummary.model_json_schema()
