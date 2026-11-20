@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "origin": "synthetic",
+  "review_status": "draft",
+  "generator": "benchmarks/generate.py",
+  "seed": 20261119,
+  "dur_snapshot": {
+    "source_id": "KR-HIRA-DUR-2026-06",
+    "content_sha256": "6d07282f0f3f47d9836009f5b2e66214ad24040624b2b7c4875a191999972e96"
+  },
+  "hashes": {
+    "inputs.jsonl": "4eb696eaff45f82e71a2da02090fdfe2a776127b50b9c5dc1850f80a02685ebf",
+    "gold.jsonl": "60d59d47116a9a6dba75cad0358b56803ed26ac8a05370443fcd24658af04bc9",
+    "recommendation_inputs.jsonl": "64e39027f8dba9cde99a53f28b4c7387d5b526dbc18de02b5cfea148da72288c",
+    "recommendation_gold.jsonl": "ac3647afadcc27a689e41b4367edd5743eaa60d65b31e7efe8b94c0f84756df6"
+  }
+}

@@ -99,6 +99,9 @@ class PreparedSnapshotPromptTest(unittest.TestCase):
 
         self.assertIn("반드시 한국어로 답변", CLINICAL_INSTRUCTIONS)
         self.assertNotIn("반드시 한국어로 답변", prompt)
+        # Answers must not show the input's English data keys (seen in benchmark answers: "recorded_none 항목").
+        self.assertIn("영문 키·필드 이름", CLINICAL_INSTRUCTIONS)
+        self.assertIn("recorded_none", CLINICAL_INSTRUCTIONS)
         self.assertIn('"blood_sugar"', prompt)
         self.assertNotIn("patient-1", prompt)
         self.assertNotIn("홍길동", prompt)
