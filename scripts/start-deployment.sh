@@ -3,12 +3,19 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 # openai: 외부 AI 제공자 / local: LLM_MODEL을 보고 vLLM·SGLang 중 하나를 고름 / vllm·sglang: 엔진 지정
-usage() { echo "사용법: $0 [openai|local|vllm|sglang] [--redis]" >&2; exit 1; }
+# --redis: 공유 문맥 저장소(compose.redis.yaml) / --observability: AI 호출 추적 화면 Phoenix(compose.observability.yaml)
+usage() { echo "사용법: $0 [openai|local|vllm|sglang] [--redis] [--observability]" >&2; exit 1; }
 mode=${1:-openai}
 case "$mode" in openai|local|vllm|sglang) ;; *) usage ;; esac
-if [[ $# -gt 2 ]]; then usage; fi
 redis=0
-if [[ $# -eq 2 ]]; then [[ $2 == --redis ]] || usage; redis=1; fi
+observability=0
+for option in "${@:2}"; do
+  case "$option" in
+    --redis) redis=1 ;;
+    --observability) observability=1 ;;
+    *) usage ;;
+  esac
+done
 
 if [[ ! -f .env ]]; then
   cp .env.example .env
@@ -76,12 +83,14 @@ if [[ $mode != openai ]]; then
   fi
 fi
 if [[ $redis == 1 ]]; then args+=(-f compose.redis.yaml); fi
+if [[ $observability == 1 ]]; then args+=(-f compose.observability.yaml); fi
 
 # 압축파일에 들어 있는 외부 이미지(PostgreSQL, 임베딩 서버, SGLang)와 KURE-v1 모델을 쓴다(외부 접속 없이 기동).
 # SGLang 이미지는 크므로 SGLang으로 띄울 때만 적재한다.
 bundled_images=()
 names=(postgres embedding)
 if [[ $engine == sglang ]]; then names+=(sglang); fi
+if [[ $observability == 1 ]]; then names+=(phoenix); fi
 for name in "${names[@]}"; do
   [[ -f $name-image.tar ]] || continue
   bundled_images+=("$name-image.tar")
@@ -110,3 +119,7 @@ docker compose "${args[@]}" ps -a
 printf '\n상태 확인: curl --fail http://127.0.0.1:8100/health (vLLM·SGLang에서 AX_G_PORT를 변경했다면 해당 포트 사용)\n로그: docker compose'
 printf ' %q' "${args[@]}"
 printf ' logs --tail=100 ax-g-ai corpus-loader dur-loader%s\n' "${engine:+ $engine}"
+if [[ $observability == 1 ]]; then
+  port=$(env_value PHOENIX_PORT || true)
+  printf '추적 화면: http://<서버>:%s (로그인 admin@localhost / .env의 PHOENIX_ADMIN_PASSWORD, 사내 PC에서 보려면 PHOENIX_BIND=0.0.0.0)\n' "${port:-6006}"
+fi

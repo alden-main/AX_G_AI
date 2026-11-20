@@ -9,6 +9,7 @@ dependencies = [
     "fastapi>=0.115,<1",
     "httpx>=0.27,<1",
     "openai>=1.99,<3",
+    "openinference-instrumentation-pydantic-ai>=0.1",
     "opentelemetry-exporter-otlp-proto-http>=1.30",
     "opentelemetry-sdk>=1.30",
     "psycopg[binary,pool]>=3.2,<4",

@@ -1,0 +1,58 @@
+# AI 호출 추적(Arize Phoenix)을 켭니다(compose.yaml에 덧붙여 씁니다).
+#   docker compose -f compose.yaml -f compose.observability.yaml up -d
+#   배포 스크립트: ./start-deployment.sh <모드> --observability
+# 화면: http://<서버>:6006 (기본은 서버 안에서만 열림, 아래 PHOENIX_BIND). 로그인 admin@localhost / PHOENIX_ADMIN_PASSWORD
+# .env: PHOENIX_SECRET, PHOENIX_ADMIN_SECRET, PHOENIX_ADMIN_PASSWORD(필수)
+#       PHOENIX_BIND(기본 127.0.0.1, 사내 PC에서 보려면 0.0.0.0), PHOENIX_RETENTION_DAYS(기본 30), AI_TRACE_CONTENT(기본 false)
+# 추적 데이터는 말뭉치 PostgreSQL의 phoenix 스키마에 저장합니다(DB 서버를 따로 두지 않습니다). GPU는 쓰지 않습니다.
+# Phoenix를 멈춰도(docker compose stop phoenix) API는 그대로 동작하며, 추적만 버려지고 경고 로그가 남습니다.
+services:
+  phoenix:
+    image: ${PHOENIX_IMAGE:-arizephoenix/phoenix:version-21.3.0}
+    environment:
+      PHOENIX_POSTGRES_HOST: postgres
+      PHOENIX_POSTGRES_PORT: "5432"
+      PHOENIX_POSTGRES_DB: ${CORPUS_DB_NAME:-axg_corpus}
+      PHOENIX_POSTGRES_USER: ${CORPUS_DB_USER:-axg}
+      PHOENIX_POSTGRES_PASSWORD: ${CORPUS_DB_PASSWORD}
+      PHOENIX_SQL_DATABASE_SCHEMA: phoenix
+      # 로그인 필수. 추적 수신(OTLP)도 PHOENIX_ADMIN_SECRET Bearer 토큰이 있어야 받습니다.
+      PHOENIX_ENABLE_AUTH: "true"
+      PHOENIX_SECRET: ${PHOENIX_SECRET:?PHOENIX_SECRET를 .env에 설정하세요(32자 이상, 숫자·소문자 포함)}
+      PHOENIX_ADMIN_SECRET: ${PHOENIX_ADMIN_SECRET:?PHOENIX_ADMIN_SECRET를 .env에 설정하세요(32자 이상, PHOENIX_SECRET와 다르게)}
+      PHOENIX_DEFAULT_ADMIN_INITIAL_PASSWORD: ${PHOENIX_ADMIN_PASSWORD:?PHOENIX_ADMIN_PASSWORD를 .env에 설정하세요}
+      PHOENIX_DEFAULT_RETENTION_POLICY_DAYS: ${PHOENIX_RETENTION_DAYS:-30}
+      # 폐쇄망·PHI: 외부 접속(폰트·텔레메트리·가격표 갱신)과 화면의 AI 비서·외부 LLM Playground를 끕니다.
+      PHOENIX_ALLOW_EXTERNAL_RESOURCES: "false"
+      PHOENIX_TELEMETRY_ENABLED: "false"
+      PHOENIX_DISABLE_MODEL_COST_AUTO_UPDATE: "true"
+      PHOENIX_DISABLE_AGENT_ASSISTANT: "true"
+      PHOENIX_ALLOWED_PROVIDERS: NONE
+    ports:
+      - "${PHOENIX_BIND:-127.0.0.1}:${PHOENIX_PORT:-6006}:6006"
+    mem_limit: ${PHOENIX_MEM_LIMIT:-1g}
+    cpus: ${PHOENIX_CPUS:-1}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:6006/healthz', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ai-data
+      # 화면 포트를 호스트에 게시하기 위한 네트워크입니다(ai-data는 internal이라 포트를 열 수 없습니다).
+      - observability-ui
+    restart: unless-stopped
+
+  ax-g-ai:
+    environment:
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://phoenix:6006/v1/traces
+      OTEL_EXPORTER_OTLP_TRACES_HEADERS: authorization=Bearer%20${PHOENIX_ADMIN_SECRET}
+      # Phoenix 프로젝트 이름(화면 왼쪽 목록).
+      OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=ax-g-ai
+
+networks:
+  observability-ui: {}

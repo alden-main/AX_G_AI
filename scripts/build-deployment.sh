@@ -23,6 +23,9 @@ embedding_image=${AX_G_EMBEDDING_IMAGE:-$default_embedding_image}
 # SGLang 이미지(공식 v0.5.19 + GravityMoE 패치, 약 수십 GB)를 미리 빌드해 넣으려면 AX_G_BUNDLE_SGLANG=1.
 # 넣지 않으면 서버가 SGLang으로 처음 기동할 때 docker/sglang-gravity로 빌드한다(베이스 이미지 다운로드 필요).
 bundle_sglang=${AX_G_BUNDLE_SGLANG:-0}
+# AI 호출 추적 화면(Arize Phoenix, 약 330MB)을 함께 넣는다(start-deployment.sh --observability). 넣지 않으려면 AX_G_BUNDLE_PHOENIX=0.
+bundle_phoenix=${AX_G_BUNDLE_PHOENIX:-1}
+phoenix_image=${AX_G_PHOENIX_IMAGE:-arizephoenix/phoenix:version-21.3.0}
 sglang_image=${AX_G_SGLANG_IMAGE:-ax-g-sglang-gravity:0.5.19}
 # Hugging Face 캐시 형식(models--<org>--<name>)의 모델 디렉터리. 없으면 아래 안내대로 먼저 받는다.
 model_cache=${AX_G_EMBEDDING_MODEL_CACHE:-"$root/hf-cache/models--nlpai-lab--KURE-v1"}
@@ -44,7 +47,7 @@ trap 'rm -rf "$staging"' EXIT
 mkdir -p "$staging/ax-g-ai-deploy"
 bundle="$staging/ax-g-ai-deploy"
 printf '%s\n' "$tag" > "$bundle/image-tag.txt"
-cp "$root/compose.yaml" "$root/compose.vllm.yaml" "$root/compose.sglang.yaml" "$root/compose.redis.yaml" "$root/.env.example" "$root/scripts/start-deployment.sh" "$bundle/"
+cp "$root/compose.yaml" "$root/compose.vllm.yaml" "$root/compose.sglang.yaml" "$root/compose.redis.yaml" "$root/compose.observability.yaml" "$root/.env.example" "$root/scripts/start-deployment.sh" "$bundle/"
 mkdir -p "$bundle/docker"
 cp -R "$root/docker/sglang-gravity" "$bundle/docker/"
 docker buildx build --platform "$platform" --tag "$tag" --output "type=docker,dest=$bundle/image.tar" "$root"
@@ -57,6 +60,7 @@ bundle_image() {
   printf '%s\n' "$2" > "$bundle/$1-image.txt"
 }
 if [[ $bundle_postgres == 1 ]]; then bundle_image postgres "$postgres_image"; fi
+if [[ $bundle_phoenix == 1 ]]; then bundle_image phoenix "$phoenix_image"; fi
 if [[ $bundle_embedding == 1 ]]; then
   bundle_image embedding "$embedding_image"
   mkdir -p "$bundle/hf-cache"
