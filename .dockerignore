@@ -14,6 +14,7 @@ __pycache__
 .env.*
 tests
 docs
+benchmarks
 ai_cc.md
 *.sqlite
 hf-cache

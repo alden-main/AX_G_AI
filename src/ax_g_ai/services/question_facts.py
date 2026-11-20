@@ -121,3 +121,25 @@ def has_medication_context(*texts: str | None) -> bool:
 def asks_for_recommendation(question: str) -> bool:
     """The question asks about diagnoses, tests, referral, medications, pregnancy or doses."""
     return _RECOMMENDATION_INTENT.search(question) is not None
+
+
+# A question that only asks for the patient's recorded values ("최근 혈압 기록 알려줘") needs no general evidence: the
+# lexical index matches its request words ("있으면", "주세요") and finds unrelated passages that the screen would then
+# list as sources. A question that also asks what a value means, a target, a guideline or a treatment still searches.
+_RECORD_LOOKUP = re.compile(
+    r"기록|수치|값|측정|결과|목록|내역|날짜|최근|이전|추이|변화|비교|알려|정리|요약|보여|있나요|있는지|확인해|계산해|구해|얼마"
+    r"|record|value|latest|trend",
+    re.I,
+)
+_KNOWLEDGE_INTENT = re.compile(
+    r"기준|목표|범위|정상|근거|출처|지침|가이드|권고|의미|해석|원인|이유|왜|어떻게|치료|관리\s*(?:방법|목표|계획)"
+    r"|가능성|주의|위험|예후|평가|부작용|영향|설명해|일반적"
+    r"|guideline|target|range|normal|meaning|why|how|treat",
+    re.I,
+)
+
+
+def is_record_lookup(question: str) -> bool:
+    """The question asks only for recorded patient values, not for knowledge, a recommendation, a drug check or a dose."""
+    return (_RECORD_LOOKUP.search(question) is not None and _KNOWLEDGE_INTENT.search(question) is None
+            and not asks_for_recommendation(question))

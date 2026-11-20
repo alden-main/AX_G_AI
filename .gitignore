@@ -228,5 +228,6 @@ text_data/reconstructed/*.md
 text_data/assets/
 
 # Generated deployment bundles
+benchmarks/output/
 ax-g-ai-deploy-*.tar.gz
 ax-g-ai-deploy-*.tar.gz.sha256

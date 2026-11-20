@@ -2,7 +2,8 @@
 
 Both use the request's corpus snapshot, so the passages, the rule results and DUR come from one release.
 
-- Chat (``chat_grounding``): evidence for the question; for a question about diagnoses, tests, drugs or
+- Chat (``chat_grounding``): evidence for the question, except one that only asks for recorded values
+  (``question_facts.is_record_lookup``); for a question about diagnoses, tests, drugs or
   doses (or one that names a drug or states pregnancy) also the stage-2/3 rule results, whose evidence
   comes first so their ``[근거 n]`` references stay valid.
 - Recommendation (``recommendation_grounding``): the clinician's explicit findings over the memo (its
@@ -22,7 +23,7 @@ from ax_g_ai.services.clinical_evidence import EvidenceChunk
 from ax_g_ai.services.clinical_recommendation import Assessment, ClinicalRecommender
 from ax_g_ai.services.corpus_snapshot import CorpusSnapshot
 from ax_g_ai.services.patient_context_store import PreparedRawEmrContext
-from ax_g_ai.services.question_facts import asks_for_recommendation, merge_question_findings, question_findings
+from ax_g_ai.services.question_facts import asks_for_recommendation, is_record_lookup, merge_question_findings, question_findings
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -60,12 +61,15 @@ def chat_grounding(question: str, context: PreparedRawEmrContext, service: Clini
 
     Synchronous: retrieval may call the embedding server and database, so callers run it in a thread.
     """
-    searched = service.find_evidence(question, snapshot.evidence)
-    if not searched:
-        # A generic question ("추천 검사는?") has no topic words: add the recorded diagnoses.
-        hint = diagnosis_hint(context)
-        if hint:
-            searched = service.find_evidence(f"{question} {hint}", snapshot.evidence)
+    searched: tuple[EvidenceChunk, ...] = ()
+    if not is_record_lookup(question):
+        searched = service.find_evidence(question, snapshot.evidence)
+        if not searched and asks_for_recommendation(question):
+            # A generic recommendation question ("추천 검사는?") has no topic words: add the recorded diagnoses.
+            # Only then — for other questions the diagnoses pull in passages unrelated to what was asked.
+            hint = diagnosis_hint(context)
+            if hint:
+                searched = service.find_evidence(f"{question} {hint}", snapshot.evidence)
     recommender = snapshot.recommender
     if recommender is None or context.rule_input is None:
         return Grounding(searched, None)

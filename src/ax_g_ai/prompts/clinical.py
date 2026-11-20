@@ -24,11 +24,19 @@ NO_GENERIC_DISCLAIMER_RULE = """사용자에게 보이는 답변에는 '진단�
 근거의 검수 여부('미검수', '검수 전')나 '참고용', '대조하지 않음' 같은 안내도 쓰지 말고, 대신 그 내용이 어느 출처에 근거했는지를 밝히세요.
 근거가 부족한 내용은 안내하지 말고 답변에서 생략하세요. 단, 응답 형식에서 명시적으로 허용한 기록 부재 표기는 그 형식대로 쓰세요."""
 
+# 입력 JSON의 키 이름(영문 필드명)은 프롬프트 내부 표기일 뿐 의료진 화면의 용어가 아니다.
+CLINICAL_TERMS_RULE = """답변에는 입력 데이터의 영문 키·필드 이름(예: prescriptions, medication_alerts, recorded_none, calculation_context,
+calculation_results, lab_results, med_name, dosage, frequency, duration_days, alerts, unmapped)이나 'EMR JSON의 ○○ 필드', 'diagnoses 목록'
+같은 데이터 구조 표현을 쓰지 마세요. 의료진이 쓰는 한국어 임상 용어로 바꿔 쓰세요: 처방 기록, 진단 기록, 검사 결과, 활력징후,
+환자 기본 정보(나이·성별·체중), 계산값, DUR 점검 결과, '기록상 없음'(빈 목록으로 기록된 항목), 'DUR 점검 제외'(목록에 없는 제품코드).
+사실의 출처를 밝힐 때도 '처방 기록', '2026-05-12 검사 결과'처럼 기록의 종류와 날짜로 쓰세요."""
+
 CLINICAL_INSTRUCTIONS = "\n".join((
     CLINICAL_ROLE,
     KOREAN_LANGUAGE_RULE,
     CLINICAL_REFERENCE_RULES,
     NO_GENERIC_DISCLAIMER_RULE,
+    CLINICAL_TERMS_RULE,
 ))
 
 
@@ -95,6 +103,7 @@ ASSESSMENT_RULES = (
     "권고로 쓰지 말고, 필요할 때만 '참고: 미국 기준은 …'처럼 국내 기준과의 차이를 한 줄로 덧붙이세요. "
     "medication_alerts는 현재 처방을 심평원 DUR 목록(병용금기·연령금기·임부금기·노인주의)과 대조한 결과입니다. alerts가 있으면 "
     "'처방 점검' 항목으로 약 이름·유형·사유(detail, condition_note)를 그대로 알리고 [출처: 심평원 DUR 목록]을 붙이세요. "
+    "DUR 경고를 '처방 점검' 밖의 문장에서 언급할 때도 그 문장마다 [출처: 심평원 DUR 목록]을 붙이세요. "
     "처방 변경이나 용량을 지시하지 말고 목록에 실린 사실로만 쓰세요. status가 possible인 임부금기는 '임신 여부 확인 필요'로 쓰고, "
     "unmapped 처방은 DUR 점검에서 빠졌다고 짧게 밝히세요. products의 proposed가 true인 약은 현재 처방이 아니라 의료진이 질문에서 "
     "언급한 약(proposed 목록)이므로 '추가 시' 점검 결과로 구분해 쓰고, proposed 약에 해당 경고가 없으면 현재 DUR 목록상 해당 금기가 "
