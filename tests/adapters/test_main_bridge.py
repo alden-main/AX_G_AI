@@ -64,6 +64,18 @@ class RawEmrPayloadMapperTest(unittest.TestCase):
         self.assertEqual(context.data, {"calculation_input_needed": ["BMI·체표면적 계산에는 체중(kg)과 키(cm) 입력이 필요합니다.", "Cockcroft–Gault CrCl 계산에는 연령, 성별(male/female), 체중(kg), 혈청 크레아티닌(mg/dL) 입력이 필요합니다.", "CKD-EPI 2021 eGFR 계산에는 연령, 성별(male/female), 혈청 크레아티닌(mg/dL) 입력이 필요합니다."]})
         self.assertEqual(context.updated_at.isoformat(), "2026-09-22T10:30:00+09:00")
 
+    def test_blood_pressure_rows_without_values_do_not_advance_the_update_time(self) -> None:
+        payload = {"patient": {"patientId": "patient-1"}, "bloodPressureList": [
+            {"measuredAt": "2026-09-20T09:00:00", "sbp": 130, "dbp": 80},
+            {"measuredAt": "2026-09-21T09:00:00", "sbp": 128},  # one side only: kept
+            {"measuredAt": "2026-09-22T09:00:00", "sbp": None, "dbp": None},  # no value: dropped, time ignored
+        ]}
+        context = self.mapper.map("patient-1", payload, prepared_at=datetime.fromisoformat("2026-09-23T10:30:00+09:00"))
+
+        self.assertEqual([row["measured_at"] for row in context.data["blood_pressure"]],  # type: ignore[union-attr]
+                         ["2026-09-20T09:00:00+09:00", "2026-09-21T09:00:00+09:00"])
+        self.assertEqual(context.updated_at.isoformat(), "2026-09-21T09:00:00+09:00")
+
     def test_patient_mismatch_and_schema_failures_are_typed_with_safe_diagnostics(self) -> None:
         with self.assertRaises(PatientMismatchError):
             self.mapper.map("other", self.payload)

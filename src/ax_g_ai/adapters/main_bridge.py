@@ -149,8 +149,9 @@ class RawEmrPayloadMapper:
     def _blood_pressure(self, items: object, timestamps: list[datetime]) -> list[dict[str, object]]:
         """혈압 목록을 측정 시각·수축기·이완기 행으로 정규화한다.
 
-        역할: 측정 시각이 없거나 읽을 수 없는 항목은 버리고, 시각이 있는 항목의 시각은 ``timestamps``에 더한다.
-        ``sbp``·``dbp``가 모두 없는 행은 버리고, 남은 행에 단위 ``mmHg``와 정규화하지 않은 추가 필드를 붙인다.
+        역할: 측정 시각이 없거나 읽을 수 없는 항목, ``sbp``·``dbp``가 모두 없는 항목은 버린다(한쪽만 있으면 남긴다).
+        남긴 행에 단위 ``mmHg``와 정규화하지 않은 추가 필드를 붙이고, 남긴 행의 측정 시각만 ``timestamps``에 더한다.
+        값 없는 행이 갱신 시각을 앞당기지 않게 하려는 것으로, 혈당·산소포화도·검사 결과 목록과 같은 기준이다.
         입력:
             items: EMR의 ``bloodPressureList`` 값(목록이 아니면 빈 결과).
             timestamps: 문맥 갱신 시각 계산용으로 측정 시각을 모으는 목록(제자리에서 추가).
@@ -161,12 +162,12 @@ class RawEmrPayloadMapper:
             measured_at = self._timestamp(item.get("measuredAt"))
             if measured_at is None:
                 continue
-            timestamps.append(measured_at)
             row: dict[str, object] = {"measured_at": measured_at.isoformat(), "unit": "mmHg"}
             for key in ("sbp", "dbp"):
                 if (value := deidentify(item.get(key))) is not None:
                     row[key] = value
             if len(row) > 2:
+                timestamps.append(measured_at)
                 result.append({**row, **_extras(item, ("measuredAt", "sbp", "dbp"))})
         return result
 
