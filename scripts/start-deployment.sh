@@ -116,7 +116,7 @@ if [[ $engine == sglang ]]; then
 fi
 docker compose "${args[@]}" up -d --no-build
 docker compose "${args[@]}" ps -a
-printf '\n상태 확인: curl --fail http://127.0.0.1:8100/health (vLLM·SGLang에서 AX_G_PORT를 변경했다면 해당 포트 사용)\n로그: docker compose'
+printf '\n준비 상태 확인: curl --fail http://127.0.0.1:8100/ready (vLLM·SGLang에서 AX_G_PORT를 변경했다면 해당 포트 사용)\n로그: docker compose'
 printf ' %q' "${args[@]}"
 printf ' logs --tail=100 ax-g-ai corpus-loader dur-loader%s\n' "${engine:+ $engine}"
 if [[ $observability == 1 ]]; then

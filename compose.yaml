@@ -109,6 +109,15 @@ services:
         condition: service_completed_successfully
       dur-loader:
         condition: service_completed_successfully
+    # 준비 상태(/ready): AI 설정이 없거나 Redis 문맥 저장소가 응답하지 않으면 unhealthy로 표시됩니다(재시작은 하지 않음).
+    # 말뭉치 DB 상태는 응답 본문의 corpus 항목에서 확인합니다(DB가 끊겨도 메모리 스냅샷으로 계속 답하므로 unhealthy가 아님).
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8100/ready', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      # AX_G_DEPENDENCY_STARTUP_WAIT_SECONDS(기본 120초) 동안 DB·Redis를 기다린 뒤 말뭉치를 불러온다.
+      start_period: 180s
     networks:
       - bridge-ai
       - ai-provider-egress

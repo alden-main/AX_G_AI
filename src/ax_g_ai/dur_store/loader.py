@@ -23,7 +23,7 @@ from psycopg.types.json import Jsonb
 
 from ax_g_ai.config import ConfigurationError, LoaderSettings
 from ax_g_ai.dur_store.snapshot import TABLE_COLUMNS, DurDataError, Snapshot, read_snapshot
-from ax_g_ai.pg_release import ReleaseTable
+from ax_g_ai.pg_release import ReleaseTable, scalar
 
 logger = logging.getLogger("ax_g_ai.dur_store")
 
@@ -68,13 +68,13 @@ def load_dur(conn: psycopg.Connection, snapshot_dir: Path) -> DurLoadResult:
 
 def _insert_dataset(conn: psycopg.Connection, snapshot: Snapshot) -> int:
     source, manifest = snapshot.source, snapshot.manifest
-    dataset_id = conn.execute(
+    dataset_id = scalar(conn.execute(
         "INSERT INTO dur.dataset (source_id, title, url, license, region, built_at, inputs, counts, content_sha256) "
         "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING dataset_id",
         (source["id"], source["title"], source.get("url"), source["license"], source["region"], manifest["built_at"],
          Jsonb(manifest.get("inputs") or {}), Jsonb({name: len(rows) for name, rows in snapshot.rows.items()}),
          snapshot.content_sha256),
-    ).fetchone()[0]
+    ))
     with conn.cursor() as cur:
         for table, columns in TABLE_COLUMNS.items():
             with cur.copy(f"COPY dur.{table} (dataset_id, {', '.join(columns)}) FROM STDIN") as copy:
@@ -85,7 +85,7 @@ def _insert_dataset(conn: psycopg.Connection, snapshot: Snapshot) -> int:
 
 def _validate(conn: psycopg.Connection, dataset_id: int, counts: dict[str, int]) -> None:
     for table, expected in counts.items():
-        actual = conn.execute(f"SELECT count(*) FROM dur.{table} WHERE dataset_id = %s", (dataset_id,)).fetchone()[0]
+        actual = scalar(conn.execute(f"SELECT count(*) FROM dur.{table} WHERE dataset_id = %s", (dataset_id,)))
         if actual != expected:
             raise DurLoadError(f"dataset {dataset_id}: {table} has {actual} rows, expected {expected}")
 

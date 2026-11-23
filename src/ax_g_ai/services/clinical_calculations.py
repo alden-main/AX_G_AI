@@ -72,22 +72,26 @@ def calculate_review_aids(context: object) -> tuple[tuple[CalculationResult, ...
         results.append(CalculationResult("체표면적", round(math.sqrt((height * weight) / 3600), 2), "m²", "Mosteller"))
     else:
         needed.append("BMI·체표면적 계산에는 체중(kg)과 키(cm) 입력이 필요합니다.")
-    missing = [label for label, value in (("연령", age), ("성별(male/female)", sex), ("체중(kg)", weight), ("혈청 크레아티닌(mg/dL)", creatinine)) if value is None]
-    if not missing:
+    if age is not None and sex is not None and weight is not None and creatinine is not None:
         crcl = cockcroft_gault_crcl(age, sex, weight, creatinine)
         results.append(CalculationResult("추정 CrCl", round(crcl, 1), "mL/min", "Cockcroft–Gault (제공된 실제 체중 사용)"))
     else:
+        missing = _missing_labels(("연령", age), ("성별(male/female)", sex), ("체중(kg)", weight), ("혈청 크레아티닌(mg/dL)", creatinine))
         needed.append("Cockcroft–Gault CrCl 계산에는 " + ", ".join(missing) + " 입력이 필요합니다.")
-    egfr_missing = [label for label, value in (("연령", age), ("성별(male/female)", sex), ("혈청 크레아티닌(mg/dL)", creatinine)) if value is None]
-    if not egfr_missing:
+    if age is not None and sex is not None and creatinine is not None:
         egfr = round(ckd_epi_2021_egfr(age, sex, creatinine), 1)
         results.append(CalculationResult(
             "추정 GFR", egfr, "mL/min/1.73m²", "CKD-EPI 2021 크레아티닌(인종 계수 없음)",
             review_notice=_EGFR_NOTICE, category=gfr_category(egfr),
         ))
     else:
+        egfr_missing = _missing_labels(("연령", age), ("성별(male/female)", sex), ("혈청 크레아티닌(mg/dL)", creatinine))
         needed.append("CKD-EPI 2021 eGFR 계산에는 " + ", ".join(egfr_missing) + " 입력이 필요합니다.")
     return tuple(results), tuple(needed)
+
+
+def _missing_labels(*inputs: tuple[str, object]) -> list[str]:
+    return [label for label, value in inputs if value is None]
 
 
 def _number(value: object, minimum: float, maximum: float) -> float | None:

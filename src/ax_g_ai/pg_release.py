@@ -17,12 +17,21 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from importlib import resources
+from typing import Any
 
 import psycopg
 from psycopg import sql
 from psycopg.rows import tuple_row
 
 _MIGRATION_NAME = re.compile(r"^(\d{4})_[a-z0-9_]+\.sql$")
+
+
+def scalar(cursor: psycopg.Cursor[Any]) -> Any:
+    """The first column of the one row a statement returns (``count(*)``, ``RETURNING id``); no row is an error."""
+    row = cursor.fetchone()
+    if row is None:
+        raise psycopg.DataError("statement returned no row")
+    return row[0] if isinstance(row, (tuple, list)) else next(iter(row.values()))
 
 
 class MigrationError(RuntimeError):

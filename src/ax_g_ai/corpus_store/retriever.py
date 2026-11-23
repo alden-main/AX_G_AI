@@ -124,7 +124,7 @@ class PostgresEvidenceRetriever:
         try:
             vector = vector_literal(self._embedder.embed([question])[0])
             with self._pool.connection() as conn:
-                rows = conn.execute(
+                rows = conn.cursor(row_factory=dict_row).execute(
                     "SELECT c.chunk_id, 1 - (e.embedding <=> %(v)s::vector) AS similarity "
                     "FROM corpus.citable_evidence c JOIN corpus.evidence_embedding_1024 e "
                     "  ON e.model_id = %(model)s AND e.body_sha256 = c.body_sha256 "

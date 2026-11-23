@@ -95,11 +95,11 @@ class Presenter:
         if concept.get("kind") == "vaccination":
             category = "예방접종"
         elif section == "exams":
-            category = _EXAM_CATEGORY.get(concept.get("kind"), "검사")
+            category = _EXAM_CATEGORY.get(str(concept.get("kind")), "검사")
         elif key == "review":
             category = "검토"
         else:
-            category = _CATEGORY.get(section) or _TEST_KEY_LABEL.get(key or "", "검사")
+            category = _CATEGORY.get(str(section)) or _TEST_KEY_LABEL.get(key or "", "검사")
         result = {"id": concept_id, "name": concept.get("name_ko") or concept_id.replace("_", " "), "category": category}
         if test.get("reason"):
             result["reason"] = test["reason"]
@@ -154,7 +154,9 @@ class Presenter:
         result = []
         for record in self._corpus.rules.get("lab_thresholds.jsonl", ()):
             lab = record.get("lab")
-            value = facts.values.get(lab) if isinstance(lab, str) else None
+            if not isinstance(lab, str):
+                continue
+            value = facts.values.get(lab)
             if value is None:
                 continue
             for band in record.get("bands") or ():

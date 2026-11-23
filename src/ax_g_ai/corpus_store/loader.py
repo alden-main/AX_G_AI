@@ -39,7 +39,7 @@ from ax_g_ai.corpus_store.precomputed import (
     read_precomputed,
 )
 from ax_g_ai.jsonl import parse_jsonl
-from ax_g_ai.pg_release import ReleaseTable
+from ax_g_ai.pg_release import ReleaseTable, scalar
 
 logger = logging.getLogger("ax_g_ai.corpus_store")
 
@@ -102,11 +102,11 @@ def load_corpus(
         release_id, reused = existing[0], True
     else:
         with conn.transaction():
-            release_id = conn.execute(
+            release_id = scalar(conn.execute(
                 "INSERT INTO corpus.corpus_release (built_at, source_commit, manifest, manifest_sha256) "
                 "VALUES (now(), %s, %s, %s) RETURNING release_id",
                 (source_commit, Jsonb(manifest), manifest_sha),
-            ).fetchone()[0]
+            ))
             _insert_release(conn, release_id, rows)
         reused = False
     _validate(conn, release_id, rows)
@@ -186,7 +186,7 @@ def _validate(conn: psycopg.Connection, release_id: int, rows: dict[str, list[di
         "concept": sum(len(rows[name]) for name in CONCEPT_FILES),
     }
     for table, count in expected.items():
-        actual = conn.execute(f"SELECT count(*) FROM corpus.{table} WHERE release_id = %s", (release_id,)).fetchone()[0]
+        actual = scalar(conn.execute(f"SELECT count(*) FROM corpus.{table} WHERE release_id = %s", (release_id,)))
         if actual != count:
             raise CorpusLoadError(f"release {release_id}: {table} has {actual} rows, expected {count}")
 

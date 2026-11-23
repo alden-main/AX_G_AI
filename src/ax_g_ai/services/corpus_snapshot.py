@@ -31,6 +31,10 @@ class CorpusSource(Protocol):
     @property
     def current(self) -> CorpusSnapshot: ...
 
+    def database_reachable(self) -> bool | None:
+        """Whether the corpus database answers now (None: no database). Synchronous and never raises; for ``GET /ready``."""
+        ...
+
     def close(self) -> None: ...
 
 
@@ -41,6 +45,9 @@ class StaticCorpus:
     @property
     def current(self) -> CorpusSnapshot:
         return self._snapshot
+
+    def database_reachable(self) -> bool | None:
+        return None
 
     def close(self) -> None:
         return None

@@ -49,9 +49,12 @@ class RuleCorpus:
         superseded: dict[str, list[str]] = defaultdict(list)
         for records in rules.values():
             for record in records:
+                claim = record.get("claim_id")
+                if not isinstance(claim, str):  # every rule record has one; a malformed record cannot supersede
+                    continue
                 for target in record.get("preferred_over") or ():
-                    if target != record.get("claim_id") and record.get("claim_id") not in superseded[target]:
-                        superseded[target].append(record.get("claim_id"))
+                    if target != claim and claim not in superseded[target]:
+                        superseded[target].append(claim)
         catalog = ConceptCatalog.from_rows(*(rows.get(name, ()) for name in CONCEPT_FILES))
         return cls(rules, {claim: tuple(items) for claim, items in chunks.items()}, catalog, skipped,
                    {target: tuple(claims) for target, claims in superseded.items()})

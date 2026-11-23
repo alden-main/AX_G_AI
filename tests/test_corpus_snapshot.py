@@ -24,6 +24,9 @@ class SwitchableCorpus:
     def __init__(self, snapshot: CorpusSnapshot) -> None:
         self.current = snapshot
 
+    def database_reachable(self) -> bool | None:
+        return None
+
     def close(self) -> None:
         return None
 

@@ -28,8 +28,8 @@ def deidentify(value: object) -> object | None:
         }
         return result or None
     if isinstance(value, list):
-        result = [safe_value for item in value if (safe_value := deidentify(item)) is not None]
-        return result or None
+        items = [safe_value for item in value if (safe_value := deidentify(item)) is not None]
+        return items or None
     return None
 
 

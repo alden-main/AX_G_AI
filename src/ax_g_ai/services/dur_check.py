@@ -425,7 +425,7 @@ class DurChecker:
             for rule in self._tables.pregnancy.get(item["ingredient_code"], ()):
                 grade = rule.get("grade")
                 alert = {"type": "임부금기", "status": status, "products": [self._product(item)],
-                         "grade": _GRADE_LABELS.get(grade, grade or "미표기"), "detail": rule["detail"],
+                         "grade": _GRADE_LABELS.get(str(grade), grade or "미표기"), "detail": rule["detail"],
                          "notice": self._notice(rule)}
                 if status == "possible":
                     alert["missing"] = [{"kind": "finding", "key": "pregnancy", "label": label}]

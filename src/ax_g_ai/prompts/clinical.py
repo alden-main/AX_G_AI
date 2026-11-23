@@ -183,9 +183,10 @@ def prompt_evidence(evidence: list[dict[str, object]]) -> list[dict[str, object]
     result = []
     for item in evidence:
         row = {key: item[key] for key in _EVIDENCE_PROMPT_FIELDS if item.get(key) not in (None, [], {})}
+        raw_sources = item.get("sources")
         sources = [
             {key: source[key] for key in ("title", "locator") if source.get(key)}
-            for source in item.get("sources") or () if isinstance(source, Mapping) and source.get("title")  # type: ignore[union-attr]
+            for source in (raw_sources if isinstance(raw_sources, list) else ()) if isinstance(source, Mapping) and source.get("title")
         ]
         if sources:
             row["sources"] = sources

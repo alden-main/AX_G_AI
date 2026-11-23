@@ -273,7 +273,8 @@ def map_emr(source: Mapping[str, Any], catalog: ConceptCatalog, site_map: SiteCo
     for value in _vital_values(source, catalog, issues):
         keep(value)
 
-    context = source.get("calculationContext") if isinstance(source.get("calculationContext"), Mapping) else {}
+    raw_context = source.get("calculationContext")
+    context: Mapping[str, Any] = raw_context if isinstance(raw_context, Mapping) else {}
     age = _bounded(context.get("age_years"), 0, 130)
     weight = _bounded(context.get("weight_kg"), 0.3, 500)
     sex = context.get("sex") if context.get("sex") in {"male", "female"} else None

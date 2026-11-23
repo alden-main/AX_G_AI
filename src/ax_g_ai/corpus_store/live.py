@@ -49,6 +49,17 @@ class LiveCorpus:
     def current(self) -> CorpusSnapshot:
         return self._current
 
+    def database_reachable(self) -> bool:
+        """One ``SELECT 1`` through the pool (bounded by its 3 s timeout). The snapshot keeps serving either way:
+        a down database only turns off semantic search and the release check until it is back."""
+        try:
+            with self._pool.connection() as conn:
+                conn.execute("SELECT 1")
+        except psycopg.Error as error:  # PoolTimeout is a psycopg.OperationalError
+            logger.warning("corpus_database_ping_failed error_type=%s", type(error).__name__)
+            return False
+        return True
+
     def refresh(self) -> bool:
         """Swap in a new snapshot if the active release or dataset changed; True when swapped."""
         with self._lock:

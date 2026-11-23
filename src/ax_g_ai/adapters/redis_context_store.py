@@ -26,10 +26,20 @@ STARTUP_RETRY_INTERVAL_SECONDS = 2.0
 
 
 class RedisPatientContextStore:
+    backend = "redis"
+
     def __init__(self, client: aioredis.Redis, *, ttl_seconds: float, prefix: str = _PREFIX) -> None:
         self._client = client
         self._ttl_ms = max(1, int(ttl_seconds * 1000))
         self._prefix = prefix
+
+    async def ping(self) -> bool:
+        """One PING within the client's socket timeout; a failure is logged by error class only (the URL holds the password)."""
+        try:
+            return bool(await self._client.ping())
+        except (redis.RedisError, OSError) as error:
+            logger.warning("patient_context_store_ping_failed error_type=%s", type(error).__name__)
+            return False
 
     @classmethod
     def connect(

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Final, Literal
 
 from pydantic import (
     AfterValidator,
@@ -42,8 +42,8 @@ def _require_http_url(value: str) -> str:
 
 HttpUrlText = Annotated[str, AfterValidator(_require_http_url)]
 
-AI_PROVIDER_OPENAI = "openai"
-AI_PROVIDER_OPENAI_COMPATIBLE = "openai_compatible"
+AI_PROVIDER_OPENAI: Final = "openai"
+AI_PROVIDER_OPENAI_COMPATIBLE: Final = "openai_compatible"
 
 _OPENAI_DEFAULTS = {"base_url": "https://api.openai.com/v1", "model": "gpt-5-mini"}
 # Legacy ``OPENAI_*`` names are read when the matching ``AI_*`` is unset.  The

@@ -132,7 +132,7 @@ class DoseStage:
                 logger.warning("clinical_dose_rule_unsupported record_id=%s error=%s", record.get("id"), error)
                 continue
             rank = (0 if item["priority"] == "primary" else 1, 0 if prescribed else 1,
-                    _ALERT_ORDER.get(item.get("alert"), 9), str(item.get("record_id")))
+                    _ALERT_ORDER.get(str(item.get("alert")), 9), str(item.get("record_id")))
             candidates.append((rank, item, record))
         candidates.sort(key=lambda entry: entry[0])
         result = []

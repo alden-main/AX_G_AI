@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 from collections import Counter
+from collections.abc import Sequence
 from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
@@ -100,7 +101,7 @@ class SqliteReferenceLookup:
         )
         return results
 
-    def _rows(self, sql: str, parameters: tuple[object, ...] | list[object] = ()) -> list[tuple]:
+    def _rows(self, sql: str, parameters: Sequence[object] = ()) -> list[tuple]:
         # Reference enrichment is optional; an unavailable or malformed local
         # DB must not block a patient request.
         try:

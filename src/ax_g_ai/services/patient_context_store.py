@@ -57,7 +57,16 @@ def context_from_json(raw: bytes | str) -> PreparedRawEmrContext:
 
 
 class ContextStore(Protocol):
-    """환자 ID별 문맥 보관. ``get``은 없거나 만료되면 ``PatientContextNotReadyError``를 낸다."""
+    """환자 ID별 문맥 보관. ``get``은 없거나 만료되면 ``PatientContextNotReadyError``를 낸다.
+
+    ``backend``(``memory``·``redis``)와 ``ping``은 준비 상태 확인(``GET /ready``)용이다.
+    """
+
+    backend: str
+
+    async def ping(self) -> bool:
+        """저장소에 지금 읽고 쓸 수 있으면 True. 예외를 내지 않는다."""
+        ...
 
     async def put(self, patient_id: str, context: PreparedRawEmrContext) -> None: ...
 
@@ -76,8 +85,13 @@ class PatientContextStore:
     스레드에서 실행되므로 별도 잠금은 두지 않는다. 매핑된 ``rule_input``도 그대로 보관한다.
     """
 
+    backend = "memory"
+
     def __init__(self, ttl_seconds: float = 12 * 60 * 60, max_entries: int = 1000) -> None:
         self._contexts: TTLCache[str, PreparedRawEmrContext] = TTLCache(maxsize=max_entries, ttl=ttl_seconds)
+
+    async def ping(self) -> bool:
+        return True
 
     async def put(self, patient_id: str, context: PreparedRawEmrContext) -> None:
         self._contexts[patient_id] = context

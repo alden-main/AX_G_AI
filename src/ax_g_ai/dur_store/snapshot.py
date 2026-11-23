@@ -151,24 +151,24 @@ def convert(directory: Path) -> tuple[dict[str, list[dict[str, Any]]], dict[str,
             age = float(row["특정연령"])
         except ValueError:
             continue
-        key = (row["성분코드"], age, _label(row["특정연령단위"]), _label(row["연령처리조건"]), row["상세정보"])
-        ages.setdefault(key, {"ingredient_code": row["성분코드"], "ingredient_name": row["성분명"], "age": age,
-                              "unit": key[2], "condition": key[3], "detail": row["상세정보"],
+        age_key = (row["성분코드"], age, _label(row["특정연령단위"]), _label(row["연령처리조건"]), row["상세정보"])
+        ages.setdefault(age_key, {"ingredient_code": row["성분코드"], "ingredient_name": row["성분명"], "age": age,
+                                  "unit": age_key[2], "condition": age_key[3], "detail": row["상세정보"],
                               "notice_no": row.get("고시번호", ""), "notice_date": row.get("고시일자", "")})
 
     pregnancy: dict[tuple, dict[str, Any]] = {}
     for row in _rows(files["pregnancy"], {"성분코드", "제품코드", "금기등급", "상세정보"}):
         product(row["제품코드"], row["제품명"], row["성분코드"], row["성분명"], row.get("업체명", ""), row.get("급여여부", ""))
-        key = (row["성분코드"], row["금기등급"], row["상세정보"])
-        pregnancy.setdefault(key, {"ingredient_code": row["성분코드"], "ingredient_name": row["성분명"], "grade": row["금기등급"],
+        pregnancy_key = (row["성분코드"], row["금기등급"], row["상세정보"])
+        pregnancy.setdefault(pregnancy_key, {"ingredient_code": row["성분코드"], "ingredient_name": row["성분명"], "grade": row["금기등급"],
                                    "detail": row["상세정보"], "notice_no": row.get("고시번호", ""), "notice_date": row.get("고시일자", "")})
 
     elderly: dict[tuple, dict[str, Any]] = {}
     for kind, category in (("elderly", "노인주의"), ("elderly_nsaid", "노인주의(해열진통소염제)")):
         for row in _rows(files[kind], {"성분코드", "제품코드", "약품상세정보"}):
             product(row["제품코드"], row["제품명"], row["성분코드"], row["성분명"], row.get("업소명", row.get("업체명", "")), row.get("급여여부", ""))
-            key = (row["성분코드"], category, row["약품상세정보"])
-            elderly.setdefault(key, {"ingredient_code": row["성분코드"], "ingredient_name": row["성분명"], "category": category,
+            elderly_key = (row["성분코드"], category, row["약품상세정보"])
+            elderly.setdefault(elderly_key, {"ingredient_code": row["성분코드"], "ingredient_name": row["성분명"], "category": category,
                                      "detail": row["약품상세정보"], "notice_no": row.get("공고번호", ""), "notice_date": row.get("공고일자", "")})
 
     def ordered(rows: dict[Any, dict[str, Any]]) -> list[dict[str, Any]]:

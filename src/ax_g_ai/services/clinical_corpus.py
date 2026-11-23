@@ -59,7 +59,7 @@ def evaluate(condition: Mapping[str, Any], facts: PatientFacts) -> bool | None:
     if condition.get("always") is True:
         return True
     if "var" in condition:
-        operator = _OPERATORS.get(condition.get("op"))
+        operator = _OPERATORS.get(str(condition.get("op")))
         if operator is None:
             raise CorpusRuleError(f"unsupported operator: {condition.get('op')!r}")
         value = facts.values.get(condition["var"])

@@ -10,12 +10,12 @@ from __future__ import annotations
 import inspect
 import json
 import logging
-from collections.abc import AsyncGenerator, AsyncIterator, Callable, Mapping, Sequence
+from collections.abc import AsyncGenerator, AsyncIterator, Callable, Mapping, Sequence, Sized
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from time import perf_counter
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Request
@@ -132,6 +132,31 @@ class ErrorBody(BaseModel):
     message: str
 
 
+class StoreReadiness(BaseModel):
+    backend: str = Field(description="memory(이 프로세스) · redis(워커·인스턴스 공유)")
+    reachable: bool
+
+
+class CorpusReadiness(BaseModel):
+    backend: Literal["postgres", "files", "none"] = Field(
+        description="postgres: DB 활성 릴리스 · files: 파일 말뭉치(DB 미설정 또는 기동 시 연결 실패로 대체) · none: 근거·규칙 없음")
+    database_reachable: bool | None = Field(
+        description="말뭉치 DB 응답 여부(null: DB 미사용). false여도 메모리 스냅샷으로 계속 답하며, 의미 검색과 릴리스 갱신만 멈춘다")
+    release_id: int | None
+    evidence_chunks: int
+    rules: int
+    dur_dataset_id: int | None
+
+
+class ReadinessBody(BaseModel):
+    """``ready``는 AI 호출 요청을 처리할 수 있다는 뜻이다(AI 설정 있음, 문맥 저장소 응답). Provider 연결 자체는 확인하지 않는다."""
+
+    status: Literal["ready", "not_ready"]
+    ai_provider: Literal["configured", "not_configured"]
+    patient_context_store: StoreReadiness
+    corpus: CorpusReadiness
+
+
 @dataclass(frozen=True)
 class AppComponents:
     """Everything the routes use, held on ``app.state.components`` and injected with ``Depends``."""
@@ -221,7 +246,7 @@ def create_app(
             response = _error(500, "INTERNAL_ERROR", "서버 내부 오류가 발생했습니다.")
 
         response.headers["X-Request-ID"] = request_id
-        if response.status_code >= 400:
+        if response.status_code >= 400 and request.url.path != "/ready":  # /ready logs its own state changes
             logger.warning(
                 "api_request_failed request_id=%s status=%s method=%s path=%s duration_ms=%d",
                 request_id,
@@ -258,6 +283,20 @@ def create_app(
     @app.get("/health", tags=["operations"])
     async def health() -> dict[str, str]:
         return {"status": "ok"}
+
+    last_readiness: list[str] = []  # logged on change only: a probe every few seconds must not flood the logs
+
+    @app.get("/ready", response_model=ReadinessBody, responses={503: {"model": ReadinessBody}}, tags=["operations"])
+    async def ready(components: Components) -> JSONResponse:
+        """준비 상태: 실패 조건은 AI 설정 없음·문맥 저장소 무응답(503). 말뭉치 상태는 함께 보고만 한다."""
+        body = await _readiness(components)
+        if last_readiness != [body.status]:
+            log = logger.info if body.status == "ready" else logger.warning
+            log("readiness status=%s ai_provider=%s store=%s store_reachable=%s corpus=%s database_reachable=%s",
+                body.status, body.ai_provider, body.patient_context_store.backend, body.patient_context_store.reachable,
+                body.corpus.backend, body.corpus.database_reachable)
+            last_readiness[:] = [body.status]
+        return JSONResponse(body.model_dump(mode="json"), status_code=200 if body.status == "ready" else 503)
 
     _responses: dict[int | str, dict[str, Any]] = {status: {"model": ErrorBody} for status in (400, 403, 404, 502, 503)}
 
@@ -361,6 +400,32 @@ class _Call:
         """The SSE ``meta`` event: the same fields, unset ones left out and times in ISO format."""
         return {key: value.isoformat() if isinstance(value, datetime) else value
                 for key, value in self.fields.items() if value is not None}
+
+
+async def _readiness(components: AppComponents) -> ReadinessBody:
+    store_reachable = await components.store.ping()
+    # The pool check may wait for a connection: keep it off the event loop.
+    database_reachable = await run_in_threadpool(components.corpus.database_reachable)
+    snapshot = components.corpus.current
+    if snapshot.release_id is not None:
+        backend: Literal["postgres", "files", "none"] = "postgres"
+    elif snapshot.evidence is not None or snapshot.recommender is not None:
+        backend = "files"
+    else:
+        backend = "none"
+    evidence = snapshot.evidence
+    configured = components.service is not None
+    return ReadinessBody(
+        status="ready" if configured and store_reachable else "not_ready",
+        ai_provider="configured" if configured else "not_configured",
+        patient_context_store=StoreReadiness(backend=components.store.backend, reachable=store_reachable),
+        corpus=CorpusReadiness(
+            backend=backend, database_reachable=database_reachable, release_id=snapshot.release_id,
+            evidence_chunks=len(evidence) if isinstance(evidence, Sized) else 0,
+            rules=len(snapshot.recommender) if snapshot.recommender is not None else 0,
+            dur_dataset_id=snapshot.dur_dataset_id,
+        ),
+    )
 
 
 async def _prepare_context(
