@@ -30,15 +30,19 @@ class SchemaTest(unittest.TestCase):
         with self.assertRaises(ValidationError):
             RecommendationItem.model_validate({**ITEM, "missing": [{"kind": "value", "key": "eGFR"}]})  # label required
 
-    def test_only_set_keys_in_their_order_and_explicit_nulls_stay(self) -> None:
+    def test_only_set_keys_in_declaration_order_and_explicit_nulls_stay(self) -> None:
         lab = {"record_id": "L", "claim_id": None, "lab": "Na", "name": "나트륨", "value": 131, "unit": None, "test_date": None,
                "band": "경도", "context": "저나트륨", "review_status": "draft", "region": None, "region_label": "미상",
                "priority": "primary", "evidence_refs": []}
         dumped = LabInterpretation.model_validate(lab).model_dump(mode="json")
-        self.assertEqual(json.dumps(dumped, ensure_ascii=False), json.dumps(lab, ensure_ascii=False))  # 131 stays an int
-        self.assertNotIn("superseded_by", dumped)
+        self.assertEqual(dumped, lab)  # explicit nulls stay; 131 stays an int
+        self.assertIs(type(dumped["value"]), int)
+        self.assertNotIn("superseded_by", dumped)  # never set: left out
+        self.assertEqual(list(dumped), [name for name in LabInterpretation.model_fields if name in lab])
+        # The order a producer passes keys in does not matter.
         reordered = dict(reversed(list(ITEM.items())))
-        self.assertEqual(list(RecommendationItem.model_validate(reordered).model_dump()), list(reordered))
+        self.assertEqual(list(RecommendationItem.model_validate(reordered).model_dump()),
+                         [name for name in RecommendationItem.model_fields if name in ITEM])
 
 
 class ApiSchemaTest(unittest.TestCase):

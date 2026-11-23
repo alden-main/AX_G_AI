@@ -152,7 +152,7 @@ class DoseStage:
         # Dose values must be citable: they get their own passages beyond the stage-2 evidence cap.
         limit = len(numbering.evidence) + self._max_dose_evidence
         for _rank, item, record in candidates[: self._max_dose_items]:
-            # Numbered in ranking order, so set after the ranking (the payload lists it last).
+            # Numbered in ranking order, so set after the ranking.
             item.evidence_refs = numbering.refs(record.get("claim_id"), limit=limit)
             result.append(item)
         return result
@@ -160,7 +160,7 @@ class DoseStage:
     def _dose_item(
         self, record: Mapping[str, Any], mapping: EmrMapping, facts: PatientFacts, *, prescribed: bool, requested: bool,
     ) -> DoseAssessment:
-        """One drug's dose entry. Optional fields are collected in output order and passed only when set."""
+        """One drug's dose entry. Optional fields are passed only when set, so the payload omits the others."""
         ingredient, klass = record.get("ingredient"), record.get("ingredient_class")
         target = str(ingredient or klass)
         age = facts.values.get("age")
@@ -270,10 +270,7 @@ class DoseStage:
     def _dose_renal(
         self, record: Mapping[str, Any], mapping: EmrMapping, facts: PatientFacts, adult: bool, missing: list[MissingInput],
     ) -> tuple[DoseRenal, Mapping[str, Any] | None]:
-        """The renal value and band shown, and the rule's band itself (for the daily-maximum check), if one applies.
-
-        Fields are assigned in their declared order, which is also the output order.
-        """
+        """The renal value and band shown, and the rule's band itself (for the daily-maximum check), if one applies."""
         param = record["renal_param"]
         renal = DoseRenal(param=param, label=self._present.concept_name(param),
                           **({"method": record["renal_method"]} if record.get("renal_method") else {}))

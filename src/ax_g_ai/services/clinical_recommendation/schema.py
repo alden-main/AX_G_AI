@@ -7,11 +7,9 @@ where it is made (``extra="forbid"``); ``/docs`` shows the real structure. Only 
 the corpus or another module are validated from a dict at their boundary (dose-condition rules,
 the DUR source, memo/question finding conflicts).
 
-Serialization keeps exactly the keys that were set, in the order they were passed (``PayloadModel``):
-an optional key that does not apply is omitted, a key set to ``null`` stays ``null``. That order is
-the API and prompt JSON contract (see ``docs/assessment_schema.md``) and differs from the field
-declaration order (e.g. provenance fields come after the record's own fields), so it is not left to
-the declarations.
+Serialization keeps exactly the keys that were set (``PayloadModel``): an optional key that does not
+apply is omitted, a key set to ``null`` stays ``null`` (see ``docs/assessment_schema.md``). Keys come in
+field declaration order (inherited provenance fields first), whatever order the producer passed them in.
 
 Types: values the code computes (status, priority, kinds, evidence numbers) are strict; text that
 comes from corpus records is ``Text`` (a string or a list of strings); structures defined by the
@@ -20,19 +18,9 @@ corpus itself (extra fields of dose-condition rules, reference values) stay open
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import Any, Literal, Self
+from typing import Any, Literal
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    ModelWrapValidatorHandler,
-    PrivateAttr,
-    SerializerFunctionWrapHandler,
-    model_serializer,
-    model_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, SerializerFunctionWrapHandler, model_serializer
 
 Text = str | list[str]
 Number = int | float
@@ -43,30 +31,19 @@ ItemKind = Literal["diagnosis", "referral", "workup", "monitoring"]
 
 
 class PayloadModel(BaseModel):
-    """Forbids unknown keys; serializes only the keys that were set, in the order they were given.
+    """Forbids unknown keys; serializes only the keys that were set (passed, or assigned later such as
+    ``evidence_refs``), in declaration order.
 
-    "Given" is the keyword (or dict) order at construction; a field assigned afterwards (e.g. ``evidence_refs``,
-    numbered once the items are ranked) follows them in declaration order. The order matters: the payload is
-    also the prompt input, and an unchanged byte order keeps the inference server's prefix cache warm.
+    A serializer rather than ``exclude_unset`` at the call sites, because the payload is nested in API
+    response models whose own defaults (``source``) must still be written, and it applies at every level.
     """
 
     model_config = ConfigDict(extra="forbid")
-    _key_order: tuple[str, ...] = PrivateAttr(default=())
-
-    @model_validator(mode="wrap")
-    @classmethod
-    def _remember_key_order(cls, data: Any, handler: ModelWrapValidatorHandler[Self]) -> Self:
-        model = handler(data)
-        if isinstance(data, Mapping):
-            model._key_order = tuple(data)
-        return model
 
     @model_serializer(mode="wrap")
-    def _set_keys_in_order(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
-        data = handler(self)
+    def _set_keys_only(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         present = self.model_fields_set | set(self.model_extra or {})
-        order = [key for key in self._key_order if key in data] + [key for key in data if key not in self._key_order]
-        return {key: data[key] for key in order if key in present}
+        return {key: value for key, value in handler(self).items() if key in present}
 
 
 class Source(PayloadModel):

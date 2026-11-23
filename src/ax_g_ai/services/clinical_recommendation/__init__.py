@@ -190,7 +190,7 @@ class ClinicalRecommender:
                 possible += 1
                 if possible > self._max_possible:
                     continue
-            # Numbered in ranking order, so set after the ranking (the payload lists it last).
+            # Numbered in ranking order, so set after the ranking.
             item.evidence_refs = numbering.refs(record.get("claim_id"))
             items.append(item)
         labs: list[LabInterpretation] = []

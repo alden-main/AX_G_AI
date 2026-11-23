@@ -46,7 +46,7 @@ class Presenter:
     def item(
         self, record: Mapping[str, Any], status: Status, leaves: list[Leaf], facts: PatientFacts, extra: Mapping[str, Any]
     ) -> RecommendationItem:
-        """The payload entry of a ``met``/``possible`` rule. Keys are passed in output order (the API and prompt JSON)."""
+        """The payload entry of a ``met``/``possible`` rule; optional fields are passed only when they apply."""
         # ``rules.evaluate_record`` gives a status only to these four kinds; the model validates it again.
         kind = cast(ItemKind, record.get("kind"))
         # Fields that only some kinds or records have: passed only when set, so the payload omits the others.
