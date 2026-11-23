@@ -77,7 +77,7 @@ def chat_grounding(question: str, context: PreparedRawEmrContext, service: Clini
     if not stated and not asks_for_recommendation(question):
         return Grounding(searched, None)
     assessment = recommender.assess(context.rule_input, stated.findings, stated.dose_drugs, stated.proposed_drugs)
-    alerts = (assessment.medication_alerts or {}).get("alerts")
+    alerts = assessment.medication_alerts.alerts if assessment.medication_alerts is not None else None
     if not assessment.items and not assessment.lab_interpretations and not alerts and not assessment.dose_assessments:
         return Grounding(searched, None)
     rule_chunks = assessment.evidence[:RULE_EVIDENCE_IN_CHAT]

@@ -88,7 +88,8 @@ def emr(*, age: float | None = 72, sex: str = "female", weight: float | None = 5
 
 
 def doses_by_id(assessment) -> dict[str, dict]:
-    return {item["record_id"]: item for item in assessment.dose_assessments}
+    """Dose entries in their API form (the payload dicts), by record id."""
+    return {item["record_id"]: item for item in assessment.as_dict()["dose_assessments"]}
 
 
 class FormulaTest(unittest.TestCase):
@@ -170,7 +171,7 @@ class DoseAssessmentTest(unittest.TestCase):
         self.assertEqual((insulin["drug"]["type"], insulin["calculations"][0]["range"]), ("class", [5.8, 11.6]))
         self.assertEqual(insulin["region"], "KR")
         self.assertNotIn("DR-REGIMEN-ONLY", items)
-        self.assertEqual({entry["input"]: entry["reason"] for entry in assessment.unmatched_dose_drugs},
+        self.assertEqual({entry.input: entry.reason for entry in assessment.unmatched_dose_drugs},
                          {"아세트아미노펜": "말뭉치에 이 약의 용량 규칙 없음", "모르는약": "성분을 확인할 수 없음"})
         payload = assessment.as_dict()
         self.assertNotIn("dose_notice", payload)

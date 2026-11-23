@@ -83,7 +83,7 @@ def _dur(emr, *, pregnant, proposed_text, conflict) -> dict[str, Any]:
     age, sex = _context(emr)
     proposed = checker.find_drugs(proposed_text) if proposed_text and has_medication_context(proposed_text) else ()
     result = checker.check(_medications(emr), age_years=age, sex=sex, pregnant=pregnant, proposed=proposed,
-                           pregnancy_conflict=conflict).as_dict()
+                           pregnancy_conflict=conflict).model_dump(mode='json')
     alerts = sorted((alert_summary(a) for a in result['alerts']), key=alert_key)
     return {'alerts': alerts, 'unmapped': sorted(u['med_code'] or '' for u in result['unmapped']),
             'proposed': sorted(p['ingredient_name'] for p in result.get('proposed', []))}

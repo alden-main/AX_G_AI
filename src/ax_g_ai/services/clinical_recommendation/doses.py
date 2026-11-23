@@ -9,11 +9,11 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable, Mapping
-from typing import Any
+from typing import Any, Literal
 
 from ax_g_ai.services.clinical_corpus import CorpusRuleError, PatientFacts, evaluate
+from ax_g_ai.services.clinical_dosing import MissingInput as MissingFormulaInput
 from ax_g_ai.services.clinical_dosing import (
-    MissingInput,
     band_daily_max_mg,
     evaluate_formula,
     formula_variables,
@@ -27,6 +27,19 @@ from ax_g_ai.services.clinical_recommendation.corpus import RuleCorpus
 from ax_g_ai.services.clinical_recommendation.model import EvidenceNumbering, unique_missing
 from ax_g_ai.services.clinical_recommendation.presentation import Presenter
 from ax_g_ai.services.clinical_recommendation.rules import condition_leaves
+from ax_g_ai.services.clinical_recommendation.schema import (
+    DoseAssessment,
+    DoseCalculation,
+    DoseCheck,
+    DoseConditionRule,
+    DoseDrug,
+    DosePrescription,
+    DoseRenal,
+    LabeledValue,
+    MissingInput,
+    RenalBand,
+    UnmatchedDoseDrug,
+)
 from ax_g_ai.services.emr_mapping import EmrMapping, MedicationMatch
 
 logger = logging.getLogger("uvicorn.error")
@@ -82,11 +95,11 @@ class DoseStage:
     def targets(self) -> frozenset[str]:
         return self._dose_targets
 
-    def resolve(self, names: Iterable[str]) -> tuple[set[str], tuple[Mapping[str, str], ...]]:
+    def resolve(self, names: Iterable[str]) -> tuple[set[str], tuple[UnmatchedDoseDrug, ...]]:
         """Dose-rule targets for the clinician's drug list (ids, or Korean/English ingredient names)."""
         catalog = self._corpus.catalog
         targets: set[str] = set()
-        unmatched: list[dict[str, str]] = []
+        unmatched: list[UnmatchedDoseDrug] = []
         for raw in names:
             text = raw.strip() if isinstance(raw, str) else ""
             if not text:
@@ -106,18 +119,18 @@ class DoseStage:
                 for class_id in (catalog.ingredients.get(catalog.drug_by_corpus_id.get(concept_id, concept_id)) or {}).get("classes") or ():
                     found.update(catalog.classes.get(class_id, {}).get("corpus_ids") or (class_id,))
             if not found:
-                unmatched.append({"input": text, "reason": "성분을 확인할 수 없음"})
+                unmatched.append(UnmatchedDoseDrug(input=text, reason="성분을 확인할 수 없음"))
             elif not found & self._dose_targets:
-                unmatched.append({"input": text, "reason": "말뭉치에 이 약의 용량 규칙 없음"})
+                unmatched.append(UnmatchedDoseDrug(input=text, reason="말뭉치에 이 약의 용량 규칙 없음"))
             targets.update(found)
         return targets, tuple(unmatched)
 
     def assessments(
         self, mapping: EmrMapping, facts: PatientFacts, requested: set[str], numbering: EvidenceNumbering,
-    ) -> list[dict[str, Any]]:
+    ) -> list[DoseAssessment]:
         medications = facts.medications or frozenset()
         classes = facts.medication_classes or frozenset()
-        candidates: list[tuple[tuple, dict[str, Any], Mapping[str, Any]]] = []
+        candidates: list[tuple[tuple, DoseAssessment, Mapping[str, Any]]] = []
         for record in self._dose_rules:
             ingredient, klass = record.get("ingredient"), record.get("ingredient_class")
             target = ingredient or klass
@@ -131,71 +144,78 @@ class DoseStage:
             except CorpusRuleError as error:
                 logger.warning("clinical_dose_rule_unsupported record_id=%s error=%s", record.get("id"), error)
                 continue
-            rank = (0 if item["priority"] == "primary" else 1, 0 if prescribed else 1,
-                    _ALERT_ORDER.get(str(item.get("alert")), 9), str(item.get("record_id")))
+            rank = (0 if item.priority == "primary" else 1, 0 if prescribed else 1,
+                    _ALERT_ORDER.get(str(item.alert), 9), str(item.record_id))
             candidates.append((rank, item, record))
         candidates.sort(key=lambda entry: entry[0])
         result = []
         # Dose values must be citable: they get their own passages beyond the stage-2 evidence cap.
         limit = len(numbering.evidence) + self._max_dose_evidence
         for _rank, item, record in candidates[: self._max_dose_items]:
-            item["evidence_refs"] = numbering.refs(record.get("claim_id"), limit=limit)
+            # Numbered in ranking order, so set after the ranking (the payload lists it last).
+            item.evidence_refs = numbering.refs(record.get("claim_id"), limit=limit)
             result.append(item)
         return result
 
     def _dose_item(
         self, record: Mapping[str, Any], mapping: EmrMapping, facts: PatientFacts, *, prescribed: bool, requested: bool,
-    ) -> dict[str, Any]:
+    ) -> DoseAssessment:
+        """One drug's dose entry. Optional fields are collected in output order and passed only when set."""
         ingredient, klass = record.get("ingredient"), record.get("ingredient_class")
         target = str(ingredient or klass)
         age = facts.values.get("age")
-        missing: list[dict[str, str]] = []
-        item: dict[str, Any] = {
-            "record_id": record.get("id"), "claim_id": record.get("claim_id"), "kind": "dose", "topic": record.get("topic"),
-            "drug": {"id": target, "name": self._present.drug_name(target), "type": "ingredient" if ingredient else "class"},
-            "anchor": [name for name, flag in (("prescribed", prescribed), ("requested", requested)) if flag],
-        }
+        missing: list[MissingInput] = []
+        optional: dict[str, Any] = {}
         if record.get("indication"):
-            item["indication"] = record["indication"]
+            optional["indication"] = record["indication"]
         prescriptions = [self._dose_prescription(med) for med in mapping.medications if self._med_matches(med, ingredient, klass)]
         if prescriptions:
-            item["prescriptions"] = prescriptions
+            optional["prescriptions"] = prescriptions
         adult = age is not None and age >= ADULT_AGE
         if age is None:
             missing.append(self._present.missing_value("age"))
         elif not adult:
-            item["not_applied"] = f"{ADULT_AGE}세 미만 — 성인 기준 용량 계산·신기능 구간을 적용하지 않음"
+            optional["not_applied"] = f"{ADULT_AGE}세 미만 — 성인 기준 용량 계산·신기능 구간을 적용하지 않음"
 
         if adult and isinstance(record.get("calculation"), Mapping):
-            item["calculations"] = self._dose_calculations(record["calculation"], facts, missing)
+            optional["calculations"] = self._dose_calculations(record["calculation"], facts, missing)
+        renal: DoseRenal | None = None
         if isinstance(record.get("renal_param"), str):
-            item["renal"] = self._dose_renal(record, mapping, facts, adult, missing)
-            band = (item["renal"].get("band") or {}).get("_raw")
+            renal, band = self._dose_renal(record, mapping, facts, adult, missing)
             if band is not None:
-                item["renal"]["band"].pop("_raw")
-                self._dose_check(prescriptions, band, item["renal"])
+                self._dose_check(prescriptions, band, renal)
+            optional["renal"] = renal
         rules = self._dose_rules_for(record, facts)
         if rules:
-            item["rules"] = rules
+            optional["rules"] = rules
         reference = [
-            {"key": key, "label": _DOSE_LABELS.get(key, key.replace("_", " ")), "value": value}
+            LabeledValue(key=key, label=_DOSE_LABELS.get(key, key.replace("_", " ")), value=value)
             for key, value in record.items() if key not in _DOSE_HANDLED and value not in (None, "", [], {})
         ]
         if reference:
-            item["reference"] = reference
+            optional["reference"] = reference
         if record.get("alert_note"):
-            item["alert_note"] = record["alert_note"]
+            optional["alert_note"] = record["alert_note"]
         if record.get("conflicts"):
-            item["conflicts"] = list(record["conflicts"])
-        item["missing"] = unique_missing(missing)
-        item["alert"] = most_severe(
-            [rule.get("alert") for rule in rules if rule["status"] == "met"]
-            + [((item.get("renal") or {}).get("band") or {}).get("alert")]
-            + ["high" for prescription in prescriptions if (prescription.get("check") or {}).get("status") == "exceeds"]
+            optional["conflicts"] = list(record["conflicts"])
+        alert = most_severe(
+            [(rule.model_extra or {}).get("alert") for rule in rules if rule.status == "met"]
+            + [renal.band.alert if renal is not None and renal.band is not None else None]
+            + ["high" for prescription in prescriptions if prescription.check is not None and prescription.check.status == "exceeds"]
         )
-        item["review_status"] = record.get("review_status")
-        item.update(self._present.provenance(record))
-        return item
+        anchor: list[Literal["prescribed", "requested"]] = []
+        if prescribed:
+            anchor.append("prescribed")
+        if requested:
+            anchor.append("requested")
+        return DoseAssessment(
+            record_id=record.get("id"), claim_id=record.get("claim_id"), kind="dose", topic=record.get("topic"),
+            drug=DoseDrug(id=target, name=self._present.drug_name(target), type="ingredient" if ingredient else "class"),
+            anchor=anchor,
+            **optional,
+            missing=unique_missing(missing), alert=alert, review_status=record.get("review_status"),
+            **self._present.provenance(record),
+        )
 
     def _med_matches(self, med: MedicationMatch, ingredient: object, klass: object) -> bool:
         catalog = self._corpus.catalog
@@ -211,103 +231,104 @@ class DoseStage:
         return False
 
     @staticmethod
-    def _dose_prescription(med: MedicationMatch) -> dict[str, Any]:
-        entry: dict[str, Any] = {"med_code": med.med_code, "med_name": med.med_name}
-        if med.dose:
-            entry["dose"] = dict(med.dose)
+    def _dose_prescription(med: MedicationMatch) -> DosePrescription:
+        optional: dict[str, Any] = {"dose": dict(med.dose)} if med.dose else {}
         daily = prescribed_daily_mg(med.dose)
         if daily is not None:
-            entry["daily_mg"] = daily.mg_per_day
-            entry["daily_basis"] = daily.basis
-        return entry
+            optional.update(daily_mg=daily.mg_per_day, daily_basis=daily.basis)
+        return DosePrescription(med_code=med.med_code, med_name=med.med_name, **optional)
 
     def _dose_calculations(
-        self, calculation: Mapping[str, Any], facts: PatientFacts, missing: list[dict[str, str]],
-    ) -> list[dict[str, Any]]:
+        self, calculation: Mapping[str, Any], facts: PatientFacts, missing: list[MissingInput],
+    ) -> list[DoseCalculation]:
         variables: dict[str, Any] = dict(facts.values)
         results = []
         for key, spec in calculation.items():
             if not isinstance(spec, Mapping) or not isinstance(spec.get("formula"), str):
                 continue
             formula = spec["formula"]
-            entry: dict[str, Any] = {"name": key, "formula": formula}
+            optional: dict[str, Any] = {}
             unit = unit_for(key, spec.get("unit"))
             if unit:
-                entry["unit"] = unit
+                optional["unit"] = unit
             for extra in ("infuse_h", "note"):
                 if spec.get(extra) is not None:
-                    entry[extra] = spec[extra]
+                    optional[extra] = spec[extra]
             try:
                 value = evaluate_formula(formula, variables)
-            except MissingInput as gap:
+            except MissingFormulaInput as gap:
                 needed = self._present.missing_value(gap.name)
-                entry["missing"] = [needed]
                 missing.append(needed)
-                results.append(entry)
+                results.append(DoseCalculation(name=key, formula=formula, **optional, missing=[needed]))
                 continue
             variables[key] = value
-            entry["inputs"] = {name: rounded(variables[name]) for name in formula_variables(formula) if name in variables}
-            entry["range" if isinstance(value, tuple) else "value"] = rounded(value)
-            results.append(entry)
+            inputs = {name: rounded(variables[name]) for name in formula_variables(formula) if name in variables}
+            result: dict[str, Any] = {"range" if isinstance(value, tuple) else "value": rounded(value)}
+            results.append(DoseCalculation(name=key, formula=formula, **optional, inputs=inputs, **result))
         return results
 
     def _dose_renal(
-        self, record: Mapping[str, Any], mapping: EmrMapping, facts: PatientFacts, adult: bool, missing: list[dict[str, str]],
-    ) -> dict[str, Any]:
+        self, record: Mapping[str, Any], mapping: EmrMapping, facts: PatientFacts, adult: bool, missing: list[MissingInput],
+    ) -> tuple[DoseRenal, Mapping[str, Any] | None]:
+        """The renal value and band shown, and the rule's band itself (for the daily-maximum check), if one applies.
+
+        Fields are assigned in their declared order, which is also the output order.
+        """
         param = record["renal_param"]
-        renal: dict[str, Any] = {"param": param, "label": self._present.concept_name(param)}
-        if record.get("renal_method"):
-            renal["method"] = record["renal_method"]
+        renal = DoseRenal(param=param, label=self._present.concept_name(param),
+                          **({"method": record["renal_method"]} if record.get("renal_method") else {}))
         value = facts.values.get(param)
         if value is None:
             needed = self._present.missing_value(param)
-            renal["missing"] = [needed]
+            renal.missing = [needed]
             missing.append(needed)
-            return renal
+            return renal, None
         lab = next((item for item in mapping.labs if item.concept == param), None)
-        renal["value"] = value
+        renal.value = value
         if lab is not None:
-            renal["unit"] = lab.unit
+            renal.unit = lab.unit
             if lab.test_date:
-                renal["test_date"] = lab.test_date
-            renal["basis"] = lab.raw_unit if lab.matched_by == "derived" else "검사실 보고값"
+                renal.test_date = lab.test_date
+            renal.basis = lab.raw_unit if lab.matched_by == "derived" else "검사실 보고값"
             if lab.matched_by == "derived" and "이상체중" in str(record.get("renal_method") or ""):
-                renal["method_note"] = "규칙은 이상체중 기준 CrCl — 실제 체중으로 계산한 값이라 비만 환자에서는 높게 나올 수 있음"
+                renal.method_note = "규칙은 이상체중 기준 CrCl — 실제 체중으로 계산한 값이라 비만 환자에서는 높게 나올 수 있음"
         if not adult or not isinstance(record.get("bands"), list):
-            return renal
+            return renal, None
         band = select_band(record["bands"], value)
         if band is None:
-            renal["band"] = None
-            renal["band_note"] = "환자 값이 규칙의 어느 구간에도 속하지 않음"
-            return renal
-        renal["band"] = {
-            "range": range_label(band["range"], renal.get("unit")),
-            "dose": [{"key": key, "label": _BAND_LABELS.get(key, key.replace("_", " ")), "value": item}
-                     for key, item in band.items() if key not in ("range", "alert")],
+            renal.band = None
+            renal.band_note = "환자 값이 규칙의 어느 구간에도 속하지 않음"
+            return renal, None
+        renal.band = RenalBand(
+            range=range_label(band["range"], renal.unit),
+            dose=[LabeledValue(key=key, label=_BAND_LABELS.get(key, key.replace("_", " ")), value=item)
+                  for key, item in band.items() if key not in ("range", "alert")],
             **({"alert": band["alert"]} if band.get("alert") not in (None, "none") else {}),
-            "_raw": band,
-        }
-        return renal
+        )
+        return renal, band
 
     @staticmethod
-    def _dose_check(prescriptions: list[dict[str, Any]], band: Mapping[str, Any], renal: Mapping[str, Any]) -> None:
+    def _dose_check(prescriptions: list[DosePrescription], band: Mapping[str, Any], renal: DoseRenal) -> None:
         """Compare each prescribed daily amount with the band's numeric daily maximum, when both exist."""
         limit = band_daily_max_mg(band)
-        if limit is None:
+        if limit is None or renal.band is None:
             return
         for prescription in prescriptions:
-            daily = prescription.get("daily_mg")
+            daily = prescription.daily_mg
             if daily is None:
                 continue
-            prescription["check"] = {
-                "limit_daily_mg": limit,
-                "limit_basis": f"{renal['param']} {renal['band']['range']} 구간 1일 최대",
-                "status": "exceeds" if daily > limit else "within",
-            }
+            prescription.check = DoseCheck(
+                limit_daily_mg=limit, limit_basis=f"{renal.param} {renal.band.range} 구간 1일 최대",
+                status="exceeds" if daily > limit else "within",
+            )
 
-    def _dose_rules_for(self, record: Mapping[str, Any], facts: PatientFacts) -> list[dict[str, Any]]:
+    def _dose_rules_for(self, record: Mapping[str, Any], facts: PatientFacts) -> list[DoseConditionRule]:
         """Dose-condition rules: met, or possible with the unknown inputs (kept per rule, not in the item's
-        ``missing``, which lists only what the calculation itself needs)."""
+        ``missing``, which lists only what the calculation itself needs).
+
+        The rule's own fields (``alert``, ``dose`` …) come along as they are (``DoseConditionRule`` allows extra
+        keys), so the entry is collected as a dict and validated once it is complete.
+        """
         results = []
         for phase, rules in (("initiation", record.get("initiation")), ("rules", record.get("rules"))):
             for rule in rules if isinstance(rules, list) else ():
@@ -326,7 +347,7 @@ class DoseStage:
                 gaps = unique_missing(self._present.missing(leaf) for leaf in leaves if leaf.result is None)
                 if gaps:
                     entry["missing"] = gaps
-                results.append(entry)
+                results.append(DoseConditionRule.model_validate(entry))
         return results
 
 

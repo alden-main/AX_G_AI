@@ -1,11 +1,17 @@
 """Pydantic schema of the assessment payload (API ``assessment``, SSE ``meta.assessment``, prompt input).
 
-Stage-2 entries (``RecommendationItem``, ``LabInterpretation`` and their parts) are built as these
-models by ``presentation.Presenter``, so mypy checks their fields; DUR alerts and dose results are
-still plain dicts that ``Assessment.payload`` validates against these models. Either way a misspelt
-or unexpected key fails at creation (``extra="forbid"``) and ``/docs`` shows the real structure. Serialization keeps exactly the keys that were set: an optional key that does
-not apply is omitted, a key set to ``null`` stays ``null`` (the JSON is the same as before the
-schema existed; see ``docs/assessment_schema.md``).
+The producers build these models directly — ``presentation.Presenter`` (stage-2 items, lab
+interpretations), ``services.dur_check.DurChecker`` (DUR alerts), ``doses.DoseStage`` (doses) — and
+``model.Assessment.payload`` assembles them, so mypy checks the field names and a wrong value fails
+where it is made (``extra="forbid"``); ``/docs`` shows the real structure. Only open structures from
+the corpus or another module are validated from a dict at their boundary (dose-condition rules,
+the DUR source, memo/question finding conflicts).
+
+Serialization keeps exactly the keys that were set, in the order they were passed (``PayloadModel``):
+an optional key that does not apply is omitted, a key set to ``null`` stays ``null``. That order is
+the API and prompt JSON contract (see ``docs/assessment_schema.md``) and differs from the field
+declaration order (e.g. provenance fields come after the record's own fields), so it is not left to
+the declarations.
 
 Types: values the code computes (status, priority, kinds, evidence numbers) are strict; text that
 comes from corpus records is ``Text`` (a string or a list of strings); structures defined by the
@@ -39,8 +45,9 @@ ItemKind = Literal["diagnosis", "referral", "workup", "monitoring"]
 class PayloadModel(BaseModel):
     """Forbids unknown keys; serializes only the keys that were set, in the order they were given.
 
-    The order matters: the payload is also the prompt input, and an unchanged byte order keeps the
-    inference server's prefix cache warm.
+    "Given" is the keyword (or dict) order at construction; a field assigned afterwards (e.g. ``evidence_refs``,
+    numbered once the items are ranked) follows them in declaration order. The order matters: the payload is
+    also the prompt input, and an unchanged byte order keeps the inference server's prefix cache warm.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -68,7 +75,7 @@ class Source(PayloadModel):
     id: str | None = None
     title: str | None = None
     citation: str | None = None
-    locator: str | None = Field(None, description="원문 안의 위치(쪽·표·권고 번호 등)")
+    locator: str | None = Field(default=None, description="원문 안의 위치(쪽·표·권고 번호 등)")
     url: str | None = None
     license: str | None = None
     region: Region | None = None
@@ -83,11 +90,11 @@ class MissingInput(PayloadModel):
 
 
 class Provenance(PayloadModel):
-    region: Region | None = Field(None, description="출처 중 우선순위가 가장 높은 지역(KR > US > EU > INTL)")
-    region_label: str | None = Field(None, description="국내 · 미국 · 유럽 · 국제·기타 · 미상")
-    priority: Priority | None = Field(None, description="reference: 같은 주제의 국내 기준에 밀려 참고로만 보이는 항목")
-    superseded_by: list[str] | None = Field(None, description="이 항목을 대체하는 상위(국내) 기준의 claim ID. priority=reference일 때만")
-    sources: list[Source] | None = Field(None, description="출처(국내 먼저)")
+    region: Region | None = Field(default=None, description="출처 중 우선순위가 가장 높은 지역(KR > US > EU > INTL)")
+    region_label: str | None = Field(default=None, description="국내 · 미국 · 유럽 · 국제·기타 · 미상")
+    priority: Priority | None = Field(default=None, description="reference: 같은 주제의 국내 기준에 밀려 참고로만 보이는 항목")
+    superseded_by: list[str] | None = Field(default=None, description="이 항목을 대체하는 상위(국내) 기준의 claim ID. priority=reference일 때만")
+    sources: list[Source] | None = Field(default=None, description="출처(국내 먼저)")
 
 
 class TestEntry(PayloadModel):
@@ -114,21 +121,21 @@ class RecommendationItem(Provenance):
     status: Status = Field(description="met: 조건 충족 / possible: 일부만 확인됨 — 나머지는 missing")
     topic: Text | None
     chapter: Text | None
-    diagnosis: Diagnosis | None = Field(None, description="kind=diagnosis일 때만")
-    already_recorded: bool | None = Field(None, description="kind=diagnosis일 때만: 이미 기록된 상병인지")
+    diagnosis: Diagnosis | None = Field(default=None, description="kind=diagnosis일 때만")
+    already_recorded: bool | None = Field(default=None, description="kind=diagnosis일 때만: 이미 기록된 상병인지")
     severity: Text | None = None
-    referral_to: Text | None = Field(None, description="kind=referral일 때만: 협진 대상")
+    referral_to: Text | None = Field(default=None, description="kind=referral일 때만: 협진 대상")
     purpose: Text | None = None
-    tests: list[TestEntry] | None = Field(None, description="kind=workup·monitoring일 때만")
-    interval: dict[str, Any] | None = Field(None, description="kind=monitoring일 때만: 규칙의 interval_* · within_* · timing_* 값")
-    actions: list[Any] | None = Field(None, description="kind=monitoring: 충족된 추적 조건의 조치")
-    strength: Text | None = Field(None, description="권고 강도")
+    tests: list[TestEntry] | None = Field(default=None, description="kind=workup·monitoring일 때만")
+    interval: dict[str, Any] | None = Field(default=None, description="kind=monitoring일 때만: 규칙의 interval_* · within_* · timing_* 값")
+    actions: list[Any] | None = Field(default=None, description="kind=monitoring: 충족된 추적 조건의 조치")
+    strength: Text | None = Field(default=None, description="권고 강도")
     note: Text | None = None
     matched: list[str] = Field(description="충족된 조건(환자 값 포함)")
     missing: list[MissingInput] = Field(description="확인되지 않은 조건")
     review_status: str | None = Field(description="approved · draft(경고 문구 없이 데이터로만 둔다)")
-    conflicts: list[Any] | None = Field(None, description="같은 주제의 다른 출처와 다른 점")
-    evidence_refs: list[int] | None = Field(None, description="응답 evidence의 번호([근거 n])")
+    conflicts: list[Any] | None = Field(default=None, description="같은 주제의 다른 출처와 다른 점")
+    evidence_refs: list[int] | None = Field(default=None, description="응답 evidence의 번호([근거 n])")
 
 
 class LabInterpretation(Provenance):
@@ -155,7 +162,7 @@ class MappingIssue(PayloadModel):
     code: str | None = None
     name: str | None = None
     detail: str
-    suggestion: str | None = Field(None, description="매핑할 개념 ID 제안")
+    suggestion: str | None = Field(default=None, description="매핑할 개념 ID 제안")
 
 
 # ── DUR ───────────────────────────────────────────────────────────────────
@@ -163,7 +170,7 @@ class DurProduct(PayloadModel):
     med_code: str | None
     med_name: str | None
     ingredient_name: str | None
-    proposed: bool | None = Field(None, description="true: 현재 처방이 아니라 질문에서 언급한 약(추가 시 점검)")
+    proposed: bool | None = Field(default=None, description="true: 현재 처방이 아니라 질문에서 언급한 약(추가 시 점검)")
 
 
 class DurNotice(PayloadModel):
@@ -179,10 +186,10 @@ class DurAlert(PayloadModel):
     products: list[DurProduct]
     detail: str | None
     notice: DurNotice
-    condition_note: str | None = Field(None, description="목록의 비고(평가하지 않고 그대로 보임)")
-    age_condition: str | None = Field(None, description="연령금기: 예) 12세 미만")
-    grade: str | None = Field(None, description="임부금기 등급")
-    category: str | None = Field(None, description="노인주의 구분")
+    condition_note: str | None = Field(default=None, description="목록의 비고(평가하지 않고 그대로 보임)")
+    age_condition: str | None = Field(default=None, description="연령금기: 예) 12세 미만")
+    grade: str | None = Field(default=None, description="임부금기 등급")
+    category: str | None = Field(default=None, description="노인주의 구분")
     note: str | None = None
     missing: list[MissingInput] | None = None
 
@@ -216,7 +223,7 @@ class MedicationAlerts(PayloadModel):
     alerts: list[DurAlert]
     unmapped: list[DurUnmapped]
     source: DurSource
-    proposed: list[DurProposed] | None = Field(None, description="질문에서 언급해 추가 시 점검한 약")
+    proposed: list[DurProposed] | None = Field(default=None, description="질문에서 언급해 추가 시 점검한 약")
 
 
 # ── stage 3: doses ────────────────────────────────────────────────────────
@@ -237,8 +244,8 @@ class DoseCheck(PayloadModel):
 class DosePrescription(PayloadModel):
     med_code: str | None
     med_name: str | None
-    dose: dict[str, Any] | None = Field(None, description="EMR의 dosage · unit · frequency · interval · durationDays 원값")
-    daily_mg: Number | None = Field(None, description="단위·횟수가 명확할 때만 계산한 1일 용량(mg)")
+    dose: dict[str, Any] | None = Field(default=None, description="EMR의 dosage · unit · frequency · interval · durationDays 원값")
+    daily_mg: Number | None = Field(default=None, description="단위·횟수가 명확할 때만 계산한 1일 용량(mg)")
     daily_basis: str | None = None
     check: DoseCheck | None = None
 
@@ -252,9 +259,9 @@ class DoseCalculation(PayloadModel):
     infuse_h: Any = None
     note: Any = None
     missing: list[MissingInput] | None = None
-    inputs: dict[str, Number | list[Number]] | None = Field(None, description="계산에 쓴 입력값")
+    inputs: dict[str, Number | list[Number]] | None = Field(default=None, description="계산에 쓴 입력값")
     value: Number | None = None
-    range: list[Number] | None = Field(None, description="[최소, 최대] 범위 공식의 결과")
+    range: list[Number] | None = Field(default=None, description="[최소, 최대] 범위 공식의 결과")
 
 
 class LabeledValue(PayloadModel):
@@ -279,9 +286,9 @@ class DoseRenal(PayloadModel):
     value: Number | None = None
     unit: str | None = None
     test_date: str | None = None
-    basis: str | None = Field(None, description="검사실 보고값 또는 계산식")
+    basis: str | None = Field(default=None, description="검사실 보고값 또는 계산식")
     method_note: str | None = None
-    band: RenalBand | None = Field(None, description="null: 어느 구간에도 속하지 않음(band_note)")
+    band: RenalBand | None = Field(default=None, description="null: 어느 구간에도 속하지 않음(band_note)")
     band_note: str | None = None
 
 
@@ -291,7 +298,7 @@ class DoseConditionRule(PayloadModel):
     model_config = ConfigDict(extra="allow")
 
     status: Status
-    phase: str | None = Field(None, description="시작 시(initiation 규칙)")
+    phase: str | None = Field(default=None, description="시작 시(initiation 규칙)")
     matched: list[str]
     missing: list[MissingInput] | None = None
 
@@ -307,11 +314,11 @@ class DoseAssessment(Provenance):
     anchor: list[Literal["prescribed", "requested"]] = Field(description="prescribed: 현재 처방 / requested: 요청 dose_drugs")
     indication: Text | None = None
     prescriptions: list[DosePrescription] | None = None
-    not_applied: str | None = Field(None, description="성인 기준을 적용하지 않은 이유(18세 미만)")
+    not_applied: str | None = Field(default=None, description="성인 기준을 적용하지 않은 이유(18세 미만)")
     calculations: list[DoseCalculation] | None = None
     renal: DoseRenal | None = None
     rules: list[DoseConditionRule] | None = None
-    reference: list[LabeledValue] | None = Field(None, description="규칙의 나머지 용량 정보(참고 텍스트)")
+    reference: list[LabeledValue] | None = Field(default=None, description="규칙의 나머지 용량 정보(참고 텍스트)")
     alert_note: Text | None = None
     conflicts: list[Any] | None = None
     missing: list[MissingInput] = Field(description="계산에 필요한데 없는 입력")
@@ -353,9 +360,9 @@ class AssessmentPayload(PayloadModel):
     findings_used: dict[str, bool] = Field(description="적용한 소견(요청 findings가 메모 추출보다 우선)")
     unknown_findings: list[str] = Field(description="규칙이 쓰지 않는 소견 키(무시됨)")
     mapping_issues: list[MappingIssue]
-    medication_alerts: MedicationAlerts | None = Field(None, description="DUR 점검이 설정된 경우에만")
-    dose_assessments: list[DoseAssessment] | None = Field(None, description="용량 단계(AX_G_CLINICAL_DOSES_ENABLED)가 켜진 경우에만")
-    unmatched_dose_drugs: list[UnmatchedDoseDrug] | None = Field(None, description="용량 단계에서 요청 약 중 규칙이 없는 것(있을 때만)")
+    medication_alerts: MedicationAlerts | None = Field(default=None, description="DUR 점검이 설정된 경우에만")
+    dose_assessments: list[DoseAssessment] | None = Field(default=None, description="용량 단계(AX_G_CLINICAL_DOSES_ENABLED)가 켜진 경우에만")
+    unmatched_dose_drugs: list[UnmatchedDoseDrug] | None = Field(default=None, description="용량 단계에서 요청 약 중 규칙이 없는 것(있을 때만)")
     finding_conflicts: dict[str, FindingConflict] | None = Field(
         None, description="메모와 질문이 서로 다른 소견(있을 때만). 질문에 출산·유산·새 임신 같은 상태 변화 표현이 있으면 충돌이 아니라 질문 값을 쓴다",
     )

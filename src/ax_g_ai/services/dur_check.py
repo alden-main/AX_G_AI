@@ -31,9 +31,20 @@ import json
 import re
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
+from ax_g_ai.services.clinical_recommendation.schema import (
+    DurAlert,
+    DurNotice,
+    DurProduct,
+    DurProposed,
+    DurSource,
+    DurUnmapped,
+    MedicationAlerts,
+    MissingInput,
+    Status,
+)
 from ax_g_ai.services.term_matcher import TermMatcher
 
 ELDERLY_AGE = 65
@@ -150,21 +161,6 @@ class ProposedDrug:
     # Ingredient keys (``_ingredient_key``; two when the list spells one drug two ways): a drug already prescribed is
     # checked as the prescription.
     keys: frozenset[str] = frozenset()
-
-
-@dataclass(frozen=True)
-class DurResult:
-    alerts: tuple[Mapping[str, Any], ...] = ()
-    unmapped: tuple[Mapping[str, Any], ...] = ()
-    source: Mapping[str, str] = field(default_factory=dict)
-    proposed: tuple[Mapping[str, Any], ...] = ()
-
-    def as_dict(self) -> dict[str, object]:
-        result: dict[str, object] = {"alerts": [dict(alert) for alert in self.alerts],
-                                     "unmapped": [dict(item) for item in self.unmapped], "source": dict(self.source)}
-        if self.proposed:
-            result["proposed"] = [dict(item) for item in self.proposed]
-        return result
 
 
 def _bare_words(name: str) -> list[str]:
@@ -331,14 +327,17 @@ class DurChecker:
     def check(
         self, medications: Sequence[tuple[str | None, str | None]], *, age_years: float | None, sex: str | None,
         pregnant: bool | None, proposed: Sequence[ProposedDrug] = (), pregnancy_conflict: bool = False,
-    ) -> DurResult:
-        """``pregnancy_conflict``: the memo and the question disagree on pregnancy (``pregnant`` is then None)."""
+    ) -> MedicationAlerts:
+        """The payload ``assessment.medication_alerts``.
+
+        ``pregnancy_conflict``: the memo and the question disagree on pregnancy (``pregnant`` is then None).
+        """
         prescribed: list[dict[str, Any]] = []
-        unmapped: list[dict[str, Any]] = []
+        unmapped: list[DurUnmapped] = []
         for code, name in medications:
             row = self._tables.products.get(code.strip()) if code and code.strip() else None
             if row is None:
-                unmapped.append({"med_code": code, "med_name": name, "detail": "DUR 목록에 없는 제품코드(9자리 보험코드) — DUR 점검 제외"})
+                unmapped.append(DurUnmapped(med_code=code, med_name=name, detail="DUR 목록에 없는 제품코드(9자리 보험코드) — DUR 점검 제외"))
                 continue
             prescribed.append({"med_code": row["product_code"], "med_name": name or row["product_name"], "product_name": row["product_name"],
                                "ingredient_code": row["ingredient_code"], "ingredient_name": row["ingredient_name"]})
@@ -346,12 +345,12 @@ class DurChecker:
         # already prescribed is checked once, as the prescription.
         # "Already prescribed" is by ingredient: a component of a prescribed combination counts too.
         current = {key for item in prescribed for key in self._names.components(item["ingredient_code"])}
-        recognized: list[dict[str, Any]] = []
+        recognized: list[DurProposed] = []
         for drug in proposed:
             if current.intersection(drug.keys):
                 continue
             current.update(drug.keys)
-            recognized.append({"name": drug.name, "ingredient_name": drug.ingredient_name})
+            recognized.append(DurProposed(name=drug.name, ingredient_name=drug.ingredient_name))
             prescribed.extend({"med_code": None, "med_name": drug.name, "product_name": None, "ingredient_code": code,
                                "ingredient_name": drug.ingredient_name, "proposed": True} for code in sorted(drug.codes))
         alerts = [
@@ -361,21 +360,24 @@ class DurChecker:
             *self._elderly(prescribed, age_years),
         ]
         # One alert per finding: a proposed drug's dosage forms share the same rules.
-        unique = {json.dumps(alert, ensure_ascii=False, sort_keys=True): alert for alert in alerts}
-        return DurResult(tuple(unique.values()), tuple(unmapped), dict(self.source), tuple(recognized))
+        unique = {json.dumps(alert.model_dump(mode="json"), ensure_ascii=False, sort_keys=True): alert for alert in alerts}
+        return MedicationAlerts(
+            alerts=list(unique.values()), unmapped=unmapped, source=DurSource.model_validate(self.source),
+            **({"proposed": recognized} if recognized else {}),
+        )
 
     @staticmethod
-    def _product(item: Mapping[str, Any]) -> dict[str, Any]:
-        product = {key: item[key] for key in ("med_code", "med_name", "ingredient_name")}
-        if item.get("proposed"):
-            product["proposed"] = True
-        return product
+    def _product(item: Mapping[str, Any]) -> DurProduct:
+        return DurProduct(
+            med_code=item["med_code"], med_name=item["med_name"], ingredient_name=item["ingredient_name"],
+            **({"proposed": True} if item.get("proposed") else {}),
+        )
 
     @staticmethod
-    def _notice(rule: Row) -> dict[str, Any]:
-        return {"no": rule.get("notice_no"), "date": rule.get("notice_date")}
+    def _notice(rule: Row) -> DurNotice:
+        return DurNotice(no=rule.get("notice_no"), date=rule.get("notice_date"))
 
-    def _pairs(self, prescribed: list[dict[str, Any]]) -> Iterable[dict[str, Any]]:
+    def _pairs(self, prescribed: list[dict[str, Any]]) -> Iterable[DurAlert]:
         by_ingredient: dict[str, list[dict[str, Any]]] = {}
         for item in prescribed:
             by_ingredient.setdefault(item["ingredient_code"], []).append(item)
@@ -386,14 +388,14 @@ class DurChecker:
                 if b == a or b not in by_ingredient or (frozenset((a, b)), rule["detail"]) in seen:
                     continue
                 seen.add((frozenset((a, b)), rule["detail"]))
-                yield {
-                    "type": "병용금기", "status": "met",
-                    "products": [self._product(item) for item in (*by_ingredient[a], *by_ingredient[b])],
-                    "detail": rule["detail"], **({"condition_note": rule["note"]} if rule.get("note") else {}),
-                    "notice": self._notice(rule),
-                }
+                note: dict[str, Any] = {"condition_note": rule["note"]} if rule.get("note") else {}
+                yield DurAlert(
+                    type="병용금기", status="met",
+                    products=[self._product(item) for item in (*by_ingredient[a], *by_ingredient[b])],
+                    detail=rule["detail"], **note, notice=self._notice(rule),
+                )
 
-    def _ages(self, prescribed: list[dict[str, Any]], age_years: float | None) -> Iterable[dict[str, Any]]:
+    def _ages(self, prescribed: list[dict[str, Any]], age_years: float | None) -> Iterable[DurAlert]:
         if age_years is None:
             return
         for item in prescribed:
@@ -403,14 +405,14 @@ class DurChecker:
                 test = _CONDITIONS.get(rule["condition"])
                 if value is None or test is None or not test(value, age):
                     continue
-                yield {"type": "연령금기", "status": "met", "products": [self._product(item)],
-                       "age_condition": f"{age:g}{unit} {rule['condition']}", "detail": rule["detail"],
-                       "notice": self._notice(rule)}
+                yield DurAlert(type="연령금기", status="met", products=[self._product(item)],
+                               age_condition=f"{age:g}{unit} {rule['condition']}", detail=rule["detail"],
+                               notice=self._notice(rule))
 
     def _pregnancy(
         self, prescribed: list[dict[str, Any]], age_years: float | None, sex: str | None, pregnant: bool | None,
         conflict: bool = False,
-    ) -> Iterable[dict[str, Any]]:
+    ) -> Iterable[DurAlert]:
         if pregnant is False or sex == "male":
             return
         if pregnant is None and not conflict:
@@ -419,23 +421,24 @@ class DurChecker:
                 return
         # Conflicting statements are flagged whatever the age: someone stated a pregnancy, so missing a
         # contraindication is worse than one more question.
-        status = "met" if pregnant else "possible"
+        status: Status = "met" if pregnant else "possible"
         label = "임신 여부(진료 메모와 질문이 서로 다름 — 확인 필요)" if conflict else "임신 여부(가임기 여성)"
+        # Only a ``possible`` alert names the input to confirm.
+        missing: dict[str, Any] = (
+            {"missing": [MissingInput(kind="finding", key="pregnancy", label=label)]} if status == "possible" else {}
+        )
         for item in prescribed:
             for rule in self._tables.pregnancy.get(item["ingredient_code"], ()):
                 grade = rule.get("grade")
-                alert = {"type": "임부금기", "status": status, "products": [self._product(item)],
-                         "grade": _GRADE_LABELS.get(str(grade), grade or "미표기"), "detail": rule["detail"],
-                         "notice": self._notice(rule)}
-                if status == "possible":
-                    alert["missing"] = [{"kind": "finding", "key": "pregnancy", "label": label}]
-                yield alert
+                yield DurAlert(type="임부금기", status=status, products=[self._product(item)],
+                               grade=_GRADE_LABELS.get(str(grade), grade or "미표기"), detail=rule["detail"],
+                               notice=self._notice(rule), **missing)
 
-    def _elderly(self, prescribed: list[dict[str, Any]], age_years: float | None) -> Iterable[dict[str, Any]]:
+    def _elderly(self, prescribed: list[dict[str, Any]], age_years: float | None) -> Iterable[DurAlert]:
         if age_years is None or age_years < ELDERLY_AGE:
             return
         for item in prescribed:
             for rule in self._tables.elderly.get(item["ingredient_code"], ()):
-                yield {"type": "노인주의", "status": "met", "category": rule["category"], "products": [self._product(item)],
-                       "detail": rule["detail"], "notice": self._notice(rule),
-                       "note": "노인 기준 65세 이상은 DUR 운영 기준(보도 확인) — 공고 원문 대조 필요"}
+                yield DurAlert(type="노인주의", status="met", category=rule["category"], products=[self._product(item)],
+                               detail=rule["detail"], notice=self._notice(rule),
+                               note="노인 기준 65세 이상은 DUR 운영 기준(보도 확인) — 공고 원문 대조 필요")

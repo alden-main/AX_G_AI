@@ -105,32 +105,32 @@ class DurSnapshotTest(unittest.TestCase):
     def test_pair_age_pregnancy_and_elderly_alerts(self) -> None:
         result = self.checker.check([("111111112", "클래리정500"), ("222222222", "심바정"), ("999999999", "모르는약")],
                                     age_years=40, sex="female", pregnant=True)
-        types = [alert["type"] for alert in result.alerts]
+        types = [alert.type for alert in result.alerts]
         self.assertEqual(types, ["병용금기", "임부금기"])
-        self.assertEqual(result.alerts[0]["detail"], "근육병증의 위험 증가 가능")
-        self.assertEqual(result.alerts[1]["grade"], "1등급")
-        self.assertEqual(result.unmapped[0]["med_code"], "999999999")
-        self.assertEqual(result.source["id"], "KR-HIRA-DUR-2026-06")
+        self.assertEqual(result.alerts[0].detail, "근육병증의 위험 증가 가능")
+        self.assertEqual(result.alerts[1].grade, "1등급")
+        self.assertEqual(result.unmapped[0].med_code, "999999999")
+        self.assertEqual(result.source.id, "KR-HIRA-DUR-2026-06")
 
-        self.assertEqual([a["type"] for a in self.checker.check([("555555555", None)], age_years=15, sex="male", pregnant=None).alerts], ["연령금기"])
-        self.assertEqual(self.checker.check([("555555555", None)], age_years=30, sex="male", pregnant=None).alerts, ())
-        self.assertEqual(self.checker.check([("555555555", None)], age_years=None, sex=None, pregnant=None).alerts, ())  # age unknown: no guess
+        self.assertEqual([a.type for a in self.checker.check([("555555555", None)], age_years=15, sex="male", pregnant=None).alerts], ["연령금기"])
+        self.assertEqual(self.checker.check([("555555555", None)], age_years=30, sex="male", pregnant=None).alerts, [])
+        self.assertEqual(self.checker.check([("555555555", None)], age_years=None, sex=None, pregnant=None).alerts, [])  # age unknown: no guess
         elderly = self.checker.check([("666666666", None), ("777777777", None)], age_years=70, sex="male", pregnant=None).alerts
-        self.assertEqual({a["category"] for a in elderly}, {"노인주의", "노인주의(해열진통소염제)"})
+        self.assertEqual({a.category for a in elderly}, {"노인주의", "노인주의(해열진통소염제)"})
 
     def test_dose_conditions_are_shown_verbatim_and_pregnancy_unknown_is_a_question(self) -> None:
         pair = self.checker.check([("333333333", None), ("444444444", None)], age_years=50, sex="male", pregnant=None).alerts[0]
-        self.assertEqual(pair["condition_note"], "1주에 MTX 15mg 이상 투여시 병용금기")
+        self.assertEqual(pair.condition_note, "1주에 MTX 15mg 이상 투여시 병용금기")
         unknown = self.checker.check([("222222222", None)], age_years=30, sex="female", pregnant=None).alerts
-        self.assertEqual((unknown[0]["type"], unknown[0]["status"]), ("임부금기", "possible"))
-        self.assertEqual(self.checker.check([("222222222", None)], age_years=60, sex="female", pregnant=None).alerts, ())
+        self.assertEqual((unknown[0].type, unknown[0].status), ("임부금기", "possible"))
+        self.assertEqual(self.checker.check([("222222222", None)], age_years=60, sex="female", pregnant=None).alerts, [])
         # Memo and question disagree: confirm whatever the age (unknown sex included), never for a male patient.
         for age, sex in ((60, "female"), (None, None)):
             conflict = self.checker.check([("222222222", None)], age_years=age, sex=sex, pregnant=None, pregnancy_conflict=True).alerts
-            self.assertEqual([(a["type"], a["status"]) for a in conflict], [("임부금기", "possible")])
-            self.assertIn("서로 다름", conflict[0]["missing"][0]["label"])
-        self.assertEqual(self.checker.check([("222222222", None)], age_years=30, sex="male", pregnant=None, pregnancy_conflict=True).alerts, ())
-        self.assertEqual(self.checker.check([("222222222", None)], age_years=30, sex="female", pregnant=False).alerts, ())
+            self.assertEqual([(a.type, a.status) for a in conflict], [("임부금기", "possible")])
+            self.assertIn("서로 다름", conflict[0].missing[0].label)  # type: ignore[index]
+        self.assertEqual(self.checker.check([("222222222", None)], age_years=30, sex="male", pregnant=None, pregnancy_conflict=True).alerts, [])
+        self.assertEqual(self.checker.check([("222222222", None)], age_years=30, sex="female", pregnant=False).alerts, [])
 
     def test_missing_files_cli_refuses_to_overwrite_and_empty_tables_are_unavailable(self) -> None:
         empty = Path(tempfile.mkdtemp())
@@ -171,7 +171,7 @@ class PostgresDurStoreTest(unittest.TestCase):
         self.assertEqual(len(from_db), 9)
         meds = [("111111112", "클래리정500"), ("222222222", "심바정"), ("333333333", None), ("444444444", None), ("555555555", None)]
         for kwargs in ({"age_years": 15, "sex": "female", "pregnant": None}, {"age_years": 70, "sex": "male", "pregnant": None}):
-            self.assertEqual(from_db.check(meds, **kwargs).as_dict(), from_file.check(meds, **kwargs).as_dict())
+            self.assertEqual(from_db.check(meds, **kwargs).model_dump(mode="json"), from_file.check(meds, **kwargs).model_dump(mode="json"))
         self.assertEqual(from_db.source["license"], "KOGL Type 1 (공공누리 제1유형 — 출처표시)")
 
     def test_new_dataset_activates_and_rollback_restores_the_previous_one(self) -> None:
@@ -245,7 +245,7 @@ class RepositoryDurTest(unittest.TestCase):
         a = next(p["product_code"] for p in snapshot.rows["product"] if p["ingredient_code"] == rule["ingredient_a"])
         b = next(p["product_code"] for p in snapshot.rows["product"] if p["ingredient_code"] == rule["ingredient_b"])
         alerts = checker.check([(a, None), (b, None)], age_years=50, sex="male", pregnant=None).alerts
-        self.assertIn("병용금기", [alert["type"] for alert in alerts])
+        self.assertIn("병용금기", [alert.type for alert in alerts])
 
 
 
@@ -281,7 +281,7 @@ class QuestionDrugTest(unittest.TestCase):
 
     def test_proposed_drug_is_checked_with_prescriptions_once(self) -> None:
         proposed = self.checker.find_drugs("와파린 추가")
-        result = self.checker.check([("200000001", "클로시드정")], age_years=30, sex="female", pregnant=True, proposed=proposed).as_dict()
+        result = self.checker.check([("200000001", "클로시드정")], age_years=30, sex="female", pregnant=True, proposed=proposed).model_dump(mode="json")
         pairs = [alert for alert in result["alerts"] if alert["type"] == "병용금기"]
         self.assertEqual(len(pairs), 1)  # two warfarin dosage forms, one alert
         self.assertEqual([p.get("proposed") for p in pairs[0]["products"]], [None, True])
@@ -292,7 +292,7 @@ class QuestionDrugTest(unittest.TestCase):
     def test_a_named_drug_already_prescribed_is_checked_as_the_prescription(self) -> None:
         proposed = self.checker.find_drugs("클래리트로마이신 계속 써도 돼?")
         result = self.checker.check([("200000001", "클로시드정"), ("300000001", "조코정")], age_years=50, sex="male", pregnant=None,
-                                    proposed=proposed).as_dict()
+                                    proposed=proposed).model_dump(mode="json")
         self.assertNotIn("proposed", result)
         self.assertEqual([alert["detail"] for alert in result["alerts"]], ["근육병증"])
 
@@ -375,17 +375,17 @@ class IngredientIdentityTest(unittest.TestCase):
     def test_prescribed_ingredient_is_not_rechecked_but_one_sharing_a_word_is(self) -> None:
         # Sodium bicarbonate prescribed; alendronate named: still checked (before, both were "sodium" and it was skipped).
         result = self.checker.check([("5", None)], age_years=30, sex="female", pregnant=True,
-                                    proposed=self.checker.find_drugs("알렌드론산 추가")).as_dict()
+                                    proposed=self.checker.find_drugs("알렌드론산 추가")).model_dump(mode="json")
         self.assertEqual([alert["detail"] for alert in result["alerts"]], ["비스포스포네이트"])
         self.assertEqual(result["proposed"], [{"name": "알렌드론산", "ingredient_name": "Alendronate"}])
         # Amlodipine is in the prescribed combination: checked once, as the prescription (the combination's own rule).
         result = self.checker.check([("8", None)], age_years=30, sex="female", pregnant=True,
-                                    proposed=self.checker.find_drugs("암로디핀 추가")).as_dict()
+                                    proposed=self.checker.find_drugs("암로디핀 추가")).model_dump(mode="json")
         self.assertNotIn("proposed", result)
         self.assertEqual([alert["detail"] for alert in result["alerts"]], ["ARB 복합제"])
 
     def test_named_amlodipine_alone_gets_no_combination_rule(self) -> None:
-        result = self.checker.check([], age_years=30, sex="female", pregnant=True, proposed=self.checker.find_drugs("amlodipine")).as_dict()
+        result = self.checker.check([], age_years=30, sex="female", pregnant=True, proposed=self.checker.find_drugs("amlodipine")).model_dump(mode="json")
         self.assertEqual(result["alerts"], [])
 
 

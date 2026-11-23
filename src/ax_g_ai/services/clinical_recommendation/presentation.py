@@ -75,15 +75,13 @@ class Presenter:
         for key in ("note", "notes"):
             if record.get(key):
                 optional["note"] = record.get(key)
-        gaps = unique_missing(self.missing(leaf) for leaf in leaves if leaf.result is None)
         conflicts: dict[str, Any] = {"conflicts": list(record["conflicts"])} if record.get("conflicts") else {}
         return RecommendationItem(
             record_id=record.get("id"), claim_id=record.get("claim_id"), kind=kind, status=status,
             topic=record.get("topic"), chapter=record.get("chapter"),
             **optional,
             matched=[self.describe(leaf, facts) for leaf in leaves if leaf.result is True and not leaf.negated],
-            # Shared with the dose stage, which still builds dicts (until it builds models too).
-            missing=[MissingInput.model_validate(gap) for gap in gaps],
+            missing=unique_missing(self.missing(leaf) for leaf in leaves if leaf.result is None),
             review_status=record.get("review_status"),
             **self.provenance(record),
             **conflicts,
@@ -134,17 +132,17 @@ class Presenter:
             return f"처방 {leaf.key}"
         return f"{leaf.kind}:{leaf.key}"
 
-    def missing(self, leaf: Leaf) -> dict[str, str]:
+    def missing(self, leaf: Leaf) -> MissingInput:
         if leaf.kind == "var":
-            return {"kind": "value", "key": leaf.key, "label": self.concept_name(leaf.key)}
+            return MissingInput(kind="value", key=leaf.key, label=self.concept_name(leaf.key))
         if leaf.kind in ("med", "med_class"):
-            return {"kind": leaf.kind, "key": leaf.key, "label": f"{leaf.key} 처방 여부(성분 미확인 처방 있음)"}
+            return MissingInput(kind=leaf.kind, key=leaf.key, label=f"{leaf.key} 처방 여부(성분 미확인 처방 있음)")
         if leaf.kind == "dx":
-            return {"kind": "dx", "key": leaf.key, "label": f"진단 기록 {leaf.key}"}
-        return {"kind": leaf.kind, "key": leaf.key, "label": leaf.key.replace("_", " ")}
+            return MissingInput(kind="dx", key=leaf.key, label=f"진단 기록 {leaf.key}")
+        return MissingInput(kind=leaf.kind, key=leaf.key, label=leaf.key.replace("_", " "))
 
-    def missing_value(self, key: str) -> dict[str, str]:
-        return {"kind": "value", "key": key, "label": _VALUE_HINTS.get(key) or self.concept_name(key)}
+    def missing_value(self, key: str) -> MissingInput:
+        return MissingInput(kind="value", key=key, label=_VALUE_HINTS.get(key) or self.concept_name(key))
 
     def concept_name(self, concept_id: str) -> str:
         concept = self._corpus.catalog.tests.get(concept_id)

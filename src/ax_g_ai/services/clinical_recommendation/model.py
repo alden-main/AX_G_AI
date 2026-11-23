@@ -8,7 +8,17 @@ from functools import cached_property
 from typing import Any
 
 from ax_g_ai.services.clinical_evidence import EvidenceChunk
-from ax_g_ai.services.clinical_recommendation.schema import AssessmentPayload, LabInterpretation, RecommendationItem
+from ax_g_ai.services.clinical_recommendation.schema import (
+    AssessmentPayload,
+    DoseAssessment,
+    FindingConflict,
+    LabInterpretation,
+    MappingIssue,
+    MedicationAlerts,
+    MissingInput,
+    RecommendationItem,
+    UnmatchedDoseDrug,
+)
 from ax_g_ai.services.emr_mapping import EmrMapping
 
 
@@ -36,23 +46,22 @@ class RuleInput:
 
 @dataclass(frozen=True)
 class Assessment:
-    """Structured stage-2 result. ``evidence`` numbering matches ``evidence_refs``.
+    """One patient's rule evaluation: the payload parts (``schema`` models) and the passages they cite.
 
-    Stage-2 entries (``items``, ``lab_interpretations``) are payload models; DUR alerts and dose results are still
-    plain dicts validated by ``payload``.
+    ``evidence`` numbering matches ``evidence_refs``. ``payload`` assembles the API/prompt payload from the parts.
     """
 
     items: tuple[RecommendationItem, ...]
     lab_interpretations: tuple[LabInterpretation, ...]
     evidence: tuple[EvidenceChunk, ...]
     findings_used: Mapping[str, bool]
-    mapping_issues: tuple[Mapping[str, Any], ...] = ()
+    mapping_issues: tuple[MappingIssue, ...] = ()
     unknown_findings: tuple[str, ...] = ()
     # HIRA DUR contraindication/caution alerts for the current prescriptions (None: DUR not configured)
-    medication_alerts: Mapping[str, Any] | None = None
+    medication_alerts: MedicationAlerts | None = None
     # Stage-3 dose results (None: dose stage disabled) and requested drugs without a dose rule
-    dose_assessments: tuple[Mapping[str, Any], ...] | None = None
-    unmatched_dose_drugs: tuple[Mapping[str, str], ...] = ()
+    dose_assessments: tuple[DoseAssessment, ...] | None = None
+    unmatched_dose_drugs: tuple[UnmatchedDoseDrug, ...] = ()
     # Findings the memo and the question state differently, left out of findings_used: {"pregnancy": {"clinical_note": True, "question": False}}
     finding_conflicts: Mapping[str, Mapping[str, bool]] = field(default_factory=dict)
 
@@ -60,34 +69,29 @@ class Assessment:
     def unreviewed(self) -> bool:
         return (any(item.review_status != "approved" for item in self.items)
                 or any(lab.review_status != "approved" for lab in self.lab_interpretations)
-                or any(dose.get("review_status") != "approved" for dose in self.dose_assessments or ()))
+                or any(dose.review_status != "approved" for dose in self.dose_assessments or ()))
 
     @cached_property
     def payload(self) -> AssessmentPayload:
-        """The validated payload (``schema.AssessmentPayload``); raises ``ValidationError`` on an unexpected key or type."""
-        return AssessmentPayload.model_validate(self._raw_dict())
+        """``schema.AssessmentPayload``: the parts as they are, and the optional groups only when they apply."""
+        optional: dict[str, Any] = {}
+        if self.medication_alerts is not None:
+            optional["medication_alerts"] = self.medication_alerts
+        if self.dose_assessments is not None:
+            optional["dose_assessments"] = list(self.dose_assessments)
+            if self.unmatched_dose_drugs:
+                optional["unmatched_dose_drugs"] = list(self.unmatched_dose_drugs)
+        if self.finding_conflicts:
+            # Produced by ``question_facts.merge_question_findings`` (plain data shared with the chat path).
+            optional["finding_conflicts"] = {key: FindingConflict.model_validate(value) for key, value in self.finding_conflicts.items()}
+        return AssessmentPayload(
+            items=list(self.items), lab_interpretations=list(self.lab_interpretations), findings_used=dict(self.findings_used),
+            unknown_findings=list(self.unknown_findings), mapping_issues=list(self.mapping_issues), **optional,
+        )
 
     def as_dict(self) -> dict[str, object]:
         """JSON-ready payload with exactly the keys that were set (a fresh dict: callers may edit it)."""
         return self.payload.model_dump(mode="json")
-
-    def _raw_dict(self) -> dict[str, object]:
-        doses: dict[str, object] = {}
-        if self.dose_assessments is not None:
-            doses["dose_assessments"] = [dict(item) for item in self.dose_assessments]
-            if self.unmatched_dose_drugs:
-                doses["unmatched_dose_drugs"] = [dict(item) for item in self.unmatched_dose_drugs]
-        return {
-            # Model instances pass validation as they are (their set keys and key order are kept).
-            "items": list(self.items),
-            "lab_interpretations": list(self.lab_interpretations),
-            "findings_used": dict(self.findings_used),
-            "unknown_findings": list(self.unknown_findings),
-            "mapping_issues": [dict(issue) for issue in self.mapping_issues],
-            **({"medication_alerts": dict(self.medication_alerts)} if self.medication_alerts is not None else {}),
-            **doses,
-            **({"finding_conflicts": {key: dict(value) for key, value in self.finding_conflicts.items()}} if self.finding_conflicts else {}),
-        }
 
 
 # The answer attributes content to its sources (source_titles, region_label); ids and review state are not repeated.
@@ -143,12 +147,9 @@ class EvidenceNumbering:
         return refs
 
 
-def unique_missing(items: Iterable[dict[str, str]]) -> list[dict[str, str]]:
-    seen: set[tuple[str, str]] = set()
-    result = []
+def unique_missing(items: Iterable[MissingInput]) -> list[MissingInput]:
+    """The first of each (kind, key), in order of first appearance: one rule can test an input in several conditions."""
+    unique: dict[tuple[str, str], MissingInput] = {}
     for item in items:
-        marker = (item["kind"], item["key"])
-        if marker not in seen:
-            seen.add(marker)
-            result.append(item)
-    return result
+        unique.setdefault((item.kind, item.key), item)
+    return list(unique.values())

@@ -29,7 +29,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ax_g_ai.corpus.files import DOSE_FILE
 from ax_g_ai.services.clinical_calculations import body_mass_index
@@ -46,9 +46,13 @@ from ax_g_ai.services.clinical_recommendation.rules import (
     flag_vocabulary,
     rank_item,
 )
-from ax_g_ai.services.clinical_recommendation.schema import LabInterpretation, RecommendationItem
+from ax_g_ai.services.clinical_recommendation.schema import DoseAssessment, LabInterpretation, RecommendationItem, UnmatchedDoseDrug
+from ax_g_ai.services.clinical_recommendation.schema import MappingIssue as PayloadMappingIssue
 from ax_g_ai.services.emr_mapping import SiteCodeMap, map_emr, normalize_name
 from ax_g_ai.services.question_facts import has_medication_context, question_findings
+
+if TYPE_CHECKING:  # dur_check imports this package's schema: a runtime import would be circular
+    from ax_g_ai.services.dur_check import DurChecker, ProposedDrug
 
 __all__ = ["FLAG_KINDS", "Assessment", "ClinicalRecommender", "Leaf", "QuestionInputs", "RuleCorpus", "RuleInput", "prompt_view", "read_rows"]
 
@@ -60,7 +64,7 @@ class QuestionInputs:
     """What a chat question or clinician memo adds to the EMR for the rule, DUR and dose checks."""
 
     findings: Mapping[str, bool]  # stated facts, e.g. {"pregnancy": True}
-    proposed_drugs: tuple[Any, ...]  # services.dur_check.ProposedDrug: drugs to add, checked against DUR
+    proposed_drugs: tuple[ProposedDrug, ...]  # drugs to add, checked against DUR
     dose_drugs: tuple[str, ...]  # ingredient ids named in the text that have dose rules
 
     def __bool__(self) -> bool:
@@ -72,11 +76,11 @@ class ClinicalRecommender:
 
     def __init__(
         self, corpus: RuleCorpus, site_map: SiteCodeMap | None = None, *,
-        max_possible: int = 12, max_evidence: int = 10, evidence_per_item: int = 1, dur: Any = None,
+        max_possible: int = 12, max_evidence: int = 10, evidence_per_item: int = 1, dur: DurChecker | None = None,
         doses: bool = False, max_dose_items: int = 12, max_dose_evidence: int = 6,
     ) -> None:
         self._corpus = corpus
-        self._dur = dur  # services.dur_check.DurChecker
+        self._dur = dur
         self._site_map = site_map
         self._max_possible = max_possible
         self._max_evidence = max_evidence
@@ -120,7 +124,7 @@ class ClinicalRecommender:
         text = " ".join(item for item in texts if item)
         if not text:
             return QuestionInputs({}, (), ())
-        proposed: tuple[Any, ...] = ()
+        proposed: tuple[ProposedDrug, ...] = ()
         if self._dur is not None and has_medication_context(text):
             proposed = self._dur.find_drugs(text)
         doses: tuple[str, ...] = ()
@@ -152,7 +156,7 @@ class ClinicalRecommender:
 
     def assess(
         self, rule_input: RuleInput, findings: Mapping[str, bool] | None = None, dose_drugs: Iterable[str] = (),
-        proposed_drugs: Sequence[Any] = (), conflicts: Mapping[str, Mapping[str, bool]] | None = None,
+        proposed_drugs: Sequence[ProposedDrug] = (), conflicts: Mapping[str, Mapping[str, bool]] | None = None,
     ) -> Assessment:
         """``proposed_drugs``: drugs to add named in the question (``QuestionInputs``), checked with the prescriptions.
         ``conflicts``: findings the memo and the question disagree on (``question_facts.merge_question_findings``),
@@ -195,15 +199,15 @@ class ClinicalRecommender:
             interpretation.evidence_refs = numbering.refs(record.get("claim_id"))
             labs.append(interpretation)
         issues = tuple(
-            {key: value for key, value in vars(issue).items() if value is not None} for issue in mapping.issues
+            PayloadMappingIssue(**{key: value for key, value in vars(issue).items() if value is not None}) for issue in mapping.issues
         )
         alerts = None
         if self._dur is not None:
             pregnant = accepted.get("pregnancy")
             alerts = self._dur.check(rule_input.medications, age_years=facts.values.get("age"), sex=sex, pregnant=pregnant,
-                                     proposed=proposed_drugs, pregnancy_conflict="pregnancy" in conflicts).as_dict()
-        doses: tuple[Mapping[str, Any], ...] | None = None
-        unmatched: tuple[Mapping[str, str], ...] = ()
+                                     proposed=proposed_drugs, pregnancy_conflict="pregnancy" in conflicts)
+        doses: tuple[DoseAssessment, ...] | None = None
+        unmatched: tuple[UnmatchedDoseDrug, ...] = ()
         if self._doses:
             requested, unmatched = self._dose_stage.resolve(dose_drugs)
             doses = tuple(self._dose_stage.assessments(mapping, facts, requested, numbering))
