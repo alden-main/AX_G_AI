@@ -1,28 +1,30 @@
-"""Check a patient's prescriptions against the HIRA DUR lists (PostgreSQL schema ``dur``).
+"""환자의 처방을 HIRA DUR 목록(PostgreSQL 스키마 ``dur``)과 대조해 DUR 경고를 만든다.
 
-The active dataset is read once into memory (``ax_g_ai.dur_store.reader``); see
-``ax_g_ai.dur_store.snapshot`` for the source and the conversion.
+설계상 위치: 서비스 계층의 DUR 점검 모듈. 런타임(``runtime.py``)이 ``DurChecker``를 만들고, 임상 추천
+(``clinical_recommendation``)이 질문 속 약 이름 찾기(``find_drugs``)와 처방 점검(``check``)에 쓴다.
+DUR 저장 계층(``dur_store.reader``)은 DB 행으로 ``DurTables``를 만든다.
 
-Prescriptions are matched by EMR ``medCode`` = 9-digit 보험 제품코드 only (no name guessing);
-unmatched codes are reported so the site can fix them. Alerts:
+역할: 활성 데이터셋은 메모리로 한 번 읽는다(``ax_g_ai.dur_store.reader``). 원천과 변환은
+``ax_g_ai.dur_store.snapshot``을 참고한다.
 
-- 병용금기: two current prescriptions whose ingredients form a listed pair (the list's 비고 —
-  e.g. "48시간 이내 병용금기", MTX weekly-dose conditions — is shown verbatim, never evaluated).
-- 연령금기: the patient's age meets the listed age condition (age unknown → no alert).
-- 임부금기: pregnancy recorded → ``met``; pregnancy unknown in a woman aged 15–49, or memo and question disagreeing
-  on it (any age, unless male) → ``possible``.
-- 노인주의: age 65 or older.
+처방은 EMR ``medCode`` = 9자리 보험 제품코드로만 맞춘다(이름 추측 없음). 맞지 않는 코드는 사이트가 고칠 수 있게
+보고한다. 경고:
 
-Drugs named in a chat question (``find_drugs``) are checked as drugs to add, against every dosage-form code
-of that ingredient. They carry ``proposed: true``. Only single-ingredient codes are named this way: the product
-list gives a combination product one row per component under one ingredient code, so a code whose rows name
-more than one ingredient (or a name listing several) is a combination and is checked only as a prescription.
-An ingredient is its English name without salt and hydrate words ("amlodipine besylate" → "amlodipine",
-"sodium alendronate" → "alendronate"; "potassium chloride", all salt words, stays whole). It is named by that
-key, its full English names, or the Korean name in its single-ingredient product names (salt suffixes
-dropped, e.g. 와파린나트륨 → 와파린) — each Korean name linked to the codes of its own products.
+- 병용금기: 현재 처방 두 개의 성분이 목록의 쌍을 이룬다(목록의 비고 —
+  예: "48시간 이내 병용금기", MTX 주간 용량 조건 — 는 그대로 보여 주며 평가하지 않는다).
+- 연령금기: 환자 나이가 목록의 연령 조건에 해당한다(나이를 모르면 경고 없음).
+- 임부금기: 임신 기록 → ``met``. 15–49세 여성의 임신 여부를 모름, 또는 메모와 질문의 임신 여부가 서로 다름
+  (남성이 아니면 나이 무관) → ``possible``.
+- 노인주의: 65세 이상.
 
-Dose-related DUR lists (용량주의, 투여기간주의) are not in the downloaded files yet.
+채팅 질문에 나온 약(``find_drugs``)은 추가할 약으로서, 그 성분의 모든 제형 코드로 점검하며 ``proposed: true``가
+붙는다. 단일 성분 코드만 이렇게 이름으로 찾는다. 제품 목록은 복합제를 하나의 성분 코드 아래 구성 성분마다 한 행으로
+주므로, 행들이 둘 이상의 성분을 말하는 코드(또는 여러 성분을 나열한 이름)는 복합제이며 처방으로만 점검한다.
+성분은 염·수화물 단어를 뺀 영문명이다("amlodipine besylate" → "amlodipine", "sodium alendronate" → "alendronate";
+모두 염 단어인 "potassium chloride"는 그대로 둔다). 이 키, 전체 영문명, 또는 단일 성분 제품명 속 한글명
+(염 접미어 제거, 예: 와파린나트륨 → 와파린)으로 찾으며, 한글명마다 그 이름을 가진 제품들의 코드에 잇는다.
+
+용량 관련 DUR 목록(용량주의, 투여기간주의)은 아직 내려받은 파일에 없다.
 """
 
 from __future__ import annotations
@@ -53,23 +55,23 @@ _WEEKS_PER_YEAR = 52.1775
 _CONDITIONS = {"미만": lambda value, limit: value < limit, "이하": lambda value, limit: value <= limit,
                "이상": lambda value, limit: value >= limit, "초과": lambda value, limit: value > limit}
 _GRADE_LABELS = {"1": "1등급", "2": "2등급"}
-# Korean ingredient name in a product name: "클로시드정250밀리그램(클래리트로마이신)_(0.25g/1정)". Later parentheses
-# may hold an export name or the packaging instead: "클리신정(클로닉신리시네이트)(수출명:CLICIN Tab)_(…)",
-# "트리세녹스주(삼산화비소)(바이알)_(…)"; those are skipped.
+# 제품명 속 한글 성분명: "클로시드정250밀리그램(클래리트로마이신)_(0.25g/1정)". 뒤쪽 괄호에는 대신 수출명이나
+# 포장이 들어 있을 수 있다: "클리신정(클로닉신리시네이트)(수출명:CLICIN Tab)_(…)",
+# "트리세녹스주(삼산화비소)(바이알)_(…)". 이런 것은 건너뛴다.
 _KO_PARENTHESES = re.compile(r"\(([^()]*[가-힣][^()]*)\)")
 _KO_NOT_INGREDIENT = frozenset({
     "1회용", "일회용", "바이알", "앰플", "프리필드", "카트리지", "주사용", "수출용", "관납용", "군납용", "소아용", "병", "별첨",
     "유전자재조합", "재조합", "미분화", "단클론항체",
 })
-_KO_RECOMBINANT = re.compile(r",?유전자재조합$")  # "니볼루맙,유전자재조합": a biologic, not a combination
+_KO_RECOMBINANT = re.compile(r",?유전자재조합$")  # "니볼루맙,유전자재조합": 복합제가 아니라 생물의약품
 _KO_SUFFIXES = re.compile(
     r"(?:[\d.]+(?:밀리그람|밀리그램|마이크로그램|그램|mg|g)?|염산염|황산염|수화물|무수물|나트륨|칼륨|칼슘|마그네슘|베실산염|말레산염|타르타르산염"
     r"|숙신산염|메실산염|브롬화수소산염|인산염|아세트산염|푸마르산염|시트르산염|질산염|장용과립|제피과립|장용|서방)$"
 )
 _MIN_KO, _MIN_EN = 3, 4
-# Counter-ion, hydrate, co-former and particle-form words: dropped to find the ingredient ("atorvastatin calcium" → "atorvastatin").
-# Esters (furoate, propionate, valerate) are part of the drug and stay. A name made only of these words
-# ("sodium bicarbonate", "potassium chloride") is kept whole.
+# 짝이온·수화물·공형성물·입자 형태 단어: 성분을 찾을 때 뺀다("atorvastatin calcium" → "atorvastatin").
+# 에스터(furoate, propionate, valerate)는 약의 일부이므로 남긴다. 이 단어들로만 된 이름
+# ("sodium bicarbonate", "potassium chloride")은 그대로 둔다.
 _SALT_WORDS = frozenset("""
     hydrochloride dihydrochloride hcl hydrobromide hydroiodide hydrate monohydrate dihydrate trihydrate hemihydrate
     sesquihydrate anhydrous sodium disodium monosodium trisodium potassium dipotassium calcium magnesium
@@ -79,9 +81,9 @@ _SALT_WORDS = frozenset("""
     hydroxide oxide nitrate lactate gluconate salt l-proline l-lysine lysine arginine l-arginine meglumine
     tromethamine erbumine granule granules micronized esilate esylate hemitartrate strontium tetrahydrate diluted solution
 """.split())
-# One ingredient the HIRA list spells two ways (found in the 2026.6 list; reviewed as the same active ingredient).
-# Applied after the salt words are dropped. A spelling missing here only makes the variants two ingredients:
-# a code carrying both is then treated as a combination and is checked as a prescription only.
+# HIRA 목록이 두 가지로 표기한 한 성분(2026.6 목록에서 발견, 같은 유효 성분으로 검수함).
+# 염 단어를 뺀 뒤 적용한다. 여기 없는 표기는 두 변형을 서로 다른 성분으로 만들 뿐이다:
+# 둘을 함께 가진 코드는 그러면 복합제로 취급되어 처방으로만 점검된다.
 _SAME_INGREDIENT = {
     "esomeprazol": "esomeprazole",
     "ibandronic acid": "ibandronate",
@@ -102,17 +104,20 @@ _SAME_INGREDIENT = {
     "dexibuprofen d.c": "dexibuprofen",
     "menotrophin h.p": "menotrophin",
     "s-amlodipine nicotinate": "s-amlodipine",
-    "estrogen": "conjugated estrogen",  # "estrogen(conjugated)": the list's only plain "estrogen"
-    "nanoliposomal irinotecan": "irinotecan",  # same active ingredient; DUR rules are per code either way
+    "estrogen": "conjugated estrogen",  # "estrogen(conjugated)": 목록에서 유일한 단순 "estrogen"
+    "nanoliposomal irinotecan": "irinotecan",  # 같은 유효 성분. DUR 규칙은 어차피 코드별
 }
-# A name that lists several ingredients, or a product the list calls a combination ("복합체" is a complex, one drug).
+# 여러 성분을 나열한 이름, 또는 목록이 복합제라 부르는 제품("복합체"는 착물로 한 약).
 _COMBINATION = re.compile(r"[,+/·]|복합(?!체)|함유")
-# A strength or amount in a name ("24mg", "0.16g", "1KI.U", "300unit"), not a name starting with a digit ("5-fluorouracil").
+# 이름 속 함량·양("24mg", "0.16g", "1KI.U", "300unit"). 숫자로 시작하는 이름("5-fluorouracil")은 아니다.
 _STRENGTH = re.compile(r"(?=[\d.,]*\d)[\d.,]+[a-zμ㎍㎎%.]*(?:/[\w.]*)?\)*", re.I)
 
 
 class DurUnavailableError(RuntimeError):
-    """The DUR dataset is not loaded or has an unexpected shape."""
+    """DUR 데이터셋이 적재되지 않았거나 형태가 예상과 다르다.
+
+    역할: DUR 저장 계층과 ``DurTables.from_rows``가 DUR 점검을 쓸 수 없음을 알리는 오류.
+    """
 
 
 Row = Mapping[str, Any]
@@ -120,7 +125,10 @@ Row = Mapping[str, Any]
 
 @dataclass(frozen=True)
 class DurTables:
-    """One DUR dataset, indexed for lookups by product code and ingredient code."""
+    """DUR 데이터셋 하나를 제품코드·성분코드로 조회할 수 있게 색인한 표 묶음.
+
+    역할: 제품(제품코드 → 행), 병용금기(성분 A → 규칙), 연령·임부·노인 규칙(성분코드 → 규칙)과 출처 정보를 담는다.
+    """
 
     source: Mapping[str, str]
     products: Mapping[str, Row]
@@ -129,11 +137,22 @@ class DurTables:
     pregnancy: Mapping[str, tuple[Row, ...]]
     elderly: Mapping[str, tuple[Row, ...]]
     dataset_id: int | None = None
-    # (ingredient code, ingredient name) as the rule lists write them: they can name components the product rows do not.
+    # 규칙 목록에 적힌 (성분코드, 성분명): 제품 행에 없는 구성 성분명을 담을 수 있다.
     ingredient_names: tuple[tuple[str, str], ...] = ()
 
     @classmethod
     def from_rows(cls, source: Mapping[str, str], rows: Mapping[str, Iterable[Row]], *, dataset_id: int | None = None) -> DurTables:
+        """표 이름별 DUR 행으로 색인된 ``DurTables``를 만든다.
+
+        역할: ``product``는 제품코드로, ``pair_rule``은 ``ingredient_a``로, ``age_rule``·``pregnancy_rule``·``elderly_rule``은
+        ``ingredient_code``로 묶는다. 규칙 목록의 (성분코드, 성분명)도 모은다(병용금기는 A·B 양쪽).
+        입력:
+            source: 데이터셋 출처 정보.
+            rows: 표 이름 → 행들.
+            dataset_id: DB의 데이터셋 ID.
+        출력: ``DurTables``.
+        예외: 제품 행이 없으면 ``DurUnavailableError``.
+        """
         def by(table: str, key: str) -> dict[str, tuple[Row, ...]]:
             grouped: dict[str, list[Row]] = defaultdict(list)
             for row in rows.get(table, ()):
@@ -153,18 +172,21 @@ class DurTables:
 
 @dataclass(frozen=True)
 class ProposedDrug:
-    """A drug named in the question: every single-ingredient DUR code (dosage form) of that ingredient."""
+    """질문에 나온 약 하나: 그 성분의 모든 단일 성분 DUR 코드(제형).
 
-    name: str  # as written in the question (Korean ingredient name or English name)
+    역할: ``DurChecker.find_drugs``의 결과이자 ``check``의 ``proposed`` 입력.
+    """
+
+    name: str  # 질문에 적힌 그대로(한글 성분명 또는 영문명)
     ingredient_name: str
     codes: frozenset[str]
-    # Ingredient keys (``_ingredient_key``; two when the list spells one drug two ways): a drug already prescribed is
-    # checked as the prescription.
+    # 성분 키(``_ingredient_key``. 목록이 한 약을 두 가지로 표기하면 두 개): 이미 처방된 약은
+    # 처방으로 점검한다.
     keys: frozenset[str] = frozenset()
 
 
 def _bare_words(name: str) -> list[str]:
-    """The words of a name without parentheses and strengths; separators (",", "+", "/") are kept."""
+    """괄호(중첩 포함)와 함량을 뺀 이름의 단어들(소문자). 구분자(",", "+", "/")는 남긴다."""
     text = name.lower()
     while (stripped := re.sub(r"\([^()]*\)", " ", text)) != text:
         text = stripped
@@ -172,31 +194,31 @@ def _bare_words(name: str) -> list[str]:
 
 
 def _english_name(name: str) -> str:
-    """'Amlodipine Besylate (as amlodipine 5mg)' → 'amlodipine besylate': no parentheses, strengths or extra spaces."""
+    """'Amlodipine Besylate (as amlodipine 5mg)' → 'amlodipine besylate': 괄호·함량·여분 공백 없음(``ext``는 ``extract``로)."""
     words = [word.strip(".,()[]") for word in _bare_words(name)]
     return " ".join("extract" if word == "ext" else word for word in words if word)
 
 
 def _is_combination_name(name: str) -> bool:
-    """'linagliptin, metformin hydrochloride' lists two ingredients; 'plerixafor 24mg(20mg/mL)' lists one."""
+    """여러 성분을 나열한 이름인지: 'linagliptin, metformin hydrochloride'는 두 성분, 'plerixafor 24mg(20mg/mL)'은 한 성분."""
     return _COMBINATION.search(" ".join(_bare_words(name))) is not None
 
 
 def _salt_free(name: str) -> str:
-    """An English name without its salt and hydrate words, unless nothing else is left."""
+    """염·수화물 단어를 뺀 영문명. 남는 단어가 없으면 전체 이름."""
     full = _english_name(name)
     kept = [word for word in full.split() if word not in _SALT_WORDS]
     return " ".join(kept) if kept else full
 
 
 def _ingredient_key(name: str) -> str:
-    """The ingredient an English name refers to (``_salt_free``, then one spelling for ``_SAME_INGREDIENT``)."""
+    """영문명이 가리키는 성분 키(``_salt_free`` 후 ``_SAME_INGREDIENT``로 표기 통일)."""
     key = _salt_free(name)
     return _SAME_INGREDIENT.get(key, key)
 
 
 def _distinct_ingredients(keys: Iterable[str]) -> frozenset[str]:
-    """Keys naming different ingredients: a key extending another ("clonixin lysinate", "clonixin") is the same one."""
+    """서로 다른 성분을 가리키는 키만 남긴다: 다른 키로 시작하는 키("clonixin lysinate", "clonixin")는 같은 성분으로 본다."""
     ordered = sorted(set(keys), key=len)
     kept: list[str] = []
     for key in ordered:
@@ -206,7 +228,7 @@ def _distinct_ingredients(keys: Iterable[str]) -> frozenset[str]:
 
 
 def _korean_ingredient(product_name: str) -> str | None:
-    """The Korean ingredient name in a product name (spaces removed), or None when it names none."""
+    """제품명 속 한글 성분명(공백 제거, 마지막 해당 괄호). 없으면 ``None``."""
     head = product_name.split("_(", 1)[0]
     candidates = []
     for group in _KO_PARENTHESES.findall(head):
@@ -217,6 +239,7 @@ def _korean_ingredient(product_name: str) -> str | None:
 
 
 def _ko_bases(name: str) -> set[str]:
+    """한글명과, 끝의 함량·염·제형 접미어를 차례로 뗀 형태들 중 세 글자 이상인 것."""
     names = {name}
     while (stripped := _KO_SUFFIXES.sub("", name)) != name and stripped:
         name = stripped
@@ -225,11 +248,23 @@ def _ko_bases(name: str) -> set[str]:
 
 
 class _DrugNames:
-    """Korean and English ingredient names → ingredient key → single-ingredient codes, from the product list."""
+    """제품 목록으로 만든 한글·영문 성분명 → 성분 키 → 단일 성분 코드 색인.
+
+    역할: 질문 텍스트에서 약 이름을 찾고(``find``), 성분코드의 구성 성분 키(``components``)를 알려 준다.
+    """
 
     def __init__(self, products: Iterable[Row], rule_names: Iterable[tuple[str, str]] = ()) -> None:
-        """``rule_names``: (ingredient code, ingredient name) from the rule lists, which may name a combination's
-        other components where every product row names only one of them."""
+        """제품 행과 규칙 목록 성분명으로 이름 색인을 만든다.
+
+        역할: 성분코드마다 구성 성분 키를 정하고, 키가 하나가 아니거나 복합 이름이 있는 코드는 복합제로 빼고 나머지 코드의
+        영문 별칭(키·전체 영문명·염 제거명)과 제품명 속 한글명(및 접미어 제거형)을 키에 잇는다. 키마다 대표 표기를 고르고,
+        다른 키와 겹치지 않는 첫 단어도 별칭으로 더한 뒤 한글·영문 매처를 만든다.
+        입력:
+            products: DUR 제품 행.
+            rule_names: 규칙 목록의 (성분코드, 성분명). 모든 제품 행이 한 성분만 말하는 복합제의 다른 구성 성분명을
+                담을 수 있다.
+        출력: 없음(색인 생성).
+        """
         rows = list(products)
         raw_names: dict[str, set[str]] = defaultdict(set)
         for row in rows:
@@ -237,7 +272,7 @@ class _DrugNames:
         for code, name in rule_names:
             if code in raw_names and name:
                 raw_names[code].add(name.strip())
-        # Ingredient keys of every code: one for a single ingredient, one per component for a combination.
+        # 코드마다의 성분 키: 단일 성분은 하나, 복합제는 구성 성분마다 하나.
         self._components = {
             code: _distinct_ingredients(_ingredient_key(name) for name in names if _english_name(name))
             for code, names in raw_names.items()
@@ -247,30 +282,30 @@ class _DrugNames:
         codes: dict[str, set[str]] = defaultdict(set)
         labels: dict[str, str] = {}
         label_rank: dict[str, tuple[bool, int, str]] = {}
-        english: dict[str, str] = {}  # full English name or ingredient key → ingredient key
-        korean: dict[str, set[str]] = defaultdict(set)  # Korean name (and its salt-free bases) → ingredient keys
+        english: dict[str, str] = {}  # 전체 영문명 또는 성분 키 → 성분 키
+        korean: dict[str, set[str]] = defaultdict(set)  # 한글명(과 염을 뗀 형태) → 성분 키들
         for row in rows:
             code = row["ingredient_code"]
             if code in combinations:
                 continue
             name = str(row.get("ingredient_name") or "").strip()
             key = _ingredient_key(name)
-            if not key:  # no English ingredient name: it cannot be named
+            if not key:  # 영문 성분명이 없음: 이름으로 찾을 수 없다
                 continue
             codes[key].add(code)
-            # The usual spelling first, then the shortest form: "aspirin", not "aspirin(enteric coated) (as aspirin)".
+            # 대표 표기는 통상 표기 먼저, 그다음 가장 짧은 형태: "aspirin(enteric coated) (as aspirin)"이 아니라 "aspirin".
             rank = (_salt_free(name) != key, len(name), name)
             if key not in labels or rank < label_rank[key]:
                 labels[key], label_rank[key] = name, rank
-            for alias in (key, _english_name(name), _salt_free(name)):  # also the list's other spelling ("diphenylhydantoin")
+            for alias in (key, _english_name(name), _salt_free(name)):  # 목록의 다른 표기("diphenylhydantoin")도
                 english.setdefault(alias, key)
             korean_name = _korean_ingredient(str(row.get("product_name") or ""))
-            # A product name that lists several Korean ingredients ("A/B") is a combination even when coded alone.
+            # 한글 성분 여러 개를 나열한 제품명("A/B")은 단독 코드여도 복합제다.
             if korean_name and not _COMBINATION.search(korean_name):
                 for base in _ko_bases(korean_name):
                     korean[base].add(key)
-        # The first word alone ("clobetasol" for "clobetasol propionate") names an ingredient only when no other
-        # ingredient starts with it: "ethyl", "insulin" or a salt word name several and stay unmatched.
+        # 첫 단어만("clobetasol propionate"의 "clobetasol")으로는 그 단어로 시작하는 다른 성분이 없을 때만 성분을
+        # 가리킨다: "ethyl", "insulin"이나 염 단어는 여러 성분을 가리키므로 매칭하지 않는다.
         first_words: dict[str, set[str]] = defaultdict(set)
         for key in codes:
             first_words[key.split()[0]].add(key)
@@ -279,7 +314,7 @@ class _DrugNames:
                 english[word] = next(iter(keys))
         self._codes = {key: frozenset(items) for key, items in codes.items()}
         self._labels = labels
-        # Leftmost-longest, non-overlapping: "와파린나트륨" is one drug, not "와파린" plus a fragment.
+        # 가장 왼쪽·가장 긴 비중첩 일치: "와파린나트륨"은 "와파린" + 조각이 아니라 한 약이다.
         self._ko_names = TermMatcher((name, key) for name, keys in korean.items() for key in sorted(keys))
         self._en_names = TermMatcher(
             ((alias, key) for alias, key in english.items() if len(alias) >= _MIN_EN and re.fullmatch(r"[a-z0-9][a-z0-9 -]*[a-z]", alias)),
@@ -287,12 +322,19 @@ class _DrugNames:
         )
 
     def components(self, code: str) -> frozenset[str]:
-        """Ingredient keys of an ingredient code (several for a combination product)."""
+        """성분코드의 성분 키들(복합제는 여러 개)."""
         return self._components.get(code, frozenset())
 
     def find(self, text: str) -> tuple[ProposedDrug, ...]:
-        """Drugs named in ``text``. A Korean name the list spells two ways in English ("류프로렐린": leuprolide,
-        leuprorelin) is one drug with the codes of both."""
+        """``text``에 나온 약들을 찾는다.
+
+        역할: 공백을 지운 텍스트에서 한글명을, 소문자 텍스트에서 영문명을 각각 가장 왼쪽·가장 긴 일치로 찾고, 이미 찾은
+        성분 키와 겹치는 일치는 버린다. 목록이 영문으로 두 가지로 표기한 한글명("류프로렐린": leuprolide, leuprorelin)은
+        두 키의 코드를 모두 가진 한 약이다. 대표 성분명은 키들의 대표 표기 중 가장 짧은 것이다.
+        입력:
+            text: 질문이나 메모 텍스트.
+        출력: ``ProposedDrug`` 튜플(한글 일치 먼저, 그다음 영문 일치).
+        """
         found: list[ProposedDrug] = []
         seen: set[str] = set()
         matches = [(match.term, match.values) for match in self._ko_names.longest(re.sub(r"\s+", "", text))]
@@ -308,6 +350,12 @@ class _DrugNames:
 
 
 class DurChecker:
+    """DUR 데이터셋 하나로 처방·추가 예정 약을 점검하는 검사기.
+
+    역할: ``DurTables``와 이름 색인을 가지고 질문 속 약을 찾으며(``find_drugs``), 병용·연령·임부·노인 경고를 만든다
+    (``check``). 생성 후 바뀌지 않는다.
+    """
+
     def __init__(self, tables: DurTables) -> None:
         self._tables = tables
         self.source = dict(tables.source)
@@ -321,16 +369,26 @@ class DurChecker:
         return self._tables.dataset_id
 
     def find_drugs(self, text: str) -> tuple[ProposedDrug, ...]:
-        """Drugs named in ``text`` (a chat question or memo), matched to DUR ingredient codes."""
+        """``text``(채팅 질문이나 메모)에 나온 약을 DUR 성분코드에 맞춰 돌려준다."""
         return self._names.find(text) if text else ()
 
     def check(
         self, medications: Sequence[tuple[str | None, str | None]], *, age_years: float | None, sex: str | None,
         pregnant: bool | None, proposed: Sequence[ProposedDrug] = (), pregnancy_conflict: bool = False,
     ) -> MedicationAlerts:
-        """The payload ``assessment.medication_alerts``.
+        """payload ``assessment.medication_alerts``를 만든다.
 
-        ``pregnancy_conflict``: the memo and the question disagree on pregnancy (``pregnant`` is then None).
+        역할: 처방을 9자리 제품코드로 DUR 제품에 맞추고(못 맞추면 ``unmapped``), 질문 속 약 중 이미 처방된 성분(복합제
+        구성 성분 포함)이 아닌 것을 모든 제형 코드로 추가한다. 병용·연령·임부·노인 규칙을 적용한 뒤 내용이 같은
+        경고는 하나로 합친다.
+        입력:
+            medications: (EMR ``medCode``, ``medName``) 목록.
+            age_years: 나이(세), 모르면 ``None``.
+            sex: ``male``/``female``, 모르면 ``None``.
+            pregnant: 임신 여부, 모르면 ``None``.
+            proposed: 질문에서 찾은 추가 예정 약(``find_drugs`` 결과).
+            pregnancy_conflict: 메모와 질문의 임신 여부가 서로 다름(이때 ``pregnant``는 ``None``).
+        출력: ``MedicationAlerts``(경고, 매핑 안 된 처방, 출처, 인식한 추가 예정 약이 있으면 ``proposed``).
         """
         prescribed: list[dict[str, Any]] = []
         unmapped: list[DurUnmapped] = []
@@ -341,9 +399,9 @@ class DurChecker:
                 continue
             prescribed.append({"med_code": row["product_code"], "med_name": name or row["product_name"], "product_name": row["product_name"],
                                "ingredient_code": row["ingredient_code"], "ingredient_name": row["ingredient_name"]})
-        # Drugs to add, named in the question: checked like prescriptions under every dosage-form code. A drug
-        # already prescribed is checked once, as the prescription.
-        # "Already prescribed" is by ingredient: a component of a prescribed combination counts too.
+        # 질문에 나온 추가 예정 약: 모든 제형 코드로 처방처럼 점검한다. 이미 처방된 약은
+        # 처방으로 한 번만 점검한다.
+        # "이미 처방됨"은 성분 기준이다: 처방된 복합제의 구성 성분도 포함한다.
         current = {key for item in prescribed for key in self._names.components(item["ingredient_code"])}
         recognized: list[DurProposed] = []
         for drug in proposed:
@@ -359,7 +417,7 @@ class DurChecker:
             *self._pregnancy(prescribed, age_years, sex, pregnant, pregnancy_conflict),
             *self._elderly(prescribed, age_years),
         ]
-        # One alert per finding: a proposed drug's dosage forms share the same rules.
+        # 소견 하나에 경고 하나: 추가 예정 약의 제형들은 같은 규칙을 공유한다.
         unique = {json.dumps(alert.model_dump(mode="json"), ensure_ascii=False, sort_keys=True): alert for alert in alerts}
         return MedicationAlerts(
             alerts=list(unique.values()), unmapped=unmapped, source=DurSource.model_validate(self.source),
@@ -368,6 +426,7 @@ class DurChecker:
 
     @staticmethod
     def _product(item: Mapping[str, Any]) -> DurProduct:
+        """점검 항목을 경고에 넣을 ``DurProduct``로 바꾼다(추가 예정 약이면 ``proposed=True``)."""
         return DurProduct(
             med_code=item["med_code"], med_name=item["med_name"], ingredient_name=item["ingredient_name"],
             **({"proposed": True} if item.get("proposed") else {}),
@@ -375,9 +434,18 @@ class DurChecker:
 
     @staticmethod
     def _notice(rule: Row) -> DurNotice:
+        """규칙의 고시 번호·일자."""
         return DurNotice(no=rule.get("notice_no"), date=rule.get("notice_date"))
 
     def _pairs(self, prescribed: list[dict[str, Any]]) -> Iterable[DurAlert]:
+        """병용금기 경고를 만든다.
+
+        역할: 점검 항목을 성분코드로 묶고, 성분 A의 규칙 중 상대 성분 B도 있는 쌍마다 경고를 낸다(같은 성분끼리 제외,
+        같은 쌍·같은 내용은 한 번). 비고는 ``condition_note``로 그대로 싣는다.
+        입력:
+            prescribed: 점검 항목(처방 + 추가 예정 약).
+        출력: ``DurAlert``(``병용금기``, ``met``)를 내는 생성기.
+        """
         by_ingredient: dict[str, list[dict[str, Any]]] = {}
         for item in prescribed:
             by_ingredient.setdefault(item["ingredient_code"], []).append(item)
@@ -396,6 +464,15 @@ class DurChecker:
                 )
 
     def _ages(self, prescribed: list[dict[str, Any]], age_years: float | None) -> Iterable[DurAlert]:
+        """연령금기 경고를 만든다.
+
+        역할: 나이를 규칙 단위(세·개월·주)로 바꿔 조건(미만·이하·이상·초과)을 검사한다. 나이를 모르거나 단위·조건을
+        모르는 규칙은 경고하지 않는다.
+        입력:
+            prescribed: 점검 항목.
+            age_years: 나이(세).
+        출력: ``DurAlert``(``연령금기``, ``met``)를 내는 생성기.
+        """
         if age_years is None:
             return
         for item in prescribed:
@@ -413,17 +490,29 @@ class DurChecker:
         self, prescribed: list[dict[str, Any]], age_years: float | None, sex: str | None, pregnant: bool | None,
         conflict: bool = False,
     ) -> Iterable[DurAlert]:
+        """임부금기 경고를 만든다.
+
+        역할: 임신이 아님이 확인됐거나 남성이면 경고하지 않는다. 임신 기록이 있으면 ``met``, 임신 여부를 모르면 가임기
+        (15–49세) 여성일 때만, 진술이 서로 다르면 나이와 관계없이 ``possible``로 확인할 입력과 함께 낸다.
+        입력:
+            prescribed: 점검 항목.
+            age_years: 나이(세).
+            sex: ``male``/``female``.
+            pregnant: 임신 여부.
+            conflict: 메모와 질문의 임신 여부가 서로 다름.
+        출력: ``DurAlert``(``임부금기``)를 내는 생성기.
+        """
         if pregnant is False or sex == "male":
             return
         if pregnant is None and not conflict:
-            # Unknown pregnancy: only flag women of reproductive age, as a question to confirm.
+            # 임신 여부 모름: 가임기 여성만 확인 질문으로 표시한다.
             if sex != "female" or age_years is None or not REPRODUCTIVE_AGE[0] <= age_years <= REPRODUCTIVE_AGE[1]:
                 return
-        # Conflicting statements are flagged whatever the age: someone stated a pregnancy, so missing a
-        # contraindication is worse than one more question.
+        # 진술이 서로 다르면 나이와 관계없이 표시한다: 누군가 임신을 언급했으므로 금기를 놓치는 것이
+        # 질문 하나 더 하는 것보다 나쁘다.
         status: Status = "met" if pregnant else "possible"
         label = "임신 여부(진료 메모와 질문이 서로 다름 — 확인 필요)" if conflict else "임신 여부(가임기 여성)"
-        # Only a ``possible`` alert names the input to confirm.
+        # ``possible`` 경고만 확인할 입력을 적는다.
         missing: dict[str, Any] = (
             {"missing": [MissingInput(kind="finding", key="pregnancy", label=label)]} if status == "possible" else {}
         )
@@ -435,6 +524,7 @@ class DurChecker:
                                notice=self._notice(rule), **missing)
 
     def _elderly(self, prescribed: list[dict[str, Any]], age_years: float | None) -> Iterable[DurAlert]:
+        """65세 이상이면 노인주의 경고를 만든다(나이를 모르면 없음)."""
         if age_years is None or age_years < ELDERLY_AGE:
             return
         for item in prescribed:

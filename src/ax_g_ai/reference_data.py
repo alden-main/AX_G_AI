@@ -1,8 +1,10 @@
-"""Convert the legacy medicine and disease dictionaries to a queryable SQLite DB.
+"""예전 약품·질환 사전(Pickle)을 조회 가능한 SQLite DB로 변환한다.
 
-The legacy inputs are Python Pickle files, which must be treated as untrusted.
-Only Pickles composed of the small set of opcodes required for built-in dict,
-string, and float values are accepted before they are loaded.
+설계상 위치: 오프라인 데이터 준비 도구. ``ax-g-ai-reference-db`` 명령(``main``)으로 실행하며, 만든 DB는
+런타임의 ``SqliteReferenceLookup``(``AX_G_REFERENCE_DATA_DB_PATH``)이 읽는다.
+
+역할: 예전 입력은 Python Pickle 파일이므로 신뢰할 수 없는 데이터로 다룬다. 내장 dict·문자열·실수 값에 필요한
+소수의 opcode로만 이루어진 Pickle만 허용하고, 그 검사를 통과한 뒤에야 불러온다.
 """
 
 from __future__ import annotations
@@ -21,11 +23,14 @@ from typing import Any
 
 
 class ReferenceDataError(ValueError):
-    """A reference-data source does not match the supported legacy format."""
+    """참조 데이터 원본이 지원하는 예전 형식과 맞지 않는다.
+
+    역할: 허용되지 않은 opcode, dict가 아닌 최상위 값, 빈 코드·이름, 문자열이 아닌 값 등을 알린다.
+    """
 
 
-# The supplied files use only these protocol-4 opcodes.  An allow-list avoids
-# invoking Pickle data that can construct objects or call arbitrary functions.
+# 제공된 파일은 protocol 4의 아래 opcode만 쓴다. 허용 목록으로 객체를 만들거나 임의 함수를 호출할 수 있는
+# Pickle 데이터가 실행되지 않게 한다.
 _SAFE_PICKLE_OPCODES = frozenset(
     {
         "PROTO",
@@ -54,11 +59,18 @@ _SAFE_PICKLE_OPCODES = frozenset(
 def convert_reference_pickles(
     *, medicine_pickle: Path, disease_pickle: Path, output: Path, replace: bool = False
 ) -> tuple[int, int]:
-    """Create SQLite reference data from the supported legacy Pickle files.
+    """지원하는 예전 Pickle 파일로 SQLite 참조 데이터를 만든다.
 
-    The output is written to a sibling temporary file and atomically published
-    only after every schema and data operation succeeds.  Existing outputs are
-    preserved unless ``replace`` is explicitly requested.
+    역할: 두 Pickle을 검사·변환한 뒤 같은 폴더의 임시 파일에 쓰고, 모든 스키마·데이터 작업이 성공한 뒤에만
+    결과 경로로 원자적으로 교체한다. 실패하면 임시 파일을 지운다. ``replace``를 명시하지 않으면 기존 결과를 보존한다.
+    입력:
+        medicine_pickle: 약품 사전 Pickle 경로.
+        disease_pickle: 질환 사전 Pickle 경로.
+        output: 만들 SQLite 파일 경로.
+        replace: 기존 결과 파일을 덮어쓸지 여부.
+    출력: (저장한 약품 행 수, 저장한 질환 행 수).
+    예외: ``FileExistsError``(결과가 이미 있고 ``replace``가 아님), ``FileNotFoundError``(입력 없음),
+        ``ReferenceDataError``(형식 불일치).
     """
     medicine = _load_builtin_dictionary(medicine_pickle, "medicine")
     disease = _load_builtin_dictionary(disease_pickle, "disease")
@@ -86,6 +98,15 @@ def convert_reference_pickles(
 
 
 def _load_builtin_dictionary(path: Path, label: str) -> dict[str, Any]:
+    """opcode 허용 목록을 통과한 Pickle만 불러와 dict로 돌려준다.
+
+    역할: 먼저 ``pickletools.genops``로 모든 opcode를 훑어 허용 목록 밖의 것이 있으면 거부하고, 통과하면 불러온다.
+    입력:
+        path: Pickle 파일 경로.
+        label: 오류 메시지에 쓸 이름("medicine" / "disease").
+    출력: 불러온 dict.
+    예외: ``FileNotFoundError``(파일 없음), ``ReferenceDataError``(허용되지 않은 opcode 또는 dict가 아닌 값).
+    """
     if not path.is_file():
         raise FileNotFoundError(f"{label} Pickle was not found: {path}")
     with path.open("rb") as source:
@@ -94,20 +115,27 @@ def _load_builtin_dictionary(path: Path, label: str) -> dict[str, Any]:
                 raise ReferenceDataError(
                     f"{label} Pickle contains unsupported opcode {opcode.name} at byte {position}"
                 )
-    # The opcode allow-list above ensures this load is limited to built-in data.
+    # 위의 opcode 허용 목록 검사 덕분에 이 load는 내장 데이터만 만든다.
     with path.open("rb") as source:
-        value = pickle.load(source)  # noqa: S301 - validated immediately above
+        value = pickle.load(source)  # noqa: S301 - 바로 위에서 검증함
     if not isinstance(value, dict):
         raise ReferenceDataError(f"{label} Pickle must contain a dictionary")
     return value
 
 
 def _medicine_rows(value: Mapping[str, Any]) -> list[tuple[str, str, str, str | None, str | None, str | None]]:
+    """약품 사전을 ``medicines`` 테이블 행으로 바꾼다.
+
+    역할: 코드가 빈 값이거나 문자열이 아닌 항목은 건너뛰고, 원래 코드와 앞뒤 공백을 없앤 코드를 함께 저장한다.
+    입력:
+        value: ``kd_code`` → {``name_ko``, ``efficacy``, ``usagex``, ``carefully``} 사전.
+    출력: (원래 코드, 정리한 코드, 한글명, 효능, 용법, 주의사항) 튜플 목록.
+    예외: ``ReferenceDataError`` — 항목이 객체가 아니거나 한글명이 없거나 값이 문자열·null·NaN이 아님.
+    """
     rows: list[tuple[str, str, str, str | None, str | None, str | None]] = []
     for code, record in value.items():
-        # The legacy CSV has a small number of rows without ``kd_code``;
-        # pandas serialised these as float NaN dictionary keys.  They cannot
-        # identify a medicine and are deliberately excluded from SQLite.
+        # 예전 CSV에는 ``kd_code``가 없는 행이 조금 있고, pandas가 이를 float NaN 키로 직렬화했다.
+        # 약품을 식별할 수 없으므로 일부러 SQLite에서 뺀다.
         if not isinstance(code, str) or not code.strip():
             continue
         if not isinstance(record, Mapping):
@@ -127,6 +155,7 @@ def _medicine_rows(value: Mapping[str, Any]) -> list[tuple[str, str, str, str | 
 
 
 def _disease_rows(value: Mapping[str, Any]) -> list[tuple[str, str]]:
+    """질환 사전(코드 → 한글명)을 (정리한 코드, 이름) 행으로 바꾼다. 빈 코드·이름은 ``ReferenceDataError``다."""
     rows: list[tuple[str, str]] = []
     for code, name in value.items():
         if not isinstance(code, str) or not code.strip():
@@ -136,6 +165,7 @@ def _disease_rows(value: Mapping[str, Any]) -> list[tuple[str, str]]:
 
 
 def _required_text(value: object, field: str) -> str:
+    """``_optional_text``와 같되 값이 없으면 ``ReferenceDataError``를 낸다."""
     text = _optional_text(value)
     if text is None:
         raise ReferenceDataError(f"{field} must be a non-blank string")
@@ -143,6 +173,7 @@ def _required_text(value: object, field: str) -> str:
 
 
 def _optional_text(value: object) -> str | None:
+    """앞뒤 공백을 없앤 문자열을 돌려준다. ``None``·NaN·빈 문자열은 ``None``, 그 밖의 타입은 ``ReferenceDataError``다."""
     if value is None or (isinstance(value, float) and math.isnan(value)):
         return None
     if not isinstance(value, str):
@@ -158,6 +189,18 @@ def _write_database(
     medicine_pickle: Path,
     disease_pickle: Path,
 ) -> None:
+    """새 SQLite 파일에 스키마를 만들고 메타데이터·질환·약품 행을 넣는다.
+
+    역할: ``metadata``(스키마 버전, 생성 시각, 원본 파일 이름·SHA-256), ``diseases``, ``medicines`` 테이블과
+    이름·코드 색인을 만들고 행을 채운다.
+    입력:
+        path: 쓸 SQLite 파일 경로(임시 파일).
+        medicine_rows: ``_medicine_rows`` 결과.
+        disease_rows: ``_disease_rows`` 결과.
+        medicine_pickle: 메타데이터에 기록할 약품 원본 경로.
+        disease_pickle: 메타데이터에 기록할 질환 원본 경로.
+    출력: 없음.
+    """
     with sqlite3.connect(path) as connection:
         connection.execute("PRAGMA foreign_keys = ON")
         connection.executescript(
@@ -202,11 +245,19 @@ def _write_database(
 
 
 def _sha256(path: Path) -> str:
+    """파일의 SHA-256 16진 문자열."""
     with path.open("rb") as handle:
         return hashlib.file_digest(handle, "sha256").hexdigest()
 
 
 def main() -> None:
+    """``ax-g-ai-reference-db`` 명령의 진입점.
+
+    역할: ``--medicine``·``--disease``·``--output``·``--replace`` 인자를 읽어 ``convert_reference_pickles``를 실행하고
+    만든 행 수를 출력한다.
+    입력: 없음(명령행 인자).
+    출력: 없음(결과 요약을 표준 출력에 쓴다).
+    """
     parser = argparse.ArgumentParser(
         description="Convert validated legacy medicine and disease Pickles into SQLite."
     )

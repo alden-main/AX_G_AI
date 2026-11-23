@@ -1,6 +1,10 @@
-"""Corpus contract shared by the build output, the loaders and the runtime (standard library only).
+"""말뭉치 빌드 결과물·적재기·런타임이 함께 지키는 말뭉치 계약 패키지(표준 라이브러리만 사용).
 
-- ``files``: file names of the generated corpus (``text_data/corpus``) and the default embedding model.
-- ``gate``: ``is_citable``, the single Python gate every corpus record passes before the AI may use it.
-- ``text``: the search tokenizer, shared by the in-memory index and the PostgreSQL ``search_tokens`` column.
+설계상 위치: 말뭉치 계약 계층. 말뭉치 빌드 스크립트, 파일·PostgreSQL 적재기, 런타임 서비스(근거 검색·규칙 평가)가
+모두 이 패키지를 가져다 써서 같은 파일 이름·인용 조건·토큰화를 공유한다.
+
+역할:
+- ``files``: 생성된 말뭉치(``text_data/corpus``)의 파일 이름과 기본 임베딩 모델.
+- ``gate``: ``is_citable``. 모든 말뭉치 레코드가 AI에 쓰이기 전에 통과하는 단 하나의 Python 관문.
+- ``text``: 검색 토크나이저. 메모리 색인과 PostgreSQL ``search_tokens`` 열이 함께 쓴다.
 """

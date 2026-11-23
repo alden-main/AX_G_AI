@@ -1,5 +1,9 @@
 """서비스 계층이 정의하고 어댑터가 구현하는 외부 경계(port).
 
+설계상 위치: 서비스 계층과 어댑터 계층 사이의 경계. 임상 채팅 서비스와 EMR 매퍼가 이 타입에 의존하고,
+어댑터 모듈이 이를 구현한다.
+
+역할:
 - ``ProviderClient``: ``adapters.openai``의 Pydantic AI 기반 Client가 구현한다(Responses·Chat Completions).
   서비스는 이 모듈에만 의존하므로 Provider SDK를 바꿔도 서비스 코드는 바뀌지 않는다.
 - ``ReferenceLookup``: ``adapters.sqlite_reference_lookup``의 SQLite 참조 DB(약품·상병명)가 구현한다.
@@ -17,18 +21,24 @@ OutputT = TypeVar("OutputT", bound=BaseModel)
 
 
 class OpenAIProviderError(RuntimeError):
-    """안전하게 분류된 Provider 호출 또는 응답 검증 실패다. 메시지는 로그에 남겨도 되는 분류 문자열만 담는다."""
+    """안전하게 분류된 Provider 호출 또는 응답 검증 실패.
+
+    역할: Provider SDK·프레임워크 오류를 대신하는 공통 예외. 메시지는 로그에 남겨도 되는 분류 문자열만 담는다.
+    """
 
 
 class ProviderOutputError(OpenAIProviderError):
-    """호출은 끝났지만 답이 비었거나 잘렸거나 요청한 구조와 맞지 않는다."""
+    """호출은 끝났지만 답이 비었거나 잘렸거나 요청한 구조와 맞지 않는 경우.
+
+    역할: 전송 실패와 구분되는 출력 오류(``OpenAIProviderError``의 하위 분류).
+    """
 
 
 @dataclass(frozen=True)
 class OpenAIRequest:
-    """Provider에 전달할 고정 지시와 비식별 입력이다.
+    """Provider에 전달할 고정 지시와 비식별 입력.
 
-    ``operation``(예: ``clinical_recommendation``)과 ``prompt_version``은 추적 span의 이름·메타데이터로
+    역할: Provider 호출 하나의 입력 단위. ``operation``(예: ``clinical_recommendation``)과 ``prompt_version``은 추적 span의 이름·메타데이터로
     남아 어느 작업·어느 프롬프트 판이 답을 만들었는지 구분한다. 둘 다 환자 데이터를 담지 않는다.
     """
 
@@ -40,13 +50,20 @@ class OpenAIRequest:
 
 @dataclass(frozen=True)
 class ProviderAnswer:
-    """검증된 모델 텍스트 응답이다."""
+    """검증된 모델 텍스트 응답.
+
+    역할: ``ProviderClient.respond``의 결과. 어댑터가 비어 있지 않음을 확인한 답을 담는다.
+    """
 
     answer: str
 
 
 class ProviderClient(Protocol):
-    """서비스 계층이 의존하는 AI Provider 호출 경계."""
+    """서비스 계층이 의존하는 AI Provider 호출 경계.
+
+    역할: 텍스트 답(``respond``), 구조화 출력(``respond_structured``), 스트림(``stream``) 세 가지 호출을 정의한다.
+    구현은 ``adapters.openai.PydanticAIProviderClient``다.
+    """
 
     async def respond(self, request: OpenAIRequest) -> ProviderAnswer: ...
 
@@ -59,7 +76,10 @@ class ProviderClient(Protocol):
 
 @dataclass(frozen=True)
 class MedicineReference:
-    """참조 DB의 약품 한 건(처방 보강용)."""
+    """참조 DB의 약품 한 건(처방 보강용).
+
+    역할: ``ReferenceLookup.medicine``의 결과. EMR 매퍼가 처방의 약품명·효능·주의사항을 보강하는 데 쓴다.
+    """
 
     name_ko: str
     efficacy: str | None
@@ -69,7 +89,7 @@ class MedicineReference:
 class ReferenceLookup(Protocol):
     """선택 기능인 참조 데이터(약품 효능·주의사항, 상병명) 조회 경계.
 
-    구현은 읽기 전용이며 환자 데이터를 쓰지 않고, 조회 실패는 예외 대신 빈 결과(``None``·``[]``)로 돌려준다.
+    역할: 구현은 읽기 전용이며 환자 데이터를 쓰지 않고, 조회 실패는 예외 대신 빈 결과(``None``·``[]``)로 돌려준다.
     """
 
     def medicine(self, code: object) -> MedicineReference | None:

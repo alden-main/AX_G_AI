@@ -1,6 +1,9 @@
-"""배포 환경별 설정.
+"""배포 환경별 설정을 환경 변수에서 읽고 검증한다.
 
-AI Provider 주소·API Key·모델과 런타임 경로는 코드에 넣지 않고 환경 변수로 주입한다.
+설계상 위치: 설정 계층. ``runtime.py``가 ``AISettings``·``RuntimeSettings``로 앱을 조립하고, 적재 CLI
+(``ax-g-ai-load-corpus``, ``ax-g-ai-load-dur``)가 ``LoaderSettings``를 쓴다.
+
+역할: AI Provider 주소·API Key·모델과 런타임 경로는 코드에 넣지 않고 환경 변수로 주입한다.
 설정값을 로그나 오류 메시지에 기록하지 않는다. 검증 실패는 필드 이름과 사유만 담은
 ``ConfigurationError``로 바뀐다.
 """
@@ -31,10 +34,14 @@ from ax_g_ai.corpus.files import DEFAULT_EMBEDDING_MODEL
 
 
 class ConfigurationError(ValueError):
-    """필수 환경 설정이 없거나 허용되지 않은 값일 때 발생한다."""
+    """필수 환경 설정이 없거나 허용되지 않은 값일 때 발생한다.
+
+    역할: pydantic 검증 오류를 환경 변수 이름과 사유만 담은 메시지로 바꿔 전달한다(설정값은 담지 않는다).
+    """
 
 
 def _require_http_url(value: str) -> str:
+    """``http://``·``https://``로 시작하지 않으면 ``ValueError``를 낸다."""
     if not value.startswith(("https://", "http://")):
         raise ValueError("must be an HTTP(S) URL")
     return value
@@ -46,18 +53,31 @@ AI_PROVIDER_OPENAI: Final = "openai"
 AI_PROVIDER_OPENAI_COMPATIBLE: Final = "openai_compatible"
 
 _OPENAI_DEFAULTS = {"base_url": "https://api.openai.com/v1", "model": "gpt-5-mini"}
-# Legacy ``OPENAI_*`` names are read when the matching ``AI_*`` is unset.  The
-# credentials and endpoint belong to OpenAI only: they must not leak to a
-# self-hosted server when an old .env still contains the OpenAI key.
+# 대응하는 ``AI_*``가 없으면 예전 ``OPENAI_*`` 이름을 읽는다. 인증 정보와 주소는 OpenAI 전용이므로,
+# 예전 .env에 OpenAI 키가 남아 있어도 자체 호스팅 서버로 새어 나가면 안 된다.
 _OPENAI_ONLY_LEGACY_FIELDS = ("base_url", "api_key", "model")
 _SHARED_LEGACY_FIELDS = ("timeout_seconds", "reasoning_effort")
 
 
 class _EnvironmentSettings(BaseSettings):
+    """환경 변수 설정 클래스들의 공통 기반.
+
+    역할: 빈 값 무시·앞뒤 공백 제거·불변 설정을 공유하고, 검증 실패를 ``ConfigurationError``로 바꾸는
+    ``from_environment``를 제공한다.
+    """
+
     model_config = SettingsConfigDict(env_ignore_empty=True, str_strip_whitespace=True, frozen=True)
 
     @classmethod
     def from_environment(cls):
+        """환경 변수로 설정 객체를 만든다.
+
+        역할: 검증 오류마다 ``<접두사><필드 이름 대문자>: 사유``를 이어 붙인 ``ConfigurationError``로 바꾼다.
+        입력값(설정값)은 메시지에 넣지 않는다.
+        입력: 없음(환경 변수·``.env``를 읽는다).
+        출력: 검증된 설정 객체.
+        예외: ``ConfigurationError`` — 필수 값 누락 또는 허용되지 않은 값.
+        """
         try:
             return cls()
         except ValidationError as error:
@@ -70,7 +90,9 @@ class _EnvironmentSettings(BaseSettings):
 
 
 class AISettings(_EnvironmentSettings):
-    """AI Provider의 서버 전용 접속 설정.
+    """AI Provider의 서버 전용 접속 설정(``AI_`` 환경 변수).
+
+    역할: Provider 종류·주소·인증·모델·시간 제한·재시도·추적 여부를 검증해 ``build_provider_client``에 넘긴다.
 
     Attributes:
         provider: ``openai``는 OpenAI Responses API, ``openai_compatible``은 vLLM 등
@@ -102,6 +124,15 @@ class AISettings(_EnvironmentSettings):
     @model_validator(mode="before")
     @classmethod
     def _apply_legacy_and_provider_defaults(cls, data: Any) -> Any:
+        """검증 전에 예전 ``OPENAI_*`` 값과 OpenAI 기본값을 채운다.
+
+        역할: ``provider``를 소문자로 정규화하고, 비어 있는 필드는 ``OPENAI_<필드>`` 환경 변수에서 채운다. OpenAI가
+        아니면 ``timeout_seconds``·``reasoning_effort``만 가져온다. OpenAI면 ``base_url``·``model`` 기본값을 넣는다.
+        끝으로 문자열 ``reasoning_effort``는 Provider와 관계없이 소문자로 바꾼다.
+        입력:
+            data: 검증 전 입력 값 사전.
+        출력: 보정한 값 사전.
+        """
         values = dict(data)
         provider = str(values.get("provider") or AI_PROVIDER_OPENAI).strip().lower()
         values["provider"] = provider
@@ -120,10 +151,18 @@ class AISettings(_EnvironmentSettings):
     @field_validator("base_url")
     @classmethod
     def _http_url(cls, value: str) -> str:
+        """HTTP(S) 주소인지 확인하고 끝의 ``/``를 없앤다."""
         return _require_http_url(value).rstrip("/")
 
     @model_validator(mode="after")
     def _openai_requirements(self) -> AISettings:
+        """검증 후 Provider별 필수 조건을 확인한다.
+
+        역할: ``AI_MODEL``은 항상 필수이고, ``openai`` Provider면 HTTPS 주소와 API Key도 필수다.
+        입력: 없음(검증된 필드).
+        출력: 자기 자신.
+        예외: ``ValueError`` — 조건 위반(``from_environment``에서 ``ConfigurationError``로 바뀐다).
+        """
         if not self.model:
             raise ValueError("AI_MODEL is required")
         if self.provider == AI_PROVIDER_OPENAI:
@@ -135,7 +174,9 @@ class AISettings(_EnvironmentSettings):
 
 
 class RuntimeSettings(_EnvironmentSettings):
-    """프로세스 런타임 설정.
+    """프로세스 런타임 설정(``AX_G_`` 환경 변수).
+
+    역할: 참조 DB·말뭉치·DUR·임베딩·환자 문맥 저장소 등 런타임 구성 요소를 켜고 끄는 값과 경로를 검증한다.
 
     Attributes:
         reference_data_db_path: 승인된 참조 SQLite 경로다. 없으면 참조 보강을 끄고,
@@ -204,7 +245,7 @@ class RuntimeSettings(_EnvironmentSettings):
 class LoaderSettings(_EnvironmentSettings):
     """적재 CLI(``ax-g-ai-load-corpus``, ``ax-g-ai-load-dur``) 설정.
 
-    런타임과 같은 ``AX_G_`` 환경 변수 이름·검증을 쓰되, 적재에 필요한 값만 읽는다
+    역할: 런타임과 같은 ``AX_G_`` 환경 변수 이름·검증을 쓰되, 적재에 필요한 값만 읽는다
     (``RuntimeSettings``는 참조 DB 경로 등 적재와 무관한 값까지 검증한다).
 
     Attributes:

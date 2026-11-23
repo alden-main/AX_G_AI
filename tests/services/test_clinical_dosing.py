@@ -128,6 +128,12 @@ class FormulaTest(unittest.TestCase):
             with self.subTest(dose=dose_fields):
                 self.assertIsNone(prescribed_daily_mg(dose_fields))
 
+    def test_daily_basis_states_the_assumed_interval_first_and_shows_the_calculation(self) -> None:
+        assumed = prescribed_daily_mg({"dosage": "0.5", "unit": "g", "frequency": 2})
+        self.assertEqual(assumed.basis, "투여 간격 미기재 — 1일 투여로 가정해 계산: 1회 0.5 g × 1일 2회 = 1000 mg/일")
+        stated = prescribed_daily_mg({"dosage": 150, "unit": "mg", "frequency": 2, "interval": "1일"})
+        self.assertEqual(stated.basis, "1회 150 mg × 1일 2회 = 300 mg/일")  # a stated daily schedule needs no assumption
+
 
 class DoseAssessmentTest(unittest.TestCase):
     def test_prescribed_drug_gets_renal_band_and_daily_dose_check(self) -> None:

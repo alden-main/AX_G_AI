@@ -1,13 +1,15 @@
-"""What a chat answer or a recommendation is grounded on: cited evidence and the rule assessment.
+"""채팅 답변이나 추천이 기대는 근거(인용 근거 문단과 규칙 평가 결과)를 모으는 모듈.
 
-Both use the request's corpus snapshot, so the passages, the rule results and DUR come from one release.
+설계상 위치: 서비스 계층에서 API 라우트와 ``ClinicalChatService`` 사이. 라우트가 채팅·추천 요청마다 이 모듈로
+근거를 마련한 뒤 결과를 답변 메서드에 넘긴다. 둘 다 요청의 말뭉치 스냅샷(``CorpusSnapshot``)을 쓰므로
+근거 문단·규칙 결과·DUR이 한 릴리스에서 온다.
 
-- Chat (``chat_grounding``): evidence for the question, except one that only asks for recorded values
-  (``question_facts.is_record_lookup``); for a question about diagnoses, tests, drugs or
-  doses (or one that names a drug or states pregnancy) also the stage-2/3 rule results, whose evidence
-  comes first so their ``[근거 n]`` references stay valid.
-- Recommendation (``recommendation_grounding``): the clinician's explicit findings over the memo (its
-  LLM extraction over the deterministic reading) over the question, then the full assessment.
+역할:
+- 채팅(``chat_grounding``): 기록된 값만 묻는 질문(``question_facts.is_record_lookup``)이 아니면 질문의 근거를 찾는다.
+  진단·검사·약·용량을 묻는 질문(또는 약 이름을 대거나 임신을 언급한 질문)에는 2·3단계 규칙 결과도 붙이며,
+  그 근거를 앞에 두어 ``[근거 n]`` 참조가 유효하게 한다.
+- 추천(``recommendation_grounding``): 의료진의 명시적 소견 > 메모(LLM 추출 > 결정적 판독) > 질문 순으로 소견을
+  합친 뒤 전체 규칙 평가를 만든다.
 """
 
 from __future__ import annotations
@@ -27,46 +29,70 @@ from ax_g_ai.services.question_facts import asks_for_recommendation, is_record_l
 
 logger = logging.getLogger("uvicorn.error")
 
-# Rule evidence passages put in front of a chat answer's own evidence.
+# 채팅 답변 자체의 근거 앞에 놓는 규칙 근거 문단 수.
 RULE_EVIDENCE_IN_CHAT = 4
 
 
 @dataclass(frozen=True)
 class Grounding:
+    """답변 하나가 기대는 근거 묶음.
+
+    역할: 프롬프트와 API 응답에 함께 실을 인용 근거 문단과 규칙 평가 결과(쓰지 않으면 ``None``)를 담는다.
+    """
+
     evidence: tuple[EvidenceChunk, ...]
-    assessment: dict[str, object] | None  # assessment payload (``docs/assessment_schema.md``), None: not used
+    assessment: dict[str, object] | None  # 평가 결과 payload(``docs/assessment_schema.md``), None: 사용 안 함
 
 
 def require_recommender(snapshot: CorpusSnapshot) -> ClinicalRecommender:
+    """스냅샷의 규칙 추천기를 돌려준다. 없거나 규칙이 비어 있으면 ``RecommendationUnavailableError``."""
     if snapshot.recommender is None or len(snapshot.recommender) == 0:
         raise RecommendationUnavailableError()
     return snapshot.recommender
 
 
 def with_rule_input(context: PreparedRawEmrContext, snapshot: CorpusSnapshot) -> PreparedRawEmrContext:
-    """Rule facts mapped with this snapshot's rules: kept when the release matches, else mapped again."""
+    """이 스냅샷의 규칙으로 매핑한 규칙 사실을 가진 문맥을 돌려준다.
+
+    역할: 추천기가 없거나 이미 같은 릴리스로 매핑돼 있으면 그대로 두고, 아니면 ``rule_source``를 다시 매핑한다.
+        매핑이 실패하면 경고 로그를 남기고 ``rule_input``을 ``None``으로 둔다(규칙 사실은 선택 사항).
+    입력:
+        context: 준비된 EMR 문맥.
+        snapshot: 요청의 말뭉치 스냅샷.
+    출력: ``rule_input``·``rule_release``가 갱신된(또는 그대로인) 문맥.
+    """
     recommender = snapshot.recommender
     if recommender is None or (context.rule_input is not None and context.rule_release == snapshot.release_id):
         return context
     try:
         rule_input = recommender.prepare(context.rule_source)
-    except Exception as error:  # rule facts are optional; never block EMR preparation or chat
+    except Exception as error:  # 규칙 사실은 선택 사항이므로 EMR 준비나 채팅을 절대 막지 않는다
         logger.warning("clinical_rule_mapping_failed error_type=%s", type(error).__name__)
         return replace(context, rule_input=None)
     return replace(context, rule_input=rule_input, rule_release=snapshot.release_id)
 
 
 def chat_grounding(question: str, context: PreparedRawEmrContext, service: ClinicalChatService, snapshot: CorpusSnapshot) -> Grounding:
-    """Evidence (and, for diagnosis/test/medication questions, rule results) for one chat question.
+    """채팅 질문 하나의 근거(진단·검사·약 질문에는 규칙 결과도)를 마련한다.
 
-    Synchronous: retrieval may call the embedding server and database, so callers run it in a thread.
+    역할: 기록 조회 질문이 아니면 근거를 검색하고, 결과가 없는 일반 추천 질문은 기록된 진단명을 덧붙여 다시 찾는다.
+        추천기와 규칙 사실이 있고 질문에 규칙 입력(소견·약)이 있거나 추천을 묻는 경우 규칙을 평가하며,
+        항목·검사 해석·DUR 경고·용량 결과 중 하나라도 있으면 규칙 근거 앞 ``RULE_EVIDENCE_IN_CHAT``개를 검색 근거 앞에 두고
+        평가 결과의 근거 참조를 그 범위로 줄인다.
+        동기 함수다. 검색이 임베딩 서버와 데이터베이스를 부를 수 있으므로 호출자가 스레드에서 실행한다.
+    입력:
+        question: 의료진 질문.
+        context: 준비된 EMR 문맥(``rule_input`` 포함).
+        service: 근거 검색에 쓰는 채팅 서비스.
+        snapshot: 요청의 말뭉치 스냅샷.
+    출력: ``Grounding``. 규칙 결과를 쓰지 않으면 ``assessment``는 ``None``.
     """
     searched: tuple[EvidenceChunk, ...] = ()
     if not is_record_lookup(question):
         searched = service.find_evidence(question, snapshot.evidence)
         if not searched and asks_for_recommendation(question):
-            # A generic recommendation question ("추천 검사는?") has no topic words: add the recorded diagnoses.
-            # Only then — for other questions the diagnoses pull in passages unrelated to what was asked.
+            # 일반적인 추천 질문("추천 검사는?")에는 주제어가 없으므로 기록된 진단명을 더한다.
+            # 이 경우에만 그렇게 한다. 다른 질문에서는 진단명이 질문과 무관한 문단을 끌어온다.
             hint = diagnosis_hint(context)
             if hint:
                 searched = service.find_evidence(f"{question} {hint}", snapshot.evidence)
@@ -88,22 +114,38 @@ async def recommendation_grounding(
     context: PreparedRawEmrContext, service: ClinicalChatService, snapshot: CorpusSnapshot, *,
     clinical_note: str | None, question: str | None, findings: Mapping[str, bool] | None, dose_drugs: Sequence[str] | None,
 ) -> tuple[PreparedRawEmrContext, Grounding]:
-    """The full assessment for a recommendation request; raises ``RecommendationUnavailableError`` without rules."""
+    """추천 요청의 전체 규칙 평가와 근거를 마련한다.
+
+    역할: 스냅샷 규칙으로 규칙 사실을 매핑(실패하면 EMR 사실 없이)한 뒤, 메모 소견 추출(LLM)과 근거 검색을 동시에
+        실행한다. 소견은 명시적 입력 > 메모(추출 > 결정적 판독) > 질문 순으로 합치고, 상태 변화 표현 없이 엇갈리면
+        충돌로 넘긴다. 용량 약은 입력과 텍스트에서 찾은 것을 순서 유지·중복 제거해 합친다. 규칙 근거 뒤에 검색 근거를 붙인다.
+    입력:
+        context: 준비된 EMR 문맥.
+        service: 소견 추출·근거 검색에 쓰는 채팅 서비스.
+        snapshot: 요청의 말뭉치 스냅샷.
+        clinical_note: 의료진 메모(없으면 ``None``).
+        question: 의료진 질문(없으면 ``None``).
+        findings: 의료진이 명시한 소견(키 → True/False).
+        dose_drugs: 용량 평가를 요청한 약 목록.
+    출력: (규칙 사실이 갱신된 문맥, ``Grounding``) 튜플.
+    예외: 스냅샷에 규칙이 없으면 ``RecommendationUnavailableError``. 소견 추출 Provider 실패는
+        ``ClinicalChatProviderUnavailableError``로 전파된다.
+    """
     rules = require_recommender(snapshot)
     context = with_rule_input(context, snapshot)
     if context.rule_input is None:
-        # EMR mapping failed: evaluate with no EMR facts.
+        # EMR 매핑 실패: EMR 사실 없이 평가한다.
         context = replace(context, rule_input=rules.prepare({}))
     query = " ".join(part for part in (question, clinical_note, diagnosis_hint(context)) if part)
-    # The note extraction (an LLM call) and the evidence search do not depend on each other: run them together.
+    # 메모 추출(LLM 호출)과 근거 검색은 서로 의존하지 않으므로 함께 실행한다.
     extracted, searched = await asyncio.gather(
         service.extract_findings(note=clinical_note, vocabulary=rules.finding_vocabulary) if clinical_note else _value({}),
         asyncio.to_thread(service.find_evidence, query, snapshot.evidence) if query else _value(()),
     )
     stated = rules.question_inputs(clinical_note, question)
-    # Explicit clinician input wins over the memo (its extraction over the deterministic reading), which wins over
-    # the question text unless the question states a change since the memo ("출산 후"). A disagreement without such
-    # a cue is left unknown and reported as a conflict to confirm.
+    # 의료진의 명시적 입력이 메모(추출 결과가 결정적 판독보다 우선)보다 우선하고, 메모는 질문 텍스트보다 우선한다.
+    # 단, 질문이 메모 이후의 변화("출산 후")를 말하면 질문이 이긴다. 그런 표현 없이 엇갈리면 미상으로 두고
+    # 확인할 충돌로 보고한다.
     note_findings, conflicts = merge_question_findings({**question_findings(clinical_note), **extracted}, question)
     merged: dict[str, bool] = {**note_findings, **(findings or {})}
     drugs = tuple(dict.fromkeys((*(dose_drugs or ()), *stated.dose_drugs)))
@@ -119,20 +161,20 @@ async def recommendation_grounding(
 
 
 def diagnosis_hint(context: PreparedRawEmrContext) -> str:
-    """The recorded diagnosis names, as extra search words for a question without a topic."""
+    """주제어 없는 질문에 덧붙일 검색어로, 기록된 진단 한글명을 공백으로 이은 문자열(최대 300자)."""
     diagnoses = context.data.get("diagnoses")
     names = [item.get("name_ko") for item in diagnoses if isinstance(item, Mapping)] if isinstance(diagnoses, list) else []
     return " ".join(name for name in names if isinstance(name, str))[:300]
 
 
 def merge_evidence(first: Sequence[EvidenceChunk], second: Sequence[EvidenceChunk]) -> tuple[EvidenceChunk, ...]:
-    """Concatenate keeping ``first``'s numbering (rule evidence refs point into it)."""
+    """``first``의 번호를 유지한 채 ``second`` 중 겹치지 않는 문단을 뒤에 잇는다(규칙 근거 참조가 ``first``를 가리킴)."""
     seen = {chunk.chunk_id for chunk in first}
     return (*first, *(chunk for chunk in second if chunk.chunk_id not in seen))
 
 
 def _renumber(assessment: Assessment, kept: int) -> dict[str, object]:
-    """Assessment payload whose evidence refs only point at the first ``kept`` passages."""
+    """근거 참조가 앞의 ``kept``개 문단만 가리키도록 줄인 평가 결과 payload."""
     payload = assessment.as_dict()
     for group in ("items", "lab_interpretations", "dose_assessments"):
         items = payload.get(group)
@@ -142,4 +184,5 @@ def _renumber(assessment: Assessment, kept: int) -> dict[str, object]:
 
 
 async def _value[T](value: T) -> T:
+    """``asyncio.gather``에 넣을 수 있도록 값을 그대로 돌려주는 코루틴."""
     return value

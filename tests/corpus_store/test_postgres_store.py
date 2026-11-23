@@ -170,6 +170,23 @@ class PrecomputedFileTest(unittest.TestCase):
             self.assertEqual(main(["--check", str(self.dir)]), 1)
 
 
+class CorpusLoaderCliTest(unittest.TestCase):
+    def test_unreadable_corpus_file_fails_with_exit_code_1_without_the_database_url(self) -> None:
+        from unittest.mock import patch
+
+        from ax_g_ai.corpus_store import loader
+
+        url = "postgresql://axg:secret-password@127.0.0.1:1/axg"
+        stderr = io.StringIO()
+        with (patch.dict(os.environ, {"AX_G_CORPUS_DATABASE_URL": url}, clear=True),
+              patch.object(loader.psycopg, "connect", return_value=contextlib.nullcontext(object())),
+              patch.object(loader, "load_corpus", side_effect=PermissionError(13, "Permission denied", "chunks.jsonl")),
+              contextlib.redirect_stderr(stderr)):
+            self.assertEqual(loader.main([]), 1)
+        self.assertIn("corpus load failed: PermissionError", stderr.getvalue())
+        self.assertNotIn("secret-password", stderr.getvalue())
+
+
 @unittest.skipUnless(TEST_DATABASE_URL, "AX_G_TEST_DATABASE_URL not set (needs a disposable pgvector database)")
 class PostgresCorpusStoreTest(unittest.TestCase):
     def setUp(self) -> None:

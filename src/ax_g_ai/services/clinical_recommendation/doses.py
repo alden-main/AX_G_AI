@@ -1,8 +1,11 @@
-"""Stage 3: corpus ``dose_rules`` applied to current prescriptions and to drugs the clinician names.
+"""3단계: 말뭉치 ``dose_rules``를 현재 처방과 의료진이 지정한 약에 적용한다.
 
-Weight-based formulas, the renal-function band the patient falls in, dose-condition rules, and the
-prescribed daily amount against a numeric band maximum (arithmetic in ``clinical_dosing``). Values are
-reference calculations that always carry their inputs, formula and sources.
+설계상 위치: 임상 추천 패키지의 용량 단계. ``ClinicalRecommender``가 ``doses=True``일 때 ``DoseStage``를 써서
+``assess`` 결과의 ``dose_assessments``·``unmatched_dose_drugs``를 만든다.
+
+역할: 체중 기반 공식, 환자가 속한 신기능 구간, 용량 조건 규칙, 처방 1일 용량과 구간 수치 최대량의 대조를 계산한다
+(산술은 ``clinical_dosing``). 값은 참고 계산이며 항상 입력·공식·출처를 함께 담는다. 용량 필드의 한국어 표시 이름도
+여기 둔다.
 """
 
 from __future__ import annotations
@@ -44,9 +47,9 @@ from ax_g_ai.services.emr_mapping import EmrMapping, MedicationMatch
 
 logger = logging.getLogger("uvicorn.error")
 
-# ── stage 3 (dose) presentation ──────────────────────────────────────────────
+# ── 3단계(용량) 표시 ──────────────────────────────────────────────
 ADULT_AGE = 18
-# Record keys the dose stage evaluates or shows elsewhere; the rest is shown as reference text.
+# 용량 단계가 평가하거나 다른 곳에 보이는 레코드 키. 나머지는 참고 텍스트로 보인다.
 _DOSE_HANDLED = frozenset({
     "id", "claim_id", "chapter", "topic", "ai_tier", "claim_status", "verification", "review_status", "usable", "sources",
     "conflicts", "kind", "source_priority", "concepts", "indication", "ingredient", "ingredient_class", "rules", "initiation",
@@ -72,12 +75,27 @@ _ALERT_ORDER = {"contraindicated": 0, "high": 1, "caution": 2, "medium": 2, "inf
 
 
 class DoseStage:
-    """Dose items for the targets anchored to the patient (prescribed) or requested by the clinician."""
+    """환자에게 처방 중이거나 의료진이 요청한 약에 대한 용량 항목을 만드는 3단계 평가기.
+
+    역할: 용량 규칙의 대상(성분·계열) 집합을 두고, 의료진의 약 목록을 대상으로 해석하며(``resolve``), 대상마다
+    계산·신기능 구간·조건 규칙·처방 대조를 담은 ``DoseAssessment``를 만든다(``assessments``).
+    """
 
     def __init__(
         self, corpus: RuleCorpus, present: Presenter, dose_rules: tuple[Mapping[str, Any], ...], *,
         max_items: int, max_evidence: int,
     ) -> None:
+        """용량 단계를 구성한다.
+
+        역할: 용량 규칙과 상한을 저장하고, 규칙의 ``ingredient`` 또는 ``ingredient_class``로 대상 집합을 만든다.
+        입력:
+            corpus: 규칙 말뭉치(카탈로그 조회용).
+            present: 표시용 ``Presenter``.
+            dose_rules: 관문을 통과한 ``dose_rules`` 레코드(3단계가 꺼지면 빈 튜플).
+            max_items: 용량 항목 최대 수.
+            max_evidence: 2단계 근거 위에 추가로 허용하는 용량 근거 문단 수.
+        출력: 없음.
+        """
         self._corpus = corpus
         self._present = present
         self._dose_rules = dose_rules
@@ -96,7 +114,14 @@ class DoseStage:
         return self._dose_targets
 
     def resolve(self, names: Iterable[str]) -> tuple[set[str], tuple[UnmatchedDoseDrug, ...]]:
-        """Dose-rule targets for the clinician's drug list (ids, or Korean/English ingredient names)."""
+        """의료진의 약 목록(ID 또는 한글·영문 성분명)을 용량 규칙 대상으로 해석한다.
+
+        역할: 이름마다 규칙 대상 ID, 계열 ID, 말뭉치 ID, 성분명 매칭 순으로 개념을 찾고, 성분이면 그 성분이 속한
+        계열의 규칙도 대상에 넣는다. 찾지 못하거나 용량 규칙이 없는 이름은 이유와 함께 미매칭으로 보고한다.
+        입력:
+            names: 요청한 약 이름·ID. 빈 값은 건너뛴다.
+        출력: (대상 개념 ID 집합, ``UnmatchedDoseDrug`` 튜플).
+        """
         catalog = self._corpus.catalog
         targets: set[str] = set()
         unmatched: list[UnmatchedDoseDrug] = []
@@ -115,7 +140,7 @@ class DoseStage:
             else:
                 for ingredient in catalog.match_ingredients(f"({text})")[0]:
                     found.update(self._present.aliases(ingredient))
-            for concept_id in list(found):  # an ingredient also anchors its classes' rules (e.g. basal insulin)
+            for concept_id in list(found):  # 성분은 그 성분이 속한 계열의 규칙에도 이어진다(예: 기저 인슐린)
                 for class_id in (catalog.ingredients.get(catalog.drug_by_corpus_id.get(concept_id, concept_id)) or {}).get("classes") or ():
                     found.update(catalog.classes.get(class_id, {}).get("corpus_ids") or (class_id,))
             if not found:
@@ -128,6 +153,18 @@ class DoseStage:
     def assessments(
         self, mapping: EmrMapping, facts: PatientFacts, requested: set[str], numbering: EvidenceNumbering,
     ) -> list[DoseAssessment]:
+        """처방 중이거나 요청된 대상의 용량 항목을 정렬해 상한까지 돌려준다.
+
+        역할: 단일 약 대상이 있는 규칙 중 처방 중이거나 요청된 것만 항목으로 만들고(평가할 수 없는 규칙은 경고 로그 후
+        건너뜀), 국내 기준 → 처방 중 → 경고 단계 → 레코드 ID 순으로 정렬한다. 정렬 순서대로 근거 번호를 붙이되,
+        2단계 근거 상한과 별도로 ``max_evidence``개까지 더 허용한다.
+        입력:
+            mapping: EMR 매핑(처방·검사 정보).
+            facts: 환자 사실.
+            requested: ``resolve``로 얻은 요청 대상.
+            numbering: 2단계와 함께 쓰는 근거 번호 매기기.
+        출력: ``DoseAssessment`` 목록(최대 ``max_items``개).
+        """
         medications = facts.medications or frozenset()
         classes = facts.medication_classes or frozenset()
         candidates: list[tuple[tuple, DoseAssessment, Mapping[str, Any]]] = []
@@ -135,7 +172,7 @@ class DoseStage:
             ingredient, klass = record.get("ingredient"), record.get("ingredient_class")
             target = ingredient or klass
             if not isinstance(target, str):
-                continue  # regimen-only rules (no single drug) are not anchored to a prescription
+                continue  # 요법만 있는 규칙(단일 약 없음)은 처방과 이어지지 않는다
             prescribed = (ingredient in medications) if ingredient else (klass in classes)
             if not prescribed and target not in requested:
                 continue
@@ -149,10 +186,10 @@ class DoseStage:
             candidates.append((rank, item, record))
         candidates.sort(key=lambda entry: entry[0])
         result = []
-        # Dose values must be citable: they get their own passages beyond the stage-2 evidence cap.
+        # 용량 값은 인용할 수 있어야 하므로 2단계 근거 상한을 넘어 자기 근거 문단을 받는다.
         limit = len(numbering.evidence) + self._max_dose_evidence
         for _rank, item, record in candidates[: self._max_dose_items]:
-            # Numbered in ranking order, so set after the ranking.
+            # 정렬 순서대로 번호를 매기므로 정렬한 뒤에 지정한다.
             item.evidence_refs = numbering.refs(record.get("claim_id"), limit=limit)
             result.append(item)
         return result
@@ -160,7 +197,20 @@ class DoseStage:
     def _dose_item(
         self, record: Mapping[str, Any], mapping: EmrMapping, facts: PatientFacts, *, prescribed: bool, requested: bool,
     ) -> DoseAssessment:
-        """One drug's dose entry. Optional fields are passed only when set, so the payload omits the others."""
+        """약 하나의 용량 항목을 만든다. 선택 필드는 값이 있을 때만 넘겨 페이로드에서 나머지는 빠진다.
+
+        역할: 맞는 처방과 1일 용량을 모으고, 연령이 없으면 누락으로, 18세 미만이면 성인 기준 미적용으로 표시한다.
+        성인이면 공식 계산과 신기능 구간(및 처방 1일 최대량 대조)을 하고, 용량 조건 규칙과 나머지 참고 필드를 붙인다.
+        경고는 충족된 조건 규칙·신기능 구간·최대량 초과(``high``) 중 가장 높은 단계로 정한다.
+        입력:
+            record: ``dose_rules`` 레코드.
+            mapping: EMR 매핑.
+            facts: 환자 사실.
+            prescribed: 대상이 현재 처방 중인지.
+            requested: 의료진이 요청한 대상인지.
+        출력: ``DoseAssessment``.
+        예외: 규칙 조건을 평가할 수 없으면 ``CorpusRuleError``(호출자가 처리).
+        """
         ingredient, klass = record.get("ingredient"), record.get("ingredient_class")
         target = str(ingredient or klass)
         age = facts.values.get("age")
@@ -218,6 +268,16 @@ class DoseStage:
         )
 
     def _med_matches(self, med: MedicationMatch, ingredient: object, klass: object) -> bool:
+        """처방 하나가 규칙의 성분 또는 계열에 해당하는지 판정한다.
+
+        역할: 성분 규칙이면 처방 성분의 별칭에 그 성분이 있는지, 계열 규칙이면 처방의 계열이나 처방 성분이 속한
+        계열(말뭉치 ID 별칭 포함)에 그 계열이 있는지 본다.
+        입력:
+            med: EMR 처방 매핑 결과.
+            ingredient: 규칙의 ``ingredient``(문자열이 아니면 무시).
+            klass: 규칙의 ``ingredient_class``(문자열이 아니면 무시).
+        출력: 해당하면 True.
+        """
         catalog = self._corpus.catalog
         if isinstance(ingredient, str):
             return any(ingredient in self._present.aliases(item) for item in med.ingredients)
@@ -232,6 +292,7 @@ class DoseStage:
 
     @staticmethod
     def _dose_prescription(med: MedicationMatch) -> DosePrescription:
+        """처방 하나의 표시 항목(EMR 원 용량, 명확할 때만 계산한 1일 mg)."""
         optional: dict[str, Any] = {"dose": dict(med.dose)} if med.dose else {}
         daily = prescribed_daily_mg(med.dose)
         if daily is not None:
@@ -241,6 +302,16 @@ class DoseStage:
     def _dose_calculations(
         self, calculation: Mapping[str, Any], facts: PatientFacts, missing: list[MissingInput],
     ) -> list[DoseCalculation]:
+        """규칙의 용량 공식을 환자 값으로 계산한다.
+
+        역할: 공식마다 단위·주입 시간·메모를 붙여 계산하고, 결과를 다음 공식의 변수로 쓴다. 입력이 없으면 그 공식은
+        ``missing``만 담고 누락 입력을 ``missing`` 목록에도 더한다. 계산하면 쓴 입력값과 값(또는 범위)을 담는다.
+        입력:
+            calculation: 레코드의 ``calculation``(이름 → ``formula`` 등).
+            facts: 환자 사실.
+            missing: 항목의 누락 입력 목록(이 함수가 추가한다).
+        출력: ``DoseCalculation`` 목록.
+        """
         variables: dict[str, Any] = dict(facts.values)
         results = []
         for key, spec in calculation.items():
@@ -270,7 +341,19 @@ class DoseStage:
     def _dose_renal(
         self, record: Mapping[str, Any], mapping: EmrMapping, facts: PatientFacts, adult: bool, missing: list[MissingInput],
     ) -> tuple[DoseRenal, Mapping[str, Any] | None]:
-        """The renal value and band shown, and the rule's band itself (for the daily-maximum check), if one applies."""
+        """표시할 신기능 값과 구간, 그리고 해당 구간이 있으면 규칙의 구간 원본(1일 최대량 대조용)을 돌려준다.
+
+        역할: ``renal_param``(CrCl·eGFR) 값이 없으면 누락으로 표시한다. 있으면 단위·검사일·근거(검사실 보고값 또는
+        계산식)를 붙이고, 이상체중 기준 규칙인데 실제 체중으로 계산한 값이면 주의 문구를 단다. 성인이고 구간이
+        있으면 환자 값이 속한 구간을 고르고, 어느 구간에도 속하지 않으면 그 사실을 적는다.
+        입력:
+            record: ``dose_rules`` 레코드.
+            mapping: EMR 매핑(검사 단위·검사일 확인용).
+            facts: 환자 사실.
+            adult: 성인(18세 이상)인지.
+            missing: 항목의 누락 입력 목록(이 함수가 추가한다).
+        출력: (``DoseRenal``, 규칙 구간 dict 또는 ``None``).
+        """
         param = record["renal_param"]
         renal = DoseRenal(param=param, label=self._present.concept_name(param),
                           **({"method": record["renal_method"]} if record.get("renal_method") else {}))
@@ -306,7 +389,15 @@ class DoseStage:
 
     @staticmethod
     def _dose_check(prescriptions: list[DosePrescription], band: Mapping[str, Any], renal: DoseRenal) -> None:
-        """Compare each prescribed daily amount with the band's numeric daily maximum, when both exist."""
+        """처방마다 1일 용량을 구간의 수치 1일 최대량과 대조한다(둘 다 있을 때만).
+
+        역할: 대조 결과(``exceeds``·``within``)와 기준을 각 처방의 ``check``에 적는다.
+        입력:
+            prescriptions: 표시용 처방 항목(이 함수가 ``check``를 채운다).
+            band: 규칙의 신기능 구간 원본.
+            renal: 표시용 신기능 결과(구간 범위 이름용).
+        출력: 없음.
+        """
         limit = band_daily_max_mg(band)
         if limit is None or renal.band is None:
             return
@@ -320,11 +411,16 @@ class DoseStage:
             )
 
     def _dose_rules_for(self, record: Mapping[str, Any], facts: PatientFacts) -> list[DoseConditionRule]:
-        """Dose-condition rules: met, or possible with the unknown inputs (kept per rule, not in the item's
-        ``missing``, which lists only what the calculation itself needs).
+        """용량 조건 규칙을 평가해 ``met`` 또는 ``possible``(알 수 없는 입력 포함)인 것을 돌려준다.
 
-        The rule's own fields (``alert``, ``dose`` …) come along as they are (``DoseConditionRule`` allows extra
-        keys), so the entry is collected as a dict and validated once it is complete.
+        역할: ``initiation``(시작 시)과 ``rules``의 규칙마다 ``when``을 평가해 거짓이 아닌 것만 남긴다. 알 수 없는 입력은
+        규칙별로 두고 항목의 ``missing``에는 넣지 않는다(항목의 ``missing``은 계산 자체에 필요한 것만 담는다).
+        규칙 자신의 필드(``alert``, ``dose`` …)는 그대로 따라온다(``DoseConditionRule``은 추가 키를 허용). 그래서 dict로
+        모은 뒤 다 채워지면 한 번에 검증한다.
+        입력:
+            record: ``dose_rules`` 레코드.
+            facts: 환자 사실.
+        출력: ``DoseConditionRule`` 목록.
         """
         results = []
         for phase, rules in (("initiation", record.get("initiation")), ("rules", record.get("rules"))):
@@ -349,5 +445,6 @@ class DoseStage:
 
 
 def most_severe(alerts: Iterable[object]) -> str | None:
+    """알려진 경고 단계 중 가장 높은 것(contraindicated > high > caution·medium > info). 없으면 ``None``."""
     ranked = [alert for alert in alerts if isinstance(alert, str) and alert in _ALERT_ORDER]
     return min(ranked, key=_ALERT_ORDER.__getitem__) if ranked else None

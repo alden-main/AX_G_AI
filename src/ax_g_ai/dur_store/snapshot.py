@@ -1,18 +1,18 @@
-"""Convert the HIRA DUR product lists (공공데이터포털 CSV, cp949) into a compact load snapshot.
+"""심평원 DUR 품목 목록(공공데이터포털 CSV, cp949)을 적재용 압축 스냅샷으로 변환하는 모듈과 CLI.
 
-Source: 건강보험심사평가원_의약품안전사용서비스(DUR) 의약품 목록 (공공데이터포털 15127983,
-공공누리 제1유형 — 출처표시 후 상업 이용 가능). The product lists expand each ingredient rule to
-every product; the snapshot keeps one row per ingredient rule plus a product → ingredient map
-(about 870k CSV rows → 70k rows), one JSONL file per ``dur`` table with the same columns.
+설계상 위치: DUR 저장 계층의 빌드 단계(오프라인 도구 ``ax-g-ai-build-dur``). 만든 스냅샷은 이미지에 실리고,
+``ax_g_ai.dur_store.loader``가 PostgreSQL에 적재하며(``text_data/corpus`` → ``corpus-loader``와 같은 흐름),
+``loader``·``reader``는 여기의 ``TABLE_COLUMNS``·``read_snapshot``을 쓴다. 원본 CSV는 이미지에 넣지 않는다.
 
-The snapshot is what ships in the image; ``ax_g_ai.dur_store.loader`` loads it into PostgreSQL
-(the same flow as ``text_data/corpus`` → ``corpus-loader``). The raw CSVs stay out of the image.
+역할: 출처는 건강보험심사평가원_의약품안전사용서비스(DUR) 의약품 목록(공공데이터포털 15127983, 공공누리 제1유형 —
+출처표시 후 상업 이용 가능)이다. 품목 목록은 성분 규칙 하나를 모든 제품으로 펼쳐 두었으므로, 스냅샷은 성분 규칙마다
+한 행과 제품 → 성분 매핑만 남긴다(CSV 약 87만 행 → 7만 행). ``dur`` 표마다 같은 열을 가진 JSONL 파일 하나를 만든다.
 
-Usage (project root)::
+사용법(프로젝트 루트)::
 
     uv run ax-g-ai-build-dur --input dur --output data/dur [--replace]
 
-Only contraindication / caution lists are converted (병용금기, 연령금기, 임부금기, 노인주의).
+금기·주의 목록만 변환한다(병용금기, 연령금기, 임부금기, 노인주의).
 """
 
 from __future__ import annotations
@@ -42,14 +42,14 @@ SOURCE = {
     "license": "KOGL Type 1 (공공누리 제1유형 — 출처표시)",
     "region": "KR",
 }
-FILES = {  # NFC file-name fragment → list kind
+FILES = {  # NFC로 정규화한 파일 이름 조각 → 목록 종류
     "병용금기": "pair",
     "연령금기": "age",
     "임부금기": "pregnancy",
     "노인주의(해열진통소염제)": "elderly_nsaid",
     "노인주의 품목": "elderly",
 }
-# Snapshot file = PostgreSQL table ``dur.<name>``; the loader and reader use these column lists.
+# 스냅샷 파일 = PostgreSQL 표 ``dur.<name>``. 적재기와 리더가 이 열 목록을 쓴다.
 TABLE_COLUMNS: dict[str, tuple[str, ...]] = {
     "product": ("product_code", "product_name", "ingredient_code", "ingredient_name", "company", "insured"),
     "pair_rule": ("ingredient_a", "ingredient_b", "name_a", "name_b", "detail", "note", "notice_no", "notice_date"),
@@ -60,24 +60,35 @@ TABLE_COLUMNS: dict[str, tuple[str, ...]] = {
 
 
 class DurDataError(ValueError):
-    """Input files are missing, have unexpected columns, or the snapshot is inconsistent."""
+    """입력 파일이 없거나 열이 예상과 다르거나 스냅샷이 일관되지 않을 때의 오류.
+
+    역할: 빌드 CLI와 적재 CLI가 잡아 종료 코드 1로 보고하는 데이터 오류.
+    """
 
 
 @dataclass(frozen=True)
 class Snapshot:
+    """검증을 마친 DUR 스냅샷(manifest + 표별 행).
+
+    역할: ``read_snapshot``의 결과로 적재기에 전달되며, 출처와 내용 해시를 속성으로 제공한다.
+    """
+
     manifest: Mapping[str, Any]
     rows: Mapping[str, list[dict[str, Any]]]
 
     @property
     def source(self) -> Mapping[str, str]:
+        """manifest의 출처 정보."""
         return self.manifest["source"]
 
     @property
     def content_sha256(self) -> str:
+        """데이터셋 동일성 해시(빌드 시각 제외)."""
         return self.manifest["content_sha256"]
 
 
 def _kind_of(name: str) -> str | None:
+    """파일 이름(NFC 정규화)이 ``.csv``이고 ``FILES`` 조각을 포함하면 그 목록 종류, 아니면 None."""
     normalized = unicodedata.normalize("NFC", name)
     if not normalized.lower().endswith(".csv"):
         return None
@@ -88,6 +99,14 @@ def _kind_of(name: str) -> str | None:
 
 
 def find_files(directory: Path) -> dict[str, Path]:
+    """CSV 폴더에서 목록 종류별 입력 파일을 찾는다.
+
+    역할: 폴더 항목을 이름순으로 훑어 ``_kind_of``로 분류한다.
+    입력:
+        directory: DUR CSV 폴더.
+    출력: {목록 종류: 파일 경로}.
+    예외: 같은 종류 파일이 둘 이상이거나 필요한 종류가 없으면 ``DurDataError``.
+    """
     found: dict[str, Path] = {}
     for entry in sorted(os.listdir(directory)):
         kind = _kind_of(entry)
@@ -102,6 +121,7 @@ def find_files(directory: Path) -> dict[str, Path]:
 
 
 def _rows(path: Path, required: set[str]) -> Iterator[dict[str, str]]:
+    """cp949 CSV의 행을 앞뒤 공백을 지운 dict로 내보낸다. 필수 열이 없으면 ``DurDataError``."""
     with path.open(encoding="cp949", errors="strict", newline="") as handle:
         reader = csv.DictReader(handle)
         columns = set(reader.fieldnames or ())
@@ -122,7 +142,16 @@ def _sha256_file(path: Path) -> str:
 
 
 def convert(directory: Path) -> tuple[dict[str, list[dict[str, Any]]], dict[str, dict[str, str]]]:
-    """(rows by table, input files) from the CSV folder. Rows are deduplicated and sorted."""
+    """CSV 폴더를 표별 스냅샷 행으로 변환한다.
+
+    역할: 목록마다 제품 행을 제품코드 기준 처음 본 것으로 모으고, 규칙은 키로 중복을 없앤다(병용금기는 성분코드 A·B를
+    정렬해 한 쌍으로, 연령금기는 숫자가 아닌 특정연령 행을 건너뛰고 단위·조건 라벨에서 괄호 코드를 뗀다, 노인주의 두
+    목록은 ``category``로 구분해 합친다). 각 표는 키 문자열 순으로 정렬한다.
+    입력:
+        directory: DUR CSV 폴더.
+    출력: (표별 행, 입력 파일별 {file, sha256}).
+    예외: 파일 누락·열 누락이면 ``DurDataError``, cp949로 읽을 수 없으면 ``UnicodeDecodeError``.
+    """
     files = find_files(directory)
     products: dict[str, dict[str, Any]] = {}
 
@@ -181,19 +210,29 @@ def convert(directory: Path) -> tuple[dict[str, list[dict[str, Any]]], dict[str,
 
 
 def _table_bytes(rows: list[dict[str, Any]], columns: tuple[str, ...]) -> bytes:
+    """행들을 지정 열 순서의 압축 JSONL UTF-8 바이트로 만든다."""
     return "".join(
         json.dumps({column: row[column] for column in columns}, ensure_ascii=False, separators=(",", ":")) + "\n" for row in rows
     ).encode("utf-8")
 
 
 def _content_sha(source: Mapping[str, Any], tables: Mapping[str, Mapping[str, Any]]) -> str:
-    """Dataset identity: same source + same table contents → same hash (build time is excluded)."""
+    """데이터셋 동일성 해시: 출처와 표 내용(행 수·SHA-256)이 같으면 같은 해시(빌드 시각은 제외)."""
     identity = {"source": source, "tables": {name: [info["count"], info["sha256"]] for name, info in tables.items()}}
     return hashlib.sha256(json.dumps(identity, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
 
 
 def build(directory: Path, output: Path) -> dict[str, int]:
-    """Write ``output/<table>.jsonl`` + ``manifest.json`` atomically (a temp folder is swapped in)."""
+    """``output/<table>.jsonl``과 ``manifest.json``을 임시 폴더에 쓴 뒤 ``output``으로 교체한다.
+
+    역할: ``convert`` 결과를 표마다 파일로 쓰고 행 수·SHA-256·입력 파일·내용 해시를 manifest에 기록한다. 기존
+    ``output``은 지운 뒤 임시 폴더로 바꾼다(삭제와 교체 사이에는 ``output``이 잠시 없다).
+    입력:
+        directory: DUR CSV 폴더.
+        output: 스냅샷 출력 폴더.
+    출력: {표 이름: 행 수}.
+    예외: ``convert``의 ``DurDataError``·``UnicodeDecodeError``를 그대로 전파한다.
+    """
     tables, inputs = convert(directory)
     temporary = output.with_name(output.name + ".tmp")
     if temporary.exists():
@@ -216,7 +255,14 @@ def build(directory: Path, output: Path) -> dict[str, int]:
 
 
 def read_snapshot(directory: Path) -> Snapshot:
-    """Read and verify a snapshot (format, per-file SHA-256 and row counts)."""
+    """스냅샷을 읽고 검증한다.
+
+    역할: manifest 형식, 표마다 파일 SHA-256·행 수·열 집합(첫 행 기준), 그리고 manifest의 ``content_sha256``을 확인한다.
+    입력:
+        directory: 스냅샷 폴더.
+    출력: ``Snapshot``.
+    예외: manifest가 없거나 어느 검증이든 실패하면 ``DurDataError``. 표 파일이 없으면 ``OSError``.
+    """
     path = directory / MANIFEST
     if not path.is_file():
         raise DurDataError(f"DUR 스냅샷 없음: {path}")
@@ -242,6 +288,13 @@ def read_snapshot(directory: Path) -> Snapshot:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """``ax-g-ai-build-dur`` CLI 진입점.
+
+    역할: 출력 폴더가 이미 있으면 ``--replace`` 없이는 멈추고, 아니면 스냅샷을 만들어 표별 행 수를 출력한다.
+    입력:
+        argv: 명령행 인자(``None``이면 ``sys.argv``).
+    출력: 종료 코드. 성공 0, 출력 폴더 존재·변환 실패 1.
+    """
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--input", type=Path, default=Path("dur"), help="DUR CSV 폴더")
     parser.add_argument("--output", type=Path, default=Path("data/dur"), help="스냅샷 폴더")

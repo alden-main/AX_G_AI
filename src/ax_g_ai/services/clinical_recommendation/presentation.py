@@ -1,6 +1,10 @@
-"""Display form of rule results: items, lab interpretations, provenance and the labels of tests and inputs.
+"""규칙 결과의 표시 형태: 추천 항목, 검사값 해석, 출처 정보, 검사·입력의 표시 이름.
 
-Korean labels live here (and in ``doses`` for dose fields); evaluation code never builds text.
+설계상 위치: 임상 추천 패키지의 표시 계층. ``ClinicalRecommender.assess``와 ``doses.DoseStage``가 ``Presenter``로
+``schema`` 모델(페이로드 항목)을 만든다.
+
+역할: 한국어 표시 이름은 여기(용량 필드는 ``doses``)에만 두고, 평가 코드는 텍스트를 만들지 않는다. 규칙 레코드와
+환자 사실로 항목·검사 목록·충족 조건 설명·누락 입력·출처(지역, 우선순위, 대체 관계)를 만든다.
 """
 
 from __future__ import annotations
@@ -38,7 +42,11 @@ _VALUE_HINTS = {
 
 
 class Presenter:
-    """Builds the payload entries of an assessment from corpus records and patient facts."""
+    """말뭉치 레코드와 환자 사실로 평가 페이로드 항목을 만드는 표시기.
+
+    역할: 말뭉치 카탈로그로 개념·약 이름을 찾고, 2단계 항목·검사값 해석·출처 정보와 충족·누락 조건 표시를 만든다.
+    상태를 갖지 않으므로 2단계와 3단계가 함께 쓴다.
+    """
 
     def __init__(self, corpus: RuleCorpus) -> None:
         self._corpus = corpus
@@ -46,10 +54,21 @@ class Presenter:
     def item(
         self, record: Mapping[str, Any], status: Status, leaves: list[Leaf], facts: PatientFacts, extra: Mapping[str, Any]
     ) -> RecommendationItem:
-        """The payload entry of a ``met``/``possible`` rule; optional fields are passed only when they apply."""
-        # ``rules.evaluate_record`` gives a status only to these four kinds; the model validates it again.
+        """``met``·``possible`` 규칙 하나의 페이로드 항목을 만든다.
+
+        역할: 종류별 선택 필드(진단: 진단명·KCD·이미 기록 여부·중증도, 협진: 대상·목적, 추천 검사·추적: 검사 목록·
+        주기·조치)와 권고 강도·메모·충돌을 해당할 때만 넣고, 충족 조건·누락 입력·출처 정보를 붙인다.
+        입력:
+            record: 규칙 레코드.
+            status: ``met`` 또는 ``possible``.
+            leaves: 규칙의 잎 조건.
+            facts: 환자 사실.
+            extra: ``rules.evaluate_record``의 추가 정보(추적 규칙의 ``actions``).
+        출력: ``RecommendationItem``.
+        """
+        # ``rules.evaluate_record``는 이 네 종류에만 상태를 준다. 모델이 다시 검증한다.
         kind = cast(ItemKind, record.get("kind"))
-        # Fields that only some kinds or records have: passed only when set, so the payload omits the others.
+        # 일부 종류·레코드에만 있는 필드: 값이 있을 때만 넘겨 페이로드에서 나머지는 빠진다.
         optional: dict[str, Any] = {}
         if kind == "diagnosis":
             condition = record.get("condition") or {}
@@ -88,7 +107,14 @@ class Presenter:
         )
 
     def provenance(self, record: Mapping[str, Any]) -> dict[str, Any]:
-        """Region, priority (domestic standard first) and display sources of a rule record."""
+        """규칙 레코드의 지역, 우선순위(국내 기준 먼저), 표시용 출처를 만든다.
+
+        역할: 출처로 지역을 정하고, 이 레코드(ID 또는 claim)를 대체하는 상위 기준이 있으면 ``reference``와
+        ``superseded_by``를, 없으면 ``primary``를 준다.
+        입력:
+            record: 규칙 레코드.
+        출력: ``Provenance`` 필드 이름 → 값 dict(``region``, ``region_label``, ``priority``, ``sources``, ``superseded_by``).
+        """
         sources = [source for source in record.get("sources") or () if isinstance(source, Mapping)]
         region = region_of(sources)
         claim = record.get("claim_id")
@@ -102,6 +128,14 @@ class Presenter:
         return result
 
     def test_entry(self, test: Mapping[str, Any]) -> TestEntry:
+        """규칙의 검사 지정 하나를 표시용 검사 항목으로 바꾼다.
+
+        역할: ``exam``·``lab``·``score``·``calc``·``screen``·``review`` 중 있는 키로 개념을 찾고, 카탈로그의 구역·종류로
+        분류(예방접종, 영상검사, 검체검사 등)를 정한다. 이름이 없으면 ID에서 만든다.
+        입력:
+            test: 규칙의 검사 지정(예: ``{"lab": "HbA1c", "reason": ...}``).
+        출력: ``TestEntry``.
+        """
         key = next((name for name in ("exam", "lab", "score", "calc", "screen", "review") if name in test), None)
         concept_id = str(test.get(key)) if key else ""
         concept = self._corpus.catalog.tests.get(concept_id, {})
@@ -120,6 +154,15 @@ class Presenter:
         )
 
     def describe(self, leaf: Leaf, facts: PatientFacts) -> str:
+        """충족된 잎 조건을 화면용 문장으로 설명한다.
+
+        역할: 수치는 "이름 연산자 기준값 (환자 값 n)", 진단은 기록된 KCD 코드, 처방은 "처방 키"로, 그 밖은
+        ``kind:key``로 쓴다.
+        입력:
+            leaf: 잎 조건.
+            facts: 환자 사실.
+        출력: 설명 문자열.
+        """
         condition = leaf.condition
         if leaf.kind == "var":
             name = self.concept_name(leaf.key)
@@ -133,6 +176,7 @@ class Presenter:
         return f"{leaf.kind}:{leaf.key}"
 
     def missing(self, leaf: Leaf) -> MissingInput:
+        """알 수 없는 잎 조건을 의료진이 확인할 누락 입력으로 바꾼다."""
         if leaf.kind == "var":
             return MissingInput(kind="value", key=leaf.key, label=self.concept_name(leaf.key))
         if leaf.kind in ("med", "med_class"):
@@ -142,15 +186,18 @@ class Presenter:
         return MissingInput(kind=leaf.kind, key=leaf.key, label=leaf.key.replace("_", " "))
 
     def missing_value(self, key: str) -> MissingInput:
+        """계산에 필요한 수치 입력의 누락 항목(CrCl·eGFR 등은 계산 방법 안내를 이름으로 쓴다)."""
         return MissingInput(kind="value", key=key, label=_VALUE_HINTS.get(key) or self.concept_name(key))
 
     def concept_name(self, concept_id: str) -> str:
+        """검사 개념의 한글 이름(``corpus_ids`` 별칭으로도 찾음). 없으면 ID의 밑줄을 공백으로 바꿔 쓴다."""
         concept = self._corpus.catalog.tests.get(concept_id)
         if concept is None:
             concept = next((row for row in self._corpus.catalog.tests.values() if concept_id in (row.get("corpus_ids") or ())), {})
         return concept.get("name_ko") or concept_id.replace("_", " ")
 
     def drug_name(self, target: str) -> str:
+        """성분·제품·계열 ID의 한글 이름. 없으면 ID의 밑줄을 공백으로 바꿔 쓴다."""
         catalog = self._corpus.catalog
         cid = catalog.drug_by_corpus_id.get(target, target)
         row = catalog.ingredients.get(cid) or catalog.products.get(cid) or catalog.classes.get(target) or {}
@@ -158,12 +205,23 @@ class Presenter:
         return (names[0] if names else None) or row.get("name_ko") or target.replace("_", " ")
 
     def aliases(self, concept_id: str) -> tuple[str, ...]:
+        """성분·제품 개념의 말뭉치 ID 별칭(``corpus_ids``). 없으면 자기 ID 하나."""
         row = self._corpus.catalog.ingredients.get(concept_id) or self._corpus.catalog.products.get(concept_id) or {}
         return tuple(row.get("corpus_ids") or (concept_id,))
 
     def lab_interpretations(
         self, mapping: EmrMapping, facts: PatientFacts, sex: str | None
     ) -> list[tuple[LabInterpretation, Mapping[str, Any]]]:
+        """환자 검사값이 속한 기준 구간을 ``lab_thresholds.jsonl`` 규칙으로 찾는다.
+
+        역할: 값이 있는 검사마다 규칙의 구간 중 성별 조건과 ``min``·``max`` 범위에 맞는 모든 구간을 해석 항목으로
+        만든다. 출처 정보에서 ``sources``는 빼고, 검사일은 EMR 매핑에서 가져온다.
+        입력:
+            mapping: EMR 매핑(검사일 확인용).
+            facts: 환자 사실(기준 단위 검사값).
+            sex: ``male``·``female`` 또는 ``None``.
+        출력: (``LabInterpretation``, 원 규칙 레코드) 목록. 근거 번호는 호출자가 붙인다.
+        """
         by_concept = {lab.concept: lab for lab in mapping.labs}
         result = []
         for record in self._corpus.rules.get("lab_thresholds.jsonl", ()):

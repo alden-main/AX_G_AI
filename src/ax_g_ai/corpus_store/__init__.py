@@ -1,1 +1,6 @@
-"""PostgreSQL(pgvector) serving store for the clinical corpus."""
+"""임상 말뭉치를 PostgreSQL(pgvector)에서 서빙하는 저장소 패키지.
+
+설계상 위치: 근거 검색·규칙 데이터의 저장 계층. 적재 CLI(``loader``)와 서비스 런타임(``live``·``retriever``·``rules``)이 함께 쓴다.
+
+역할: 말뭉치 릴리스 적재, 임베딩 클라이언트, 사전 계산 임베딩, 하이브리드 근거 검색, 활성 릴리스 자동 교체 모듈을 묶는다.
+"""

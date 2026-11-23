@@ -1,6 +1,9 @@
 """환경 설정으로 Bridge API 런타임을 조립한다.
 
-말뭉치(근거 검색·규칙)와 DUR은 하나의 스냅샷(``CorpusSnapshot``)으로 묶는다. PostgreSQL을 쓸 수
+설계상 위치: 조립(composition root) 계층. ``ax-g-ai`` 명령과 Uvicorn 팩토리(``ax_g_ai.runtime:create_runtime_app``)가
+호출하며, 설정·어댑터·서비스를 묶어 ``api.create_app``에 넘긴다.
+
+역할: 말뭉치(근거 검색·규칙)와 DUR은 하나의 스냅샷(``CorpusSnapshot``)으로 묶는다. PostgreSQL을 쓸 수
 있으면 근거와 규칙을 같은 활성 릴리스에서 읽고 ``LiveCorpus``가 릴리스·DUR 데이터셋 변경을 함께
 반영한다. DB를 쓸 수 없으면 근거와 규칙을 모두 파일 말뭉치에서 읽어 기동 시점으로 고정한다.
 """
@@ -32,17 +35,24 @@ logger = logging.getLogger("uvicorn.error")
 
 
 def create_runtime_app() -> FastAPI:
-    """필수 설정이 없거나 잘못되면 AI를 호출하지 않는 fail-closed 앱을 생성한다."""
+    """환경 설정으로 운영용 FastAPI 앱을 조립한다.
+
+    역할: AI·런타임 설정을 읽고 참조 DB 조회기, 말뭉치 원천, 추적 계측, 환자 문맥 저장소를 만들어
+    ``create_app``에 넘긴다. ``attributed_sources_only``이면 참조 DB를 쓰지 않는다. 필수 설정이 없거나 잘못되면
+    AI를 호출하지 않는 fail-closed 앱(서비스 없음)을 만든다.
+    입력: 없음(환경 변수를 읽는다).
+    출력: FastAPI 앱. 종료 시 말뭉치 원천을 닫도록 등록되어 있다.
+    """
     try:
         ai_settings = AISettings.from_environment()
         runtime_settings = RuntimeSettings.from_environment()
     except ConfigurationError as error:
-        # The message names fields and reasons only, never configured values.
+        # 메시지에는 필드 이름과 사유만 있고 설정값은 없다.
         logger.warning("runtime_configuration_invalid reason=%s", error)
         return create_app()
     database_path = runtime_settings.reference_data_db_path
     if database_path is not None and runtime_settings.attributed_sources_only:
-        # medicine_dict/disease_dict: provenance and license unconfirmed, so it cannot be attributed.
+        # medicine_dict/disease_dict: 출처·라이선스가 확인되지 않아 출처를 밝힐 수 없다.
         logger.warning("reference_data_disabled reason=attributed_sources_only")
         database_path = None
     lookup = None if database_path is None else SqliteReferenceLookup(database_path)
@@ -62,7 +72,14 @@ def create_runtime_app() -> FastAPI:
 
 
 def _context_store(settings: RuntimeSettings) -> ContextStore:
-    """Redis when configured and reachable (shared by workers), else this process's memory."""
+    """환자 문맥 저장소를 고른다.
+
+    역할: Redis URL이 설정되어 있고 연결되면 워커들이 공유하는 Redis 저장소를, 아니면 이 프로세스의 메모리
+    저장소를 쓴다. 워커가 여럿인데 메모리 저장소를 쓰게 되면 경고를 남긴다.
+    입력:
+        settings: 런타임 설정.
+    출력: ``RedisPatientContextStore`` 또는 ``PatientContextStore``.
+    """
     workers = os.getenv("WEB_CONCURRENCY", "1")
     if settings.patient_context_redis_url is not None:
         import redis
@@ -77,7 +94,7 @@ def _context_store(settings: RuntimeSettings) -> ContextStore:
                 wait_seconds=settings.dependency_startup_wait_seconds,
             )
         except redis.RedisError as error:
-            # Error class only; the URL holds the password.
+            # 오류 클래스만 남긴다. URL에는 비밀번호가 들어 있다.
             logger.warning("patient_context_store_unavailable error_type=%s fallback=memory", type(error).__name__)
         else:
             logger.info("patient_context_store backend=redis workers=%s", workers)
@@ -89,7 +106,14 @@ def _context_store(settings: RuntimeSettings) -> ContextStore:
 
 
 def _corpus_source(settings: RuntimeSettings) -> CorpusSource:
-    """Evidence and rules of the active PostgreSQL release (kept current), else of the corpus files (fixed)."""
+    """근거·규칙(·DUR)을 제공할 말뭉치 원천을 고른다.
+
+    역할: DB URL이 있고 연결되면 활성 PostgreSQL 릴리스를 계속 반영하는 ``LiveCorpus``를, 아니면 파일 말뭉치를
+    한 번 읽어 고정한 ``StaticCorpus``를 쓴다(DUR 없음). 파일 말뭉치 경로도 없으면 근거·규칙이 없는 스냅샷이다.
+    입력:
+        settings: 런타임 설정.
+    출력: ``CorpusSource``.
+    """
     if settings.corpus_database_url is not None:
         live = _live_corpus(settings)
         if live is not None:
@@ -99,7 +123,7 @@ def _corpus_source(settings: RuntimeSettings) -> CorpusSource:
     evidence: EvidenceRetriever | None = None
     rules: RuleCorpus | None = None
     if settings.evidence_corpus_dir is not None:
-        # One read of the corpus files serves the evidence index and the rules.
+        # 말뭉치 파일을 한 번 읽어 근거 색인과 규칙에 함께 쓴다.
         rows = read_corpus_rows(settings.evidence_corpus_dir)
         gate = {"include_unreviewed": settings.evidence_include_unreviewed, "require_license": settings.attributed_sources_only}
         evidence = InMemoryEvidenceIndex.from_rows(rows, **gate)
@@ -111,7 +135,15 @@ def _corpus_source(settings: RuntimeSettings) -> CorpusSource:
 
 
 def _live_corpus(settings: RuntimeSettings) -> CorpusSource | None:
-    # Imported lazily so deployments without the database never load the driver.
+    """PostgreSQL 활성 릴리스를 반영하는 ``LiveCorpus``를 만든다.
+
+    역할: 연결 풀을 열고, 릴리스·DUR 데이터셋 ID로 근거 검색기(어휘 색인 + 선택적 임베딩)·규칙·DUR 점검기를 묶은
+    ``CorpusSnapshot``을 만드는 ``build``를 ``LiveCorpus``에 넘긴다. DB를 쓸 수 없으면 열었던 자원을 닫고 ``None``을 돌려준다.
+    입력:
+        settings: 런타임 설정(``corpus_database_url``이 있어야 한다).
+    출력: ``LiveCorpus`` 또는 ``None``(DB 연결 실패 → 호출자가 파일 말뭉치로 대체).
+    """
+    # DB를 쓰지 않는 배포에서 드라이버를 불러오지 않도록 지연 import한다.
     import psycopg
 
     from ax_g_ai.corpus_store.embedding import TeiEmbeddingClient
@@ -127,7 +159,7 @@ def _live_corpus(settings: RuntimeSettings) -> CorpusSource | None:
     include_unreviewed, require_license = settings.evidence_include_unreviewed, settings.attributed_sources_only
 
     def build(conn: psycopg.Connection, release_id: int, dur_dataset_id: int | None) -> CorpusSnapshot:
-        # One read of the release serves the evidence index and the rules (passages and concepts are read once).
+        # 릴리스를 한 번 읽어 근거 색인과 규칙에 함께 쓴다(문단과 개념을 한 번만 읽는다).
         rows = read_rows(conn, release_id)
         index = InMemoryEvidenceIndex.from_rows(rows, include_unreviewed=include_unreviewed, require_license=require_license)
         evidence = PostgresEvidenceRetriever(
@@ -160,7 +192,7 @@ def _live_corpus(settings: RuntimeSettings) -> CorpusSource | None:
     url = settings.corpus_database_url.get_secret_value()  # type: ignore[union-attr]
 
     try:
-        # The pool itself keeps reconnecting for up to ``dependency_startup_wait_seconds`` (a database starting with the API).
+        # 풀이 ``dependency_startup_wait_seconds``까지 스스로 다시 연결을 시도한다(API와 함께 시작하는 DB 대비).
         pool = open_pool(url, wait_seconds=settings.dependency_startup_wait_seconds)
         try:
             return LiveCorpus(pool, build, refresh_seconds=settings.corpus_refresh_seconds, watch_dur=settings.dur_enabled,
@@ -175,11 +207,22 @@ def _live_corpus(settings: RuntimeSettings) -> CorpusSource | None:
 
 
 def _recommender(settings: RuntimeSettings, rules: RuleCorpus | None, dur, *, backend: str) -> ClinicalRecommender | None:
+    """규칙 말뭉치로 추천기를 만든다.
+
+    역할: 병원 코드 매핑(설정 시)·DUR 점검기·용량 규칙 사용 여부를 붙여 ``ClinicalRecommender``를 만들고 적재 현황을 로그에 남긴다.
+    입력:
+        settings: 런타임 설정.
+        rules: 규칙 말뭉치. ``None``이면 추천기를 만들지 않는다.
+        dur: DUR 점검기(``DurChecker``) 또는 ``None``.
+        backend: 로그에 남길 원천 설명(예: ``files``, ``postgres release_id=3``).
+    출력: ``ClinicalRecommender`` 또는 ``None``.
+    예외: 병원 코드 매핑 파일이 잘못되면 ``SiteCodeMap.load``의 예외가 그대로 전파된다.
+    """
     if rules is None:
         return None
     site_map = None
     if settings.site_code_map_path is not None:
-        # A malformed site map is a deployment error: fail at start-up (a later release keeps the current snapshot).
+        # 잘못된 병원 코드 매핑은 배포 오류다. 기동 시 실패시킨다(이후 릴리스에서 실패하면 현재 스냅샷을 유지한다).
         site_map = SiteCodeMap.load(Path(settings.site_code_map_path), rules.catalog)
     recommender = ClinicalRecommender(
         rules, site_map, max_evidence=settings.recommendation_max_evidence, dur=dur, doses=settings.clinical_doses_enabled,
@@ -193,5 +236,6 @@ def _recommender(settings: RuntimeSettings, rules: RuleCorpus | None, dur, *, ba
 
 
 def _close_all(closers: list[Callable[[], None]]) -> None:
+    """등록된 정리 함수를 차례로 호출한다."""
     for close in closers:
         close()
