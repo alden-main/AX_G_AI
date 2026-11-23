@@ -22,6 +22,7 @@ from ax_g_ai.config import AISettings, ConfigurationError, RuntimeSettings
 from ax_g_ai.services.clinical_chat import ClinicalChatService
 from ax_g_ai.services.clinical_evidence import EvidenceRetriever, InMemoryEvidenceIndex
 from ax_g_ai.services.clinical_recommendation import ClinicalRecommender, RuleCorpus
+from ax_g_ai.services.clinical_recommendation import read_rows as read_corpus_rows
 from ax_g_ai.services.corpus_snapshot import CorpusSnapshot, CorpusSource, StaticCorpus
 from ax_g_ai.services.emr_mapping import SiteCodeMap
 from ax_g_ai.services.patient_context_store import ContextStore, PatientContextStore
@@ -98,16 +99,13 @@ def _corpus_source(settings: RuntimeSettings) -> CorpusSource:
     evidence: EvidenceRetriever | None = None
     rules: RuleCorpus | None = None
     if settings.evidence_corpus_dir is not None:
-        evidence = InMemoryEvidenceIndex.load(
-            settings.evidence_corpus_dir, include_unreviewed=settings.evidence_include_unreviewed,
-            require_license=settings.attributed_sources_only,
-        )
+        # One read of the corpus files serves the evidence index and the rules.
+        rows = read_corpus_rows(settings.evidence_corpus_dir)
+        gate = {"include_unreviewed": settings.evidence_include_unreviewed, "require_license": settings.attributed_sources_only}
+        evidence = InMemoryEvidenceIndex.from_rows(rows, **gate)
         logger.info("clinical_evidence_loaded backend=files chunks=%d unreviewed=%d", len(evidence), evidence.unreviewed_count)
         if settings.clinical_rules_enabled:
-            rules = RuleCorpus.load(
-                settings.evidence_corpus_dir, include_unreviewed=settings.evidence_include_unreviewed,
-                require_license=settings.attributed_sources_only,
-            )
+            rules = RuleCorpus.from_rows(rows, **gate)
     recommender = _recommender(settings, rules, None, backend="files")
     return StaticCorpus(CorpusSnapshot(evidence, recommender))
 
@@ -118,7 +116,7 @@ def _live_corpus(settings: RuntimeSettings) -> CorpusSource | None:
 
     from ax_g_ai.corpus_store.embedding import TeiEmbeddingClient
     from ax_g_ai.corpus_store.live import LiveCorpus
-    from ax_g_ai.corpus_store.retriever import CorpusUnavailableError, PostgresEvidenceRetriever, load_index, open_pool
+    from ax_g_ai.corpus_store.retriever import CorpusUnavailableError, PostgresEvidenceRetriever, open_pool
     from ax_g_ai.corpus_store.rules import read_rows
     from ax_g_ai.dur_store.reader import read_tables
     from ax_g_ai.services.dur_check import DurChecker, DurUnavailableError
@@ -129,7 +127,9 @@ def _live_corpus(settings: RuntimeSettings) -> CorpusSource | None:
     include_unreviewed, require_license = settings.evidence_include_unreviewed, settings.attributed_sources_only
 
     def build(conn: psycopg.Connection, release_id: int, dur_dataset_id: int | None) -> CorpusSnapshot:
-        index = load_index(conn, release_id, include_unreviewed=include_unreviewed, require_license=require_license)
+        # One read of the release serves the evidence index and the rules (passages and concepts are read once).
+        rows = read_rows(conn, release_id)
+        index = InMemoryEvidenceIndex.from_rows(rows, include_unreviewed=include_unreviewed, require_license=require_license)
         evidence = PostgresEvidenceRetriever(
             pool, release_id, index, embedder=embedder, model_id=settings.embedding_model,
             include_unreviewed=include_unreviewed, similarity_floor=settings.evidence_similarity_floor,
@@ -140,7 +140,7 @@ def _live_corpus(settings: RuntimeSettings) -> CorpusSource | None:
         )
         rules = None
         if settings.clinical_rules_enabled:
-            rules = RuleCorpus.from_rows(read_rows(conn, release_id), include_unreviewed=include_unreviewed, require_license=require_license)
+            rules = RuleCorpus.from_rows(rows, include_unreviewed=include_unreviewed, require_license=require_license)
         dur = None
         if settings.dur_enabled:
             if dur_dataset_id is None:

@@ -42,6 +42,17 @@ def ckd_epi_2021_egfr(age_years: float, sex: str, serum_creatinine_mg_dl: float)
     return 142 * min(ratio, 1) ** alpha * max(ratio, 1) ** -1.200 * 0.9938 ** age_years * sex_factor
 
 
+def cockcroft_gault_crcl(age_years: float, sex: str, weight_kg: float, serum_creatinine_mg_dl: float) -> float:
+    """Return Cockcroft-Gault creatinine clearance (mL/min) with the given (actual) body weight, unrounded."""
+    return (140 - age_years) * weight_kg / (72 * serum_creatinine_mg_dl) * (0.85 if sex == "female" else 1.0)
+
+
+def body_mass_index(weight_kg: float, height_cm: float) -> float:
+    """Return BMI (kg/m²), unrounded."""
+    height_m = height_cm / 100
+    return weight_kg / (height_m * height_m)
+
+
 def gfr_category(egfr: float) -> str:
     return next(label for lower, label in _GFR_CATEGORIES if egfr >= lower)
 
@@ -57,15 +68,13 @@ def calculate_review_aids(context: object) -> tuple[tuple[CalculationResult, ...
     results: list[CalculationResult] = []
     needed: list[str] = []
     if weight is not None and height is not None:
-        height_m = height / 100
-        results.append(CalculationResult("BMI", round(weight / (height_m * height_m), 1), "kg/m²", "BMI"))
+        results.append(CalculationResult("BMI", round(body_mass_index(weight, height), 1), "kg/m²", "BMI"))
         results.append(CalculationResult("체표면적", round(math.sqrt((height * weight) / 3600), 2), "m²", "Mosteller"))
     else:
         needed.append("BMI·체표면적 계산에는 체중(kg)과 키(cm) 입력이 필요합니다.")
     missing = [label for label, value in (("연령", age), ("성별(male/female)", sex), ("체중(kg)", weight), ("혈청 크레아티닌(mg/dL)", creatinine)) if value is None]
     if not missing:
-        factor = 0.85 if sex == "female" else 1.0
-        crcl = ((140 - age) * weight / (72 * creatinine)) * factor
+        crcl = cockcroft_gault_crcl(age, sex, weight, creatinine)
         results.append(CalculationResult("추정 CrCl", round(crcl, 1), "mL/min", "Cockcroft–Gault (제공된 실제 체중 사용)"))
     else:
         needed.append("Cockcroft–Gault CrCl 계산에는 " + ", ".join(missing) + " 입력이 필요합니다.")

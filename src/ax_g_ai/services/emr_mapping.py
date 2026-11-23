@@ -28,7 +28,7 @@ from typing import Any
 
 from ax_g_ai.corpus.files import CONCEPT_FILES
 from ax_g_ai.jsonl import read_jsonl
-from ax_g_ai.services.clinical_calculations import ckd_epi_2021_egfr
+from ax_g_ai.services.clinical_calculations import ckd_epi_2021_egfr, cockcroft_gault_crcl
 from ax_g_ai.services.clinical_corpus import PatientFacts
 from ax_g_ai.services.term_matcher import TermMatcher
 
@@ -423,8 +423,8 @@ def _derived(latest: Mapping[str, LabValue], age: float | None, sex: str | None)
         result.append(LabValue("eGFR", egfr, "mL/min/1.73m2", None, "CKD-EPI 2021", scr.test_date, None, "derived"))
     weight = latest.get("weight_kg")
     if weight is not None and "CrCl" not in latest:
-        # Same Cockcroft-Gault form as clinical_calculations (actual body weight).
-        crcl = (140 - age) * weight.value / (72 * scr.value) * (0.85 if sex == "female" else 1.0)
+        # The same Cockcroft-Gault function as the chat calculations (actual body weight).
+        crcl = cockcroft_gault_crcl(age, sex, weight.value, scr.value)
         result.append(LabValue("CrCl", round(crcl, 1), "mL/min", None, "Cockcroft-Gault(실제 체중)", scr.test_date, None, "derived"))
     return result
 

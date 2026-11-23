@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal
 
@@ -202,8 +203,17 @@ class FindingExtraction(BaseModel):
 
 
 def finding_extraction_output(vocabulary: list[str] | tuple[str, ...]) -> type[FindingExtraction]:
-    """Output model whose keys are an enum of ``vocabulary`` (strict JSON Schema / guided decoding keeps the model to it)."""
-    keys: Any = list[Literal[tuple(vocabulary)]]  # type: ignore[misc, valid-type]
+    """Output model whose keys are an enum of ``vocabulary`` (strict JSON Schema / guided decoding keeps the model to it).
+
+    The vocabulary is fixed per corpus snapshot, so the model (and its JSON Schema) is built once per vocabulary,
+    not on every recommendation request.
+    """
+    return _finding_extraction_model(tuple(vocabulary))
+
+
+@lru_cache(maxsize=8)  # a few corpus releases at most are served over a process lifetime
+def _finding_extraction_model(vocabulary: tuple[str, ...]) -> type[FindingExtraction]:
+    keys: Any = list[Literal[vocabulary]]  # type: ignore[misc, valid-type]
     return create_model("ClinicalFindings", __base__=FindingExtraction, present=(keys, ...), absent=(keys, ...))
 
 

@@ -107,7 +107,7 @@ class ClinicalChatService:
         )
         with _provider_failure(request.operation):
             try:
-                extracted = await self._provider.respond_structured(request, finding_extraction_output(list(vocabulary)))
+                extracted = await self._provider.respond_structured(request, finding_extraction_output(tuple(vocabulary)))
             except ProviderOutputError as error:
                 logger.warning("finding_extraction_invalid reason=%s", error)
                 return {}

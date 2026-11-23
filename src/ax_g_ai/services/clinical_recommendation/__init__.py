@@ -32,6 +32,7 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 from ax_g_ai.corpus.files import DOSE_FILE
+from ax_g_ai.services.clinical_calculations import body_mass_index
 from ax_g_ai.services.clinical_corpus import CorpusRuleError
 from ax_g_ai.services.clinical_recommendation.corpus import RuleCorpus, read_rows
 from ax_g_ai.services.clinical_recommendation.doses import DoseStage
@@ -140,7 +141,7 @@ class ClinicalRecommender:
         values = dict(mapping.facts.values)
         weight, height = context.get("weight_kg"), context.get("height_cm")
         if "BMI" not in values and _plausible(weight, 0.3, 500) and _plausible(height, 30, 300):
-            values["BMI"] = round(float(weight) / (float(height) / 100) ** 2, 1)  # type: ignore[arg-type]
+            values["BMI"] = round(body_mass_index(float(weight), float(height)), 1)  # type: ignore[arg-type]
             mapping = replace(mapping, facts=replace(mapping.facts, values=values))
         medications = tuple(
             (_text_or_none(item.get("medCode")), _text_or_none(item.get("medName")))

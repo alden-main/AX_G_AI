@@ -23,7 +23,8 @@ from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 
 from ax_g_ai.corpus_store.embedding import EmbeddingError, TeiEmbeddingClient, vector_literal
-from ax_g_ai.services.clinical_evidence import EvidenceChunk, InMemoryEvidenceIndex, concept_names, lexical_cutoff, prioritize
+from ax_g_ai.corpus_store.rules import read_rows
+from ax_g_ai.services.clinical_evidence import EvidenceChunk, InMemoryEvidenceIndex, lexical_cutoff, prioritize
 
 logger = logging.getLogger("uvicorn.error")
 _RRF_K = 60
@@ -61,25 +62,12 @@ def active_release_id(conn: psycopg.Connection) -> int:
 def load_index(
     conn: psycopg.Connection, release_id: int, *, include_unreviewed: bool, require_license: bool = False,
 ) -> InMemoryEvidenceIndex:
-    """The citable passages of ``release_id`` (it must be the active release: the gate view reads only that one)."""
-    chunks = conn.execute(
-        "SELECT chunk_id, claim_id, chapter, title_path, body AS text, claim_status, ai_tier, verification, "
-        "review_status, sources, conflicts, updated_at::text AS updated_at, doc_path "
-        "FROM corpus.citable_evidence WHERE release_id = %s", (release_id,),
-    ).fetchall()
-    concepts = conn.execute(
-        "SELECT c.concept_type, c.payload, coalesce(json_agg(json_build_object('claim_id', u.claim_id)) "
-        "  FILTER (WHERE u.claim_id IS NOT NULL), '[]') AS used_by "
-        "FROM corpus.concept c LEFT JOIN corpus.concept_usage u USING (release_id, concept_type, concept_id) "
-        "WHERE c.release_id = %s GROUP BY c.concept_type, c.concept_id, c.payload", (release_id,),
-    ).fetchall()
-    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for row in concepts:
-        kind = "test" if row["concept_type"] == "test" else "class" if row["concept_type"] == "drug_class" else "drug"
-        grouped[kind].append({**row["payload"], "used_by": row["used_by"]})
-    names = concept_names(grouped["test"], grouped["drug"], grouped["class"])
+    """The citable passages of ``release_id`` (it must be the active release: the gate view reads only that one).
+
+    For a standalone retriever (``open``). The service reads ``read_rows`` once and builds the index and the rules from it.
+    """
     # is_citable() runs again in Python as a second gate behind the SQL view.
-    return InMemoryEvidenceIndex.from_records(chunks, names, include_unreviewed=include_unreviewed, require_license=require_license)
+    return InMemoryEvidenceIndex.from_rows(read_rows(conn, release_id), include_unreviewed=include_unreviewed, require_license=require_license)
 
 
 class PostgresEvidenceRetriever:

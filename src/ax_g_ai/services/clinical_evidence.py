@@ -152,9 +152,16 @@ class InMemoryEvidenceIndex:
 
     @classmethod
     def load(cls, corpus_dir: Path, *, include_unreviewed: bool, require_license: bool = False) -> InMemoryEvidenceIndex:
+        rows = {name: read_jsonl(corpus_dir / name, strict=False) for name in (CHUNKS_FILE, *CONCEPT_FILES)}
+        return cls.from_rows(rows, include_unreviewed=include_unreviewed, require_license=require_license)
+
+    @classmethod
+    def from_rows(
+        cls, rows: Mapping[str, Iterable[Mapping[str, Any]]], *, include_unreviewed: bool, require_license: bool = False,
+    ) -> InMemoryEvidenceIndex:
+        """Index of corpus rows by file name: the same mapping ``RuleCorpus.from_rows`` reads, so one read serves both."""
         return cls.from_records(
-            read_jsonl(corpus_dir / CHUNKS_FILE, strict=False),
-            concept_names(*(read_jsonl(corpus_dir / name, strict=False) for name in CONCEPT_FILES)),
+            rows.get(CHUNKS_FILE, ()), concept_names(*(rows.get(name, ()) for name in CONCEPT_FILES)),
             include_unreviewed=include_unreviewed, require_license=require_license,
         )
 
