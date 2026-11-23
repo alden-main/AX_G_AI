@@ -34,7 +34,6 @@ from ax_g_ai.errors import (
 )
 from ax_g_ai.services.clinical_chat import ClinicalChatService, evidence_payload
 from ax_g_ai.services.clinical_grounding import chat_grounding, recommendation_grounding, require_recommender, with_rule_input
-from ax_g_ai.services.clinical_recommendation import ClinicalRecommender
 from ax_g_ai.services.clinical_recommendation.schema import AssessmentPayload, Evidence
 from ax_g_ai.services.corpus_snapshot import CorpusSnapshot, CorpusSource, StaticCorpus
 from ax_g_ai.services.patient_context_store import ContextStore, PatientContextStore, PreparedRawEmrContext
@@ -191,7 +190,6 @@ def create_app(
     service: ClinicalChatService | None = None,
     mapper: RawEmrPayloadMapper | None = None,
     store: ContextStore | None = None,
-    recommender: ClinicalRecommender | None = None,
     *,
     corpus: CorpusSource | None = None,
     on_shutdown: Sequence[Callable[[], object]] = (),
@@ -199,9 +197,8 @@ def create_app(
     """새 내부 계약만 노출하는 ASGI 앱을 조립한다.
 
     ``service``가 없으면 AI 설정이 없는 fail-closed 앱이며, AI 호출이 필요한 요청은
-    ``AI_PROVIDER_UNAVAILABLE``로 거부된다. ``corpus``는 요청마다 읽는 말뭉치 스냅샷(근거·규칙·DUR)이며,
-    없으면 ``recommender``와 ``service``의 근거 검색기로 고정 스냅샷을 만든다. ``on_shutdown``은 종료 시
-    닫을 자원(DB 풀 등)이다.
+    ``AI_PROVIDER_UNAVAILABLE``로 거부된다. ``corpus``는 요청마다 읽는 말뭉치 스냅샷(근거 검색·규칙·DUR)의
+    유일한 출처이며, 없으면 근거·규칙이 없는 빈 스냅샷이다. ``on_shutdown``은 종료 시 닫을 자원(DB 풀 등)이다.
     """
 
     @asynccontextmanager
@@ -209,9 +206,7 @@ def create_app(
         yield
         for close in (*on_shutdown, components.store.close):
             try:
-                result = close()
-                if inspect.isawaitable(result):
-                    await result
+                await _call(close)
             except Exception as error:  # shutdown must continue past one failing resource
                 logger.warning("resource_close_failed error_type=%s", type(error).__name__)
 
@@ -220,7 +215,7 @@ def create_app(
     app = FastAPI(title="AX-G AI Clinical Chat API", version="1", lifespan=lifespan, separate_input_output_schemas=False)
     components = app.state.components = AppComponents(
         service, mapper or RawEmrPayloadMapper(), store or PatientContextStore(),
-        corpus or StaticCorpus(CorpusSnapshot(recommender=recommender)),
+        corpus or StaticCorpus(),
     )
 
     @app.middleware("http")

@@ -6,12 +6,21 @@ Korean labels live here (and in ``doses`` for dose fields); evaluation code neve
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, cast
 
 from ax_g_ai.services.clinical_corpus import PatientFacts
 from ax_g_ai.services.clinical_evidence import REGION_LABELS, region_of, sorted_sources
 from ax_g_ai.services.clinical_recommendation.corpus import RuleCorpus
 from ax_g_ai.services.clinical_recommendation.model import Leaf, unique_missing
+from ax_g_ai.services.clinical_recommendation.schema import (
+    Diagnosis,
+    ItemKind,
+    LabInterpretation,
+    MissingInput,
+    RecommendationItem,
+    Status,
+    TestEntry,
+)
 from ax_g_ai.services.emr_mapping import EmrMapping
 
 _CATEGORY = {
@@ -35,43 +44,50 @@ class Presenter:
         self._corpus = corpus
 
     def item(
-        self, record: Mapping[str, Any], status: str, leaves: list[Leaf], facts: PatientFacts, extra: Mapping[str, Any]
-    ) -> dict[str, Any]:
-        kind = record.get("kind")
-        item: dict[str, Any] = {
-            "record_id": record.get("id"), "claim_id": record.get("claim_id"), "kind": kind, "status": status,
-            "topic": record.get("topic"), "chapter": record.get("chapter"),
-        }
+        self, record: Mapping[str, Any], status: Status, leaves: list[Leaf], facts: PatientFacts, extra: Mapping[str, Any]
+    ) -> RecommendationItem:
+        """The payload entry of a ``met``/``possible`` rule. Keys are passed in output order (the API and prompt JSON)."""
+        # ``rules.evaluate_record`` gives a status only to these four kinds; the model validates it again.
+        kind = cast(ItemKind, record.get("kind"))
+        # Fields that only some kinds or records have: passed only when set, so the payload omits the others.
+        optional: dict[str, Any] = {}
         if kind == "diagnosis":
             condition = record.get("condition") or {}
-            item["diagnosis"] = {"name": condition.get("name"), "kcd": list(condition.get("kcd") or ())}
+            kcd = list(condition.get("kcd") or ())
             recorded = facts.diagnosis_codes or frozenset()
-            item["already_recorded"] = any(code.startswith(prefix) for prefix in condition.get("kcd") or () for code in recorded)
+            optional["diagnosis"] = Diagnosis(name=condition.get("name"), kcd=kcd)
+            optional["already_recorded"] = any(code.startswith(prefix) for prefix in kcd for code in recorded)
             if record.get("severity"):
-                item["severity"] = record.get("severity")
+                optional["severity"] = record.get("severity")
         if kind == "referral":
-            item["referral_to"] = record.get("to")
+            optional["referral_to"] = record.get("to")
             if record.get("purpose"):
-                item["purpose"] = record.get("purpose")
+                optional["purpose"] = record.get("purpose")
         if kind == "workup":
-            item["tests"] = [self.test_entry(test) for test in record.get("tests") or () if isinstance(test, Mapping)]
+            optional["tests"] = [self.test_entry(test) for test in record.get("tests") or () if isinstance(test, Mapping)]
         if kind == "monitoring":
-            item["tests"] = [self.test_entry({"lab": name}) for name in record.get("check") or ()]
-            item["interval"] = {key: record[key] for key in record if key.startswith(("interval_", "within_", "timing_"))}
+            optional["tests"] = [self.test_entry({"lab": name}) for name in record.get("check") or ()]
+            optional["interval"] = {key: record[key] for key in record if key.startswith(("interval_", "within_", "timing_"))}
             if extra.get("actions"):
-                item["actions"] = list(extra["actions"])
+                optional["actions"] = list(extra["actions"])
         if record.get("strength"):
-            item["strength"] = record.get("strength")
+            optional["strength"] = record.get("strength")
         for key in ("note", "notes"):
             if record.get(key):
-                item["note"] = record.get(key)
-        item["matched"] = [self.describe(leaf, facts) for leaf in leaves if leaf.result is True and not leaf.negated]
-        item["missing"] = unique_missing(self.missing(leaf) for leaf in leaves if leaf.result is None)
-        item["review_status"] = record.get("review_status")
-        item.update(self.provenance(record))
-        if record.get("conflicts"):
-            item["conflicts"] = list(record["conflicts"])
-        return item
+                optional["note"] = record.get(key)
+        gaps = unique_missing(self.missing(leaf) for leaf in leaves if leaf.result is None)
+        conflicts: dict[str, Any] = {"conflicts": list(record["conflicts"])} if record.get("conflicts") else {}
+        return RecommendationItem(
+            record_id=record.get("id"), claim_id=record.get("claim_id"), kind=kind, status=status,
+            topic=record.get("topic"), chapter=record.get("chapter"),
+            **optional,
+            matched=[self.describe(leaf, facts) for leaf in leaves if leaf.result is True and not leaf.negated],
+            # Shared with the dose stage, which still builds dicts (until it builds models too).
+            missing=[MissingInput.model_validate(gap) for gap in gaps],
+            review_status=record.get("review_status"),
+            **self.provenance(record),
+            **conflicts,
+        )
 
     def provenance(self, record: Mapping[str, Any]) -> dict[str, Any]:
         """Region, priority (domestic standard first) and display sources of a rule record."""
@@ -87,7 +103,7 @@ class Presenter:
             result["superseded_by"] = list(dict.fromkeys(by))
         return result
 
-    def test_entry(self, test: Mapping[str, Any]) -> dict[str, Any]:
+    def test_entry(self, test: Mapping[str, Any]) -> TestEntry:
         key = next((name for name in ("exam", "lab", "score", "calc", "screen", "review") if name in test), None)
         concept_id = str(test.get(key)) if key else ""
         concept = self._corpus.catalog.tests.get(concept_id, {})
@@ -100,10 +116,10 @@ class Presenter:
             category = "검토"
         else:
             category = _CATEGORY.get(str(section)) or _TEST_KEY_LABEL.get(key or "", "검사")
-        result = {"id": concept_id, "name": concept.get("name_ko") or concept_id.replace("_", " "), "category": category}
-        if test.get("reason"):
-            result["reason"] = test["reason"]
-        return result
+        return TestEntry(
+            id=concept_id, name=concept.get("name_ko") or concept_id.replace("_", " "), category=category,
+            **({"reason": test["reason"]} if test.get("reason") else {}),
+        )
 
     def describe(self, leaf: Leaf, facts: PatientFacts) -> str:
         condition = leaf.condition
@@ -149,7 +165,7 @@ class Presenter:
 
     def lab_interpretations(
         self, mapping: EmrMapping, facts: PatientFacts, sex: str | None
-    ) -> list[tuple[dict[str, Any], Mapping[str, Any]]]:
+    ) -> list[tuple[LabInterpretation, Mapping[str, Any]]]:
         by_concept = {lab.concept: lab for lab in mapping.labs}
         result = []
         for record in self._corpus.rules.get("lab_thresholds.jsonl", ()):
@@ -165,12 +181,13 @@ class Presenter:
                 if ("min" in band and value < band["min"]) or ("max" in band and value > band["max"]):
                     continue
                 source = by_concept.get(lab)
-                result.append(({
-                    "record_id": record.get("id"), "claim_id": record.get("claim_id"), "lab": lab,
-                    "name": self.concept_name(lab), "value": value, "unit": record.get("unit"),
-                    "test_date": source.test_date if source else None, "band": band.get("label"),
-                    "context": record.get("context") or record.get("topic"),
-                    "review_status": record.get("review_status"),
-                    **{key: value for key, value in self.provenance(record).items() if key != "sources"},
-                }, record))
+                provenance = {key: item for key, item in self.provenance(record).items() if key != "sources"}
+                result.append((LabInterpretation(
+                    record_id=record.get("id"), claim_id=record.get("claim_id"), lab=lab,
+                    name=self.concept_name(lab), value=value, unit=record.get("unit"),
+                    test_date=source.test_date if source else None, band=band.get("label"),
+                    context=record.get("context") or record.get("topic"),
+                    review_status=record.get("review_status"),
+                    **provenance,
+                ), record))
         return result

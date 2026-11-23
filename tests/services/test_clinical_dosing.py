@@ -203,7 +203,7 @@ class DoseAssessmentTest(unittest.TestCase):
     def test_dose_evidence_survives_a_full_stage_two_evidence_cap(self) -> None:
         r = engine(max_evidence=1)
         assessment = r.assess(r.prepare(emr()))
-        self.assertEqual(len([ref for item in assessment.items for ref in item["evidence_refs"]]) <= 1, True)
+        self.assertEqual(len([ref for item in assessment.items for ref in item.evidence_refs or ()]) <= 1, True)
         self.assertTrue(doses_by_id(assessment)["DR-PREGABALIN"]["evidence_refs"])
 
     def test_dose_stage_off_by_default(self) -> None:

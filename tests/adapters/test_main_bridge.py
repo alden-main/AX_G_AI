@@ -6,8 +6,8 @@ from datetime import datetime
 from pathlib import Path
 
 from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
+from ax_g_ai.adapters.sqlite_reference_lookup import SqliteReferenceLookup
 from ax_g_ai.errors import PatientContextUnavailableError, PatientMismatchError
-from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
 
 
 class RawEmrPayloadMapperTest(unittest.TestCase):

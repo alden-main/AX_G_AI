@@ -1,4 +1,4 @@
-"""Read-only lookups for the SQLite reference-data database."""
+"""Read-only lookups for the SQLite reference-data database (implements ``services.ports.ReferenceLookup``)."""
 
 from __future__ import annotations
 
@@ -6,21 +6,14 @@ import sqlite3
 from collections import Counter
 from collections.abc import Sequence
 from contextlib import closing
-from dataclasses import dataclass
 from pathlib import Path
 
+from ax_g_ai.services.ports import MedicineReference
 from ax_g_ai.services.term_matcher import TermMatcher
 
 _MAX_MATCHES = 5
 _MIN_NAME_LENGTH = 2
 _REFERENCE_TEXT_LIMIT = 600
-
-
-@dataclass(frozen=True)
-class MedicineReference:
-    name_ko: str
-    efficacy: str | None
-    precautions: str | None
 
 
 class SqliteReferenceLookup:

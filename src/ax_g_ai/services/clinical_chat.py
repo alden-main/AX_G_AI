@@ -22,9 +22,8 @@ from ax_g_ai.prompts.clinical import (
 )
 from ax_g_ai.services.clinical_evidence import EvidenceChunk, EvidenceRetriever
 from ax_g_ai.services.clinical_recommendation import prompt_view
-from ax_g_ai.services.ports import OpenAIProviderError, OpenAIRequest, ProviderClient, ProviderOutputError
+from ax_g_ai.services.ports import OpenAIProviderError, OpenAIRequest, ProviderClient, ProviderOutputError, ReferenceLookup
 from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
-from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -35,31 +34,26 @@ class ClinicalChatService:
     ``snapshot``은 ``RawEmrPayloadMapper``가 비식별 처리한 문맥이어야 한다. Provider
     실패는 원인과 무관하게 ``ClinicalChatProviderUnavailableError``로 바뀌고, 로그에는
     프롬프트·EMR·API Key 없이 분류된 사유만 남는다.
+
+    근거 검색기는 갖지 않는다. 근거는 요청의 말뭉치 스냅샷(``CorpusSnapshot.evidence``)에서 찾아
+    (``find_evidence``) 답변 메서드에 넘기므로, 한 요청의 근거·규칙·DUR이 같은 릴리스에서 온다.
     """
 
     def __init__(
         self,
         provider: ProviderClient,
-        reference_lookup: SqliteReferenceLookup | None = None,
-        evidence: EvidenceRetriever | None = None,
-        evidence_limit: int = 3,
-        *, allow_general_knowledge: bool = False,
+        reference_lookup: ReferenceLookup | None = None,
+        *, evidence_limit: int = 3, allow_general_knowledge: bool = False,
     ) -> None:
         self._provider = provider
         # False (attribution-only): recommendations may not add suggestions without a corpus source.
         self._allow_general_knowledge = allow_general_knowledge
         self._reference_lookup = reference_lookup
-        self._evidence = evidence
         self._evidence_limit = evidence_limit
 
-    def find_evidence(self, question: str, retriever: EvidenceRetriever | None = None) -> tuple[EvidenceChunk, ...]:
-        """Corpus evidence to cite for ``question``; logs chunk ids only (no question text).
-
-        ``retriever`` is the request's corpus snapshot; without it the service's own retriever is used.
-        """
-        if retriever is None:  # not ``or``: an empty index is falsy (``__len__``) but still the snapshot's index
-            retriever = self._evidence
-        if retriever is None:
+    def find_evidence(self, question: str, retriever: EvidenceRetriever | None) -> tuple[EvidenceChunk, ...]:
+        """Evidence from ``retriever`` (the request's corpus snapshot) to cite for ``question``; logs chunk ids only."""
+        if retriever is None:  # not ``not retriever``: an empty index is falsy (``__len__``) but still searchable
             return ()
         try:
             chunks = retriever.search(question, self._evidence_limit)
@@ -76,7 +70,7 @@ class ClinicalChatService:
 
     async def answer_prepared_snapshot(
         self, *, question: str, snapshot: Mapping[str, Any], reference_record: str | None = None,
-        evidence: Sequence[EvidenceChunk] | None = None, assessment: Mapping[str, Any] | None = None,
+        evidence: Sequence[EvidenceChunk] = (), assessment: Mapping[str, Any] | None = None,
     ) -> str:
         """준비된 동일 환자의 EMR 문맥으로 한국어 답변을 생성한다."""
         request = self._chat_request("prepared_snapshot_chat", question, snapshot, reference_record, evidence, assessment)
@@ -86,7 +80,7 @@ class ClinicalChatService:
 
     async def stream_prepared_snapshot(
         self, *, question: str, snapshot: Mapping[str, Any], reference_record: str | None = None,
-        evidence: Sequence[EvidenceChunk] | None = None, assessment: Mapping[str, Any] | None = None,
+        evidence: Sequence[EvidenceChunk] = (), assessment: Mapping[str, Any] | None = None,
     ) -> AsyncIterator[str]:
         """Yield a prepared-snapshot answer as provider text becomes available."""
         request = self._chat_request("prepared_snapshot_chat_stream", question, snapshot, reference_record, evidence, assessment)
@@ -167,12 +161,11 @@ class ClinicalChatService:
 
     def _chat_request(
         self, operation: str, question: str, snapshot: Mapping[str, Any], reference_record: str | None,
-        evidence: Sequence[EvidenceChunk] | None, assessment: Mapping[str, Any] | None = None,
+        evidence: Sequence[EvidenceChunk], assessment: Mapping[str, Any] | None = None,
     ) -> OpenAIRequest:
         references = self._reference_lookup.search_question(question) if self._reference_lookup else None
-        chunks = self.find_evidence(question) if evidence is None else evidence
         return _request(operation, compose_prepared_snapshot_question(
-            question, snapshot, reference_record, references, evidence=evidence_payload(chunks),
+            question, snapshot, reference_record, references, evidence=evidence_payload(evidence),
             assessment=prompt_view(assessment) if assessment else None,
         ))
 

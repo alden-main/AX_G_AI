@@ -1,8 +1,9 @@
 """Pydantic schema of the assessment payload (API ``assessment``, SSE ``meta.assessment``, prompt input).
 
-The recommender builds plain dicts; ``Assessment.payload`` validates them against these models,
-so a misspelt or unexpected key fails at creation (``extra="forbid"``) and ``/docs`` shows the
-real structure. Serialization keeps exactly the keys that were set: an optional key that does
+Stage-2 entries (``RecommendationItem``, ``LabInterpretation`` and their parts) are built as these
+models by ``presentation.Presenter``, so mypy checks their fields; DUR alerts and dose results are
+still plain dicts that ``Assessment.payload`` validates against these models. Either way a misspelt
+or unexpected key fails at creation (``extra="forbid"``) and ``/docs`` shows the real structure. Serialization keeps exactly the keys that were set: an optional key that does
 not apply is omitted, a key set to ``null`` stays ``null`` (the JSON is the same as before the
 schema existed; see ``docs/assessment_schema.md``).
 
@@ -32,6 +33,7 @@ Number = int | float
 Status = Literal["met", "possible"]
 Priority = Literal["primary", "reference"]
 Region = Literal["KR", "US", "EU", "INTL"]
+ItemKind = Literal["diagnosis", "referral", "workup", "monitoring"]
 
 
 class PayloadModel(BaseModel):
@@ -107,7 +109,7 @@ class RecommendationItem(Provenance):
 
     record_id: str | None
     claim_id: str | None
-    kind: Literal["diagnosis", "referral", "workup", "monitoring"] = Field(
+    kind: ItemKind = Field(
         description="diagnosis(의심 진단) · referral(협진) · workup(추천 검사) · monitoring(추적 검사)")
     status: Status = Field(description="met: 조건 충족 / possible: 일부만 확인됨 — 나머지는 missing")
     topic: Text | None

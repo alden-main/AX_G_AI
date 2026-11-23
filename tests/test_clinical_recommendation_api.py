@@ -10,6 +10,7 @@ from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
 from ax_g_ai.api import create_app
 from ax_g_ai.services.clinical_chat import ClinicalChatService
 from ax_g_ai.services.clinical_evidence import InMemoryEvidenceIndex
+from ax_g_ai.services.corpus_snapshot import CorpusSnapshot, StaticCorpus
 from ax_g_ai.services.patient_context_store import PatientContextStore
 from ax_g_ai.services.ports import OpenAIRequest, ProviderAnswer, ProviderOutputError
 from tests.services.test_clinical_recommendation import RULES, recommender, source
@@ -48,8 +49,9 @@ def payload() -> dict[str, object]:
 
 def client(provider: ScriptedProvider, *, rules: bool = True, general_knowledge: bool = False) -> TestClient:
     evidence = InMemoryEvidenceIndex.from_records(RULES["chunks.jsonl"], {}, include_unreviewed=True)
-    service = ClinicalChatService(provider, evidence=evidence, allow_general_knowledge=general_knowledge)  # type: ignore[arg-type]
-    return TestClient(create_app(service, RawEmrPayloadMapper(), PatientContextStore(), recommender() if rules else None))
+    service = ClinicalChatService(provider, allow_general_knowledge=general_knowledge)  # type: ignore[arg-type]
+    corpus = StaticCorpus(CorpusSnapshot(evidence, recommender() if rules else None))
+    return TestClient(create_app(service, RawEmrPayloadMapper(), PatientContextStore(), corpus=corpus))
 
 
 class ClinicalRecommendationApiTest(unittest.TestCase):
@@ -169,7 +171,8 @@ class DurRecommendationApiTest(unittest.TestCase):
         engine = ClinicalRecommender(RuleCorpus.from_rows(RULES, include_unreviewed=True), dur=checker_from_snapshot(snapshot_dir))
         provider = ScriptedProvider()
         evidence = InMemoryEvidenceIndex.from_records(RULES["chunks.jsonl"], {}, include_unreviewed=True)
-        api = TestClient(create_app(ClinicalChatService(provider, evidence=evidence), RawEmrPayloadMapper(), PatientContextStore(), engine))  # type: ignore[arg-type]
+        api = TestClient(create_app(ClinicalChatService(provider), RawEmrPayloadMapper(), PatientContextStore(),  # type: ignore[arg-type]
+                                    corpus=StaticCorpus(CorpusSnapshot(evidence, engine))))
         emr = source(medicineDtailList=[{"medCode": "111111111", "medName": "클래리정"}, {"medCode": "222222222", "medName": "심바정"}])
         api.post("/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": emr})
 
@@ -236,8 +239,8 @@ class DoseRecommendationApiTest(unittest.TestCase):
 
         self.provider = ScriptedProvider()
         evidence = InMemoryEvidenceIndex.from_records([*RULES["chunks.jsonl"], *DOSE_CHUNKS], {}, include_unreviewed=True)
-        service = ClinicalChatService(self.provider, evidence=evidence)  # type: ignore[arg-type]
-        self.api = TestClient(create_app(service, RawEmrPayloadMapper(), PatientContextStore(), engine()))
+        service = ClinicalChatService(self.provider)  # type: ignore[arg-type]
+        self.api = TestClient(create_app(service, RawEmrPayloadMapper(), PatientContextStore(), corpus=StaticCorpus(CorpusSnapshot(evidence, engine()))))
         self.api.post("/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": emr()})
 
     def test_recommendation_returns_dose_results_and_the_prompt_carries_dose_rules(self) -> None:

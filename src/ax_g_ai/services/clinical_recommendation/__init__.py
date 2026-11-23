@@ -46,6 +46,7 @@ from ax_g_ai.services.clinical_recommendation.rules import (
     flag_vocabulary,
     rank_item,
 )
+from ax_g_ai.services.clinical_recommendation.schema import LabInterpretation, RecommendationItem
 from ax_g_ai.services.emr_mapping import SiteCodeMap, map_emr, normalize_name
 from ax_g_ai.services.question_facts import has_medication_context, question_findings
 
@@ -161,7 +162,7 @@ class ClinicalRecommender:
         accepted, unknown = accepted_findings(findings or {}, self._vocabulary)
         facts = derive_facts(mapping.facts, accepted, sex, self._vocabulary)
         numbering = EvidenceNumbering(self._corpus.chunks_by_claim, self._max_evidence, self._evidence_per_item)
-        candidates: list[tuple[tuple, dict[str, Any], Mapping[str, Any]]] = []
+        candidates: list[tuple[tuple, RecommendationItem, Mapping[str, Any]]] = []
         for name in ("diagnosis.jsonl", "referral.jsonl", "workup.jsonl", "monitoring.jsonl"):
             for record in self._corpus.rules.get(name, ()):
                 try:
@@ -174,23 +175,24 @@ class ClinicalRecommender:
                     item = self._present.item(record, status, leaves, facts, extra)
                     candidates.append((rank_item(item, leaves), item, record))
         candidates.sort(key=lambda entry: entry[0])
-        items: list[dict[str, Any]] = []
+        items: list[RecommendationItem] = []
         possible = references = 0
         for _rank_key, item, record in candidates:
-            if item["priority"] == "reference":
+            if item.priority == "reference":
                 references += 1
                 if references > self._max_possible:
                     continue
-            elif item["status"] == "possible":
+            elif item.status == "possible":
                 possible += 1
                 if possible > self._max_possible:
                     continue
-            item["evidence_refs"] = numbering.refs(record.get("claim_id"))
+            # Numbered in ranking order, so set after the ranking (the payload lists it last).
+            item.evidence_refs = numbering.refs(record.get("claim_id"))
             items.append(item)
-        labs = []
-        interpretations = sorted(self._present.lab_interpretations(mapping, facts, sex), key=lambda pair: pair[0]["priority"] != "primary")
+        labs: list[LabInterpretation] = []
+        interpretations = sorted(self._present.lab_interpretations(mapping, facts, sex), key=lambda pair: pair[0].priority != "primary")
         for interpretation, record in interpretations:
-            interpretation["evidence_refs"] = numbering.refs(record.get("claim_id"))
+            interpretation.evidence_refs = numbering.refs(record.get("claim_id"))
             labs.append(interpretation)
         issues = tuple(
             {key: value for key, value in vars(issue).items() if value is not None} for issue in mapping.issues

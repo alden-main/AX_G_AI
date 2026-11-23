@@ -302,9 +302,9 @@ class PostgresCorpusStoreTest(unittest.TestCase):
         self.assertEqual(len(RuleCorpus.from_rows(rows, include_unreviewed=False)), 0)
         engine = ClinicalRecommender(RuleCorpus.from_rows(rows, include_unreviewed=True))
         assessment = engine.assess(engine.prepare({"diagnosisList": [{"diagnosisCode": "K81.0"}]}))
-        self.assertEqual([(item["record_id"], item["status"]) for item in assessment.items], [("369-C03-K1", "met")])
+        self.assertEqual([(item.record_id, item.status) for item in assessment.items], [("369-C03-K1", "met")])
         self.assertEqual([chunk.chunk_id for chunk in assessment.evidence], ["369-C03-chunk"])
-        self.assertEqual(assessment.items[0]["tests"][0]["name"], "칼륨")
+        self.assertEqual(assessment.items[0].tests[0].name, "칼륨")  # type: ignore[index]
 
     def test_hybrid_search_semantic_floor_and_fallback(self) -> None:
         self.load(FakeEmbedder())

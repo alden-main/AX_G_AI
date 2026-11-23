@@ -13,6 +13,7 @@ from ax_g_ai.api import create_app
 from ax_g_ai.errors import PatientContextNotReadyError
 from ax_g_ai.services.clinical_chat import ClinicalChatService
 from ax_g_ai.services.clinical_evidence import InMemoryEvidenceIndex
+from ax_g_ai.services.corpus_snapshot import CorpusSnapshot, StaticCorpus
 from ax_g_ai.services.patient_context_store import context_from_json, context_to_json
 from tests.services.test_clinical_recommendation import RULES, recommender, source
 from tests.test_clinical_recommendation_api import ScriptedProvider, payload
@@ -117,8 +118,8 @@ class RedisContextStoreTest(unittest.TestCase):
     def test_two_app_instances_share_contexts_like_two_workers(self) -> None:
         def app():
             evidence = InMemoryEvidenceIndex.from_records(RULES["chunks.jsonl"], {}, include_unreviewed=True)
-            return TestClient(create_app(ClinicalChatService(ScriptedProvider(), evidence=evidence), RawEmrPayloadMapper(),  # type: ignore[arg-type]
-                                         self.make(), recommender()))
+            return TestClient(create_app(ClinicalChatService(ScriptedProvider()), RawEmrPayloadMapper(),  # type: ignore[arg-type]
+                                         self.make(), corpus=StaticCorpus(CorpusSnapshot(evidence, recommender()))))
 
         with app() as first, app() as second:
             self.assertEqual(first.post("/internal/v1/patient-context", json=payload()).status_code, 200)

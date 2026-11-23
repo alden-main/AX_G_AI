@@ -111,7 +111,7 @@ async def recommendation_grounding(
     evidence = merge_evidence(assessment.evidence, searched)
     logger.info(
         "clinical_recommendation_assessed items=%d met=%d findings=%d unknown_findings=%d evidence=%d unreviewed=%s doses=%d",
-        len(assessment.items), sum(1 for item in assessment.items if item.get("status") == "met"),
+        len(assessment.items), sum(1 for item in assessment.items if item.status == "met"),
         len(assessment.findings_used), len(assessment.unknown_findings), len(evidence), assessment.unreviewed,
         len(assessment.dose_assessments or ()),
     )

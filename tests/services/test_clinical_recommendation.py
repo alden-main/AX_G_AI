@@ -89,7 +89,8 @@ def source(**extra: object) -> dict[str, object]:
 
 
 def by_id(assessment) -> dict[str, dict]:
-    return {item["record_id"]: item for item in assessment.items}
+    """Stage-2 items in their API form (the payload dicts), by record id."""
+    return {item["record_id"]: item for item in assessment.as_dict()["items"]}
 
 
 class RuleGateTest(unittest.TestCase):
@@ -197,9 +198,9 @@ class AssessmentTest(unittest.TestCase):
     def test_ranking_puts_met_before_possible_and_diagnosis_first(self) -> None:
         engine = recommender()
         items = engine.assess(engine.prepare(source())).items
-        statuses = [item["status"] for item in items]
+        statuses = [item.status for item in items]
         self.assertEqual(statuses, sorted(statuses, key=lambda status: status != "met"))
-        self.assertEqual(items[0]["kind"], "diagnosis")
+        self.assertEqual(items[0].kind, "diagnosis")
 
     def test_evidence_is_numbered_once_per_passage_and_capped(self) -> None:
         engine = recommender(max_evidence=1)
@@ -209,14 +210,14 @@ class AssessmentTest(unittest.TestCase):
         items = by_id(assessment)
         self.assertEqual(items["335-C01-K1"]["evidence_refs"], [1])
         self.assertEqual(items["335-C03-K1"]["evidence_refs"], [])
-        self.assertEqual(assessment.lab_interpretations[0]["evidence_refs"], [])
+        self.assertEqual(assessment.as_dict()["lab_interpretations"][0]["evidence_refs"], [])
 
     def test_lab_bands_and_derived_flags(self) -> None:
         engine = recommender()
         assessment = engine.assess(engine.prepare(source()))
 
         self.assertEqual(
-            [(lab["lab"], lab["band"], lab["value"]) for lab in assessment.lab_interpretations], [("Na", "경도", 131.0)],
+            [(lab["lab"], lab["band"], lab["value"]) for lab in assessment.as_dict()["lab_interpretations"]], [("Na", "경도", 131.0)],
         )
         self.assertTrue(assessment.unreviewed)
         payload = assessment.as_dict()
@@ -253,7 +254,7 @@ class RepositorySupplementRulesTest(unittest.TestCase):
         self.assertEqual(prepared.mapping.facts.values["SBP"], 150)
         self.assertEqual(prepared.mapping.facts.values["DBP"], 88)  # latest row; a null systolic is skipped
         self.assertFalse([issue for issue in prepared.mapping.issues if issue.code == "bloodPressureList"])
-        items = {item["record_id"]: item for item in engine.assess(prepared).items}
+        items = {item["record_id"]: item for item in engine.assess(prepared).as_dict()["items"]}
 
         self.assertEqual(items["S01-C01-K1"]["diagnosis"]["kcd"], ["I10"])
         self.assertEqual(items["S01-C01-K2"]["status"], "met")
@@ -265,7 +266,7 @@ class RepositorySupplementRulesTest(unittest.TestCase):
     def test_cancer_screening_follows_sex_age_and_clinician_findings(self) -> None:
         engine = self.engine()
         woman = engine.prepare({"calculationContext": {"age_years": 52, "sex": "female"}})
-        items = {item["record_id"]: item for item in engine.assess(woman).items}
+        items = {item["record_id"]: item for item in engine.assess(woman).as_dict()["items"]}
         self.assertEqual(items["S04-C01-K1"]["status"], "possible")  # unknown: already screened?
         self.assertEqual(items["S04-C03-K1"]["tests"][0]["category"], "영상검사")
         self.assertIn("S04-C04-K2", items)
@@ -273,19 +274,19 @@ class RepositorySupplementRulesTest(unittest.TestCase):
 
         smoker = engine.assess(woman, {"smoking_20_pack_years_current_or_quit_within_15y": True,
                                        "unfit_for_lung_surgery": False, "colorectal_screening_up_to_date": True})
-        items = {item["record_id"]: item for item in smoker.items}
+        items = {item["record_id"]: item for item in smoker.as_dict()["items"]}
         self.assertEqual(items["S04-C02-K1"]["status"], "met")
         self.assertEqual(items["S04-C02-K1"]["tests"][0]["id"], "LDCT_chest")
         self.assertNotIn("S04-C01-K1", items)
 
-        man = {item["record_id"] for item in engine.assess(engine.prepare({"calculationContext": {"age_years": 52, "sex": "male"}})).items}
+        man = {item["record_id"] for item in engine.assess(engine.prepare({"calculationContext": {"age_years": 52, "sex": "male"}})).as_dict()["items"]}
         self.assertNotIn("S04-C03-K1", man)
         self.assertNotIn("S04-C04-K2", man)
 
     def test_infection_rules_use_pregnancy_and_tb_risk_findings(self) -> None:
         engine = self.engine()
         prepared = engine.prepare({"calculationContext": {"age_years": 30, "sex": "female"}})
-        items = {item["record_id"]: item for item in engine.assess(prepared, {"pregnancy": True, "tb_contact": True}).items}
+        items = {item["record_id"]: item for item in engine.assess(prepared, {"pregnancy": True, "tb_contact": True}).as_dict()["items"]}
         self.assertEqual([test["id"] for test in items["S03-C03-K1"]["tests"]], ["Syphilis_serology", "Anti_HIV", "HBsAg", "Anti_HCV"])
         self.assertEqual(items["S03-C04-K1"]["tests"][0]["id"], "Latent_TB_screen")
 
@@ -301,14 +302,14 @@ class RegionPriorityTest(unittest.TestCase):
         woman = engine.prepare({"calculationContext": {"age_years": 56, "sex": "female"}})
         assessment = engine.assess(woman, {"smoking_30_pack_years_current": True, "smoking_20_pack_years_current_or_quit_within_15y": True,
                                            "unfit_for_lung_surgery": False})
-        items = {item["record_id"]: item for item in assessment.items}
+        items = {item["record_id"]: item for item in assessment.as_dict()["items"]}
 
         for kr, us in (("S05-C03-K1", "S04-C01-K1"), ("S05-C04-K1", "S04-C03-K1"), ("S05-C05-K1", "S04-C04-K2"), ("S05-C06-K1", "S04-C02-K1")):
             self.assertEqual((items[kr]["priority"], items[kr]["region"]), ("primary", "KR"))
             self.assertEqual((items[us]["priority"], items[us]["region"]), ("reference", "US"))
             self.assertEqual(items[us]["superseded_by"], [kr.rsplit("-", 1)[0]])
         self.assertEqual(items["S05-C01-K1"]["tests"][0]["id"], "Upper_endoscopy")  # gastric cancer: domestic only
-        priorities = [item["priority"] for item in assessment.items]
+        priorities = [item["priority"] for item in assessment.as_dict()["items"]]
         self.assertEqual(priorities, sorted(priorities, key=lambda value: value != "primary"))
         self.assertEqual(items["S05-C03-K1"]["sources"][0]["license"], "Not protected (Korean Copyright Act Art. 7 — statutes·public notices)")
 
@@ -318,16 +319,16 @@ class RegionPriorityTest(unittest.TestCase):
                                    "diagnosisList": [],
                                    "bloodPressureList": [{"measuredAt": "2026-11-01 09:00:00", "sbp": 135, "dbp": 85}]})
         assessment = engine.assess(prepared)
-        items = {item["record_id"]: item for item in assessment.items}
+        items = {item["record_id"]: item for item in assessment.as_dict()["items"]}
         self.assertNotIn("S05-C07-K1", items)          # 135/85 is not hypertension by the domestic 140/90 threshold
         self.assertEqual(items["S05-C07-K3"]["status"], "met")  # prehypertension → rule out masked hypertension
         self.assertEqual(items["S01-C01-K1"]["priority"], "reference")  # VA/DoD >130 still shown, as reference
-        bands = {(lab["record_id"], lab["band"], lab["priority"]) for lab in assessment.lab_interpretations}
+        bands = {(lab["record_id"], lab["band"], lab["priority"]) for lab in assessment.as_dict()["lab_interpretations"]}
         self.assertIn(("S05-C09-K1", "정상B(경계)", "primary"), bands)
         self.assertIn(("S05-C09-K3", "정상B(경계)", "primary"), bands)       # BMI 27.7
         self.assertIn(("416-C01-K1", "비만 1단계", "reference"), bands)      # WHO Asian BMI, superseded
-        first_reference = next(i for i, lab in enumerate(assessment.lab_interpretations) if lab["priority"] == "reference")
-        self.assertTrue(all(lab["priority"] == "reference" for lab in assessment.lab_interpretations[first_reference:]))
+        first_reference = next(i for i, lab in enumerate(assessment.as_dict()["lab_interpretations"]) if lab["priority"] == "reference")
+        self.assertTrue(all(lab["priority"] == "reference" for lab in assessment.as_dict()["lab_interpretations"][first_reference:]))
 
     def test_evidence_search_puts_domestic_passages_first(self) -> None:
         from ax_g_ai.services.clinical_evidence import InMemoryEvidenceIndex
@@ -349,7 +350,7 @@ class DomesticScreeningScheduleTest(unittest.TestCase):
     def items(self, age: int, sex: str, findings=None) -> dict[str, dict]:
         engine = self.engine()
         prepared = engine.prepare({"calculationContext": {"age_years": age, "sex": sex}, "diagnosisList": []})
-        return {item["record_id"]: item for item in engine.assess(prepared, findings or {}).items}
+        return {item["record_id"]: item for item in engine.assess(prepared, findings or {}).as_dict()["items"]}
 
     def test_national_checkup_items_by_age_and_sex(self) -> None:
         woman54 = self.items(54, "female")
@@ -375,5 +376,5 @@ class DomesticScreeningScheduleTest(unittest.TestCase):
     def test_screening_score_referrals(self) -> None:
         engine = self.engine()
         prepared = engine.prepare({"calculationContext": {"age_years": 45, "sex": "female"}, "diagnosisList": []})
-        items = {item["record_id"]: item for item in engine.assess(prepared, {"phq9_item9_positive": True}).items}
+        items = {item["record_id"]: item for item in engine.assess(prepared, {"phq9_item9_positive": True}).as_dict()["items"]}
         self.assertEqual(items["S05-C10-K11"]["referral_to"], "정신건강의학과 등 전문의(정신건강복지센터 상담 안내)")

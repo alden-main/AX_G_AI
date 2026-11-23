@@ -8,7 +8,7 @@ from functools import cached_property
 from typing import Any
 
 from ax_g_ai.services.clinical_evidence import EvidenceChunk
-from ax_g_ai.services.clinical_recommendation.schema import AssessmentPayload
+from ax_g_ai.services.clinical_recommendation.schema import AssessmentPayload, LabInterpretation, RecommendationItem
 from ax_g_ai.services.emr_mapping import EmrMapping
 
 
@@ -36,10 +36,14 @@ class RuleInput:
 
 @dataclass(frozen=True)
 class Assessment:
-    """Structured stage-2 result. ``evidence`` numbering matches ``evidence_refs``."""
+    """Structured stage-2 result. ``evidence`` numbering matches ``evidence_refs``.
 
-    items: tuple[Mapping[str, Any], ...]
-    lab_interpretations: tuple[Mapping[str, Any], ...]
+    Stage-2 entries (``items``, ``lab_interpretations``) are payload models; DUR alerts and dose results are still
+    plain dicts validated by ``payload``.
+    """
+
+    items: tuple[RecommendationItem, ...]
+    lab_interpretations: tuple[LabInterpretation, ...]
     evidence: tuple[EvidenceChunk, ...]
     findings_used: Mapping[str, bool]
     mapping_issues: tuple[Mapping[str, Any], ...] = ()
@@ -54,10 +58,9 @@ class Assessment:
 
     @property
     def unreviewed(self) -> bool:
-        return any(
-            item.get("review_status") != "approved"
-            for item in (*self.items, *self.lab_interpretations, *(self.dose_assessments or ()))
-        )
+        return (any(item.review_status != "approved" for item in self.items)
+                or any(lab.review_status != "approved" for lab in self.lab_interpretations)
+                or any(dose.get("review_status") != "approved" for dose in self.dose_assessments or ()))
 
     @cached_property
     def payload(self) -> AssessmentPayload:
@@ -75,8 +78,9 @@ class Assessment:
             if self.unmatched_dose_drugs:
                 doses["unmatched_dose_drugs"] = [dict(item) for item in self.unmatched_dose_drugs]
         return {
-            "items": [dict(item) for item in self.items],
-            "lab_interpretations": [dict(item) for item in self.lab_interpretations],
+            # Model instances pass validation as they are (their set keys and key order are kept).
+            "items": list(self.items),
+            "lab_interpretations": list(self.lab_interpretations),
             "findings_used": dict(self.findings_used),
             "unknown_findings": list(self.unknown_findings),
             "mapping_issues": [dict(issue) for issue in self.mapping_issues],

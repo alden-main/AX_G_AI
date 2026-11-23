@@ -16,6 +16,7 @@ from fastapi import FastAPI
 
 from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
 from ax_g_ai.adapters.provider import build_provider_client
+from ax_g_ai.adapters.sqlite_reference_lookup import SqliteReferenceLookup
 from ax_g_ai.adapters.telemetry import instrumentation_from_environment
 from ax_g_ai.api import create_app
 from ax_g_ai.config import AISettings, ConfigurationError, RuntimeSettings
@@ -26,7 +27,6 @@ from ax_g_ai.services.clinical_recommendation import read_rows as read_corpus_ro
 from ax_g_ai.services.corpus_snapshot import CorpusSnapshot, CorpusSource, StaticCorpus
 from ax_g_ai.services.emr_mapping import SiteCodeMap
 from ax_g_ai.services.patient_context_store import ContextStore, PatientContextStore
-from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -51,7 +51,7 @@ def create_runtime_app() -> FastAPI:
     logger.info("ai_tracing enabled=%s content=%s", instrumentation is not None, instrumentation is not None and ai_settings.trace_content)
     return create_app(
         ClinicalChatService(
-            build_provider_client(ai_settings, instrumentation=instrumentation), lookup, None, runtime_settings.evidence_max_chunks,
+            build_provider_client(ai_settings, instrumentation=instrumentation), lookup, evidence_limit=runtime_settings.evidence_max_chunks,
             allow_general_knowledge=not runtime_settings.attributed_sources_only,
         ),
         RawEmrPayloadMapper(lookup),

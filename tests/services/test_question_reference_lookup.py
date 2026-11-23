@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from ax_g_ai.adapters.sqlite_reference_lookup import SqliteReferenceLookup
 from ax_g_ai.services.clinical_chat import ClinicalChatService
-from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
 from tests.services.test_clinical_chat import RecordingProvider
 
 

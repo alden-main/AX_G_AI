@@ -12,6 +12,7 @@ from ax_g_ai.api import create_app
 from ax_g_ai.corpus.gate import is_citable
 from ax_g_ai.services.clinical_chat import ClinicalChatService
 from ax_g_ai.services.clinical_evidence import InMemoryEvidenceIndex
+from ax_g_ai.services.corpus_snapshot import CorpusSnapshot, StaticCorpus
 from tests.services.test_clinical_chat import SNAPSHOT, RecordingProvider
 
 REPO_CORPUS = Path(__file__).resolve().parents[2] / "text_data" / "corpus"
@@ -126,9 +127,10 @@ class EvidenceChatTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_prompt_numbers_evidence_and_states_citation_rules(self) -> None:
         provider = RecordingProvider()
-        service = ClinicalChatService(provider, evidence=StaticRetriever(self.found))
+        service = ClinicalChatService(provider)
         with self.assertLogs("uvicorn.error", level="INFO") as logs:
-            await service.answer_prepared_snapshot(question="급성 담낭염 수술 시기", snapshot=SNAPSHOT)
+            evidence = service.find_evidence("급성 담낭염 수술 시기", StaticRetriever(self.found))
+            await service.answer_prepared_snapshot(question="급성 담낭염 수술 시기", snapshot=SNAPSHOT, evidence=evidence)
         prompt = provider.requests[0].input
         self.assertIn("[최신화 근거 문단", prompt)
         self.assertIn("[근거 n: 출처명]", prompt)
@@ -143,17 +145,18 @@ class EvidenceChatTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_retriever_failure_does_not_block_answer(self) -> None:
         provider = RecordingProvider()
-        service = ClinicalChatService(provider, evidence=StaticRetriever(fail=True))
+        service = ClinicalChatService(provider)
         with self.assertLogs("uvicorn.error", level="WARNING"):
-            answer = await service.answer_prepared_snapshot(question="질문", snapshot=SNAPSHOT)
+            evidence = service.find_evidence("질문", StaticRetriever(fail=True))
+        answer = await service.answer_prepared_snapshot(question="질문", snapshot=SNAPSHOT, evidence=evidence)
         self.assertEqual(answer, "요약 답변")
         self.assertNotIn("[최신화 근거 문단", provider.requests[0].input)
 
-    async def test_precomputed_evidence_is_not_searched_again(self) -> None:
-        retriever = StaticRetriever(self.found)
-        service = ClinicalChatService(RecordingProvider(), evidence=retriever)
-        await service.answer_prepared_snapshot(question="질문", snapshot=SNAPSHOT, evidence=())
-        self.assertEqual(retriever.calls, 0)
+    async def test_answer_uses_only_the_evidence_it_is_given(self) -> None:
+        # The service has no retriever of its own: evidence comes from the request's corpus snapshot.
+        provider = RecordingProvider()
+        await ClinicalChatService(provider).answer_prepared_snapshot(question="급성 담낭염 수술 시기", snapshot=SNAPSHOT)
+        self.assertNotIn("[최신화 근거 문단", provider.requests[0].input)
 
 
 class EvidenceApiTest(unittest.TestCase):
@@ -163,7 +166,8 @@ class EvidenceApiTest(unittest.TestCase):
         write_corpus(Path(raw.name), CHUNKS)
         found = InMemoryEvidenceIndex.load(Path(raw.name), include_unreviewed=True).search("급성 담낭염 수술 시기", 2)
         self.provider = RecordingProvider(answer="조기 복강경 담낭절제를 고려합니다 [근거 1: WSES 지침].")
-        self.client = TestClient(create_app(ClinicalChatService(self.provider, evidence=StaticRetriever(found)), RawEmrPayloadMapper()))
+        corpus = StaticCorpus(CorpusSnapshot(evidence=StaticRetriever(found)))
+        self.client = TestClient(create_app(ClinicalChatService(self.provider), RawEmrPayloadMapper(), corpus=corpus))
         payload = {"patient": {"patientId": "pid-1"}, "bloodSugarList": [{"measuredAt": "2026-09-22 10:30:00", "glucoseValue": 120}]}
         self.provider_answer_for_summary()
         self.client.post("/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": payload})

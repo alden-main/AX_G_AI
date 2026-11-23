@@ -16,7 +16,7 @@ from ax_g_ai.errors import PatientContextUnavailableError, PatientMismatchError
 from ax_g_ai.services.clinical_calculations import calculate_review_aids
 from ax_g_ai.services.deidentified_snapshot import deidentify, is_identifier_key
 from ax_g_ai.services.patient_context_store import PreparedRawEmrContext
-from ax_g_ai.services.reference_lookup import SqliteReferenceLookup
+from ax_g_ai.services.ports import ReferenceLookup
 
 # EMR fields the rule mapping reads (``emr_mapping.map_emr``, ``ClinicalRecommender.prepare``). A whitelist, so
 # no identifier passes; unlike ``deidentify`` it keeps empty lists and null values, which the rules read as
@@ -66,7 +66,7 @@ class RawEmrPayloadMapper:
         "labResultList", "medicineDtailList", "diagnosisList", "calculationContext",
     })
 
-    def __init__(self, reference_lookup: SqliteReferenceLookup | None = None) -> None:
+    def __init__(self, reference_lookup: ReferenceLookup | None = None) -> None:
         self._reference_lookup = reference_lookup
 
     def map(self, patient_id: str, payload: Mapping[str, Any], *, prepared_at: datetime | None = None) -> PreparedRawEmrContext:
@@ -163,7 +163,7 @@ class RawEmrPayloadMapper:
 
     @staticmethod
     def _prescriptions(
-        items: object, reference_lookup: SqliteReferenceLookup | None
+        items: object, reference_lookup: ReferenceLookup | None
     ) -> list[dict[str, object]]:
         allowed = (("medCode", "med_code"), ("medName", "med_name"), ("category", "category"), ("dosage", "dosage"), ("unit", "unit"), ("frequency", "frequency"), ("interval", "interval"), ("durationDays", "duration_days"))
         result: list[dict[str, object]] = []
@@ -186,7 +186,7 @@ class RawEmrPayloadMapper:
 
     @staticmethod
     def _diagnoses(
-        items: object, reference_lookup: SqliteReferenceLookup | None
+        items: object, reference_lookup: ReferenceLookup | None
     ) -> list[dict[str, object]]:
         result: list[dict[str, object]] = []
         for item in RawEmrPayloadMapper._items(items):

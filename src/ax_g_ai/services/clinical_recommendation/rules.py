@@ -15,6 +15,7 @@ from typing import Any
 
 from ax_g_ai.services.clinical_corpus import PatientFacts, evaluate
 from ax_g_ai.services.clinical_recommendation.model import Leaf
+from ax_g_ai.services.clinical_recommendation.schema import RecommendationItem, Status
 
 FLAG_KINDS = ("finding", "event", "risk", "indication", "lab_present", "dx_history")
 _KIND_ORDER = {"diagnosis": 0, "referral": 1, "workup": 2, "monitoring": 3}
@@ -25,7 +26,7 @@ _DIABETES_KCD = ("E10", "E11", "E12", "E13", "E14")
 
 def evaluate_record(
     record: Mapping[str, Any], facts: PatientFacts
-) -> tuple[str, list[Leaf], dict[str, Any]] | None:
+) -> tuple[Status, list[Leaf], dict[str, Any]] | None:
     kind = record.get("kind")
     extra: dict[str, Any] = {}
     if kind == "diagnosis":
@@ -51,7 +52,7 @@ def evaluate_record(
 
 def evaluate_monitoring(
     record: Mapping[str, Any], facts: PatientFacts
-) -> tuple[str, list[Leaf], dict[str, Any]] | None:
+) -> tuple[Status, list[Leaf], dict[str, Any]] | None:
     after = record.get("after")
     rules = [rule for rule in record.get("rules") or () if isinstance(rule, Mapping)]
     if isinstance(after, Mapping):
@@ -105,7 +106,7 @@ def derive_facts(
     return replace(base, flags=flags)
 
 
-def rule_status(condition: Mapping[str, Any], facts: PatientFacts) -> tuple[str, list[Leaf]] | None:
+def rule_status(condition: Mapping[str, Any], facts: PatientFacts) -> tuple[Status, list[Leaf]] | None:
     result = evaluate(condition, facts)
     leaves = list(condition_leaves(condition, facts, negated=False))
     if result is True:
@@ -148,15 +149,15 @@ def condition_leaves(condition: Mapping[str, Any], facts: PatientFacts, *, negat
     yield Leaf(kind, str(condition[kind]), condition, evaluate(condition, facts), negated)
 
 
-def rank_item(item: Mapping[str, Any], leaves: list[Leaf]) -> tuple:
+def rank_item(item: RecommendationItem, leaves: list[Leaf]) -> tuple:
     anchors = [leaf for leaf in leaves if leaf.result is True and not leaf.negated]
     # Anchors other than age/sex (diagnosis, prescription, lab value, clinician finding) rank first.
     strong = sum(1 for leaf in anchors if not is_weak_anchor(leaf))
     known = sum(1 for leaf in leaves if leaf.result is not None)
     return (
-        0 if item.get("priority") == "primary" else 1,  # domestic standard (or no competing one) first
-        _STATUS_ORDER.get(item["status"], 9), 0 if strong else 1, _KIND_ORDER.get(item["kind"], 9),
-        -strong, -(known / len(leaves) if leaves else 0), str(item.get("record_id")),
+        0 if item.priority == "primary" else 1,  # domestic standard (or no competing one) first
+        _STATUS_ORDER.get(item.status, 9), 0 if strong else 1, _KIND_ORDER.get(item.kind, 9),
+        -strong, -(known / len(leaves) if leaves else 0), str(item.record_id),
     )
 
 

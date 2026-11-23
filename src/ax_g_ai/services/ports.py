@@ -1,7 +1,8 @@
-"""서비스 계층이 정의하고 어댑터가 구현하는 AI Provider 경계(port).
+"""서비스 계층이 정의하고 어댑터가 구현하는 외부 경계(port).
 
-``adapters.openai``의 Pydantic AI 기반 Client가 ``ProviderClient``를 구현한다(Responses·Chat Completions).
-서비스는 이 모듈에만 의존하므로 Provider SDK를 바꿔도 서비스 코드는 바뀌지 않는다.
+- ``ProviderClient``: ``adapters.openai``의 Pydantic AI 기반 Client가 구현한다(Responses·Chat Completions).
+  서비스는 이 모듈에만 의존하므로 Provider SDK를 바꿔도 서비스 코드는 바뀌지 않는다.
+- ``ReferenceLookup``: ``adapters.sqlite_reference_lookup``의 SQLite 참조 DB(약품·상병명)가 구현한다.
 """
 
 from __future__ import annotations
@@ -54,3 +55,31 @@ class ProviderClient(Protocol):
         ...
 
     def stream(self, request: OpenAIRequest) -> AsyncIterator[str]: ...
+
+
+@dataclass(frozen=True)
+class MedicineReference:
+    """참조 DB의 약품 한 건(처방 보강용)."""
+
+    name_ko: str
+    efficacy: str | None
+    precautions: str | None
+
+
+class ReferenceLookup(Protocol):
+    """선택 기능인 참조 데이터(약품 효능·주의사항, 상병명) 조회 경계.
+
+    구현은 읽기 전용이며 환자 데이터를 쓰지 않고, 조회 실패는 예외 대신 빈 결과(``None``·``[]``)로 돌려준다.
+    """
+
+    def medicine(self, code: object) -> MedicineReference | None:
+        """보험 약품코드 하나에 정확히 대응하는 약품. 없거나 여러 건이면 ``None``."""
+        ...
+
+    def disease(self, code: object) -> str | None:
+        """상병 코드의 한글명."""
+        ...
+
+    def search_question(self, question: str) -> list[dict[str, str]]:
+        """질문에 이름이 직접 나온 상병·약품의 참조 항목(개수 제한, 출처 메타데이터 포함)."""
+        ...
