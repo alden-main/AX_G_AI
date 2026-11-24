@@ -27,7 +27,8 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              count: 1
+              # 쓸 GPU 번호(nvidia-smi 기준) 1장. 여러 GPU 서버에서는 .env의 GPU_DEVICE로 비어 있는 GPU를 고릅니다.
+              device_ids: ["${GPU_DEVICE:-0}"]
               capabilities: [gpu]
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
@@ -46,9 +47,10 @@ services:
       AI_PROVIDER: openai_compatible
       AI_BASE_URL: http://vllm:8000/v1
       AI_MODEL: ${AI_MODEL:-qwen3-32b-awq}
-    # 서버 내부 확인용입니다. Bridge와 같은 네트워크로만 쓰려면 이 항목을 비우세요(ports: !override []).
+    # 기본은 서버 안에서만 열립니다(127.0.0.1). 사내 PC에서 테스트하려면 .env에 AX_G_BIND=0.0.0.0(인증 없이 열리므로 테스트 때만).
+    # Bridge와 같은 네트워크로만 쓰려면 이 항목을 비우세요(ports: !override []).
     ports: !override
-      - "127.0.0.1:${AX_G_PORT:-8100}:8100"
+      - "${AX_G_BIND:-127.0.0.1}:${AX_G_PORT:-8100}:8100"
     # 외부 AI 제공자용 네트워크(ai-provider-egress)를 뺍니다. EMR 프롬프트는 ai-inference 밖으로 나가지 않습니다.
     networks: !override
       - bridge-ai

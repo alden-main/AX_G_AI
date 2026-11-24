@@ -5,8 +5,12 @@
 ## 구성
 
 - `compose.yaml`: OpenAI 등 외부 AI 제공자와 함께 API, PostgreSQL/pgvector, TEI 임베딩 서버(KURE-v1) 및 말뭉치·DUR 적재기를 실행한다.
-- `compose.vllm.yaml`: 위 데이터 서비스와 API를 A100 서버의 vLLM과 함께 실행한다.
-- `compose.redis.yaml`: 위 두 구성 중 하나에 추가해 Redis 환자 문맥 저장소와 다중 워커를 사용한다.
+- `compose.vllm.yaml`: `compose.yaml`에 덧붙여 A100 서버의 vLLM으로 실행한다(외부 AI 제공자 네트워크를 빼고 API 포트를 `127.0.0.1`에만 연다).
+- `compose.sglang.yaml`: `compose.yaml`에 덧붙여 SGLang으로 실행한다. vLLM이 지원하지 않는 `learning-unit/L1-16B-A3B`(GravityMoE)용이며, 이미지는 `docker/sglang-gravity`(공식 SGLang v0.5.19 + GravityMoE 패치)로 만든다.
+- `compose.redis.yaml`: 위 구성 중 하나에 추가해 Redis 환자 문맥 저장소와 다중 워커를 사용한다.
+- `compose.observability.yaml`: 위 구성 중 하나에 추가해 AI 호출 추적 화면(Arize Phoenix)을 띄운다(6절).
+
+자체 모델 구성은 `compose.yaml` 위에 덧붙이는 파일이므로 항상 `-f compose.yaml -f compose.<vllm|sglang>.yaml` 순서로 지정한다. 덧붙이는 파일의 `!override`는 Docker Compose 2.24.4 이상이 필요하다.
 
 `.env`에는 API 키와 비밀번호만 두며 서버에서 별도로 관리하고 이미지나 저장소에 포함하지 않는다. 나머지 설정은 Compose 파일과 코드 기본값에 있다. 코드 기본값과 다르게 운영하는 애플리케이션 설정(`AI_REASONING_EFFORT=low`, `AX_G_EVIDENCE_INCLUDE_UNREVIEWED=true`, `AX_G_CLINICAL_DOSES_ENABLED=true`)과 서버 자원·이미지·포트 값은 Compose 파일에 `${이름:-기본값}`으로 적혀 있으며, 서버별로 바꿀 때만 같은 이름을 `.env`에 적는다. 바꿀 수 있는 이름은 `.env.example`에, 그 밖의 `AX_G_*`·`AI_*` 설정 설명은 `src/ax_g_ai/config.py`에 있다. `.dockerignore`는 `.env`와 이미지 tar를 빌드 컨텍스트에서 제외한다.
 
@@ -38,7 +42,10 @@ uvx --from huggingface_hub hf download nlpai-lab/KURE-v1 --cache-dir hf-cache
 | `postgres-image.tar`, `postgres-image.txt` | PostgreSQL(pgvector) 이미지와 이름 |
 | `embedding-image.tar`, `embedding-image.txt` | TEI 임베딩 서버 이미지와 이름 |
 | `hf-cache/` | KURE-v1 임베딩 모델 |
-| `compose.yaml`, `compose.vllm.yaml`, `compose.redis.yaml` | Compose 파일 |
+| `compose.yaml`, `compose.vllm.yaml`, `compose.sglang.yaml`, `compose.redis.yaml`, `compose.observability.yaml` | Compose 파일 |
+| `phoenix-image.tar`, `phoenix-image.txt` | 추적 화면(Arize Phoenix) 이미지와 이름(`AX_G_BUNDLE_PHOENIX=0`이면 빠짐) |
+| `docker/sglang-gravity/` | SGLang 이미지 빌드 파일(Dockerfile, GravityMoE 패치) |
+| `sglang-image.tar`, `sglang-image.txt` | SGLang 이미지와 이름(`AX_G_BUNDLE_SGLANG=1`일 때만) |
 | `.env.example` | 비밀값 예제(값 없음) |
 | `start-deployment.sh` | 서버 기동 스크립트 |
 
@@ -52,11 +59,26 @@ uvx --from huggingface_hub hf download nlpai-lab/KURE-v1 --cache-dir hf-cache
 | `AX_G_BUNDLE_POSTGRES` / `AX_G_BUNDLE_EMBEDDING` | `1` | `0`이면 PostgreSQL 이미지 / TEI 이미지와 모델을 넣지 않는다(서버가 최초 기동 때 내려받는다) |
 | `AX_G_POSTGRES_IMAGE` / `AX_G_EMBEDDING_IMAGE` | 위 이미지 | 넣을 외부 이미지 |
 | `AX_G_EMBEDDING_MODEL_CACHE` | `hf-cache/models--nlpai-lab--KURE-v1` | 넣을 모델 캐시 디렉터리 |
+| `AX_G_BUNDLE_SGLANG` | `0` | `1`이면 SGLang 이미지를 빌드해 넣는다(수십 GB). 폐쇄망 GPU 서버에서 SGLang을 쓸 때 필요하다 |
+| `AX_G_SGLANG_IMAGE` | `ax-g-sglang-gravity:0.5.19` | 넣을 SGLang 이미지 태그 |
+| `AX_G_BUNDLE_PHOENIX` | `1` | `0`이면 추적 화면 이미지(약 330MB)를 넣지 않는다 |
+| `AX_G_PHOENIX_IMAGE` | `arizephoenix/phoenix:version-21.3.0` | 넣을 Phoenix 이미지 |
 
 ```bash
 # 예: ARM 서버용, 새 태그
 AX_G_PLATFORM=linux/arm64 AX_G_IMAGE_TAG=ax-g-ai:1.0.1 ./scripts/build-deployment.sh
 ```
+
+전달 전에 압축 파일을 검사할 수 있다. 체크섬, 필수 파일, 함께 넣은 이미지·모델의 짝을 확인하고, API 이미지를 불러와
+단독으로 띄워 `/health`·`/ready`(AI 설정 인식, 파일 말뭉치의 근거·규칙 로드)를 확인한 뒤 컨테이너를 지운다. AI는 호출하지 않는다.
+
+```bash
+./scripts/verify-deployment.sh ax-g-ai-deploy-amd64.tar.gz
+```
+
+GitHub Actions(`.github/workflows/deployment-bundle.yml`)는 `main` 푸시·PR(이미지에 들어가는 파일이 바뀐 경우)과 수동 실행 때
+amd64 압축 파일을 같은 두 스크립트로 만들고 검사한다. 결과물은 크기 때문에 올리지 않으며(실행 요약에 크기·SHA-256만 남김),
+실제 전달 파일은 위처럼 로컬에서 만든다.
 
 ### 서버 준비
 
@@ -87,8 +109,12 @@ vi .env                        # OPENAI_API_KEY, CORPUS_DB_PASSWORD
 |---|---|---|
 | OpenAI(기본) | `./start-deployment.sh` | — |
 | OpenAI + Redis | `./start-deployment.sh openai --redis` | `.env`에 `REDIS_PASSWORD`, 서버에서 Redis 이미지 |
-| vLLM | `./start-deployment.sh vllm` | GPU 서버, 서버에서 vLLM 이미지·모델([vLLM 구성](#4-a100과-vllm-구성)) |
-| vLLM + Redis | `./start-deployment.sh vllm --redis` | 위 두 가지 |
+| 자체 모델(권장) | `./start-deployment.sh local` | GPU 서버, `.env`의 `LLM_MODEL`에 맞는 추론 서버 이미지·모델([자체 모델 구성](#4-a100과-자체-모델-구성vllm-sglang)) |
+| vLLM 지정 | `./start-deployment.sh vllm` | 위와 같음 |
+| SGLang 지정 | `./start-deployment.sh sglang` | 위와 같음 |
+| 위 구성 + Redis | 위 명령 뒤에 `--redis` | `.env`에 `REDIS_PASSWORD`, 서버에서 Redis 이미지 |
+
+`local`은 `.env`의 `LLM_MODEL`(Hugging Face 모델 ID)을 보고 추론 서버를 고른다. `learning-unit/L1-*`는 SGLang, 그 밖의 모델은 vLLM이며, 비워 두면 vLLM과 `Qwen/Qwen3-32B-AWQ`를 쓴다. SGLang으로 띄울 모델 목록은 `start-deployment.sh`의 `SGLANG_MODEL_PATTERNS`에 있다. `vllm`·`sglang`은 엔진을 직접 지정하며, 모델과 맞지 않으면 경고한다.
 
 스크립트는 Compose 파일 조합을 검증한 뒤 이미지를 적재하고 `up -d --no-build`로 기동한다. 기존 `.env`는 덮어쓰지 않는다. 압축 안의 이미지 이름(`image-tag.txt`, `*-image.txt`)을 Compose에 넘기고, 임베딩 서버는 압축 안의 `hf-cache/`를 오프라인(`HF_HUB_OFFLINE=1`)으로 쓴다. `.env`에 `EMBEDDING_IMAGE`, `EMBEDDING_CACHE_DIR`, `EMBEDDING_HF_HUB_OFFLINE`, `POSTGRES_IMAGE`를 직접 적으면 그 값이 우선한다.
 
@@ -96,11 +122,12 @@ vi .env                        # OPENAI_API_KEY, CORPUS_DB_PASSWORD
 
 ```bash
 curl --fail http://127.0.0.1:8100/health          # {"status":"ok"}
-docker compose -f compose.yaml ps -a               # 적재기 두 개는 Exited (0)이 정상
+curl http://127.0.0.1:8100/ready                   # 준비되면 200 "status":"ready", 아니면 503 (corpus.backend가 postgres인지 확인)
+docker compose -f compose.yaml ps -a               # 적재기 두 개는 Exited (0)이 정상, ax-g-ai는 (healthy)
 docker compose -f compose.yaml logs --tail=100 ax-g-ai corpus-loader dur-loader
 ```
 
-로그에서 `clinical_evidence_loaded backend=postgres`, `dur_loaded`, `clinical_rules_loaded`를 확인한다. `fallback=files`나 `dur_unavailable`이 보이면 DB 적재를 확인한다. `/health`만으로 AI 제공자 연결까지 확인되지는 않으므로 실제 질문을 한 번 보낸다. Redis·vLLM을 쓰면 `-f` 뒤에 실행한 파일 조합을 같은 순서로 지정한다(스크립트가 마지막에 해당 로그 명령을 출력한다).
+로그에서 `clinical_evidence_loaded backend=postgres`, `dur_loaded`, `clinical_rules_loaded`를 확인한다. `fallback=files`나 `dur_unavailable`이 보이면 DB 적재를 확인한다. `/ready`는 AI 설정·문맥 저장소·말뭉치 DB 상태를 보여 주지만 AI 제공자 연결까지 확인하지는 않으므로 실제 질문을 한 번 보낸다. Redis·vLLM·SGLang을 쓰면 `-f` 뒤에 실행한 파일 조합을 같은 순서로 지정한다(스크립트가 마지막에 해당 로그 명령을 출력한다).
 
 재부팅 때는 서비스가 동시에 시작되므로 API가 PostgreSQL·Redis 연결을 최대 `AX_G_DEPENDENCY_STARTUP_WAIT_SECONDS`(기본 120초) 동안 다시 시도하고, 그 안에 연결되지 않으면 경고 후 파일 검색·메모리 저장소로 대체한다.
 
@@ -137,11 +164,11 @@ docker buildx build --platform linux/amd64 \
 shasum -a 256 ax-g-ai_1.0.0_linux_amd64.tar > ax-g-ai_1.0.0_linux_amd64.tar.sha256
 
 scp ax-g-ai_1.0.0_linux_amd64.tar ax-g-ai_1.0.0_linux_amd64.tar.sha256 \
-  compose.yaml compose.vllm.yaml compose.redis.yaml .env.example \
+  compose.yaml compose.vllm.yaml compose.sglang.yaml compose.redis.yaml compose.observability.yaml .env.example \
   deploy@SERVER_HOST:/opt/ax-g/deploy/
 ```
 
-ARM 서버는 플랫폼과 파일명을 `linux/arm64`, `ax-g-ai_1.0.0_linux_arm64.tar`로 바꾼다. 서버의 배포 디렉터리는 미리 생성한다. `.env.example`에는 비밀 값이 없으며 실제 `.env`는 전송하지 않는다.
+SGLang 구성을 쓰면 `docker/sglang-gravity/` 디렉터리도 같은 상대 경로로 전송한다. ARM 서버는 플랫폼과 파일명을 `linux/arm64`, `ax-g-ai_1.0.0_linux_arm64.tar`로 바꾼다. 서버의 배포 디렉터리는 미리 생성한다. `.env.example`에는 비밀 값이 없으며 실제 `.env`는 전송하지 않는다.
 
 임베딩 검사를 의도적으로 건너뛸 때만 `--build-arg ALLOW_STALE_EMBEDDINGS=1`을 지정한다(말뭉치·임베딩 갱신은 [개발 PC 준비](#개발-pc-준비) 참고).
 
@@ -185,9 +212,9 @@ curl --fail http://127.0.0.1:8100/health
 
 소스가 있는 개발 환경에서는 `.env`를 준비한 뒤 `docker compose up -d --build`를 사용할 수 있다.
 
-### 4. A100과 vLLM 구성
+### 4. A100과 자체 모델 구성(vLLM, SGLang)
 
-배포 스크립트(`./start-deployment.sh vllm`)를 쓸 때도 아래 GPU 확인과 vLLM 이미지·모델 준비가 필요하다. NVIDIA 드라이버, NVIDIA Container Toolkit과 GPU 접근을 확인한다.
+배포 스크립트(`./start-deployment.sh local`)를 쓸 때도 아래 GPU 확인과 추론 서버 이미지·모델 준비가 필요하다. NVIDIA 드라이버, NVIDIA Container Toolkit과 GPU 접근, Compose 버전(2.24.4 이상)을 확인한다.
 
 ```bash
 nvidia-smi
@@ -195,39 +222,78 @@ docker run --rm --gpus all ubuntu nvidia-smi
 docker compose version
 ```
 
-서버 `.env`에 `CORPUS_DB_PASSWORD`(수동 절차면 `AX_G_AI_IMAGE`도)를 설정하고 필요하면 아래 값을 추가한다. vLLM 구성은 API 컨테이너의 `AI_PROVIDER`, `AI_BASE_URL`, `AI_MODEL`을 직접 설정하므로 `.env`의 동일 항목보다 우선한다. `OPENAI_API_KEY`는 vLLM 인증에 사용되지 않는다.
+서버 `.env`에 `CORPUS_DB_PASSWORD`(수동 절차면 `AX_G_AI_IMAGE`도)를 설정하고, `LLM_MODEL`로 모델을 고른다. 자체 모델 구성은 API 컨테이너의 `AI_PROVIDER`, `AI_BASE_URL`, `AI_MODEL`을 직접 설정하므로 `.env`의 동일 항목보다 우선한다. `OPENAI_API_KEY`는 쓰지 않으며, API 컨테이너는 외부 AI 제공자 네트워크에 연결되지 않는다.
+
+| 모델(`LLM_MODEL`) | 추론 서버 | Compose 파일 | 비고 |
+|---|---|---|---|
+| `Qwen/Qwen3-32B-AWQ`(기본) 등 | vLLM `vllm/vllm-openai:v0.11.0` | `compose.vllm.yaml` | A100 40GB 대상 |
+| `learning-unit/L1-16B-A3B` | SGLang `ax-g-sglang-gravity:0.5.19` | `compose.sglang.yaml` | GravityMoE, bf16 가중치 약 32.5GB, 최대 문맥 32768 |
+
+`AI_MODEL`(응답 모델 이름)을 비우면 배포 스크립트가 모델 ID의 끝부분을 소문자로 쓴다(`qwen3-32b-awq`, `l1-16b-a3b`). Compose를 직접 실행할 때는 `LLM_MODEL`과 `AI_MODEL`을 함께 적는다. 예전 이름 `VLLM_MODEL`도 vLLM 모델로 읽는다.
 
 ```dotenv
-VLLM_MODEL=Qwen/Qwen3-32B-AWQ
-AI_MODEL=qwen3-32b-awq
+# vLLM 예시
+LLM_MODEL=Qwen/Qwen3-32B-AWQ
 VLLM_MAX_MODEL_LEN=16384
 VLLM_GPU_MEMORY_UTILIZATION=0.90
+# SGLang 예시
+# LLM_MODEL=learning-unit/L1-16B-A3B
+# SGLANG_CONTEXT_LENGTH=16384
+# SGLANG_MEM_FRACTION_STATIC=0.88
+# 쓸 GPU 번호(nvidia-smi 기준, 기본 0). 추론 서버는 이 GPU 1장만 사용한다
+# GPU_DEVICE=3
 HF_CACHE_DIR=/opt/ax-g/hf-cache
 # gated 모델에 필요한 경우 설정
 # HF_TOKEN=
 ```
 
 ```bash
-docker compose -f compose.vllm.yaml up -d
-docker compose -f compose.vllm.yaml ps -a
-docker compose -f compose.vllm.yaml logs --tail=100 vllm corpus-loader dur-loader ax-g-ai
+# ENGINE은 vllm 또는 sglang
+docker compose -f compose.yaml -f compose.ENGINE.yaml up -d --no-build
+docker compose -f compose.yaml -f compose.ENGINE.yaml ps -a
+docker compose -f compose.yaml -f compose.ENGINE.yaml logs --tail=100 ENGINE corpus-loader dur-loader ax-g-ai
 curl --fail http://127.0.0.1:8100/health
 ```
 
-vLLM은 최초 기동 시 모델을 다운로드하므로 시간이 걸린다(수동 절차면 TEI 모델도). 모델이 캐시에 준비된 뒤 `HF_HUB_OFFLINE=1`로 실행할 수 있다. 임베딩 서버의 오프라인 여부는 `EMBEDDING_HF_HUB_OFFLINE`으로 따로 정해지며, 배포 스크립트는 압축 안의 모델로 오프라인 기동한다. 기본 vLLM 모델은 Qwen3 32B AWQ이며 A100 40GB를 대상으로 한다. 다른 모델 계열을 사용하면 `compose.vllm.yaml`의 `--reasoning-parser` 설정과 모델 호환성을 함께 확인한다. vLLM 구성의 API 포트는 기본적으로 `127.0.0.1:${AX_G_PORT:-8100}`에만 바인딩된다.
+추론 서버는 최초 기동 시 모델을 다운로드하므로 시간이 걸린다(수동 절차면 TEI 모델도). 모델이 캐시에 준비된 뒤 `HF_HUB_OFFLINE=1`로 실행할 수 있다. 임베딩 서버의 오프라인 여부는 `EMBEDDING_HF_HUB_OFFLINE`으로 따로 정해지며, 배포 스크립트는 압축 안의 모델로 오프라인 기동한다. 다른 모델 계열을 쓰면 reasoning parser(`VLLM_REASONING_PARSER`, `SGLANG_REASONING_PARSER`)와 모델 호환성을 함께 확인한다. API 포트는 기본적으로 `127.0.0.1:${AX_G_PORT:-8100}`에만 바인딩된다.
+
+#### SGLang 이미지와 L1 모델
+
+- **이미지**: `learning-unit/L1-16B-A3B`는 공식 SGLang에 없는 `GravityMoEForCausalLM` 구조다. 모델 카드가 안내하는 `trillion-labs/sglang-gravity`는 SGLang v0.5.19에 커밋 하나(`cac38fc`, 모델 등록)를 더한 fork이므로, `docker/sglang-gravity/Dockerfile`은 공식 `lmsysorg/sglang:v0.5.19-cu129-runtime`에 그 패치(`gravity.patch`)만 적용한다. CUDA 12 이미지이므로 드라이버는 CUDA 12.9 이상을 지원해야 한다. 모델 카드 예시의 `lmsysorg/sglang:latest`는 이 모델을 등록하지 않아 쓸 수 없다.
+- **빌드**: 서버에 이미지가 없으면 `start-deployment.sh`가 처음 한 번 `docker build --tag ax-g-sglang-gravity:0.5.19 docker/sglang-gravity`로 빌드한다(베이스 이미지 다운로드 필요). 폐쇄망이면 개발 PC에서 `AX_G_BUNDLE_SGLANG=1 ./scripts/build-deployment.sh`로 이미지를 압축에 넣는다. 수동으로는 `docker build -t ax-g-sglang-gravity:0.5.19 docker/sglang-gravity`.
+- **실행 옵션**: 모델 카드 권장값(`--trust-remote-code`, `--dtype=bfloat16`, `--attention-backend=triton`, `--moe-runner-backend=triton`)을 쓴다. `--mem-fraction-static=0.88`은 A100 40GB 기준값으로, 가중치를 뺀 나머지가 KV 캐시다(MLA라 토큰당 약 32KB). 기동 중 OOM이면 `SGLANG_MEM_FRACTION_STATIC`이나 `SGLANG_CONTEXT_LENGTH`를 낮춘다.
+- **사고 모드**: GLM-4.5 형식 chat template이며 `enable_thinking=false`를 지원한다. API는 Chat Completions 요청마다 `chat_template_kwargs.enable_thinking=false`를 보내므로(코드 기본값 `disable_thinking=True`) 사고 토큰 없이 답하고, `--reasoning-parser=glm45`가 혹시 남은 `<think>`를 content에서 분리한다.
+- **기동 후 확인**: 요약 요청이 JSON 스키마대로 나오는지, 스트리밍이 `finish_reason: stop`으로 끝나는지, 응답에 `<think>`가 섞이지 않는지 실제 질문으로 확인한다. 3B 활성 모델이므로 한국어 임상 응답 품질은 기존 모델과 통합테스트 시나리오로 비교한 뒤 운영에 쓴다.
 
 ### 5. 선택 사항: Redis와 다중 워커
 
-두 구성 중 실제 사용하는 파일에 `compose.redis.yaml`을 추가한다. `.env`에 `REDIS_PASSWORD`를 설정한다. URL에 삽입되므로 영숫자 비밀번호를 사용한다. 기본 워커 수는 2개이며 `AX_G_WORKERS`로 조절한다.
+실제 사용하는 파일 조합 마지막에 `compose.redis.yaml`을 추가한다. `.env`에 `REDIS_PASSWORD`를 설정한다. URL에 삽입되므로 영숫자 비밀번호를 사용한다. 기본 워커 수는 2개이며 `AX_G_WORKERS`로 조절한다.
 
 ```bash
-# OpenAI 구성 예시. vLLM이면 첫 번째 파일을 compose.vllm.yaml로 바꾼다.
+# OpenAI 구성 예시. 자체 모델이면 compose.yaml 뒤에 compose.vllm.yaml 또는 compose.sglang.yaml을 넣는다.
 docker compose -f compose.yaml -f compose.redis.yaml up -d --no-build
 docker compose -f compose.yaml -f compose.redis.yaml ps -a
 docker compose -f compose.yaml -f compose.redis.yaml logs --tail=100 redis ax-g-ai
 ```
 
 이후 상태 확인, 갱신 및 종료 명령에도 같은 `-f` 파일 조합을 사용한다. Redis는 내부 네트워크에서만 사용하고 디스크에 저장하지 않는다. 재시작 시 환자 문맥을 다시 준비해야 한다. Redis 없이 기본 메모리 저장소를 쓰면 문맥은 프로세스 사이에 공유되지 않으므로 단일 워커로 운영한다. 기동 시 Redis 연결에 실패하면 메모리 저장소로 대체되므로 로그에서 `patient_context_store backend=redis`를 확인한다.
+
+### 6. 선택 사항: AI 호출 추적 화면(Arize Phoenix)
+
+AI 호출마다 작업 이름(`invoke_agent clinical_recommendation` 등), 모델, 토큰 수, 소요 시간, 종료 사유, 프롬프트 판(`metadata.prompt_version`)을 웹 화면에서 본다. 배포 스크립트는 `--observability`로 켠다(`./start-deployment.sh local --observability`, `--redis`와 함께 써도 된다). 수동이면 파일 조합 마지막에 `compose.observability.yaml`을 추가한다.
+
+- `.env`: `PHOENIX_SECRET`, `PHOENIX_ADMIN_SECRET`(각 32자 이상, 숫자·소문자 포함, 서로 다르게. 예: `openssl rand -hex 24`), `PHOENIX_ADMIN_PASSWORD`(화면 로그인 `admin@localhost`의 최초 비밀번호).
+- 화면: `http://<서버>:6006`. 기본은 서버 안(`127.0.0.1`)에서만 열리며, 사내 PC에서 보려면 `.env`에 `PHOENIX_BIND=0.0.0.0`을 둔다(로그인 필요). 추적 수신(OTLP)도 `PHOENIX_ADMIN_SECRET` 토큰이 있어야 받는다.
+- 저장: 말뭉치 PostgreSQL의 `phoenix` 스키마(최초 기동 때 Phoenix가 만든다). 보관 기간 기본 30일(`PHOENIX_RETENTION_DAYS`).
+- 자원: GPU를 쓰지 않는다. 확인한 유휴 메모리는 약 470MB이며 상한은 `PHOENIX_MEM_LIMIT`(기본 `1g`)·`PHOENIX_CPUS`(기본 `1`)다.
+- 폐쇄망·PHI: 외부 접속(폰트·텔레메트리·가격표 갱신), 화면의 AI 비서, 외부 LLM Playground를 끈다.
+- 본문: 기본은 프롬프트·응답 본문을 남기지 않는다. 개발·벤치마크에서 `AI_TRACE_CONTENT=true`로 켜면 화면에서 지시문·입력·응답을 대화 형태로 본다. 운영에서 켜려면 개인정보·보안 승인이 필요하다. 본문을 꺼도 Provider 오류 응답 본문은 오류 이벤트에 남는다.
+- 끄기: `docker compose <같은 -f 조합> stop phoenix`. API는 그대로 동작하며 추적만 버려지고 경고 로그가 남는다. 완전히 빼려면 `compose.observability.yaml` 없이 다시 `up -d`한다.
+
+```bash
+docker compose -f compose.yaml -f compose.observability.yaml up -d --no-build
+docker compose -f compose.yaml -f compose.observability.yaml logs --tail=100 phoenix
+```
 
 ## 운영과 갱신
 
@@ -236,4 +302,4 @@ docker compose -f compose.yaml -f compose.redis.yaml logs --tail=100 redis ax-g-
 - 말뭉치와 DUR 적재기는 이미지의 데이터를 DB에 적재하고 활성화한다. 이전 데이터로 전환할 때는 실제 Compose 파일 조합에 대해 각각 `docker compose ... run --rm corpus-loader --activate <release_id>`, `docker compose ... run --rm dur-loader --activate <dataset_id>`를 사용한다. 활성 데이터는 기본 60초 주기로 갱신된다. 자세한 내용은 [말뭉치 DB 문서](clinical_corpus_postgres.md)를 참고한다.
 - DB를 사용할 수 없으면 말뭉치 파일 기반 검색으로 대체될 수 있지만 DUR은 DB의 활성 데이터셋이 없으면 비활성화된다. 로그의 `clinical_evidence_loaded`, `dur_loaded`, `dur_unavailable`을 확인한다.
 - 이미지에는 `data/reference_data.sqlite`가 포함되지 않는다. 사용 시 파일을 읽기 전용으로 마운트하고 `AX_G_REFERENCE_DATA_DB_PATH`와 `AX_G_ATTRIBUTED_SOURCES_ONLY=false`를 설정해야 한다. 출처·라이선스 확인과 생성 방법은 [참조 데이터 문서](reference_data_sqlite.md)를 따른다.
-- 중지하려면 사용 중인 파일 조합으로 `docker compose -f compose.yaml down`을 실행한다. vLLM 또는 Redis를 사용했다면 해당 파일을 같은 순서로 지정한다.
+- 중지하려면 사용 중인 파일 조합으로 `docker compose -f compose.yaml down`을 실행한다. vLLM·SGLang 또는 Redis를 사용했다면 해당 파일을 같은 순서로 지정한다.

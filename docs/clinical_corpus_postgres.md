@@ -30,7 +30,7 @@ PostgresEvidenceRetriever (EvidenceRetriever 구현) → ClinicalChatService
 
 DB는 서빙 저장소다. 내용 수정은 지금처럼 YAML에서 하고 빌드한다. DB에서 직접 고치면 출처 검증(A등급·원문 위치)을 우회하게 된다.
 
-스키마: [schema.sql](../src/ax_g_ai/corpus_store/schema.sql) — `pgvector/pgvector:0.8.7-pg16` 임시 컨테이너에서 생성·게이트·어휘 검색·벡터 검색을 확인했다.
+스키마: [migrations/](../src/ax_g_ai/corpus_store/migrations/)(최초 스키마는 `0001_initial.sql`) — `pgvector/pgvector:0.8.7-pg16` 임시 컨테이너에서 생성·게이트·어휘 검색·벡터 검색을 확인했다.
 
 ## 핵심 설계 결정
 
@@ -83,7 +83,7 @@ PostgresEvidenceRetriever
 
 ## 적재기 (구현: [loader.py](../src/ax_g_ai/corpus_store/loader.py), `ax-g-ai-load-corpus`)
 
-1. 스키마 없으면 생성(`corpus.schema_version`).
+1. 적용되지 않은 마이그레이션(`migrations/NNNN_*.sql`)을 번호 순서로 한 트랜잭션에 적용하고 `corpus.schema_version`에 기록한다(advisory lock으로 동시 실행 방지, 실패하면 전부 롤백). 스키마 변경은 이미 적용된 파일을 고치지 않고 다음 번호 파일로 추가한다(트랜잭션 안에서 실행되므로 `CREATE INDEX CONCURRENTLY`는 쓸 수 없다).
 2. 말뭉치 파일 SHA-256으로 매니페스트 → 같은 매니페스트 릴리스가 있으면 재사용.
 3. 새 릴리스를 비활성으로 적재(출처·문단·규칙·개념·코드·사용처) → 건수 검증.
 4. 벡터 채우기: 사전 계산 파일(`corpus/embeddings/<model_id>.jsonl`, [precomputed.py](../src/ax_g_ai/corpus_store/precomputed.py)) → 임베딩 서버로 표본 3개를 다시 계산해 코사인 ≥ 0.99면 파일 벡터 사용, 아니면 파일 무시 → 남은 문단만 서버로 계산(실패해도 활성화는 진행, 다음 적재 때 채움).
@@ -106,7 +106,7 @@ PostgresEvidenceRetriever
 
 ## DUR 스키마 (`dur`, 구현: [dur_store](../src/ax_g_ai/dur_store/))
 
-심평원 DUR 의약품 목록도 같은 PostgreSQL에 둔다. 말뭉치와 수명 주기(갱신 주기·출처·롤백 단위)가 달라 스키마를 나눴다([schema.sql](../src/ax_g_ai/dur_store/schema.sql)).
+심평원 DUR 의약품 목록도 같은 PostgreSQL에 둔다. 말뭉치와 수명 주기(갱신 주기·출처·롤백 단위)가 달라 스키마를 나눴다([migrations/](../src/ax_g_ai/dur_store/migrations/), 마이그레이션 방식은 말뭉치와 같다).
 
 | 표 | 내용 |
 |---|---|
