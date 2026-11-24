@@ -67,10 +67,12 @@ services:
     ports: !override
       - "${AX_G_BIND:-127.0.0.1}:${AX_G_PORT:-8100}:8100"
     # 외부 AI 제공자용 네트워크(ai-provider-egress)를 뺍니다. EMR 프롬프트는 ai-inference 밖으로 나가지 않습니다.
+    # api-ingress는 위 포트를 호스트에 게시하기 위한 네트워크입니다(internal 네트워크만 있으면 포트가 열리지 않습니다).
     networks: !override
       - bridge-ai
       - ai-inference
       - ai-data
+      - api-ingress
     depends_on:
       sglang:
         condition: service_healthy

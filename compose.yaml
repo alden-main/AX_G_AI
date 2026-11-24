@@ -140,6 +140,11 @@ networks:
     internal: true
   # 임베딩 모델 다운로드용 네트워크입니다. AX-G AI는 연결하지 않습니다.
   model-download: {}
+  # 자체 모델 구성(compose.vllm.yaml·compose.sglang.yaml)에서 API 포트를 호스트에 게시하는 네트워크입니다.
+  # 들어오는 연결만 쓰도록 외부로 나가는 NAT를 끕니다(Linux 기준).
+  api-ingress:
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "false"
 
 volumes:
   corpus-db: {}
