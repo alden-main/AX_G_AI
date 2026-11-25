@@ -34,6 +34,15 @@ class AISettingsTest(unittest.TestCase):
         self.assertIsNone(result.api_key)
         self.assertFalse(result.disable_thinking)
         self.assertEqual(result.max_output_tokens, 1024)
+        self.assertIsNone(result.temperature)
+
+    def test_temperature_is_validated_and_limited_to_openai_compatible(self) -> None:
+        compatible = {"AI_PROVIDER": "openai_compatible", "AI_BASE_URL": "http://sglang:8000/v1", "AI_MODEL": "l1"}
+
+        self.assertEqual(settings(**compatible, AI_TEMPERATURE="0.3").temperature, 0.3)
+        for environment in ({**compatible, "AI_TEMPERATURE": "2.5"}, {"OPENAI_API_KEY": "secret", "AI_TEMPERATURE": "0.3"}):
+            with self.subTest(environment=environment), self.assertRaises(ConfigurationError):
+                settings(**environment)
 
     def test_openai_key_and_model_are_not_sent_to_a_self_hosted_server(self) -> None:
         result = settings(

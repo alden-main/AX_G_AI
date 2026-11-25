@@ -10,27 +10,31 @@ Provider 실패를 분류해 로그로 남긴 뒤 ``ClinicalChatProviderUnavaila
 from __future__ import annotations
 
 import logging
-from collections.abc import AsyncIterator, Iterator, Mapping, Sequence
+from collections.abc import AsyncGenerator, AsyncIterator, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from typing import Any
 
 from ax_g_ai.errors import ClinicalChatProviderUnavailableError
 from ax_g_ai.prompts.clinical import (
-    CLINICAL_INSTRUCTIONS,
     FINDING_EXTRACTION_INSTRUCTIONS,
     INITIAL_PATIENT_SUMMARY_REQUEST,
     ONE_SHOT_PATIENT_SUMMARY_REQUEST,
     PROMPT_VERSION,
     RECOMMENDATION_REQUEST,
+    ModelProfile,
     compose_finding_extraction,
     compose_prepared_snapshot_question,
     compose_recommendation_input,
     finding_extraction_output,
+    prompt_texts,
 )
+from ax_g_ai.prompts.data_labels import PromptLabels
+from ax_g_ai.services.answer_review import DUR_ONLY_ANSWER, UNUSABLE, check_opening, dur_notice, fallback_answer, review_answer
 from ax_g_ai.services.clinical_evidence import EvidenceChunk, EvidenceRetriever
 from ax_g_ai.services.clinical_recommendation import prompt_view
 from ax_g_ai.services.ports import OpenAIProviderError, OpenAIRequest, ProviderClient, ProviderOutputError, ReferenceLookup
 from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
+from ax_g_ai.services.question_facts import asks_only_for_dur
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -52,7 +56,8 @@ class ClinicalChatService:
         self,
         provider: ProviderClient,
         reference_lookup: ReferenceLookup | None = None,
-        *, evidence_limit: int = 3, allow_general_knowledge: bool = False,
+        *, evidence_limit: int = 3, allow_general_knowledge: bool = False, prompt_labels: PromptLabels = "korean",
+        model_profile: ModelProfile = "compact",
     ) -> None:
         """서비스를 만든다.
 
@@ -62,6 +67,8 @@ class ClinicalChatService:
             reference_lookup: 질문으로 로컬 참조 DB를 찾는 조회기. ``None``이면 참조를 싣지 않는다.
             evidence_limit: 질문 하나에 인용할 근거 문단 최대 개수.
             allow_general_knowledge: 추천 답변에 말뭉치 출처 없는 일반 지식 제안을 허용할지 여부.
+            prompt_labels: 프롬프트 데이터·규칙 문구의 항목 이름 표기 방식(``korean`` 기본, ``english``는 비교 실험용).
+            model_profile: 모델 프로필. ``compact``면 DUR만 묻는 질문을 모델 없이 답하고, ``capable``이면 모델이 답한다.
         출력: 없음.
         """
         self._provider = provider
@@ -69,6 +76,13 @@ class ClinicalChatService:
         self._allow_general_knowledge = allow_general_knowledge
         self._reference_lookup = reference_lookup
         self._evidence_limit = evidence_limit
+        self._labels = prompt_labels
+        self._profile = model_profile
+
+    @property
+    def answers_dur_only_itself(self) -> bool:
+        """DUR만 묻는 질문을 모델 없이 DUR 점검 블록으로 답하는지(``compact`` 프로필). 그러면 근거 검색도 필요 없다."""
+        return self._profile == "compact"
 
     def find_evidence(self, question: str, retriever: EvidenceRetriever | None) -> tuple[EvidenceChunk, ...]:
         """``question``에 인용할 근거를 ``retriever``(요청의 말뭉치 스냅샷)에서 찾는다.
@@ -99,21 +113,33 @@ class ClinicalChatService:
         self, *, question: str, snapshot: Mapping[str, Any], reference_record: str | None = None,
         evidence: Sequence[EvidenceChunk] = (), assessment: Mapping[str, Any] | None = None,
     ) -> str:
-        """준비된 동일 환자의 EMR 문맥으로 한국어 답변을 생성한다."""
+        """준비된 동일 환자의 EMR 문맥으로 한국어 답변을 생성한다(DUR 점검 결과가 있으면 끝에 고정 문장으로 붙인다).
+
+        ``compact`` 프로필에서는 DUR 점검만 묻는 질문을 모델을 부르지 않고 DUR 점검 블록으로 답한다(``_server_answer``).
+        """
+        notice = dur_notice(assessment, prescribed=bool(snapshot.get("prescriptions")))
+        if self.answers_dur_only_itself and (answer := _server_answer("prepared_snapshot_chat", question, notice)) is not None:
+            return answer
         request = self._chat_request("prepared_snapshot_chat", question, snapshot, reference_record, evidence, assessment)
         with _provider_failure(request.operation):
-            response = await self._provider.respond(request)
-        return response.answer
+            answer = await self._respond_checked(request, question, has_notice=notice is not None)
+        return answer + (notice or "")
 
     async def stream_prepared_snapshot(
         self, *, question: str, snapshot: Mapping[str, Any], reference_record: str | None = None,
         evidence: Sequence[EvidenceChunk] = (), assessment: Mapping[str, Any] | None = None,
     ) -> AsyncIterator[str]:
-        """준비된 EMR 문맥 답변을 Provider 텍스트가 도착하는 대로 조각 단위로 내보낸다."""
+        """준비된 EMR 문맥 답변을 Provider 텍스트가 도착하는 대로 조각 단위로 내보낸다(DUR 경고 문장은 마지막 조각)."""
+        notice = dur_notice(assessment, prescribed=bool(snapshot.get("prescriptions")))
+        if self.answers_dur_only_itself and (answer := _server_answer("prepared_snapshot_chat_stream", question, notice)) is not None:
+            yield answer
+            return
         request = self._chat_request("prepared_snapshot_chat_stream", question, snapshot, reference_record, evidence, assessment)
         with _provider_failure(request.operation):
-            async for delta in self._provider.stream(request):
+            async for delta in self._stream_checked(request, question, has_notice=notice is not None):
                 yield delta
+        if notice:
+            yield notice
 
     async def extract_findings(self, *, note: str, vocabulary: Sequence[str]) -> dict[str, bool]:
         """의료진 메모를 규칙 소견 키로 옮긴다(명시됨 → True, 부정됨 → False).
@@ -129,7 +155,7 @@ class ClinicalChatService:
         """
         if not note.strip() or not vocabulary:
             return {}
-        request = _request(
+        request = self._request(
             "finding_extraction", compose_finding_extraction(note, list(vocabulary)), instructions=FINDING_EXTRACTION_INSTRUCTIONS,
         )
         with _provider_failure(request.operation):
@@ -145,54 +171,126 @@ class ClinicalChatService:
         self, *, snapshot: Mapping[str, Any], assessment: Mapping[str, Any], evidence: Sequence[EvidenceChunk],
         clinical_note: str | None = None, question: str | None = None,
     ) -> str:
-        """규칙 평가 결과와 근거로 추천 답변을 한 번에 생성한다."""
+        """규칙 평가 결과와 근거로 추천 답변을 한 번에 생성한다(DUR 점검 결과가 있으면 끝에 고정 문장으로 붙인다)."""
+        notice = dur_notice(assessment, prescribed=bool(snapshot.get("prescriptions")))
         request = self._recommendation_request("clinical_recommendation", snapshot, assessment, evidence, clinical_note, question)
         with _provider_failure(request.operation):
-            response = await self._provider.respond(request)
-        return response.answer
+            answer = await self._respond_checked(request, question or RECOMMENDATION_REQUEST, has_notice=notice is not None)
+        return answer + (notice or "")
 
     async def stream_recommendation(
         self, *, snapshot: Mapping[str, Any], assessment: Mapping[str, Any], evidence: Sequence[EvidenceChunk],
         clinical_note: str | None = None, question: str | None = None,
     ) -> AsyncIterator[str]:
         """추천 답변을 Provider 텍스트가 도착하는 대로 조각 단위로 내보낸다."""
+        notice = dur_notice(assessment, prescribed=bool(snapshot.get("prescriptions")))
         request = self._recommendation_request("clinical_recommendation_stream", snapshot, assessment, evidence, clinical_note, question)
         with _provider_failure(request.operation):
-            async for delta in self._provider.stream(request):
+            async for delta in self._stream_checked(request, question or RECOMMENDATION_REQUEST, has_notice=notice is not None):
                 yield delta
+        if notice:
+            yield notice
 
     def _recommendation_request(
         self, operation: str, snapshot: Mapping[str, Any], assessment: Mapping[str, Any], evidence: Sequence[EvidenceChunk],
         clinical_note: str | None, question: str | None,
     ) -> OpenAIRequest:
         """추천 요청을 만든다(질문이 없으면 ``RECOMMENDATION_REQUEST``)."""
-        return _request(operation, compose_recommendation_input(
+        return self._request(operation, compose_recommendation_input(
             snapshot, prompt_view(assessment), evidence_payload(evidence), clinical_note=clinical_note,
-            question=question or RECOMMENDATION_REQUEST, allow_general_knowledge=self._allow_general_knowledge,
+            question=question or RECOMMENDATION_REQUEST, allow_general_knowledge=self._allow_general_knowledge, labels=self._labels,
+            profile=self._profile,
         ))
 
     async def summarize_prepared_snapshot(self, *, snapshot: Mapping[str, Any]) -> PreparedPatientSummary:
         """준비 시점에 EMR 문맥으로 화면용 구조화 환자 상태 요약을 생성한다."""
-        request = _request("patient_context_summary", compose_prepared_snapshot_question(INITIAL_PATIENT_SUMMARY_REQUEST, snapshot))
+        request = self._request(
+            "patient_context_summary", compose_prepared_snapshot_question(INITIAL_PATIENT_SUMMARY_REQUEST, snapshot, labels=self._labels),
+        )
         with _provider_failure(request.operation):
             return await self._provider.respond_structured(request, PreparedPatientSummary)
 
     async def summarize_once(self, *, snapshot: Mapping[str, Any]) -> str:
         """EMR에서 독립적인 간결 요약을 한 번 생성한다."""
-        request = _summary_request("one_shot_patient_summary", snapshot)
+        request = self._summary_request("one_shot_patient_summary", snapshot)
         with _provider_failure(request.operation):
-            response = await self._provider.respond(request)
-        return response.answer
+            return await self._respond_checked(request, ONE_SHOT_PATIENT_SUMMARY_REQUEST)
 
     async def stream_summary_once(self, *, snapshot: Mapping[str, Any]) -> AsyncIterator[str]:
         """일회성 EMR 요약을 Provider 텍스트가 도착하는 대로 조각 단위로 내보낸다.
 
         ``summarize_prepared_snapshot``과 달리 JSON 스키마가 없으므로, 전체 요약이 생성되기 전에 첫 문장을 보여 줄 수 있다.
         """
-        request = _summary_request("one_shot_patient_summary_stream", snapshot)
+        request = self._summary_request("one_shot_patient_summary_stream", snapshot)
         with _provider_failure(request.operation):
-            async for delta in self._provider.stream(request):
+            async for delta in self._stream_checked(request, ONE_SHOT_PATIENT_SUMMARY_REQUEST):
                 yield delta
+
+    async def _respond_checked(self, request: OpenAIRequest, question: str, *, has_notice: bool = False) -> str:
+        """Provider 답변을 점검하고, 쓸 수 없거나 내부 키가 보이면 한 번 다시 요청한다.
+
+        역할: 질문 되풀이는 잘라 낸다. 다시 받은 답변에도 내부 키만 보이면 그 답변을 쓰고, 여전히 쓸 수 없으면(질문 되풀이뿐·JSON)
+            오류 대신 고정 안내 문장(``fallback_answer``)을 돌려준다. Provider 호출 자체의 실패는 그대로 전파된다.
+        입력:
+            request: Provider 요청.
+            question: 되풀이 비교에 쓸 질문(프롬프트의 ``[의료진 질문]``).
+            has_notice: 답변 끝에 DUR 점검 블록이 붙는지(안내 문장을 고른다).
+        출력: 점검한 답변 또는 안내 문장.
+        """
+        text, problem = "", None
+        for attempt in (1, 2):
+            text, problem = review_answer((await self._provider.respond(request)).answer, question)
+            if problem is None:
+                return text
+            _log_rejected(request.operation, problem, attempt)
+        if problem not in UNUSABLE:
+            return text
+        _log_fallback(request.operation, problem)
+        return fallback_answer(has_notice=has_notice)
+
+    async def _stream_checked(self, request: OpenAIRequest, question: str, *, has_notice: bool = False) -> AsyncIterator[str]:
+        """Provider 스트림 앞부분을 점검해 질문 되풀이를 잘라 내고, 쓸 수 없으면 한 번 다시 요청한다.
+
+        역할: 앞부분이 질문과 갈라질 때까지만 모아 두고(되풀이가 아니면 첫 조각을 바로 내보낸다), 아직 아무것도 내보내지
+            않았을 때만 다시 요청한다. 내보내기 시작한 뒤의 내용(내부 키 등)은 고칠 수 없다. 두 번 모두 쓸 수 없으면
+            오류 대신 고정 안내 문장(``fallback_answer``)을 한 조각으로 내보낸다.
+        입력:
+            request: Provider 요청.
+            question: 되풀이 비교에 쓸 질문.
+            has_notice: 답변 끝에 DUR 점검 블록이 붙는지(안내 문장을 고른다).
+        출력: 텍스트 조각 비동기 반복자.
+        """
+        problem = None
+        for attempt in (1, 2):
+            buffer, started = "", False
+            deltas = self._provider.stream(request)
+            try:
+                async for delta in deltas:
+                    if started:
+                        yield delta
+                        continue
+                    buffer += delta
+                    opening = check_opening(buffer, question)
+                    if opening.state == "bad":
+                        break
+                    if opening.state == "ok":
+                        started = True
+                        yield opening.text
+                else:
+                    if not started:
+                        opening = check_opening(buffer, question, final=True)
+                        if opening.state == "ok":
+                            started = True
+                            yield opening.text
+            finally:
+                if isinstance(deltas, AsyncGenerator):  # 버린 스트림의 연결을 닫는다
+                    await deltas.aclose()
+            if started:
+                return
+            problem = opening.problem
+            _log_rejected(request.operation, problem, attempt)
+        _log_fallback(request.operation, problem)
+        yield fallback_answer(has_notice=has_notice)
 
     def _chat_request(
         self, operation: str, question: str, snapshot: Mapping[str, Any], reference_record: str | None,
@@ -212,20 +310,49 @@ class ClinicalChatService:
         출력: ``OpenAIRequest``.
         """
         references =self._reference_lookup.search_question(question) if self._reference_lookup else None
-        return _request(operation, compose_prepared_snapshot_question(
+        return self._request(operation, compose_prepared_snapshot_question(
             question, snapshot, reference_record, references, evidence=evidence_payload(evidence),
-            assessment=prompt_view(assessment) if assessment else None,
+            assessment=prompt_view(assessment) if assessment else None, labels=self._labels, profile=self._profile,
+        ))
+
+    def _request(self, operation: str, input: str, *, instructions: str | None = None) -> OpenAIRequest:
+        """작업 이름과 프롬프트 버전을 붙인 Provider 요청(둘 다 trace에 남으며 환자 데이터는 없다).
+
+        역할: 지시문 기본값은 표기 방식에 맞춘 임상 지시문이다. 영문 키 표기면 프롬프트 버전에 ``-en``을, ``capable`` 프로필이면
+            ``-capable``을 붙여 추적에서 구분한다.
+        """
+        version = PROMPT_VERSION + ("-en" if self._labels == "english" else "") + ("-capable" if self._profile == "capable" else "")
+        return OpenAIRequest(
+            prompt_texts(self._labels, self._profile).instructions if instructions is None else instructions, input,
+            operation=operation, prompt_version=version,
+        )
+
+    def _summary_request(self, operation: str, snapshot: Mapping[str, Any]) -> OpenAIRequest:
+        """일회성 환자 요약 요청을 만든다."""
+        return self._request(operation, compose_prepared_snapshot_question(
+            ONE_SHOT_PATIENT_SUMMARY_REQUEST, snapshot, one_shot_summary=True, labels=self._labels,
         ))
 
 
-def _request(operation: str, input: str, *, instructions: str = CLINICAL_INSTRUCTIONS) -> OpenAIRequest:
-    """작업 이름과 프롬프트 버전을 붙인 Provider 요청(둘 다 trace에 남으며 환자 데이터는 없다)."""
-    return OpenAIRequest(instructions, input, operation=operation, prompt_version=PROMPT_VERSION)
+def _log_rejected(operation: str, problem: object, attempt: int) -> None:
+    """점검에서 걸린 답변을 기록한다(답변 본문·프롬프트는 남기지 않는다)."""
+    logger.warning("provider_answer_rejected operation=%s reason=%s attempt=%d", operation, problem, attempt)
 
 
-def _summary_request(operation: str, snapshot: Mapping[str, Any]) -> OpenAIRequest:
-    """일회성 환자 요약 요청을 만든다."""
-    return _request(operation, compose_prepared_snapshot_question(ONE_SHOT_PATIENT_SUMMARY_REQUEST, snapshot, one_shot_summary=True))
+def _log_fallback(operation: str, problem: object) -> None:
+    """두 번 모두 쓸 수 없어 안내 문장으로 답한 요청을 기록한다(API 응답은 200이므로 이 로그로 집계한다)."""
+    logger.warning("provider_answer_fallback operation=%s reason=%s", operation, problem)
+
+
+def _server_answer(operation: str, question: str, notice: str | None) -> str | None:
+    """DUR 점검만 묻는 질문이고 DUR 점검 블록이 있으면 모델 없이 만든 답변을, 아니면 ``None``을 돌려준다.
+
+    역할: 작은 자체 모델이 이 질문에 DUR 결론을 뒤집거나 프롬프트 JSON을 그대로 내는 일이 있어, 결정적으로 답한다.
+    """
+    if notice is None or not asks_only_for_dur(question):
+        return None
+    logger.info("server_answer operation=%s kind=dur_only", operation)
+    return DUR_ONLY_ANSWER + notice
 
 
 def evidence_payload(chunks: Sequence[EvidenceChunk]) -> list[dict[str, object]]:

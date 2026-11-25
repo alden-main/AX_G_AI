@@ -31,6 +31,8 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from ax_g_ai.corpus.files import DEFAULT_EMBEDDING_MODEL
+from ax_g_ai.prompts.clinical import ModelProfile
+from ax_g_ai.prompts.data_labels import PromptLabels
 
 
 class ConfigurationError(ValueError):
@@ -101,7 +103,10 @@ class AISettings(_EnvironmentSettings):
         api_key: Bearer 토큰이다. 인증 없는 내부 vLLM에서는 ``None``일 수 있다.
         reasoning_effort: 추론 모델의 사고량이다. 낮을수록 첫 글자가 빨라진다.
         disable_thinking: Qwen3 계열처럼 chat template에서 사고 모드를 끌 수 있는
-            모델에 ``enable_thinking=false``를 전달할지 여부다.
+            모델에 ``enable_thinking=false``를 전달할지 여부다. L1처럼 사고 모드로 학습한 모델은 끄면 품질이 떨어진다.
+        temperature: Chat Completions 샘플링 온도(0~2)다. ``None``이면 보내지 않아 추론 서버 기본값을 쓰는데,
+            모델 ``generation_config``에 값이 없으면 SGLang은 1.0을 써서 같은 입력에도 답이 크게 흔들린다.
+            OpenAI 추론 모델(Responses API)은 이 값을 받지 않으므로 ``openai_compatible``에서만 쓴다.
         max_retries: 첫 토큰 전 연결 오류·429·5xx의 SDK 재시도 횟수다.
         trace_content: OpenTelemetry 추적(``OTEL_EXPORTER_OTLP_ENDPOINT`` 설정 시)에 프롬프트·지시문·응답 본문을
             담을지 여부다(기본 끔). 끄면 모델·토큰 수·소요 시간·종료 사유만 남는다. 비식별 EMR도 추적 저장소에
@@ -117,6 +122,7 @@ class AISettings(_EnvironmentSettings):
     timeout_seconds: PositiveFloat = 30
     reasoning_effort: Literal["minimal", "low", "medium", "high"] | None = None
     disable_thinking: bool = True
+    temperature: Annotated[float, Field(ge=0, le=2)] | None = None
     max_output_tokens: PositiveInt | None = None
     max_retries: NonNegativeInt = 2
     trace_content: bool = False
@@ -158,7 +164,8 @@ class AISettings(_EnvironmentSettings):
     def _openai_requirements(self) -> AISettings:
         """검증 후 Provider별 필수 조건을 확인한다.
 
-        역할: ``AI_MODEL``은 항상 필수이고, ``openai`` Provider면 HTTPS 주소와 API Key도 필수다.
+        역할: ``AI_MODEL``은 항상 필수이고, ``openai`` Provider면 HTTPS 주소와 API Key도 필수이며 ``AI_TEMPERATURE``는
+            쓸 수 없다(추론 모델이 요청을 거부하므로 기동 시 막는다).
         입력: 없음(검증된 필드).
         출력: 자기 자신.
         예외: ``ValueError`` — 조건 위반(``from_environment``에서 ``ConfigurationError``로 바뀐다).
@@ -170,6 +177,8 @@ class AISettings(_EnvironmentSettings):
                 raise ValueError("AI_BASE_URL must use HTTPS for the openai provider")
             if self.api_key is None:
                 raise ValueError("AI_API_KEY or OPENAI_API_KEY is required")
+            if self.temperature is not None:
+                raise ValueError("AI_TEMPERATURE is only supported for the openai_compatible provider")
         return self
 
 
@@ -215,6 +224,12 @@ class RuntimeSettings(_EnvironmentSettings):
         attributed_sources_only: 출처를 밝히면 쓸 수 있는 자료만 AI에 쓴다(기본 true). 켜면 (1) 근거·규칙의 모든 출처에
             라이선스(CC0·CC BY·퍼블릭 도메인)와 제목이 있어야 하고, (2) 출처·라이선스가 확인되지 않은 참조 DB
             (``reference_data_db_path``, 약품 효능·주의사항)를 쓰지 않으며, (3) 추천 의견에서 출처 없는 일반 의학 지식 제안을 막는다.
+        prompt_data_labels: AI에 보내는 데이터·규칙 문구의 항목 이름 표기. ``korean``(기본)은 한국어 이름('기록상 없음', '판정'),
+            ``english``는 영문 키(recorded_none, status)다. 영어로 학습한 자체 모델의 답변 정확도를 비교하는 실험용이며
+            API 응답의 키는 어느 쪽이든 바뀌지 않는다.
+        model_profile: 모델 성능에 따른 프롬프트·답변 방식. ``compact``(기본, 작은 자체 모델)는 본문의 DUR 판단을 막고 DUR만 묻는
+            질문을 서버가 DUR 점검 블록으로 답한다. ``capable``(GPT 등)은 같은 블록에 더해 본문에서 경고의 임상적 의미를 설명할 수 있고
+            DUR만 묻는 질문도 모델이 답한다. 데이터 정리·DUR 판정·답변 점검·대체 응답은 같다.
     """
 
     model_config = SettingsConfigDict(env_prefix="AX_G_")
@@ -232,6 +247,8 @@ class RuntimeSettings(_EnvironmentSettings):
     site_code_map_path: FilePath | None = None
     recommendation_max_evidence: int = Field(default=10, ge=1, le=20)
     attributed_sources_only: bool = True
+    prompt_data_labels: PromptLabels = "korean"
+    model_profile: ModelProfile = "compact"
     clinical_doses_enabled: bool = False
     dur_enabled: bool = True
     corpus_refresh_seconds: PositiveFloat = 60

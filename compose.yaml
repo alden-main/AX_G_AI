@@ -86,19 +86,25 @@ services:
     expose:
       - "8100"
     ports:
-      # 사내망 PC에서 테스트할 수 있도록 호스트에 API 포트를 게시합니다.
-      - "8100:8100"
-    # .env: 비밀값(API 키 등)과 서버별로 바꿀 설정. 그 밖의 AX_G_*·AI_* 설정은 코드 기본값을 쓰며
-    # 바꿀 때만 .env에 적는다(항목 설명: src/ax_g_ai/config.py, docs/linux_docker_build.md).
+      # 사내망 PC에서 테스트할 수 있도록 호스트에 API 포트를 게시합니다(호스트 8500 → 컨테이너 8100).
+      # 바꾸려면 아래 기본값(AX_G_PORT, 서버 안에서만 열려면 AX_G_BIND=127.0.0.1)을 고칩니다.
+      - "${AX_G_BIND:-0.0.0.0}:${AX_G_PORT:-8500}:8100"
+    # .env: 비밀값(API 키·비밀번호)만 둔다. 그 밖의 AX_G_*·AI_* 설정은 아래 environment와 코드 기본값을 쓰며
+    # 바꿀 때는 이 파일을 고친다(항목 설명: src/ax_g_ai/config.py, docs/linux_docker_build.md).
     env_file:
       - .env
     environment:
       # 코드 기본값과 다르게 운영하는 애플리케이션 설정. 서버별로 바꾸려면 같은 이름을 .env에 적는다.
-      # 사고량: 비워 두면(AI_REASONING_EFFORT=) Provider 기본값(medium)을 쓴다.
-      AI_REASONING_EFFORT: ${AI_REASONING_EFFORT-low}
+      # 사고량(OpenAI만 해당): capable 프로필에서 추론을 활용하도록 medium. 첫 글자가 늦으면 low로 낮춘다.
+      AI_REASONING_EFFORT: ${AI_REASONING_EFFORT-medium}
+      # 모델 프로필: capable(GPT 등 고성능, 이 파일 기본) 또는 compact(작은 자체 모델, compose.sglang.yaml·compose.vllm.yaml 기본).
+      # compact는 본문의 DUR 판단을 막고 DUR만 묻는 질문을 서버가 답한다. capable은 본문에서 DUR 경고의 임상적 의미를 설명할 수 있다.
+      AX_G_MODEL_PROFILE: ${AX_G_MODEL_PROFILE:-capable}
       # 현재 말뭉치·용량 규칙은 전부 의료진 미검수(draft)라, 끄면 근거 인용·추천 진단/검사·용량 참고가 비활성이 된다.
       AX_G_EVIDENCE_INCLUDE_UNREVIEWED: ${AX_G_EVIDENCE_INCLUDE_UNREVIEWED:-true}
       AX_G_CLINICAL_DOSES_ENABLED: ${AX_G_CLINICAL_DOSES_ENABLED:-true}
+      # AI에 보내는 데이터의 항목 이름 표기: korean(한국어 이름, 기본) 또는 english(영문 키, 비교 실험용). 바꾼 뒤 ax-g-ai만 다시 시작하면 된다.
+      AX_G_PROMPT_DATA_LABELS: ${AX_G_PROMPT_DATA_LABELS:-korean}
       AX_G_CORPUS_DATABASE_URL: postgresql://${CORPUS_DB_USER:-axg}:${CORPUS_DB_PASSWORD}@postgres:5432/${CORPUS_DB_NAME:-axg_corpus}
       AX_G_EMBEDDING_URL: http://embedding:80
       AX_G_EMBEDDING_MODEL: ${AX_G_EMBEDDING_MODEL:-kure-v1}

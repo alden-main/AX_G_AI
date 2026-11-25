@@ -226,7 +226,7 @@ class OpenAICompatibleChatClientTest(unittest.IsolatedAsyncioTestCase):
     async def test_sends_api_key_json_schema_and_token_limit_when_configured(self) -> None:
         recorder = Recorder(json_response(chat_completion('{"message": "요약"}')))
         client = compatible_provider(
-            recorder, AI_API_KEY="secret", AI_DISABLE_THINKING="false", AI_MAX_OUTPUT_TOKENS="512",
+            recorder, AI_API_KEY="secret", AI_DISABLE_THINKING="false", AI_MAX_OUTPUT_TOKENS="512", AI_TEMPERATURE="0.3",
         )
 
         await client.respond_structured(OpenAIRequest("instructions", "input"), Summary)
@@ -235,6 +235,7 @@ class OpenAICompatibleChatClientTest(unittest.IsolatedAsyncioTestCase):
         sent = recorder.body()
         self.assertNotIn("chat_template_kwargs", sent)
         self.assertEqual(sent["max_completion_tokens"], 512)
+        self.assertEqual(sent["temperature"], 0.3)
         self.assertEqual(sent["response_format"], {
             "type": "json_schema",
             "json_schema": {"name": "Summary", "strict": True, "schema": SCHEMA},

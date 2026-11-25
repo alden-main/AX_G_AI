@@ -25,7 +25,14 @@ from ax_g_ai.services.clinical_evidence import EvidenceChunk
 from ax_g_ai.services.clinical_recommendation import Assessment, ClinicalRecommender
 from ax_g_ai.services.corpus_snapshot import CorpusSnapshot
 from ax_g_ai.services.patient_context_store import PreparedRawEmrContext
-from ax_g_ai.services.question_facts import asks_for_recommendation, is_record_lookup, merge_question_findings, question_findings
+from ax_g_ai.services.question_facts import (
+    asks_for_clinical_rules,
+    asks_for_recommendation,
+    asks_only_for_dur,
+    is_record_lookup,
+    merge_question_findings,
+    question_findings,
+)
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -78,7 +85,9 @@ def chat_grounding(question: str, context: PreparedRawEmrContext, service: Clini
     역할: 기록 조회 질문이 아니면 근거를 검색하고, 결과가 없는 일반 추천 질문은 기록된 진단명을 덧붙여 다시 찾는다.
         추천기와 규칙 사실이 있고 질문에 규칙 입력(소견·약)이 있거나 추천을 묻는 경우 규칙을 평가하며,
         항목·검사 해석·DUR 경고·용량 결과 중 하나라도 있으면 규칙 근거 앞 ``RULE_EVIDENCE_IN_CHAT``개를 검색 근거 앞에 두고
-        평가 결과의 근거 참조를 그 범위로 줄인다.
+        평가 결과의 근거 참조를 그 범위로 줄인다. 진단·검사·협진 질문(또는 임신 밖의 소견을 말한 질문)이 아니면
+        DUR 점검 결과와 용량 결과만 싣고, 규칙 입력도 약·처방 질문도 아니면 현재 처방의 DUR 경고만 싣는다.
+        서비스가 DUR만 묻는 질문(``asks_only_for_dur``)을 직접 답하면(``compact``) 근거를 검색하지 않는다.
         동기 함수다. 검색이 임베딩 서버와 데이터베이스를 부를 수 있으므로 호출자가 스레드에서 실행한다.
     입력:
         question: 의료진 질문.
@@ -88,7 +97,8 @@ def chat_grounding(question: str, context: PreparedRawEmrContext, service: Clini
     출력: ``Grounding``. 규칙 결과를 쓰지 않으면 ``assessment``는 ``None``.
     """
     searched: tuple[EvidenceChunk, ...] = ()
-    if not is_record_lookup(question):
+    # compact 프로필은 DUR 점검만 묻는 질문을 서버가 DUR 점검 블록으로 답하므로(``ClinicalChatService``) 근거 문단이 필요 없다.
+    if not is_record_lookup(question) and not (service.answers_dur_only_itself and asks_only_for_dur(question)):
         searched = service.find_evidence(question, snapshot.evidence)
         if not searched and asks_for_recommendation(question):
             # 일반적인 추천 질문("추천 검사는?")에는 주제어가 없으므로 기록된 진단명을 더한다.
@@ -101,8 +111,17 @@ def chat_grounding(question: str, context: PreparedRawEmrContext, service: Clini
         return Grounding(searched, None)
     stated = recommender.question_inputs(question)
     if not stated and not asks_for_recommendation(question):
-        return Grounding(searched, None)
+        # 규칙 입력이 없는 질문(SOAP·요약 등)에도 현재 처방의 DUR 경고는 싣는다. 규칙 항목은 싣지 않는다
+        # (질문과 무관한 possible 항목이 환자 사실처럼 답변에 섞이기 때문이다).
+        medication_alerts = recommender.check_medications(context.rule_input)
+        if medication_alerts is None or not medication_alerts.alerts:
+            return Grounding(searched, None)
+        return Grounding(searched, {"medication_alerts": medication_alerts.model_dump(mode="json")})
     assessment = recommender.assess(context.rule_input, stated.findings, stated.dose_drugs, stated.proposed_drugs)
+    if not asks_for_clinical_rules(question) and set(stated.findings) <= {"pregnancy"}:
+        # 약·처방·임신·용량 질문: DUR·용량 결과만 싣는다(진단·검사 규칙 항목과 그 근거 문단은 싣지 않는다).
+        payload = _medication_view(assessment)
+        return Grounding(searched, payload or None)
     alerts = assessment.medication_alerts.alerts if assessment.medication_alerts is not None else None
     if not assessment.items and not assessment.lab_interpretations and not alerts and not assessment.dose_assessments:
         return Grounding(searched, None)
@@ -171,6 +190,19 @@ def merge_evidence(first: Sequence[EvidenceChunk], second: Sequence[EvidenceChun
     """``first``의 번호를 유지한 채 ``second`` 중 겹치지 않는 문단을 뒤에 잇는다(규칙 근거 참조가 ``first``를 가리킴)."""
     seen = {chunk.chunk_id for chunk in first}
     return (*first, *(chunk for chunk in second if chunk.chunk_id not in seen))
+
+
+def _medication_view(assessment: Assessment) -> dict[str, object]:
+    """평가 결과에서 DUR 점검 결과와 용량 결과만 남긴 payload(규칙 근거 문단을 싣지 않으므로 근거 번호는 뺀다).
+
+    역할: 용량 항목은 근거 번호 대신 출처명으로 출처를 밝힌다. 둘 다 없으면 빈 사전.
+    """
+    payload = assessment.as_dict()
+    view = {key: payload[key] for key in ("medication_alerts", "dose_assessments", "unmatched_dose_drugs") if payload.get(key)}
+    doses = view.get("dose_assessments")
+    for item in doses if isinstance(doses, list) else ():
+        item.pop("evidence_refs", None)
+    return view
 
 
 def _renumber(assessment: Assessment, kept: int) -> dict[str, object]:

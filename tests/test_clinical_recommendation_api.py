@@ -16,6 +16,12 @@ from ax_g_ai.services.ports import OpenAIRequest, ProviderAnswer, ProviderOutput
 from tests.services.test_clinical_recommendation import RULES, recommender, source
 
 
+def prompt_rules(prompt: str) -> dict:
+    """The rule-assessment JSON the model sees (Korean data names, see prompts.data_labels)."""
+    section = prompt.split("[말뭉치 규칙 평가 결과", 1)[1]
+    return json.loads(next(line for line in section.split("\n") if line.startswith("{")))
+
+
 class ScriptedProvider:
     """Answers the findings-extraction call with JSON and everything else with text."""
 
@@ -148,11 +154,10 @@ class ClinicalRecommendationApiTest(unittest.TestCase):
         self.assertIn("[말뭉치 규칙 평가 결과", provider.requests[-1].input)
         evidence = response.json()["evidence"]
         self.assertLessEqual(len([item for item in evidence if item["chunk_id"] in {"335-C01-chunk", "335-C03-chunk", "404-C03-chunk"}]), 4)
-        rule_section = provider.requests[-1].input.split("[말뭉치 규칙 평가 결과", 1)[1]
-        assessment = json.loads(rule_section.split("\n")[2])
-        refs = [ref for item in assessment["items"] for ref in item.get("evidence_refs", ())]
+        assessment = prompt_rules(provider.requests[-1].input)
+        refs = [ref for item in assessment["규칙 평가 항목"] for ref in item.get("근거 번호", ())]
         self.assertTrue(refs and max(refs) <= len(evidence))
-        self.assertNotIn("sources", rule_section.split("\n")[2])  # shown on screen, not repeated to the model
+        self.assertNotIn('"출처":', json.dumps(assessment, ensure_ascii=False))  # shown on screen, not repeated to the model
 
 
 if __name__ == "__main__":
@@ -180,25 +185,52 @@ class DurRecommendationApiTest(unittest.TestCase):
         alerts = body["assessment"]["medication_alerts"]
         self.assertEqual([a["type"] for a in alerts["alerts"]], ["병용금기"])
         self.assertEqual(alerts["source"]["license"], "KOGL Type 1 (공공누리 제1유형 — 출처표시)")
-        self.assertIn("medication_alerts", provider.requests[-1].input)
+        self.assertIn('"DUR 점검 결과"', provider.requests[-1].input)
+        self.assertNotIn("medication_alerts", provider.requests[-1].input)
+        # The model does not judge DUR in the text; the server appends the fixed block instead.
+        self.assertIn("병용·연령·임부·노인 금기에 해당하는지 직접 판단하지 마세요", provider.requests[-1].input)
+        self.assertIn("\n\n[처방 점검 — 심평원 DUR 목록]\n• 병용금기: 클래리정 + 심바정", body["answer"])
 
-        api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "현재 복용 약 병용금기 있나요?"})
+        # A question about the DUR check alone is answered by the server's block, without the model or evidence.
+        sent = len(provider.requests)
+        body = api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "현재 복용 약 병용금기 있나요?"}).json()
+        self.assertEqual(len(provider.requests), sent)
+        self.assertTrue(body["answer"].startswith("처방 점검 결과는 아래와 같습니다.\n\n[처방 점검 — 심평원 DUR 목록]\n• 병용금기: 클래리정 + 심바정"))
+        self.assertIsNone(body.get("evidence"))
+        # Plain wording without DUR terms is the same question.
+        body = api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "이 약들 같이 먹어도 괜찮아?"}).json()
+        self.assertEqual(len(provider.requests), sent)
+        self.assertIn("근육병증", body["answer"])
+
+        api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "현재 복용 약 병용금기가 있으면 이유도 설명해 주세요."})
         self.assertIn("병용금기", provider.requests[-1].input)
         self.assertIn("근육병증", provider.requests[-1].input)
+        # A medication question carries the DUR result but not the unrelated diagnosis/test rule items.
+        self.assertEqual(list(prompt_rules(provider.requests[-1].input)), ["DUR 점검 결과"])
+        self.assertNotIn("진단·검사·협진·추적 규칙을", provider.requests[-1].input)
 
-        # Plain wording without DUR terms still gets the check.
-        api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "이 약들 같이 먹어도 괜찮아?"})
-        self.assertIn("근육병증", provider.requests[-1].input)
+        # A question with no rule inputs (SOAP) still carries the DUR alerts, but not the unrelated rule items,
+        # and the answer always ends with the fixed DUR block (JSON and streaming).
+        body = api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "SOAP 형식으로 정리해 주세요."}).json()
+        rules = prompt_rules(provider.requests[-1].input)
+        self.assertEqual(list(rules), ["DUR 점검 결과"])
+        self.assertEqual([alert["유형"] for alert in rules["DUR 점검 결과"]["경고"]], ["병용금기"])
+        self.assertIn("\n\n[처방 점검 — 심평원 DUR 목록]\n• 병용금기: ", body["answer"])
+        self.assertIn("근육병증", body["answer"].split("[처방 점검", 1)[1])
+        with api.stream("POST", "/internal/v1/clinical-chat/stream", json={"patient_id": "pid-1", "question": "SOAP 형식으로 정리해 주세요."}) as response:
+            stream = response.read().decode()
+        self.assertIn("[처방 점검 — 심평원 DUR 목록]", stream)
+        self.assertLess(stream.index("[처방 점검"), stream.index("event: done"))
 
         # A drug named in the question is checked as one to add.
         api.post("/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": source(
             medicineDtailList=[{"medCode": "222222222", "medName": "심바정"}])})
         api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "clarithromycin 추가해도 될까요?"})
         prompt = provider.requests[-1].input
-        rules = json.loads(prompt.split("[말뭉치 규칙 평가 결과", 1)[1].split("\n")[2])
-        pair = next(alert for alert in rules["medication_alerts"]["alerts"] if alert["type"] == "병용금기")
-        self.assertEqual([product.get("proposed") for product in pair["products"]], [True, None])
-        self.assertEqual(rules["medication_alerts"]["proposed"], [{"name": "clarithromycin", "ingredient_name": "clarithromycin"}])
+        rules = prompt_rules(prompt)
+        pair = next(alert for alert in rules["DUR 점검 결과"]["경고"] if alert["유형"] == "병용금기")
+        self.assertEqual([product.get("추가 예정 약") for product in pair["제품"]], [True, None])
+        self.assertEqual(rules["DUR 점검 결과"]["추가 예정 약"], [{"이름": "clarithromycin", "성분명": "clarithromycin"}])
 
         # Pregnancy stated in the recommendation question turns 임부금기 from possible (woman aged 30) into met.
         api.post("/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": source(
@@ -217,7 +249,7 @@ class DurRecommendationApiTest(unittest.TestCase):
         alert = body["assessment"]["medication_alerts"]["alerts"][0]
         self.assertEqual((alert["type"], alert["status"]), ("임부금기", "possible"))
         self.assertIn("서로 다름", alert["missing"][0]["label"])
-        self.assertIn("finding_conflicts", provider.requests[-1].input)
+        self.assertIn('"소견 충돌":{"임신":{"진료 메모":true,"질문":false}}', provider.requests[-1].input)
         # Explicit findings win, and there is nothing left to confirm.
         body = api.post("/internal/v1/clinical-recommendations", json={**request, "findings": {"pregnancy": False}}).json()
         self.assertFalse(body["assessment"]["findings_used"]["pregnancy"])
@@ -256,7 +288,7 @@ class DoseRecommendationApiTest(unittest.TestCase):
         refs = [ref for item in doses.values() for ref in item["evidence_refs"]]
         self.assertTrue(refs and max(refs) <= len(body["evidence"]))
         prompt = self.provider.requests[-1].input
-        self.assertIn("dose_assessments는 말뭉치 용량 규칙을", prompt)
+        self.assertIn("'용량 결과'는 말뭉치 용량 규칙을", prompt)
         self.assertIn("`용량 참고`", prompt)
         self.assertIn("92.8", prompt)
 
@@ -270,7 +302,10 @@ class DoseRecommendationApiTest(unittest.TestCase):
     def test_chat_dose_question_gets_dose_results(self) -> None:
         self.api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "프레가발린 용량 괜찮나요?"})
         prompt = self.provider.requests[-1].input
-        self.assertIn("dose_assessments는 말뭉치 용량 규칙을", prompt)
-        self.assertIn("limit_daily_mg", prompt)
+        self.assertIn("'용량 결과'는 말뭉치 용량 규칙을", prompt)
+        self.assertIn('"기준 1일 최대(mg)":75.0', prompt)
+        # A dose question carries only the dose (and DUR) results, without the rule items or their evidence numbers.
+        self.assertNotIn("규칙 평가 항목", prompt_rules(prompt))
+        self.assertNotIn("근거 번호", json.dumps(prompt_rules(prompt), ensure_ascii=False))
         self.api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "최근 혈당 추이는?"})
-        self.assertNotIn("dose_assessments", self.provider.requests[-1].input)
+        self.assertNotIn("용량 결과", self.provider.requests[-1].input)

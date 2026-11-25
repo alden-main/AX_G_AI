@@ -10,6 +10,8 @@ from ax_g_ai.services.question_facts import is_record_lookup
 
 
 class FakeService:
+    answers_dur_only_itself = True
+
     def __init__(self, found_on=()):
         self.queries = []
         self.found_on = found_on

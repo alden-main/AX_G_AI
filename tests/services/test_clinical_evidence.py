@@ -134,8 +134,8 @@ class EvidenceChatTest(unittest.IsolatedAsyncioTestCase):
         prompt = provider.requests[0].input
         self.assertIn("[최신화 근거 문단", prompt)
         self.assertIn("[근거 n: 출처명]", prompt)
-        self.assertIn('"n":1', prompt)
-        self.assertIn('"sources":[{"title":', prompt)  # source titles reach the model so it can attribute
+        self.assertIn('"번호":1', prompt)
+        self.assertIn('"출처":[{"제목":', prompt)  # source titles reach the model so it can attribute
         # No review-state warnings in the answer: content is attributed to its sources instead.
         self.assertNotIn("미검수", prompt)
         self.assertNotIn("review_label", prompt)

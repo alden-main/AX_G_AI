@@ -14,9 +14,9 @@ usage() {
 
 서버 연결 (둘 중 하나)
   --server <user@host>     SSH 터널로 서버의 127.0.0.1:<remote-port> API에 연결 (키 인증 필요)
-  --remote-port <port>     서버 API 포트 (기본 8100)
+  --remote-port <port>     서버 API 포트 (기본 8500, 서버 .env의 AX_G_PORT)
   --local-port <port>      터널의 로컬 포트 (기본 18100)
-  --base-url <url>         터널 없이 직접 접속할 API 주소 (기본 http://127.0.0.1:8100)
+  --base-url <url>         터널 없이 직접 접속할 API 주소 (기본 http://127.0.0.1:8500)
 
 실행 범위
   --label <이름>           실행 이름. 이미지 태그·모델명 등 비밀이 아닌 값 (필수)
@@ -46,7 +46,7 @@ judge 제안 (선택, 둘 다 지정하면 실행; core JSON 실행에만 적용
 EOF
 }
 
-server="" remote_port=8100 local_port=18100 base_url="" label="" suite=all mode=json split=development
+server="" remote_port=8500 local_port=18100 base_url="" label="" suite=all mode=json split=development
 allow_holdout="" repetitions=1 timeout=120 judge_url="" judge_model="" compare_with="" skip_readiness="" quiet=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -117,7 +117,7 @@ if [[ -n $server ]]; then
   tunnel_pid=$!
   base_url="http://127.0.0.1:$local_port"
 else
-  base_url=${base_url:-http://127.0.0.1:8100}
+  base_url=${base_url:-http://127.0.0.1:8500}
   log "2/5 직접 접속: $base_url"
 fi
 

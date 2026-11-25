@@ -59,7 +59,8 @@ def _model(settings: AISettings, provider: OpenAIProvider) -> Model:
     """Provider 종류에 맞는 Pydantic AI 모델과 모델 설정을 만든다.
 
     역할: ``AI_PROVIDER_OPENAI``이면 저장하지 않는(``openai_store=False``) Responses 모델에 추론 강도·최대 출력 토큰을
-    설정하고, 그 밖에는 Chat Completions 모델에 최대 출력 토큰과(``disable_thinking``이면) 사고 끄기 템플릿 인자를 설정한다.
+    설정하고, 그 밖에는 Chat Completions 모델에 최대 출력 토큰·샘플링 온도(설정한 경우)와(``disable_thinking``이면) 사고 끄기
+    템플릿 인자를 설정한다.
     입력:
         settings: AI 설정.
         provider: SDK Client를 감싼 ``OpenAIProvider``.
@@ -77,6 +78,8 @@ def _model(settings: AISettings, provider: OpenAIProvider) -> Model:
     chat = OpenAIChatModelSettings()
     if settings.max_output_tokens is not None:
         chat["max_tokens"] = settings.max_output_tokens
+    if settings.temperature is not None:
+        chat["temperature"] = settings.temperature
     if settings.disable_thinking:
         # Qwen3 계열 Chat 템플릿은 그렇게 지시하면 사고 단계를 건너뛴다.
         chat["extra_body"] = {"chat_template_kwargs": {"enable_thinking": False}}

@@ -137,6 +137,36 @@ def has_medication_context(*texts: str | None) -> bool:
     return any(text and MEDICATION_CONTEXT.search(text) for text in texts)
 
 
+# 진단·검사·협진 규칙 항목이 필요한 질문. 약·처방·임신·용량만 묻는 질문(``_RECOMMENDATION_INTENT``의 나머지)에는
+# DUR·용량 결과만 싣는다. "처방"이 들어간 기록 질문에 질문과 무관한 규칙 항목이 실려 답변에 섞였기 때문이다.
+_CLINICAL_RULE_INTENT = re.compile(
+    r"추천|감별|의심|진단명|어떤\s*검사|검사가?\s*필요|필요한\s*검사|추가\s*검사|워크업|workup|work-up|협진|의뢰", re.I,
+)
+
+
+def asks_for_clinical_rules(question: str) -> bool:
+    """질문이 진단·검사·협진(규칙 항목)을 묻는지 여부."""
+    return _CLINICAL_RULE_INTENT.search(question) is not None
+
+
+# DUR 점검만 묻는 질문("현재 약끼리 함께 써도 되는지 DUR로 확인해 주세요"). 답변은 서버의 DUR 점검 블록뿐이므로
+# 모델을 부르지 않는다(작은 모델이 본문에서 DUR 결론을 뒤집거나 JSON을 그대로 내는 일이 있었다). 이유·대안·용량·
+# 요약·검사 등 다른 내용도 묻는 질문은 모델이 답한다.
+_DUR_ONLY_INTENT = re.compile(
+    r"DUR|병용|금기|상호\s*작용|(?:같이|함께)\s*(?:먹|복용|써|쓰|사용|투여)", re.I,
+)
+_BEYOND_DUR = re.compile(
+    r"용량|투여량|감량|증량|mg|요약|정리|soap|검사|수치|진단|추천|감별|의심|부작용|효과|기전|대체|대안|바꾸|변경|교체"
+    r"|이유|왜|어떻게|설명|모니터|주의|위험|근거|지침|가이드|기록|임신|임부|임산부",
+    re.I,
+)
+
+
+def asks_only_for_dur(question: str) -> bool:
+    """질문이 처방의 DUR 점검(병용·연령·임부 금기 등) 결과만 묻는지 여부(다른 내용을 함께 물으면 False)."""
+    return _DUR_ONLY_INTENT.search(question) is not None and _BEYOND_DUR.search(question) is None
+
+
 def asks_for_recommendation(question: str) -> bool:
     """질문이 진단·검사·의뢰·약·임신·용량에 대해 묻는지 여부."""
     return _RECOMMENDATION_INTENT.search(question) is not None

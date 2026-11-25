@@ -44,7 +44,13 @@ from ax_g_ai.services.clinical_recommendation.rules import (
     flag_vocabulary,
     rank_item,
 )
-from ax_g_ai.services.clinical_recommendation.schema import DoseAssessment, LabInterpretation, RecommendationItem, UnmatchedDoseDrug
+from ax_g_ai.services.clinical_recommendation.schema import (
+    DoseAssessment,
+    LabInterpretation,
+    MedicationAlerts,
+    RecommendationItem,
+    UnmatchedDoseDrug,
+)
 from ax_g_ai.services.clinical_recommendation.schema import MappingIssue as PayloadMappingIssue
 from ax_g_ai.services.emr_mapping import SiteCodeMap, map_emr, normalize_name
 from ax_g_ai.services.question_facts import has_medication_context, question_findings
@@ -190,6 +196,20 @@ class ClinicalRecommender:
             for item in source.get("medicineDtailList") or () if isinstance(item, Mapping)
         )
         return RuleInput(mapping, sex, medications)
+
+    def check_medications(self, rule_input: RuleInput) -> MedicationAlerts | None:
+        """질문과 무관하게 현재 처방만 심평원 DUR로 점검한다(규칙·용량 평가 없음).
+
+        역할: 규칙 입력이 없는 채팅 질문(SOAP·요약 등)에도 DUR 경고를 빠뜨리지 않기 위해 쓴다. 소견·추가 예정 약이 없으므로
+            임신 여부는 모름으로 점검한다(가임기 여성의 임부금기는 ``possible``).
+        입력:
+            rule_input: ``prepare``가 만든 규칙 입력.
+        출력: ``MedicationAlerts``. DUR 점검기가 없거나 처방이 없으면 ``None``.
+        """
+        if self._dur is None or not rule_input.medications:
+            return None
+        facts = derive_facts(rule_input.mapping.facts, {}, rule_input.sex, self._vocabulary)
+        return self._dur.check(rule_input.medications, age_years=facts.values.get("age"), sex=rule_input.sex, pregnant=None)
 
     def assess(
         self, rule_input: RuleInput, findings: Mapping[str, bool] | None = None, dose_drugs: Iterable[str] = (),

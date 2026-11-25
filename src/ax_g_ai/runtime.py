@@ -62,7 +62,8 @@ def create_runtime_app() -> FastAPI:
     return create_app(
         ClinicalChatService(
             build_provider_client(ai_settings, instrumentation=instrumentation), lookup, evidence_limit=runtime_settings.evidence_max_chunks,
-            allow_general_knowledge=not runtime_settings.attributed_sources_only,
+            allow_general_knowledge=not runtime_settings.attributed_sources_only, prompt_labels=runtime_settings.prompt_data_labels,
+            model_profile=runtime_settings.model_profile,
         ),
         RawEmrPayloadMapper(lookup),
         _context_store(runtime_settings),

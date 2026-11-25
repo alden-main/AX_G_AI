@@ -54,7 +54,8 @@ if [[ $mode != openai ]]; then
   model=$(env_value LLM_MODEL)
   [[ -n $model ]] || model=$(env_value VLLM_MODEL)  # 이전 설정 이름
   case "$mode" in
-    local) engine=$(engine_for_model "${model:-Qwen/Qwen3-32B-AWQ}") ;;
+    # 기본 자체 모델은 L1(SGLang)이다. 다른 모델은 셸의 LLM_MODEL로 지정한다.
+    local) model=${model:-learning-unit/L1-16B-A3B}; engine=$(engine_for_model "$model") ;;
     *)
       engine=$mode
       if [[ -n $model && $(engine_for_model "$model") != "$engine" ]]; then
@@ -103,6 +104,14 @@ if [[ -d hf-cache/models--nlpai-lab--KURE-v1 ]] && ! is_set EMBEDDING_CACHE_DIR;
 fi
 
 docker compose "${args[@]}" config --quiet
+# 실제로 적용될 모델 프로필(셸·.env 지정과 compose 파일 기본값을 반영한 값)을 보여 준다.
+profile=$(docker compose "${args[@]}" config 2>/dev/null \
+  | sed -nE 's/^[[:space:]]*AX_G_MODEL_PROFILE:[[:space:]]*["'\'']?([^"'\'']*)["'\'']?[[:space:]]*$/\1/p' | head -n 1)
+case "$profile" in
+  compact) printf '모델 프로필: compact (자체 모델용 — 본문의 DUR 판단 금지, DUR만 묻는 질문은 서버가 답함)\n' ;;
+  capable) printf '모델 프로필: capable (고성능 모델용 — 본문에서 DUR 경고의 임상적 의미 설명 허용)\n' ;;
+  *) printf '모델 프로필: 확인 불가(compose 파일에 AX_G_MODEL_PROFILE이 없어 코드 기본값 compact를 씁니다)\n' ;;
+esac
 docker load --input image.tar
 for tarball in ${bundled_images[@]+"${bundled_images[@]}"}; do docker load --input "$tarball"; done
 # 압축에 SGLang 이미지가 없고 서버에도 없으면 docker/sglang-gravity로 한 번 빌드한다(베이스 이미지 다운로드 필요).
@@ -116,7 +125,8 @@ if [[ $engine == sglang ]]; then
 fi
 docker compose "${args[@]}" up -d --no-build
 docker compose "${args[@]}" ps -a
-printf '\n준비 상태 확인: curl --fail http://127.0.0.1:8100/ready (vLLM·SGLang에서 AX_G_PORT를 변경했다면 해당 포트 사용)\n로그: docker compose'
+api_port=$(env_value AX_G_PORT || true)
+printf '\n준비 상태 확인: curl --fail http://127.0.0.1:%s/ready\n로그: docker compose' "${api_port:-8500}"
 printf ' %q' "${args[@]}"
 printf ' logs --tail=100 ax-g-ai corpus-loader dur-loader%s\n' "${engine:+ $engine}"
 if [[ $observability == 1 ]]; then

@@ -13,6 +13,8 @@ from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
 
 
 class Service:
+    answers_dur_only_itself = True
+
     def __init__(self) -> None:
         self.called = False
         self.fail_summary = False

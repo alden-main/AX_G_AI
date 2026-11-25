@@ -113,24 +113,26 @@ class PreparedSnapshotPromptTest(unittest.TestCase):
 
         self.assertIn("반드시 한국어로 답변", CLINICAL_INSTRUCTIONS)
         self.assertNotIn("반드시 한국어로 답변", prompt)
-        # Answers must not show the input's English data keys (seen in benchmark answers: "recorded_none 항목").
-        self.assertIn("영문 키·필드 이름", CLINICAL_INSTRUCTIONS)
-        self.assertIn("recorded_none", CLINICAL_INSTRUCTIONS)
-        self.assertIn('"blood_sugar"', prompt)
+        # The model sees Korean data names, so English keys cannot leak into answers ("recorded_none 항목").
+        self.assertIn("입력 데이터의 항목 이름", CLINICAL_INSTRUCTIONS)
+        self.assertIn('"혈당":[{"측정 시각":', prompt)
+        self.assertNotIn("blood_sugar", prompt)
+        self.assertNotIn("recorded_none", prompt)
+        self.assertIn('"기록상 없음"', compose_prepared_snapshot_question("처방은?", {"recorded_none": ["처방"]}))
         self.assertNotIn("patient-1", prompt)
         self.assertNotIn("홍길동", prompt)
         self.assertNotIn("obs-1", prompt)
         self.assertIn("페니실린", prompt)
-        self.assertIn("새로 들어온 임상 필드도 함께 검토", prompt)
+        self.assertIn("새로 들어온 임상 항목도 함께 검토", prompt)
 
     def test_prepared_snapshot_prompt_keeps_the_stable_emr_prefix_before_the_question(self) -> None:
         snapshot = {"blood_sugar": [{"measured_at": "2026-09-22T10:30:00+09:00", "value": 120, "unit": "mg/dL"}]}
         first = compose_prepared_snapshot_question("최근 혈당은?", snapshot)
         second = compose_prepared_snapshot_question("현재 EMR을 SOAP로 요약해줘", snapshot, "S: 기침")
 
-        emr_end = first.index('"unit":"mg/dL"}]}') + len('"unit":"mg/dL"}]}')
+        emr_end = first.index('"단위":"mg/dL"}]}') + len('"단위":"mg/dL"}]}')
         self.assertEqual(first[:emr_end], second[:emr_end])
-        self.assertLess(second.index('"blood_sugar"'), second.index("[참고 기록"))
+        self.assertLess(second.index('"혈당"'), second.index("[참고 기록"))
         self.assertLess(second.index("[참고 기록"), second.index("[응답 형식]"))
         self.assertTrue(first.endswith("[의료진 질문]\n최근 혈당은?"))
 
