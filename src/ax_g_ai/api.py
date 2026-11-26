@@ -3,19 +3,20 @@
 설계상 위치: HTTP 계층. ``runtime.create_runtime_app``(운영)과 테스트가 ``create_app``으로 앱을 만들고, Bridge 서버가
 ``/internal/v1/...`` 엔드포인트를 호출한다. 요청·응답 모델과 예외 → 오류 코드 변환도 이 파일에 있다.
 
-역할: 환자 문맥 준비, EMR 1회 요약, 임상 채팅, 추천 의견(각각 JSON과 SSE ``/stream``)과 ``/health``·``/ready``를
-제공한다. 모든 엔드포인트는 ``async``다. Provider 응답을 기다리는 동안 스레드를 점유하지 않으므로
+역할: 환자 문맥 준비, EMR 1회 요약, 임상 채팅, 추천 의견(SSE ``/stream``)과 ``/health``·``/ready``, 추천 소견 목록을
+제공한다. Bridge가 스트리밍만 쓰므로 JSON 응답 엔드포인트는 두지 않는다. 모든 엔드포인트는 ``async``다. Provider 응답을 기다리는 동안 스레드를 점유하지 않으므로
 동시 요청 수가 스레드풀 크기(기본 40)에 묶이지 않고, ``/health``도 지연되지 않는다.
 도메인 예외는 아래 ``_ERROR_RESPONSES``의 예외 처리기에서 안전한 오류 코드로 바뀐다.
 """
 
 from __future__ import annotations
 
+import asyncio
 import inspect
 import json
 import logging
 from collections.abc import AsyncGenerator, AsyncIterator, Callable, Mapping, Sequence, Sized
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass
 from datetime import datetime
 from time import perf_counter
@@ -25,7 +26,7 @@ from uuid import uuid4
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, ConfigDict, Field, SerializerFunctionWrapHandler, StringConstraints, model_serializer
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from starlette.concurrency import run_in_threadpool
 
 from ax_g_ai.adapters.main_bridge import RawEmrPayloadMapper
@@ -38,10 +39,8 @@ from ax_g_ai.errors import (
 )
 from ax_g_ai.services.clinical_chat import ClinicalChatService, evidence_payload
 from ax_g_ai.services.clinical_grounding import chat_grounding, recommendation_grounding, require_recommender, with_rule_input
-from ax_g_ai.services.clinical_recommendation.schema import AssessmentPayload, Evidence
 from ax_g_ai.services.corpus_snapshot import CorpusSnapshot, CorpusSource, StaticCorpus
 from ax_g_ai.services.patient_context_store import ContextStore, PatientContextStore, PreparedRawEmrContext
-from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
 
 # Uvicorn의 error 로거를 써서 애플리케이션 경고도 Uvicorn 로그와 같은 컨테이너 표준 로깅 설정으로 나가게 한다.
 logger = logging.getLogger("uvicorn.error")
@@ -86,59 +85,6 @@ class PatientContextRequestBody(PatientIdBody):
     emr_payload: dict[str, object]
 
 
-class PatientContextReadyBody(BaseModel):
-    """환자 문맥 준비 완료 응답.
-
-    역할: 준비 상태, 초기 환자 요약, EMR 갱신 시각을 돌려준다.
-    """
-
-    patient_id: str
-    status: str = "ready"
-    patient_summary: PreparedPatientSummary
-    emr_updated_at: datetime
-
-
-class _OmitsMissingEvidence(BaseModel):
-    """근거가 없으면 ``evidence`` 키를 응답에서 뺀다.
-
-    역할: 그 키만 뺀다. 다른 곳(``assessment`` 안이나 근거 문단)의 null은 계약의 일부인데,
-    ``response_model_exclude_none``을 쓰면 그것까지 빠지기 때문이다.
-    """
-
-    @model_serializer(mode="wrap")
-    def _omit_missing_evidence(self, handler: SerializerFunctionWrapHandler) -> dict[str, object]:
-        """기본 직렬화 결과에서 값이 ``None``인 ``evidence`` 키만 제거한다."""
-        data = handler(self)
-        if data.get("evidence") is None:
-            data.pop("evidence", None)
-        return data
-
-
-class ClinicalChatResponseBody(_OmitsMissingEvidence):
-    """임상 채팅 응답.
-
-    역할: 답변, 출처, EMR 갱신 시각과 답변에 인용한 근거(없으면 생략)를 돌려준다.
-    """
-
-    answer: str
-    source: str = _SOURCE
-    emr_updated_at: datetime
-    # 답변에 붙인 최신화 근거([근거 n] 번호와 같음). 근거가 없으면 필드를 생략한다. 검수 상태는 review_status(데이터)로만 둔다.
-    evidence: list[Evidence] | None = None
-
-
-class EmrSummaryResponseBody(BaseModel):
-    """EMR 1회 요약 응답.
-
-    역할: 근거를 인용하지 않으며, 공개된 계약대로 ``evidence: null``을 유지한다.
-    """
-
-    answer: str
-    source: str = _SOURCE
-    emr_updated_at: datetime
-    evidence: None = None
-
-
 class ClinicalRecommendationRequestBody(PatientIdBody):
     """추천 의견(의심 진단·추천 검사·협진) 요청 본문.
 
@@ -154,21 +100,6 @@ class ClinicalRecommendationRequestBody(PatientIdBody):
     dose_drugs: list[Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]] | None = Field(
         default=None, max_length=20,
     )
-
-
-class ClinicalRecommendationResponseBody(_OmitsMissingEvidence):
-    """추천 의견 응답.
-
-    역할: 추천 문장, 출처, EMR 갱신 시각, 규칙 평가 결과(``assessment``)와 인용 근거(없으면 생략)를 돌려준다.
-    """
-
-    answer: str
-    source: str = _SOURCE
-    emr_updated_at: datetime
-    # 규칙 평가 결과(진단·검사·협진·추적 항목, 검사값 범주, DUR, 용량). 구조는 docs/assessment_schema.md.
-    # 해당 없는 키는 생략하고, 값이 없는 키는 null로 둔다(SSE meta.assessment와 같은 JSON).
-    assessment: AssessmentPayload
-    evidence: list[Evidence] | None = None
 
 
 class ErrorBody(BaseModel):
@@ -373,20 +304,7 @@ def create_app(
 
     _responses: dict[int | str, dict[str, Any]] = {status: {"model": ErrorBody} for status in (400, 403, 404, 502, 503)}
 
-    # 사용 사례마다 JSON 엔드포인트와 SSE ``/stream`` 짝이 있다. 둘 다 같은 ``_Call``(Provider 인자와 ``answer``
-    # 밖의 응답 필드)을 준비하며, SSE ``meta`` 이벤트가 그 필드를 그대로 담는다.
-
-    @app.post("/internal/v1/patient-context", response_model=PatientContextReadyBody, responses=_responses, tags=["internal"])
-    async def prepare_patient_context(
-        body: PatientContextRequestBody, components: Components, service: Service, snapshot: Snapshot,
-    ) -> PatientContextReadyBody:
-        """EMR로 환자 문맥을 준비하고 초기 요약을 만든 뒤 저장한다."""
-        # 갱신은 이전 항목을 무효화하는 데서 시작한다. 잘못된 EMR 데이터나 실패한 요약 때문에
-        # 오래된 환자 문맥이 남아 있으면 안 된다.
-        context = await _prepare_context(body, components, snapshot)
-        summary = await service.summarize_prepared_snapshot(snapshot=context.data)
-        await components.store.put(body.patient_id, context)
-        return PatientContextReadyBody(patient_id=body.patient_id, patient_summary=summary, emr_updated_at=context.updated_at)
+    # 사용 사례마다 ``_Call``(Provider 인자와 SSE ``meta`` 필드)을 준비한 뒤 ``_stream``으로 보낸다.
 
     @app.post("/internal/v1/patient-context/stream", response_model=None, responses=_responses, tags=["internal"])
     async def prepare_patient_context_stream(
@@ -394,8 +312,8 @@ def create_app(
     ) -> StreamingResponse:
         """EMR 문맥을 바로 준비·저장하고 초기 요약을 SSE로 보낸다.
 
-        ``meta``가 나가는 즉시 채팅이 문맥을 쓸 수 있다. ``done`` 전에 요약이 실패하면 JSON 엔드포인트처럼
-        문맥을 버린다.
+        ``meta``가 나가는 즉시 채팅이 문맥을 쓸 수 있다. ``done`` 전에 요약이 실패하면 문맥을 버린다
+        (오래된 문맥이나 요약 없는 문맥이 남지 않게 한다).
         """
         store = components.store
         context = await _prepare_context(body, components, snapshot)
@@ -407,12 +325,6 @@ def create_app(
             on_failure=lambda: store.discard(body.patient_id),
         )
 
-    @app.post("/internal/v1/emr-summary", response_model=EmrSummaryResponseBody, responses=_responses, tags=["internal"])
-    async def emr_summary(body: PatientContextRequestBody, components: Components, service: Service) -> EmrSummaryResponseBody:
-        """Bridge가 전달한 EMR을 저장 없이 한 번 요약한다."""
-        call = _summary_call(body, components)
-        return EmrSummaryResponseBody(answer=await service.summarize_once(**call.arguments), **call.fields)
-
     @app.post("/internal/v1/emr-summary/stream", response_model=None, responses=_responses, tags=["internal"])
     async def emr_summary_stream(
         body: PatientContextRequestBody, request: Request, components: Components, service: Service,
@@ -420,14 +332,6 @@ def create_app(
         """채팅 문맥을 저장하지 않고 EMR 1회 요약을 SSE로 보낸다."""
         call = _summary_call(body, components)
         return await _stream(request, lambda: service.stream_summary_once(**call.arguments), call.meta)
-
-    @app.post("/internal/v1/clinical-chat", response_model=ClinicalChatResponseBody, responses=_responses, tags=["internal"])
-    async def clinical_chat(
-        body: ClinicalChatRequestBody, components: Components, service: Service, snapshot: Snapshot,
-    ) -> ClinicalChatResponseBody:
-        """준비된 환자 문맥과 말뭉치 근거로 임상 질문에 답한다."""
-        call = await _chat_call(body, components, service, snapshot)
-        return ClinicalChatResponseBody(answer=await service.answer_prepared_snapshot(**call.arguments), **call.fields)
 
     @app.post("/internal/v1/clinical-chat/stream", response_model=None, responses=_responses, tags=["internal"])
     async def clinical_chat_stream(
@@ -444,14 +348,6 @@ def create_app(
         return {"findings": list(rules.finding_vocabulary), "rules": len(rules), "unreviewed_rules": rules.unreviewed_count,
                 "dose_drugs": list(rules.dose_drugs)}
 
-    @app.post("/internal/v1/clinical-recommendations", response_model=ClinicalRecommendationResponseBody, responses=_responses, tags=["internal"])
-    async def clinical_recommendations(
-        body: ClinicalRecommendationRequestBody, components: Components, service: Service, snapshot: Snapshot,
-    ) -> ClinicalRecommendationResponseBody:
-        """말뭉치 규칙 평가 + 근거 인용으로 의심 진단·추천 검사·협진 의견을 만든다."""
-        call = await _recommendation_call(body, components, service, snapshot)
-        return ClinicalRecommendationResponseBody(answer=await service.recommend(**call.arguments), **call.fields)
-
     @app.post("/internal/v1/clinical-recommendations/stream", response_model=None, responses=_responses, tags=["internal"])
     async def clinical_recommendations_stream(
         body: ClinicalRecommendationRequestBody, request: Request, components: Components, service: Service, snapshot: Snapshot,
@@ -467,8 +363,7 @@ def create_app(
 class _Call:
     """준비된 사용 사례 하나.
 
-    역할: Provider 메서드에 넘길 ``arguments``와 ``answer`` 밖의 응답 ``fields``를 함께 들고, JSON 응답과 SSE ``meta``가
-    같은 값을 쓰게 한다.
+    역할: Provider 메서드에 넘길 ``arguments``와 SSE ``meta``에 담을 ``fields``를 함께 든다.
     """
 
     arguments: dict[str, Any]
@@ -590,6 +485,9 @@ async def _stream(
 
     역할: HTTP 200을 확정하기 전에 첫 조각을 먼저 받아 두므로, 연결 실패나 첫 토큰 실패는 일반 JSON 502로 응답한다.
     스트리밍 도중 실패하면 ``on_failure``를 호출하고 안전한 SSE ``error`` 이벤트로 끝낸다.
+    Provider 스트림은 처음부터 끝까지 한 작업(``_pump``)에서만 읽고, 요청 처리 작업과 응답 전송 작업은 큐에서 꺼내기만 한다.
+    Provider 스트림(pydantic-ai·httpx)은 첫 조각부터 끝까지 anyio cancel scope를 잡고 있어, 첫 조각을 받은 작업과 나머지를
+    읽는 작업이 다르면 스트림을 닫을 때 ``RuntimeError``(cancel scope)가 나서 모든 스트림이 ``done`` 없이 끊겼다.
     입력:
         request: 현재 요청(로그용 요청 ID·경로).
         start: Provider 스트림(텍스트 조각 비동기 반복자)을 시작하는 함수.
@@ -598,39 +496,65 @@ async def _stream(
     출력: ``text/event-stream`` ``StreamingResponse``.
     예외: 스트림이 시작되지 않으면 ``ClinicalChatProviderUnavailableError``.
     """
-    try:
-        deltas = start()
-        first_delta = await anext(deltas)
-    except (ClinicalChatProviderUnavailableError, StopAsyncIteration) as error:
+    queue: asyncio.Queue[tuple[str, Any]] = asyncio.Queue()
+    pump = asyncio.create_task(_pump(start, queue))
+    kind, first = await queue.get()
+    if kind != "delta":
         await _call(on_failure)
-        raise ClinicalChatProviderUnavailableError("stream did not start") from error
+        if kind == "end" or isinstance(first, ClinicalChatProviderUnavailableError):
+            raise ClinicalChatProviderUnavailableError("stream did not start") from (first if kind == "error" else None)
+        raise first
 
     async def events() -> AsyncIterator[str]:
-        yield _sse("meta", meta)
-        yield _sse("delta", {"text": first_delta})
         try:
-            async for delta in deltas:
-                yield _sse("delta", {"text": delta})
-        except ClinicalChatProviderUnavailableError:
-            # 첫 이벤트 이후 HTTP 상태는 이미 200이다. SSE 오류에 Provider 세부 정보·프롬프트·EMR을 드러내지 않는다.
-            await _call(on_failure)
-            logger.warning(
-                "api_stream_failed request_id=%s path=%s code=AI_PROVIDER_UNAVAILABLE stage=streaming",
-                _request_id(request),
-                request.url.path,
-            )
-            yield _sse("error", {"code": "AI_PROVIDER_UNAVAILABLE", "message": "AI 답변을 준비하는 중 연결이 종료되었습니다."})
-        else:
-            yield _sse("done", {})
+            yield _sse("meta", meta)
+            yield _sse("delta", {"text": first})
+            while True:
+                kind, value = await queue.get()
+                if kind == "delta":
+                    yield _sse("delta", {"text": value})
+                elif kind == "end":
+                    yield _sse("done", {})
+                    return
+                elif isinstance(value, ClinicalChatProviderUnavailableError):
+                    # 첫 이벤트 이후 HTTP 상태는 이미 200이다. SSE 오류에 Provider 세부 정보·프롬프트·EMR을 드러내지 않는다.
+                    await _call(on_failure)
+                    logger.warning(
+                        "api_stream_failed request_id=%s path=%s code=AI_PROVIDER_UNAVAILABLE stage=streaming",
+                        _request_id(request),
+                        request.url.path,
+                    )
+                    yield _sse("error", {"code": "AI_PROVIDER_UNAVAILABLE", "message": "AI 답변을 준비하는 중 연결이 종료되었습니다."})
+                    return
+                else:
+                    raise value
         finally:
-            if isinstance(deltas, AsyncGenerator):  # 서비스 메서드는 비동기 제너레이터다
-                await deltas.aclose()
+            # 클라이언트가 끊으면 Provider 스트림을 그 스트림을 연 작업 안에서 정리하도록 취소한다.
+            if not pump.done():
+                pump.cancel()
+            with suppress(asyncio.CancelledError):
+                await pump
 
     return StreamingResponse(
         events(),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+async def _pump(start: Callable[[], AsyncIterator[str]], queue: asyncio.Queue[tuple[str, Any]]) -> None:
+    """Provider 스트림을 이 작업 안에서 끝까지 읽어 ``("delta", 텍스트)``·``("end", None)``·``("error", 예외)``로 큐에 넣는다."""
+    deltas = start()
+    try:
+        async for delta in deltas:
+            await queue.put(("delta", delta))
+    except Exception as error:
+        await queue.put(("error", error))
+    else:
+        await queue.put(("end", None))
+    finally:
+        if isinstance(deltas, AsyncGenerator):  # 서비스 메서드는 비동기 제너레이터다
+            await deltas.aclose()
 
 
 async def _call(callback: Callable[[], object] | None) -> None:

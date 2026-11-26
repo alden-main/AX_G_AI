@@ -46,11 +46,15 @@ class PydanticAIProviderClient:
     역할: Provider별 차이(Responses·Chat Completions, 저장 안 함, 사고 모드)는 ``model``의 설정이 맡는다.
     호출 하나는 모델 요청 하나다: 출력 재시도(``retries=0``)를 하지 않고, ``stop``으로 끝나지 않은
     응답(토큰 한도로 잘림, 실패·중단된 스트림)은 오류로 바꾼다. 작업(``operation``)마다 이름이 같은
-    Agent를 두어 추적이 ``invoke_agent <operation>``으로 남는다.
+    Agent를 두어 추적이 ``invoke_agent <operation>``으로 남는다. ``system_prompt_prefix``가 있으면 모든 지시문 앞에 그 줄을 둔다
+    (모델이 정렬 학습한 신원 문장을 지시문 앞에 두라는 모델 카드 권장, 예: L1-30B-A5B).
     """
 
-    def __init__(self, model: Model, *, instrumentation: InstrumentationSettings | None = None) -> None:
+    def __init__(
+        self, model: Model, *, instrumentation: InstrumentationSettings | None = None, system_prompt_prefix: str | None = None,
+    ) -> None:
         self._model = model
+        self._prefix = system_prompt_prefix
         self._capabilities = [Instrumentation(settings=instrumentation)] if instrumentation is not None else []
         self._agents: dict[str, Agent[None, Any]] = {}
         self._label = type(model).__name__
@@ -109,7 +113,8 @@ class PydanticAIProviderClient:
         metadata = {"operation": request.operation}
         if request.prompt_version:
             metadata["prompt_version"] = request.prompt_version
-        return {"instructions": request.instructions, "metadata": metadata}
+        instructions = f"{self._prefix}\n{request.instructions}" if self._prefix else request.instructions
+        return {"instructions": instructions, "metadata": metadata}
 
 
 def _require_complete(response: ModelResponse, label: str) -> None:

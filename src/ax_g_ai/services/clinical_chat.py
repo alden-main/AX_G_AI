@@ -17,7 +17,6 @@ from typing import Any
 from ax_g_ai.errors import ClinicalChatProviderUnavailableError
 from ax_g_ai.prompts.clinical import (
     FINDING_EXTRACTION_INSTRUCTIONS,
-    INITIAL_PATIENT_SUMMARY_REQUEST,
     ONE_SHOT_PATIENT_SUMMARY_REQUEST,
     PROMPT_VERSION,
     RECOMMENDATION_REQUEST,
@@ -29,11 +28,10 @@ from ax_g_ai.prompts.clinical import (
     prompt_texts,
 )
 from ax_g_ai.prompts.data_labels import PromptLabels
-from ax_g_ai.services.answer_review import DUR_ONLY_ANSWER, UNUSABLE, check_opening, dur_notice, fallback_answer, review_answer
+from ax_g_ai.services.answer_review import DUR_ONLY_ANSWER, check_opening, dur_notice, fallback_answer
 from ax_g_ai.services.clinical_evidence import EvidenceChunk, EvidenceRetriever
 from ax_g_ai.services.clinical_recommendation import prompt_view
 from ax_g_ai.services.ports import OpenAIProviderError, OpenAIRequest, ProviderClient, ProviderOutputError, ReferenceLookup
-from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
 from ax_g_ai.services.question_facts import asks_only_for_dur
 
 logger = logging.getLogger("uvicorn.error")
@@ -109,22 +107,6 @@ class ClinicalChatService:
             )
         return chunks
 
-    async def answer_prepared_snapshot(
-        self, *, question: str, snapshot: Mapping[str, Any], reference_record: str | None = None,
-        evidence: Sequence[EvidenceChunk] = (), assessment: Mapping[str, Any] | None = None,
-    ) -> str:
-        """준비된 동일 환자의 EMR 문맥으로 한국어 답변을 생성한다(DUR 점검 결과가 있으면 끝에 고정 문장으로 붙인다).
-
-        ``compact`` 프로필에서는 DUR 점검만 묻는 질문을 모델을 부르지 않고 DUR 점검 블록으로 답한다(``_server_answer``).
-        """
-        notice = dur_notice(assessment, prescribed=bool(snapshot.get("prescriptions")))
-        if self.answers_dur_only_itself and (answer := _server_answer("prepared_snapshot_chat", question, notice)) is not None:
-            return answer
-        request = self._chat_request("prepared_snapshot_chat", question, snapshot, reference_record, evidence, assessment)
-        with _provider_failure(request.operation):
-            answer = await self._respond_checked(request, question, has_notice=notice is not None)
-        return answer + (notice or "")
-
     async def stream_prepared_snapshot(
         self, *, question: str, snapshot: Mapping[str, Any], reference_record: str | None = None,
         evidence: Sequence[EvidenceChunk] = (), assessment: Mapping[str, Any] | None = None,
@@ -167,17 +149,6 @@ class ClinicalChatService:
         # 명시와 부정이 함께 있는 키는 부정으로 센다.
         return {**dict.fromkeys(extracted.present, True), **dict.fromkeys(extracted.absent, False)}
 
-    async def recommend(
-        self, *, snapshot: Mapping[str, Any], assessment: Mapping[str, Any], evidence: Sequence[EvidenceChunk],
-        clinical_note: str | None = None, question: str | None = None,
-    ) -> str:
-        """규칙 평가 결과와 근거로 추천 답변을 한 번에 생성한다(DUR 점검 결과가 있으면 끝에 고정 문장으로 붙인다)."""
-        notice = dur_notice(assessment, prescribed=bool(snapshot.get("prescriptions")))
-        request = self._recommendation_request("clinical_recommendation", snapshot, assessment, evidence, clinical_note, question)
-        with _provider_failure(request.operation):
-            answer = await self._respond_checked(request, question or RECOMMENDATION_REQUEST, has_notice=notice is not None)
-        return answer + (notice or "")
-
     async def stream_recommendation(
         self, *, snapshot: Mapping[str, Any], assessment: Mapping[str, Any], evidence: Sequence[EvidenceChunk],
         clinical_note: str | None = None, question: str | None = None,
@@ -202,51 +173,15 @@ class ClinicalChatService:
             profile=self._profile,
         ))
 
-    async def summarize_prepared_snapshot(self, *, snapshot: Mapping[str, Any]) -> PreparedPatientSummary:
-        """준비 시점에 EMR 문맥으로 화면용 구조화 환자 상태 요약을 생성한다."""
-        request = self._request(
-            "patient_context_summary", compose_prepared_snapshot_question(INITIAL_PATIENT_SUMMARY_REQUEST, snapshot, labels=self._labels),
-        )
-        with _provider_failure(request.operation):
-            return await self._provider.respond_structured(request, PreparedPatientSummary)
-
-    async def summarize_once(self, *, snapshot: Mapping[str, Any]) -> str:
-        """EMR에서 독립적인 간결 요약을 한 번 생성한다."""
-        request = self._summary_request("one_shot_patient_summary", snapshot)
-        with _provider_failure(request.operation):
-            return await self._respond_checked(request, ONE_SHOT_PATIENT_SUMMARY_REQUEST)
-
     async def stream_summary_once(self, *, snapshot: Mapping[str, Any]) -> AsyncIterator[str]:
         """일회성 EMR 요약을 Provider 텍스트가 도착하는 대로 조각 단위로 내보낸다.
 
-        ``summarize_prepared_snapshot``과 달리 JSON 스키마가 없으므로, 전체 요약이 생성되기 전에 첫 문장을 보여 줄 수 있다.
+        JSON 스키마가 없으므로 전체 요약이 생성되기 전에 첫 문장을 보여 줄 수 있다(환자 문맥 준비 스트림도 이 요약을 쓴다).
         """
         request = self._summary_request("one_shot_patient_summary_stream", snapshot)
         with _provider_failure(request.operation):
             async for delta in self._stream_checked(request, ONE_SHOT_PATIENT_SUMMARY_REQUEST):
                 yield delta
-
-    async def _respond_checked(self, request: OpenAIRequest, question: str, *, has_notice: bool = False) -> str:
-        """Provider 답변을 점검하고, 쓸 수 없거나 내부 키가 보이면 한 번 다시 요청한다.
-
-        역할: 질문 되풀이는 잘라 낸다. 다시 받은 답변에도 내부 키만 보이면 그 답변을 쓰고, 여전히 쓸 수 없으면(질문 되풀이뿐·JSON)
-            오류 대신 고정 안내 문장(``fallback_answer``)을 돌려준다. Provider 호출 자체의 실패는 그대로 전파된다.
-        입력:
-            request: Provider 요청.
-            question: 되풀이 비교에 쓸 질문(프롬프트의 ``[의료진 질문]``).
-            has_notice: 답변 끝에 DUR 점검 블록이 붙는지(안내 문장을 고른다).
-        출력: 점검한 답변 또는 안내 문장.
-        """
-        text, problem = "", None
-        for attempt in (1, 2):
-            text, problem = review_answer((await self._provider.respond(request)).answer, question)
-            if problem is None:
-                return text
-            _log_rejected(request.operation, problem, attempt)
-        if problem not in UNUSABLE:
-            return text
-        _log_fallback(request.operation, problem)
-        return fallback_answer(has_notice=has_notice)
 
     async def _stream_checked(self, request: OpenAIRequest, question: str, *, has_notice: bool = False) -> AsyncIterator[str]:
         """Provider 스트림 앞부분을 점검해 질문 되풀이를 잘라 내고, 쓸 수 없으면 한 번 다시 요청한다.

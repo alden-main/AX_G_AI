@@ -107,6 +107,10 @@ class AISettings(_EnvironmentSettings):
         temperature: Chat Completions 샘플링 온도(0~2)다. ``None``이면 보내지 않아 추론 서버 기본값을 쓰는데,
             모델 ``generation_config``에 값이 없으면 SGLang은 1.0을 써서 같은 입력에도 답이 크게 흔들린다.
             OpenAI 추론 모델(Responses API)은 이 값을 받지 않으므로 ``openai_compatible``에서만 쓴다.
+        repetition_penalty: 반복 억제 계수(``openai_compatible`` 전용, ``extra_body``로 보냄)다. ``None``이면 보내지 않는다.
+            L1-30B-A5B 모델 카드는 1.05를 권장한다(1.0이면 긴 임상 답변에서 같은 구절을 반복).
+        system_prompt_prefix: 모든 지시문 앞에 두는 한 줄(``openai_compatible`` 전용)이다. 모델이 정렬 학습한 신원 문장을 넣는다
+            (L1-30B-A5B: ``You are Chain-of-Evidence, a medical AI assistant developed by Lunit.``). ``None``이면 넣지 않는다.
         max_retries: 첫 토큰 전 연결 오류·429·5xx의 SDK 재시도 횟수다.
         trace_content: OpenTelemetry 추적(``OTEL_EXPORTER_OTLP_ENDPOINT`` 설정 시)에 프롬프트·지시문·응답 본문을
             담을지 여부다(기본 끔). 끄면 모델·토큰 수·소요 시간·종료 사유만 남는다. 비식별 EMR도 추적 저장소에
@@ -123,6 +127,8 @@ class AISettings(_EnvironmentSettings):
     reasoning_effort: Literal["minimal", "low", "medium", "high"] | None = None
     disable_thinking: bool = True
     temperature: Annotated[float, Field(ge=0, le=2)] | None = None
+    repetition_penalty: Annotated[float, Field(gt=0, le=2)] | None = None
+    system_prompt_prefix: Annotated[str, Field(max_length=500)] | None = None
     max_output_tokens: PositiveInt | None = None
     max_retries: NonNegativeInt = 2
     trace_content: bool = False
@@ -164,8 +170,8 @@ class AISettings(_EnvironmentSettings):
     def _openai_requirements(self) -> AISettings:
         """검증 후 Provider별 필수 조건을 확인한다.
 
-        역할: ``AI_MODEL``은 항상 필수이고, ``openai`` Provider면 HTTPS 주소와 API Key도 필수이며 ``AI_TEMPERATURE``는
-            쓸 수 없다(추론 모델이 요청을 거부하므로 기동 시 막는다).
+        역할: ``AI_MODEL``은 항상 필수이고, ``openai`` Provider면 HTTPS 주소와 API Key도 필수이며 ``AI_TEMPERATURE``·
+            ``AI_REPETITION_PENALTY``·``AI_SYSTEM_PROMPT_PREFIX``는 쓸 수 없다(자체 모델 서버용 설정이므로 기동 시 막는다).
         입력: 없음(검증된 필드).
         출력: 자기 자신.
         예외: ``ValueError`` — 조건 위반(``from_environment``에서 ``ConfigurationError``로 바뀐다).
@@ -177,8 +183,9 @@ class AISettings(_EnvironmentSettings):
                 raise ValueError("AI_BASE_URL must use HTTPS for the openai provider")
             if self.api_key is None:
                 raise ValueError("AI_API_KEY or OPENAI_API_KEY is required")
-            if self.temperature is not None:
-                raise ValueError("AI_TEMPERATURE is only supported for the openai_compatible provider")
+            for name in ("temperature", "repetition_penalty", "system_prompt_prefix"):
+                if getattr(self, name) is not None:
+                    raise ValueError(f"AI_{name.upper()} is only supported for the openai_compatible provider")
         return self
 
 

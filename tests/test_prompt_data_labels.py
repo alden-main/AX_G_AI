@@ -15,7 +15,8 @@ from ax_g_ai.prompts.clinical import (
 )
 from ax_g_ai.prompts.data_labels import KEY_NAMES, RULE_KEYS, VALUE_NAMES, korean_view, prompt_data, render_rule
 from ax_g_ai.services.clinical_chat import ClinicalChatService
-from ax_g_ai.services.ports import OpenAIRequest, ProviderAnswer
+from ax_g_ai.services.ports import OpenAIRequest
+from tests.sse import collect
 
 SNAPSHOT = {"recorded_none": ["처방"], "lab_results": [{"test_date": "2026-06-23", "value": "0.92", "item_name": "크레아티닌", "unit": "mg/dL"}]}
 ASSESSMENT = {
@@ -81,21 +82,24 @@ class LabelStyleTest(unittest.TestCase):
 
 
 class UndatedPrescriptionTest(unittest.TestCase):
-    def test_undated_rows_say_so_and_every_date_comes_first(self) -> None:
-        # A small model gave an undated prescription the date of the row next to it.
+    def test_undated_prescriptions_move_to_their_own_group(self) -> None:
+        # A small model gave an undated prescription the latest measurement date, even with an explicit '기록 없음' value.
         summary = {"prescriptions": [
             {"med_name": "A", "dosage": 20, "prescriptionDate": "2026-06-25"},
-            {"med_name": "B", "dosage": 500},
-        ]}
+            {"med_name": "B", "dosage": 500, "prescriptionDate": None},
+        ], "blood_pressure": []}
         marked = mark_undated_prescriptions(summary)
 
-        self.assertEqual(list(marked["prescriptions"][0]), ["prescriptionDate", "med_name", "dosage"])
-        self.assertEqual(marked["prescriptions"][1], {"prescriptionDate": "기록 없음", "med_name": "B", "dosage": 500})
-        self.assertNotIn("prescriptionDate", summary["prescriptions"][1])  # input untouched
+        self.assertEqual(list(marked), ["prescriptions", "undated_prescriptions", "blood_pressure"])
+        self.assertEqual(marked["prescriptions"], [{"med_name": "A", "dosage": 20, "prescriptionDate": "2026-06-25"}])
+        self.assertEqual(marked["undated_prescriptions"], [{"med_name": "B", "dosage": 500, "prescriptionDate": None}])
+        self.assertEqual(len(summary["prescriptions"]), 2)  # input untouched
         prompt = compose_prepared_snapshot_question("SOAP로 정리해 주세요", summary)
-        self.assertIn('{"처방일":"기록 없음","약품명":"B"', prompt)
-        self.assertIn("'처방일'이 '기록 없음'이면", prompt)
-        self.assertIn('"prescriptionDate":"기록 없음"', compose_recommendation_input(summary, {}, [], labels="english"))
+        self.assertIn('"처방(처방일 기록 없음)":[{"약품명":"B"', prompt)
+        self.assertIn("'처방(처방일 기록 없음)'의 약은", prompt)
+        self.assertIn('"undated_prescriptions":[', compose_recommendation_input(summary, {}, [], labels="english"))
+        only_undated = mark_undated_prescriptions({"prescriptions": [{"med_name": "B"}]})
+        self.assertEqual(only_undated, {"undated_prescriptions": [{"med_name": "B"}]})
         self.assertEqual(mark_undated_prescriptions(SNAPSHOT), SNAPSHOT)
 
 
@@ -105,6 +109,7 @@ class ModelProfileTest(unittest.TestCase):
         self.assertEqual(compact, prompt_texts("korean"))
         self.assertIn("직접 판단하지 마세요", compact.dur_rule)
         self.assertIn("임상적 의미", capable.dur_rule)
+        self.assertIn("선택지마다 끝에 근거를 붙이세요", capable.dur_rule)
         self.assertNotIn("⟪", prompt_texts("english", "capable").dur_rule)
         for field in dataclasses.fields(compact):
             if field.name != "dur_rule":
@@ -126,16 +131,16 @@ class Recording:
     def __init__(self) -> None:
         self.requests: list[OpenAIRequest] = []
 
-    async def respond(self, request: OpenAIRequest) -> ProviderAnswer:
+    async def stream(self, request: OpenAIRequest):
         self.requests.append(request)
-        return ProviderAnswer("답변")
+        yield "답변"
 
 
 class ServiceLabelsTest(unittest.IsolatedAsyncioTestCase):
     async def test_service_uses_the_configured_style_and_marks_the_prompt_version(self) -> None:
         korean, english = Recording(), Recording()
-        await ClinicalChatService(korean).answer_prepared_snapshot(question="처방은?", snapshot=SNAPSHOT)
-        await ClinicalChatService(english, prompt_labels="english").answer_prepared_snapshot(question="처방은?", snapshot=SNAPSHOT)
+        await collect(ClinicalChatService(korean).stream_prepared_snapshot(question="처방은?", snapshot=SNAPSHOT))
+        await collect(ClinicalChatService(english, prompt_labels="english").stream_prepared_snapshot(question="처방은?", snapshot=SNAPSHOT))
 
         self.assertIn('"기록상 없음"', korean.requests[0].input)
         self.assertIn('"recorded_none"', english.requests[0].input)
@@ -143,7 +148,7 @@ class ServiceLabelsTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(english.requests[0].instructions, prompt_texts("english").instructions)
 
         capable = Recording()
-        await ClinicalChatService(capable, model_profile="capable").answer_prepared_snapshot(question="처방은?", snapshot=SNAPSHOT)
+        await collect(ClinicalChatService(capable, model_profile="capable").stream_prepared_snapshot(question="처방은?", snapshot=SNAPSHOT))
         self.assertEqual(capable.requests[0].prompt_version, f"{korean.requests[0].prompt_version}-capable")
 
 

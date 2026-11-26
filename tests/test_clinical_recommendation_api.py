@@ -12,8 +12,9 @@ from ax_g_ai.services.clinical_chat import ClinicalChatService
 from ax_g_ai.services.clinical_evidence import InMemoryEvidenceIndex
 from ax_g_ai.services.corpus_snapshot import CorpusSnapshot, StaticCorpus
 from ax_g_ai.services.patient_context_store import PatientContextStore
-from ax_g_ai.services.ports import OpenAIRequest, ProviderAnswer, ProviderOutputError
+from ax_g_ai.services.ports import OpenAIRequest, ProviderOutputError
 from tests.services.test_clinical_recommendation import RULES, recommender, source
+from tests.sse import post_stream
 
 
 def prompt_rules(prompt: str) -> dict:
@@ -30,14 +31,10 @@ class ScriptedProvider:
         self.requests: list[OpenAIRequest] = []
         self.output_types: dict[str, type] = {}
 
-    async def respond(self, request: OpenAIRequest) -> ProviderAnswer:
-        self.requests.append(request)
-        return ProviderAnswer("의심 진단: 만성 콩팥병 가능성 [근거 1: VA/DoD CKD 2025]")
-
     async def respond_structured(self, request: OpenAIRequest, output_type):
         self.requests.append(request)
         self.output_types[request.operation] = output_type
-        text = self.extraction if request.operation == "finding_extraction" else '{"message":"로드됨","sections":[],"guidance":"확인"}'
+        text = self.extraction
         try:
             return output_type.model_validate_json(text)
         except ValidationError as error:
@@ -64,15 +61,15 @@ class ClinicalRecommendationApiTest(unittest.TestCase):
     def test_recommendation_applies_note_findings_rules_without_review_warnings(self) -> None:
         provider = ScriptedProvider()
         api = client(provider)
-        self.assertEqual(api.post("/internal/v1/patient-context", json=payload()).status_code, 200)
+        self.assertEqual(post_stream(api,"/internal/v1/patient-context", json=payload()).status_code, 200)
 
-        response = api.post("/internal/v1/clinical-recommendations", json={
+        response = post_stream(api,"/internal/v1/clinical-recommendations", json={
             "patient_id": "pid-1", "clinical_note": "3일 전부터 혈변, B형간염 검사 받은 적 없음", "findings": {"hematochezia": False},
         })
 
         self.assertEqual(response.status_code, 200)
         body = response.json()
-        self.assertEqual(body["answer"], "의심 진단: 만성 콩팥병 가능성 [근거 1: VA/DoD CKD 2025]")
+        self.assertEqual(body["answer"], "추천 검사")
         self.assertNotIn("review_notice", body)  # no repeated warning: reference use is the service's stated purpose
         assessment = body["assessment"]
         # Explicit findings override the note extraction.
@@ -100,13 +97,13 @@ class ClinicalRecommendationApiTest(unittest.TestCase):
     def test_general_knowledge_suggestions_only_when_attribution_only_is_off(self) -> None:
         provider = ScriptedProvider()
         api = client(provider, general_knowledge=True)
-        api.post("/internal/v1/patient-context", json=payload())
-        api.post("/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"})
+        post_stream(api,"/internal/v1/patient-context", json=payload())
+        post_stream(api,"/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"})
         self.assertIn("[AI 일반 지식·출처 없음]", provider.requests[-1].input)
 
     def test_stream_sends_assessment_in_meta_then_text(self) -> None:
         api = client(ScriptedProvider())
-        api.post("/internal/v1/patient-context", json=payload())
+        post_stream(api,"/internal/v1/patient-context", json=payload())
 
         response = api.post("/internal/v1/clinical-recommendations/stream", json={"patient_id": "pid-1"})
 
@@ -120,10 +117,10 @@ class ClinicalRecommendationApiTest(unittest.TestCase):
 
     def test_invalid_extraction_is_ignored_and_findings_endpoint_lists_vocabulary(self) -> None:
         api = client(ScriptedProvider(extraction="not json"))
-        api.post("/internal/v1/patient-context", json=payload())
+        post_stream(api,"/internal/v1/patient-context", json=payload())
 
         with self.assertLogs("uvicorn.error", level="WARNING"):
-            response = api.post("/internal/v1/clinical-recommendations", json={"patient_id": "pid-1", "clinical_note": "혈변"})
+            response = post_stream(api,"/internal/v1/clinical-recommendations", json={"patient_id": "pid-1", "clinical_note": "혈변"})
         self.assertEqual(response.json()["assessment"]["findings_used"], {})
 
         listed = api.get("/internal/v1/clinical-recommendations/findings").json()
@@ -133,24 +130,24 @@ class ClinicalRecommendationApiTest(unittest.TestCase):
     def test_without_rules_the_endpoint_fails_closed_and_chat_is_unchanged(self) -> None:
         provider = ScriptedProvider()
         api = client(provider, rules=False)
-        api.post("/internal/v1/patient-context", json=payload())
+        post_stream(api,"/internal/v1/patient-context", json=payload())
 
-        response = api.post("/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"})
+        response = post_stream(api,"/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"})
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response.json()["code"], "RECOMMENDATION_UNAVAILABLE")
 
-        api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "추천 검사 알려줘"})
+        post_stream(api,"/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "추천 검사 알려줘"})
         self.assertNotIn("[말뭉치 규칙 평가 결과", provider.requests[-1].input)
 
     def test_chat_adds_rule_results_only_for_diagnosis_or_test_questions(self) -> None:
         provider = ScriptedProvider()
         api = client(provider)
-        api.post("/internal/v1/patient-context", json=payload())
+        post_stream(api,"/internal/v1/patient-context", json=payload())
 
-        api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "최근 혈당 추이는?"})
+        post_stream(api,"/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "최근 혈당 추이는?"})
         self.assertNotIn("[말뭉치 규칙 평가 결과", provider.requests[-1].input)
 
-        response = api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "추가로 필요한 검사는?"})
+        response = post_stream(api,"/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "추가로 필요한 검사는?"})
         self.assertIn("[말뭉치 규칙 평가 결과", provider.requests[-1].input)
         evidence = response.json()["evidence"]
         self.assertLessEqual(len([item for item in evidence if item["chunk_id"] in {"335-C01-chunk", "335-C03-chunk", "404-C03-chunk"}]), 4)
@@ -179,9 +176,9 @@ class DurRecommendationApiTest(unittest.TestCase):
         api = TestClient(create_app(ClinicalChatService(provider), RawEmrPayloadMapper(), PatientContextStore(),  # type: ignore[arg-type]
                                     corpus=StaticCorpus(CorpusSnapshot(evidence, engine))))
         emr = source(medicineDtailList=[{"medCode": "111111111", "medName": "클래리정"}, {"medCode": "222222222", "medName": "심바정"}])
-        api.post("/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": emr})
+        post_stream(api,"/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": emr})
 
-        body = api.post("/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"}).json()
+        body = post_stream(api,"/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"}).json()
         alerts = body["assessment"]["medication_alerts"]
         self.assertEqual([a["type"] for a in alerts["alerts"]], ["병용금기"])
         self.assertEqual(alerts["source"]["license"], "KOGL Type 1 (공공누리 제1유형 — 출처표시)")
@@ -193,16 +190,16 @@ class DurRecommendationApiTest(unittest.TestCase):
 
         # A question about the DUR check alone is answered by the server's block, without the model or evidence.
         sent = len(provider.requests)
-        body = api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "현재 복용 약 병용금기 있나요?"}).json()
+        body = post_stream(api,"/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "현재 복용 약 병용금기 있나요?"}).json()
         self.assertEqual(len(provider.requests), sent)
         self.assertTrue(body["answer"].startswith("처방 점검 결과는 아래와 같습니다.\n\n[처방 점검 — 심평원 DUR 목록]\n• 병용금기: 클래리정 + 심바정"))
         self.assertIsNone(body.get("evidence"))
         # Plain wording without DUR terms is the same question.
-        body = api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "이 약들 같이 먹어도 괜찮아?"}).json()
+        body = post_stream(api,"/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "이 약들 같이 먹어도 괜찮아?"}).json()
         self.assertEqual(len(provider.requests), sent)
         self.assertIn("근육병증", body["answer"])
 
-        api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "현재 복용 약 병용금기가 있으면 이유도 설명해 주세요."})
+        post_stream(api,"/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "현재 복용 약 병용금기가 있으면 이유도 설명해 주세요."})
         self.assertIn("병용금기", provider.requests[-1].input)
         self.assertIn("근육병증", provider.requests[-1].input)
         # A medication question carries the DUR result but not the unrelated diagnosis/test rule items.
@@ -211,7 +208,7 @@ class DurRecommendationApiTest(unittest.TestCase):
 
         # A question with no rule inputs (SOAP) still carries the DUR alerts, but not the unrelated rule items,
         # and the answer always ends with the fixed DUR block (JSON and streaming).
-        body = api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "SOAP 형식으로 정리해 주세요."}).json()
+        body = post_stream(api,"/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "SOAP 형식으로 정리해 주세요."}).json()
         rules = prompt_rules(provider.requests[-1].input)
         self.assertEqual(list(rules), ["DUR 점검 결과"])
         self.assertEqual([alert["유형"] for alert in rules["DUR 점검 결과"]["경고"]], ["병용금기"])
@@ -223,9 +220,9 @@ class DurRecommendationApiTest(unittest.TestCase):
         self.assertLess(stream.index("[처방 점검"), stream.index("event: done"))
 
         # A drug named in the question is checked as one to add.
-        api.post("/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": source(
+        post_stream(api,"/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": source(
             medicineDtailList=[{"medCode": "222222222", "medName": "심바정"}])})
-        api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "clarithromycin 추가해도 될까요?"})
+        post_stream(api,"/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "clarithromycin 추가해도 될까요?"})
         prompt = provider.requests[-1].input
         rules = prompt_rules(prompt)
         pair = next(alert for alert in rules["DUR 점검 결과"]["경고"] if alert["유형"] == "병용금기")
@@ -233,17 +230,17 @@ class DurRecommendationApiTest(unittest.TestCase):
         self.assertEqual(rules["DUR 점검 결과"]["추가 예정 약"], [{"이름": "clarithromycin", "성분명": "clarithromycin"}])
 
         # Pregnancy stated in the recommendation question turns 임부금기 from possible (woman aged 30) into met.
-        api.post("/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": source(
+        post_stream(api,"/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": source(
             calculationContext={"age_years": 30, "sex": "female"}, medicineDtailList=[{"medCode": "222222222", "medName": "심바정"}])})
-        body = api.post("/internal/v1/clinical-recommendations", json={"patient_id": "pid-1", "question": "처방 점검"}).json()
+        body = post_stream(api,"/internal/v1/clinical-recommendations", json={"patient_id": "pid-1", "question": "처방 점검"}).json()
         self.assertEqual([(a["type"], a["status"]) for a in body["assessment"]["medication_alerts"]["alerts"]], [("임부금기", "possible")])
-        body = api.post("/internal/v1/clinical-recommendations", json={"patient_id": "pid-1", "question": "임신 10주 환자 처방 점검"}).json()
+        body = post_stream(api,"/internal/v1/clinical-recommendations", json={"patient_id": "pid-1", "question": "임신 10주 환자 처방 점검"}).json()
         self.assertEqual(body["assessment"]["findings_used"], {"pregnancy": True})
         self.assertEqual([(a["type"], a["status"]) for a in body["assessment"]["medication_alerts"]["alerts"]], [("임부금기", "met")])
 
         # Memo and question disagree without a change cue: neither is applied, 임부금기 asks to confirm.
         request = {"patient_id": "pid-1", "clinical_note": "임신 10주", "question": "임신 아님"}
-        body = api.post("/internal/v1/clinical-recommendations", json=request).json()
+        body = post_stream(api,"/internal/v1/clinical-recommendations", json=request).json()
         self.assertNotIn("pregnancy", body["assessment"]["findings_used"])
         self.assertEqual(body["assessment"]["finding_conflicts"], {"pregnancy": {"clinical_note": True, "question": False}})
         alert = body["assessment"]["medication_alerts"]["alerts"][0]
@@ -251,15 +248,15 @@ class DurRecommendationApiTest(unittest.TestCase):
         self.assertIn("서로 다름", alert["missing"][0]["label"])
         self.assertIn('"소견 충돌":{"임신":{"진료 메모":true,"질문":false}}', provider.requests[-1].input)
         # Explicit findings win, and there is nothing left to confirm.
-        body = api.post("/internal/v1/clinical-recommendations", json={**request, "findings": {"pregnancy": False}}).json()
+        body = post_stream(api,"/internal/v1/clinical-recommendations", json={**request, "findings": {"pregnancy": False}}).json()
         self.assertFalse(body["assessment"]["findings_used"]["pregnancy"])
         self.assertNotIn("finding_conflicts", body["assessment"])
         self.assertEqual(body["assessment"]["medication_alerts"]["alerts"], [])
         # A change of status stated in the question overrides the older memo.
-        body = api.post("/internal/v1/clinical-recommendations", json={**request, "question": "출산 후 2주, 처방 점검"}).json()
+        body = post_stream(api,"/internal/v1/clinical-recommendations", json={**request, "question": "출산 후 2주, 처방 점검"}).json()
         self.assertFalse(body["assessment"]["findings_used"]["pregnancy"])
         self.assertNotIn("finding_conflicts", body["assessment"])
-        body = api.post("/internal/v1/clinical-recommendations", json={
+        body = post_stream(api,"/internal/v1/clinical-recommendations", json={
             "patient_id": "pid-1", "clinical_note": "임신 아님", "question": "이번에 임신 확인됨, 처방 점검"}).json()
         self.assertTrue(body["assessment"]["findings_used"]["pregnancy"])
         self.assertEqual([(a["type"], a["status"]) for a in body["assessment"]["medication_alerts"]["alerts"]], [("임부금기", "met")])
@@ -273,10 +270,10 @@ class DoseRecommendationApiTest(unittest.TestCase):
         evidence = InMemoryEvidenceIndex.from_records([*RULES["chunks.jsonl"], *DOSE_CHUNKS], {}, include_unreviewed=True)
         service = ClinicalChatService(self.provider)  # type: ignore[arg-type]
         self.api = TestClient(create_app(service, RawEmrPayloadMapper(), PatientContextStore(), corpus=StaticCorpus(CorpusSnapshot(evidence, engine()))))
-        self.api.post("/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": emr()})
+        post_stream(self.api,"/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": emr()})
 
     def test_recommendation_returns_dose_results_and_the_prompt_carries_dose_rules(self) -> None:
-        body = self.api.post("/internal/v1/clinical-recommendations",
+        body = post_stream(self.api,"/internal/v1/clinical-recommendations",
                              json={"patient_id": "pid-1", "dose_drugs": ["레보티록신"]}).json()
         doses = {item["record_id"]: item for item in body["assessment"]["dose_assessments"]}
         self.assertEqual(set(doses), {"DR-PREGABALIN", "DR-LEVOTHYROXINE"})
@@ -296,16 +293,16 @@ class DoseRecommendationApiTest(unittest.TestCase):
         listing = self.api.get("/internal/v1/clinical-recommendations/findings").json()
         self.assertIn("pregabalin", listing["dose_drugs"])
         self.assertIn("basal_insulin", listing["dose_drugs"])
-        too_many = self.api.post("/internal/v1/clinical-recommendations", json={"patient_id": "pid-1", "dose_drugs": ["x"] * 21})
+        too_many = post_stream(self.api,"/internal/v1/clinical-recommendations", json={"patient_id": "pid-1", "dose_drugs": ["x"] * 21})
         self.assertEqual(too_many.status_code, 400)
 
     def test_chat_dose_question_gets_dose_results(self) -> None:
-        self.api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "프레가발린 용량 괜찮나요?"})
+        post_stream(self.api,"/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "프레가발린 용량 괜찮나요?"})
         prompt = self.provider.requests[-1].input
         self.assertIn("'용량 결과'는 말뭉치 용량 규칙을", prompt)
         self.assertIn('"기준 1일 최대(mg)":75.0', prompt)
         # A dose question carries only the dose (and DUR) results, without the rule items or their evidence numbers.
         self.assertNotIn("규칙 평가 항목", prompt_rules(prompt))
         self.assertNotIn("근거 번호", json.dumps(prompt_rules(prompt), ensure_ascii=False))
-        self.api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "최근 혈당 추이는?"})
+        post_stream(self.api,"/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "최근 혈당 추이는?"})
         self.assertNotIn("용량 결과", self.provider.requests[-1].input)

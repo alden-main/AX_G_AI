@@ -72,28 +72,29 @@
 8. (기준 실행을 지정한 경우) 비교
 
 ```bash
-# 서버의 127.0.0.1:8100 API에 SSH 터널로 연결 (키 인증 필요)
+# 서버의 127.0.0.1:8500 API에 SSH 터널로 연결 (키 인증 필요)
 benchmarks/run-benchmark.sh --server deploy@gpu01 --label img-1.0.0-qwen3-32b
 
 # judge 제안 포함, 이전 실행과 비교. judge 키는 환경 변수로만 넘깁니다.
 export BENCHMARK_JUDGE_API_KEY=...
 benchmarks/run-benchmark.sh --server deploy@gpu01 --label img-1.0.1-qwen3-32b \
   --judge-url https://api.openai.com/v1/chat/completions --judge-model <judge-model> \
-  --compare-with benchmarks/output/<이전 core JSON 실행 폴더>
+  --compare-with benchmarks/output/<이전 core 실행 폴더>
 
-# 터널 없이 직접 접속, SSE 포함, core만
-benchmarks/run-benchmark.sh --base-url http://127.0.0.1:8100 --label local-dev --suite core --mode both
+# 터널 없이 직접 접속, core만
+benchmarks/run-benchmark.sh --base-url http://127.0.0.1:8500 --label local-dev --suite core
 ```
 
-- **기본값:** `--suite all`(core + recommendation), `--mode json`, `--split development`입니다. 전체 옵션은 `--help`로 확인합니다.
+- **기본값:** `--suite all`(core + recommendation), `--split development`입니다. 전체 옵션은 `--help`로 확인합니다.
+- **호출 경로:** API가 SSE(`/stream`)만 제공하므로 모든 실행이 Bridge와 같은 스트리밍 경로를 씁니다(아래 「SSE 측정」). `--mode` 옵션은 없습니다. 예전 JSON 실행(`manifest.json`의 `mode: json`)과 `compare`하면 설정 차이로 표시됩니다.
 - **사전 점검:** `/health` 다음에 `/internal/v1/clinical-recommendations/findings`로 말뭉치 규칙 적재 여부를 확인하고, 결과를 `readiness.txt`와 요약에 남깁니다.
   - 규칙이 없으면(503) recommendation 실행 전에 중단합니다. 그래도 진행하려면 `--skip-readiness`를 씁니다. core만 실행할 때는 경고만 냅니다.
   - DUR 사용 여부는 API가 직접 알려 주지 않습니다. 소견 목록의 `pregnancy` 유무로 추정만 합니다. 실제 확인은 실행 뒤 자동 대조 결과로 합니다. `dur_unavailable`이나 `dur_dataset_differs`가 나오면 요약에 경고가 표시됩니다.
 - **진행 표시:** 실행 중에는 업무마다 사례 번호, 상태, 소요 시간, 경과 시간, 남은 예상 시간을 stderr에 출력합니다. 남은 예상 시간은 끝난 사례의 평균 소요 시간으로 계산합니다. `--quiet`로 끌 수 있고, `python -m benchmarks run`에도 같은 옵션이 있습니다.
-- **judge 적용 범위 안내:** judge 옵션이 적용되지 않는 설정(SSE만 실행, recommendation만 실행)이면 경고를 남깁니다. 비교 대상 중 한쪽에 judge 결과가 없으면 judge 비교를 생략한다고 기록합니다.
+- **judge 적용 범위 안내:** judge 옵션이 적용되지 않는 설정(recommendation만 실행)이면 경고를 남깁니다. 비교 대상 중 한쪽에 judge 결과가 없으면 judge 비교를 생략한다고 기록합니다.
 - **실패 기록:** 중간에 실패하면 세션 폴더의 `summary.txt`에 실패 사유가 남습니다. 예기치 않은 명령 오류나 Ctrl-C로 끝난 경우는 종료 코드가 남습니다.
 - **결과 위치:** 실행마다 `benchmarks/output/<run_id>/`에 `report.json`이 저장되고, judge를 지정했으면 `judge-report.json`도 저장됩니다. 세션 기록은 `benchmarks/output/session-<시각>-<label>/`에 남습니다(`runs.txt`, `summary.txt`, `compare.json`, `judge-compare.json`, `session.log`).
-- **judge 범위:** judge는 core JSON 실행에만 적용됩니다. `--compare-with`에는 이전 세션 `runs.txt`에 적힌 `core json` 실행 폴더를 넘깁니다.
+- **judge 범위:** judge는 core 실행에만 적용됩니다. `--compare-with`에는 이전 세션 `runs.txt`에 적힌 `core` 실행 폴더를 넘깁니다.
 - **SSH 터널:** `BatchMode`로 열기 때문에 비밀번호 입력을 기다리지 않습니다. SSH 키를 등록해 두세요.
 - **label:** 이미지 태그와 모델명처럼 비밀이 아닌 값을 넣으세요. 서버 구성(`.env`)은 API로 확인할 수 없으므로 따로 기록해 두세요.
 - **사람 검토 후:** 검토 시트를 판정하고 `commit-review`한 뒤 `report`를 다시 실행하면 확정 점수가 나옵니다.
@@ -105,9 +106,8 @@ benchmarks/run-benchmark.sh --base-url http://127.0.0.1:8100 --label local-dev -
 ```bash
 .venv/bin/python -m benchmarks.generate          # 데이터 재생성(생성기를 수정했을 때)
 .venv/bin/python -m benchmarks validate          # core와 recommendation 검증
-.venv/bin/python -m benchmarks run --live --base-url http://127.0.0.1:8100 --label baseline --split development
-.venv/bin/python -m benchmarks run --live --base-url http://127.0.0.1:8100 --label streaming --split development --mode sse
-.venv/bin/python -m benchmarks run --live --base-url http://127.0.0.1:8100 --label rec --split development --suite recommendation
+.venv/bin/python -m benchmarks run --live --base-url http://127.0.0.1:8500 --label baseline --split development
+.venv/bin/python -m benchmarks run --live --base-url http://127.0.0.1:8500 --label rec --split development --suite recommendation
 .venv/bin/python -m benchmarks review benchmarks/output/<run_id>          # core만
 .venv/bin/python -m benchmarks judge benchmarks/output/<run_id> --live --url http://127.0.0.1:8000/v1/chat/completions --model <judge-model>
 .venv/bin/python -m benchmarks commit-review benchmarks/output/<run_id> --file benchmarks/output/<run_id>/review.jsonl --actor <reviewer>
@@ -118,8 +118,8 @@ benchmarks/run-benchmark.sh --base-url http://127.0.0.1:8100 --label local-dev -
 - holdout은 `--split holdout --allow-holdout`을 줄 때만 실행됩니다. 프롬프트를 조정할 때는 쓰지 않습니다. 데이터가 저장소에 공개되어 있으므로 접근 제어나 암기 방지는 보장하지 않습니다.
 - 실행기는 입력 파일만 읽고, 허용 필드만으로 요청을 새로 만듭니다. 정답과 기준은 요청에 들어가지 않습니다.
 - 결과는 Git과 Docker에서 제외된 `benchmarks/output/`에만 기록됩니다. 테스트는 임시 디렉터리를 씁니다.
-- `--mode sse`의 동작은 다음과 같습니다.
-  - 요약, 채팅, 추천은 `/stream` 경로를 씁니다.
+- SSE 측정은 다음과 같습니다.
+  - 요약, 채팅, 추천은 `/stream` 경로를 씁니다. 검토 시트·judge는 이어 붙인 `delta` 텍스트를 답변으로, `meta`의 근거·평가 결과를 함께 씁니다.
   - 환자 문맥 준비도 화면에 처음 표시되는 `/patient-context/stream`으로 측정하며, `meta.status: ready`가 없으면 실패입니다.
   - 측정값은 클라이언트 단조 시계 기준입니다. 첫 텍스트 시간, 조각 간격, `done`까지의 시간을 잽니다.
   - SSE 조각은 토큰이 아니므로 TTFT·토큰 지표는 N/A입니다. `--timeout`은 네트워크 작업 제한이며 스트림 전체 시간 제한이 아닙니다.

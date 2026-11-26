@@ -7,6 +7,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from ax_g_ai.runtime import create_runtime_app
+from tests.sse import post_stream
 
 
 class InternalNetworkAuthenticationTest(TestCase):
@@ -16,7 +17,7 @@ class InternalNetworkAuthenticationTest(TestCase):
         }
         with patch.dict(os.environ, environment, clear=True):
             client = TestClient(create_runtime_app())
-            response = client.post(
+            response = post_stream(client,
                 "/internal/v1/patient-context",
                 json={"patient_id": "patient-1", "emr_payload": {}},
             )

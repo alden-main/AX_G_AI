@@ -22,7 +22,8 @@ services:
       # 모델 최대 32768. 가중치(bf16 약 32.5GB)를 뺀 나머지가 KV 캐시이며, MLA라 토큰당 약 32KB입니다.
       # 사고 모드는 입력(최대 약 14K 토큰) 뒤에 사고·답변 토큰(AI_MAX_OUTPUT_TOKENS)이 붙으므로 모델 최대값을 씁니다.
       - --context-length=${SGLANG_CONTEXT_LENGTH:-32768}
-      # 가중치 + KV 캐시가 쓰는 GPU 메모리 비율입니다. A100 40GB 기준값이며 OOM이면 낮추세요.
+      # 가중치 + KV 캐시가 쓰는 GPU 메모리 비율입니다. OOM이면 낮추세요.
+      # A100 80GB에서 L1-30B-A5B(가중치 약 59GB)는 KV 캐시가 약 11GB(약 18만 토큰)라 기동 OOM이면 0.85로 낮춥니다.
       - --mem-fraction-static=${SGLANG_MEM_FRACTION_STATIC:-0.88}
       # 모델 카드 권장 커널입니다.
       - --attention-backend=${SGLANG_ATTENTION_BACKEND:-triton}
@@ -69,6 +70,10 @@ services:
       AI_DISABLE_THINKING: ${AI_DISABLE_THINKING:-false}
       # 모델 generation_config에 온도가 없어 지정하지 않으면 SGLang이 1.0을 써서 같은 입력에도 답이 크게 흔들립니다.
       AI_TEMPERATURE: ${AI_TEMPERATURE:-0.3}
+      # 모델 카드 권장 반복 억제 계수와 지시문 앞 신원 문장. 비워 두면 보내지 않습니다(16B 기본).
+      # start-deployment.sh가 L1-30B-A5B면 1.05와 "You are Chain-of-Evidence, …", 온도 0으로 채웁니다.
+      AI_REPETITION_PENALTY: ${AI_REPETITION_PENALTY:-}
+      AI_SYSTEM_PROMPT_PREFIX: ${AI_SYSTEM_PROMPT_PREFIX:-}
       # 사고 + 답변 토큰 상한(모델 카드 권장 2048 이상). 넘으면 잘린 응답으로 보고 오류 처리합니다.
       AI_MAX_OUTPUT_TOKENS: ${AI_MAX_OUTPUT_TOKENS:-6144}
       # 사고 시간을 포함한 Provider 요청 제한 시간(초). 코드 기본값 30초로는 부족합니다.

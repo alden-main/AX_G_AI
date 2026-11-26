@@ -72,8 +72,23 @@ if [[ $mode != openai ]]; then
     served=${model##*/}
     export AI_MODEL="$(printf '%s' "$served" | tr '[:upper:]' '[:lower:]')"
   fi
+  # 모델 카드 권장 설정(셸·.env에 이미 있으면 그 값을 쓴다). compose 파일은 모델별로 나눌 수 없어 여기서 정한다.
+  case "$model" in
+    learning-unit/L1-30B-*)
+      # 정렬 학습한 신원 문장을 지시문 앞에, 반복 억제 1.05(1.0이면 긴 답변에서 구절 반복), 결정적 임상 작업은 온도 0.
+      is_set AI_SYSTEM_PROMPT_PREFIX || export AI_SYSTEM_PROMPT_PREFIX="You are Chain-of-Evidence, a medical AI assistant developed by Lunit."
+      is_set AI_REPETITION_PENALTY || export AI_REPETITION_PENALTY=1.05
+      is_set AI_TEMPERATURE || export AI_TEMPERATURE=0
+      # 30B는 DUR 경고의 임상적 의미와 검토 선택지(근거 포함)를 쓸 수 있는 capable 프로필로 띄운다.
+      is_set AX_G_MODEL_PROFILE || export AX_G_MODEL_PROFILE=capable
+      ;;
+  esac
   args+=(-f "compose.$engine.yaml")
   printf '추론 서버: %s (모델 %s, 응답 이름 %s)\n' "$engine" "$LLM_MODEL" "$(env_value AI_MODEL)"
+  temperature=$(env_value AI_TEMPERATURE || true)
+  penalty=$(env_value AI_REPETITION_PENALTY || true)
+  prefix=$(env_value AI_SYSTEM_PROMPT_PREFIX || true)
+  printf '샘플링: 온도 %s, 반복 억제 %s, 지시문 앞 문장 %s\n' "${temperature:-compose 기본값}" "${penalty:-보내지 않음}" "${prefix:-없음}"
 
   # compose.<엔진>.yaml의 `!override`는 Docker Compose 2.24.4 이상에서 동작한다.
   compose_version=$(docker compose version --short 2>/dev/null || true)

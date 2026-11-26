@@ -14,6 +14,7 @@ from ax_g_ai.services.clinical_chat import ClinicalChatService
 from ax_g_ai.services.clinical_evidence import InMemoryEvidenceIndex
 from ax_g_ai.services.corpus_snapshot import CorpusSnapshot, StaticCorpus
 from tests.services.test_clinical_chat import SNAPSHOT, RecordingProvider
+from tests.sse import collect, post_stream
 
 REPO_CORPUS = Path(__file__).resolve().parents[2] / "text_data" / "corpus"
 SOURCE_A = {"id": "PAPER-WSES-CHOLECYSTITIS-2020", "title": "WSES 2020", "locator": "Statements 3.1–3.5", "url": "https://example.org/wses", "ai_use": "A"}
@@ -130,7 +131,7 @@ class EvidenceChatTest(unittest.IsolatedAsyncioTestCase):
         service = ClinicalChatService(provider)
         with self.assertLogs("uvicorn.error", level="INFO") as logs:
             evidence = service.find_evidence("급성 담낭염 수술 시기", StaticRetriever(self.found))
-            await service.answer_prepared_snapshot(question="급성 담낭염 수술 시기", snapshot=SNAPSHOT, evidence=evidence)
+            await collect(service.stream_prepared_snapshot(question="급성 담낭염 수술 시기", snapshot=SNAPSHOT, evidence=evidence))
         prompt = provider.requests[0].input
         self.assertIn("[최신화 근거 문단", prompt)
         self.assertIn("[근거 n: 출처명]", prompt)
@@ -148,14 +149,14 @@ class EvidenceChatTest(unittest.IsolatedAsyncioTestCase):
         service = ClinicalChatService(provider)
         with self.assertLogs("uvicorn.error", level="WARNING"):
             evidence = service.find_evidence("질문", StaticRetriever(fail=True))
-        answer = await service.answer_prepared_snapshot(question="질문", snapshot=SNAPSHOT, evidence=evidence)
-        self.assertEqual(answer, "요약 답변")
+        answer = await collect(service.stream_prepared_snapshot(question="질문", snapshot=SNAPSHOT, evidence=evidence))
+        self.assertEqual(answer, "부분 답변")
         self.assertNotIn("[최신화 근거 문단", provider.requests[0].input)
 
     async def test_answer_uses_only_the_evidence_it_is_given(self) -> None:
         # The service has no retriever of its own: evidence comes from the request's corpus snapshot.
         provider = RecordingProvider()
-        await ClinicalChatService(provider).answer_prepared_snapshot(question="급성 담낭염 수술 시기", snapshot=SNAPSHOT)
+        await collect(ClinicalChatService(provider).stream_prepared_snapshot(question="급성 담낭염 수술 시기", snapshot=SNAPSHOT))
         self.assertNotIn("[최신화 근거 문단", provider.requests[0].input)
 
 
@@ -169,30 +170,18 @@ class EvidenceApiTest(unittest.TestCase):
         corpus = StaticCorpus(CorpusSnapshot(evidence=StaticRetriever(found)))
         self.client = TestClient(create_app(ClinicalChatService(self.provider), RawEmrPayloadMapper(), corpus=corpus))
         payload = {"patient": {"patientId": "pid-1"}, "bloodSugarList": [{"measuredAt": "2026-09-22 10:30:00", "glucoseValue": 120}]}
-        self.provider_answer_for_summary()
-        self.client.post("/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": payload})
+        post_stream(self.client, "/internal/v1/patient-context", json={"patient_id": "pid-1", "emr_payload": payload})
 
-    def provider_answer_for_summary(self) -> None:
-        summary = json.dumps({"message": "요약", "sections": [], "guidance": "확인"}, ensure_ascii=False)
-
-        async def respond_structured(request, output_type):
-            self.provider.requests.append(request)
-            return output_type.model_validate_json(summary)
-
-        self.provider.respond_structured = respond_structured  # type: ignore[method-assign]
-
-    def test_chat_response_and_stream_meta_list_the_cited_evidence(self) -> None:
+    def test_chat_stream_meta_lists_the_cited_evidence(self) -> None:
         body = {"patient_id": "pid-1", "question": "급성 담낭염 수술 시기"}
-        response = self.client.post("/internal/v1/clinical-chat", json=body)
+        response = post_stream(self.client, "/internal/v1/clinical-chat", json=body)
         self.assertEqual(response.status_code, 200)
         evidence = response.json()["evidence"]
         self.assertEqual([(e["n"], e["chunk_id"], e["review_status"]) for e in evidence],
                          [(1, "369-C03-chunk", "draft"), (2, "369-C04-chunk", "approved")])
         self.assertFalse(any("review_label" in e for e in evidence))
         self.assertEqual(evidence[0]["sources"][0]["url"], "https://example.org/wses")
-        stream = self.client.post("/internal/v1/clinical-chat/stream", json=body)
-        meta = json.loads(stream.text.split("\n")[1].removeprefix("data: "))
-        self.assertEqual(meta["evidence"][0]["chunk_id"], "369-C03-chunk")
+        self.assertEqual(response.events[0], "meta")  # evidence arrives in meta, before the text
 
 
 @unittest.skipUnless((REPO_CORPUS / "chunks.jsonl").is_file(), "generated corpus not present")

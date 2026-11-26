@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-import json
 import unittest
 from pathlib import Path
 
@@ -9,6 +8,7 @@ from pydantic import ValidationError
 
 from ax_g_ai.services.clinical_recommendation import ClinicalRecommender, RuleCorpus
 from ax_g_ai.services.clinical_recommendation.schema import AssessmentPayload, LabInterpretation, RecommendationItem
+from tests.sse import post_stream
 from tests.test_clinical_recommendation_api import ScriptedProvider, client, payload
 
 REPO_CORPUS = Path(__file__).resolve().parents[2] / "text_data" / "corpus"
@@ -46,20 +46,14 @@ class SchemaTest(unittest.TestCase):
 
 
 class ApiSchemaTest(unittest.TestCase):
-    def test_http_and_sse_carry_the_same_assessment_json(self) -> None:
+    def test_stream_meta_carries_a_valid_assessment(self) -> None:
+        # The SSE meta is the only place the assessment reaches Bridge; it must match the documented schema.
         api = client(ScriptedProvider())
-        api.post("/internal/v1/patient-context", json=payload())
-        body = {"patient_id": "pid-1", "clinical_note": "혈변"}
-        http = api.post("/internal/v1/clinical-recommendations", json=body).json()["assessment"]
-        meta_line = next(line for line in api.post("/internal/v1/clinical-recommendations/stream", json=body).text.splitlines()
-                         if line.startswith("data:") and '"assessment"' in line)
-        self.assertEqual(json.dumps(http, ensure_ascii=False), json.dumps(json.loads(meta_line[5:])["assessment"], ensure_ascii=False))
-
-    def test_openapi_documents_the_assessment(self) -> None:
-        schemas = client(ScriptedProvider()).get("/openapi.json").json()["components"]["schemas"]
-        self.assertEqual(schemas["ClinicalRecommendationResponseBody"]["properties"]["assessment"]["$ref"],
-                         "#/components/schemas/AssessmentPayload")
-        self.assertEqual(schemas["RecommendationItem"]["properties"]["status"]["enum"], ["met", "possible"])
+        post_stream(api, "/internal/v1/patient-context", json=payload())
+        response = post_stream(api, "/internal/v1/clinical-recommendations", json={"patient_id": "pid-1", "clinical_note": "혈변"})
+        assessment = response.meta["assessment"]
+        self.assertEqual(AssessmentPayload.model_validate(assessment).model_dump(mode="json"), assessment)
+        self.assertEqual(response.events[0], "meta")
 
 
 class SchemaDocumentTest(unittest.TestCase):

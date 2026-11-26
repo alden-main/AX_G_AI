@@ -44,6 +44,22 @@ class AISettingsTest(unittest.TestCase):
             with self.subTest(environment=environment), self.assertRaises(ConfigurationError):
                 settings(**environment)
 
+    def test_model_card_sampling_settings_are_limited_to_openai_compatible(self) -> None:
+        compatible = {"AI_PROVIDER": "openai_compatible", "AI_BASE_URL": "http://sglang:8000/v1", "AI_MODEL": "l1"}
+        prefix = "You are Chain-of-Evidence, a medical AI assistant developed by Lunit."
+
+        result = settings(**compatible, AI_REPETITION_PENALTY="1.05", AI_SYSTEM_PROMPT_PREFIX=prefix)
+        self.assertEqual((result.repetition_penalty, result.system_prompt_prefix), (1.05, prefix))
+        empty = settings(**compatible, AI_REPETITION_PENALTY="", AI_SYSTEM_PROMPT_PREFIX="")  # compose passes empty values
+        self.assertEqual((empty.repetition_penalty, empty.system_prompt_prefix), (None, None))
+        for environment in (
+            {**compatible, "AI_REPETITION_PENALTY": "0"},
+            {"OPENAI_API_KEY": "secret", "AI_REPETITION_PENALTY": "1.05"},
+            {"OPENAI_API_KEY": "secret", "AI_SYSTEM_PROMPT_PREFIX": prefix},
+        ):
+            with self.subTest(environment=environment), self.assertRaises(ConfigurationError):
+                settings(**environment)
+
     def test_openai_key_and_model_are_not_sent_to_a_self_hosted_server(self) -> None:
         result = settings(
             AI_PROVIDER="openai_compatible", AI_BASE_URL="http://vllm:8000/v1", AI_MODEL="qwen3",

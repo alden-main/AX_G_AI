@@ -17,6 +17,7 @@ from ax_g_ai.services.clinical_evidence import InMemoryEvidenceIndex
 from ax_g_ai.services.corpus_snapshot import CorpusSnapshot, StaticCorpus
 from ax_g_ai.services.patient_context_store import PatientContextStore
 from tests.services.test_clinical_recommendation import RULES, recommender, source
+from tests.sse import post_stream
 from tests.test_clinical_recommendation_api import ScriptedProvider, payload
 
 
@@ -66,29 +67,29 @@ class SnapshotApiTest(unittest.TestCase):
         self.api = TestClient(create_app(service, RawEmrPayloadMapper(), self.store, corpus=self.corpus))
 
     def test_prepared_context_records_its_release_and_is_remapped_for_a_newer_one(self) -> None:
-        self.api.post("/internal/v1/patient-context", json=payload())
+        post_stream(self.api,"/internal/v1/patient-context", json=payload())
         self.assertEqual(asyncio.run(self.store.get("pid-1")).rule_release, 1)
         newer = recommender()
         self.corpus.current = CorpusSnapshot(self.corpus.current.evidence, newer, release_id=2)
         with patch.object(newer, "prepare", wraps=newer.prepare) as remap:
-            response = self.api.post("/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"})
+            response = post_stream(self.api,"/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"})
             self.assertEqual(response.status_code, 200)
-            self.api.post("/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"})
+            post_stream(self.api,"/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"})
         self.assertEqual(remap.call_count, 2)  # mapped with release 2's rules (per request; the stored context is not rewritten)
 
     def test_same_release_reuses_the_prepared_facts(self) -> None:
-        self.api.post("/internal/v1/patient-context", json=payload())
+        post_stream(self.api,"/internal/v1/patient-context", json=payload())
         engine = self.corpus.current.recommender
         with patch.object(engine, "prepare", wraps=engine.prepare) as remap:
-            self.api.post("/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"})
+            post_stream(self.api,"/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"})
         remap.assert_not_called()
 
     def test_evidence_is_searched_in_the_request_snapshot(self) -> None:
-        self.api.post("/internal/v1/patient-context", json=payload())
-        response = self.api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "만성 콩팥병 추천 검사"})
+        post_stream(self.api,"/internal/v1/patient-context", json=payload())
+        response = post_stream(self.api,"/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "만성 콩팥병 추천 검사"})
         self.assertTrue(response.json().get("evidence"))
         self.corpus.current = CorpusSnapshot(InMemoryEvidenceIndex([]), None, release_id=3)
-        response = self.api.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "만성 콩팥병 추천 검사"})
+        response = post_stream(self.api,"/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "만성 콩팥병 추천 검사"})
         self.assertNotIn("evidence", response.json())  # the new (empty) snapshot, not a retriever kept in the service
 
 
@@ -113,8 +114,8 @@ class ConcurrentCallsTest(unittest.TestCase):
         evidence = InMemoryEvidenceIndex.from_records(RULES["chunks.jsonl"], {}, include_unreviewed=True)
         api = TestClient(create_app(Service(ScriptedProvider()), RawEmrPayloadMapper(), PatientContextStore(),  # type: ignore[arg-type]
                                     corpus=StaticCorpus(CorpusSnapshot(evidence, recommender()))))
-        api.post("/internal/v1/patient-context", json=payload())
-        response = api.post("/internal/v1/clinical-recommendations", json={"patient_id": "pid-1", "clinical_note": "혈변"})
+        post_stream(api,"/internal/v1/patient-context", json=payload())
+        response = post_stream(api,"/internal/v1/clinical-recommendations", json={"patient_id": "pid-1", "clinical_note": "혈변"})
         self.assertTrue(overlap["seen"])
         self.assertEqual(response.json()["assessment"]["findings_used"].get("hematochezia"), True)
 

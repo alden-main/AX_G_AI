@@ -9,7 +9,7 @@ from ax_g_ai.errors import ClinicalChatProviderUnavailableError
 from ax_g_ai.prompts.clinical import CLINICAL_INSTRUCTIONS, compose_prepared_snapshot_question
 from ax_g_ai.services.clinical_chat import ClinicalChatService
 from ax_g_ai.services.ports import OpenAIProviderError, OpenAIRequest, ProviderAnswer, ProviderOutputError
-from ax_g_ai.services.prepared_patient_summary import PreparedPatientSummary
+from tests.sse import collect
 
 
 class RecordingProvider:
@@ -52,7 +52,7 @@ class ClinicalChatServiceTest(unittest.IsolatedAsyncioTestCase):
 
         with self.assertLogs("uvicorn.error", level="WARNING") as logs:
             with self.assertRaises(ClinicalChatProviderUnavailableError):
-                await service.answer_prepared_snapshot(question="환자 이름을 포함한 질문", snapshot=SNAPSHOT)
+                await collect(service.stream_prepared_snapshot(question="환자 이름을 포함한 질문", snapshot=SNAPSHOT))
 
         self.assertIn("reason=provider failed", logs.output[0])
         self.assertNotIn("환자 이름", logs.output[0])
@@ -67,30 +67,12 @@ class ClinicalChatServiceTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(received, ["부분 "])
 
-    async def test_structured_summary_requests_the_schema_and_rejects_freeform_text(self) -> None:
-        provider = RecordingProvider(answer='{"message":"로드됨","sections":[{"label":"혈당","content":"120입니다."}],"guidance":"확인하세요."}')
-
-        summary = await ClinicalChatService(provider).summarize_prepared_snapshot(snapshot=SNAPSHOT)
-
-        self.assertEqual(summary.sections[0].label, "혈당")
-        self.assertEqual(provider.output_types, [PreparedPatientSummary])
-        self.assertEqual(provider.requests[0].operation, "patient_context_summary")
-        self.assertTrue(provider.requests[0].prompt_version)
-        self.assertIn("message에 EMR에서 확인되는 환자 상태를 한 문장", provider.requests[0].input)
-        self.assertIn("추가 요약 4~5줄", provider.requests[0].input)
-        self.assertIn("새로운 추정 진단이나 감별 진단은 제시하지 마세요", provider.requests[0].input)
-        self.assertNotIn("요약·분석하세요", provider.requests[0].input)
-        with self.assertLogs("uvicorn.error", level="WARNING"), self.assertRaises(ClinicalChatProviderUnavailableError):
-            await ClinicalChatService(RecordingProvider(answer="자유 형식")).summarize_prepared_snapshot(snapshot=SNAPSHOT)
-
     async def test_one_shot_summary_streams_and_answers_with_fixed_instructions(self) -> None:
         provider = RecordingProvider()
         service = ClinicalChatService(provider)
 
-        self.assertEqual(await service.summarize_once(snapshot=SNAPSHOT), "요약 답변")
         self.assertEqual([delta async for delta in service.stream_summary_once(snapshot=SNAPSHOT)], ["부분 ", "답변"])
         self.assertTrue(all(request.instructions == CLINICAL_INSTRUCTIONS for request in provider.requests))
-        self.assertEqual(provider.requests[0].input, provider.requests[1].input)
         prompt = provider.requests[0].input
         self.assertIn("추가 요약 4~5줄", prompt)
         self.assertIn("중요한 이상 소견은 빠뜨리지 마세요", prompt)

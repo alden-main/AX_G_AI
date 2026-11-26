@@ -26,7 +26,6 @@ def main():
     p.add_argument('--label', required=True, help='non-secret model/configuration label')
     p.add_argument('--repetitions', type=int, default=1)
     p.add_argument('--timeout', type=float, default=120)
-    p.add_argument('--mode', choices=['json', 'sse'], default='json')
     p.add_argument('--quiet', action='store_true', help='do not print per-task progress to stderr')
     p.add_argument('--suite', choices=sorted(SUITES), default='core',
                    help='core: summary and chat (human review); recommendation: DUR and pregnancy checks (automatic)')
@@ -65,7 +64,7 @@ def main():
         if not args.live:
             parser.error('run requires --live; no requests are made by default')
         print(run(args.base_url, args.split, args.output, label=args.label, repetitions=args.repetitions,
-                  timeout=args.timeout, allow_holdout=args.allow_holdout, mode=args.mode, suite=args.suite,
+                  timeout=args.timeout, allow_holdout=args.allow_holdout, suite=args.suite,
                   progress=None if args.quiet else stderr_progress))
     elif args.command == 'review':
         print(create(args.run_dir))

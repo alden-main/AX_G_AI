@@ -9,7 +9,7 @@ from tests.services.test_clinical_chat import RecordingProvider
 
 
 class QuestionReferenceTest(unittest.IsolatedAsyncioTestCase):
-    async def test_lookup_and_both_chat_paths_use_explicit_named_reference(self):
+    async def test_lookup_and_chat_use_explicit_named_reference(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'reference.sqlite'
             with sqlite3.connect(path) as db:
@@ -30,11 +30,9 @@ class QuestionReferenceTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(lookup.search_question('관련 없는 질문'), [])
             provider = RecordingProvider()
             service = ClinicalChatService(provider, reference_lookup=lookup)
-            await service.answer_prepared_snapshot(question='시험약을 설명해줘', snapshot={'blood_sugar': []})
+            [delta async for delta in service.stream_prepared_snapshot(question='시험약을 설명해줘', snapshot={})]
             self.assertIn('일반 효능', provider.requests[0].input)
             self.assertIn('진단 기준이 아닌', provider.requests[0].input)
-            [delta async for delta in service.stream_prepared_snapshot(question='시험약을 설명해줘', snapshot={})]
-            self.assertIn('일반 효능', provider.requests[1].input)
 
     def test_longest_names_are_preferred_and_results_are_bounded(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -1,4 +1,4 @@
-"""API runner. This module never loads or transmits benchmark references."""
+"""API runner over the SSE endpoints (the only ones the API serves). This module never loads or transmits benchmark references."""
 from __future__ import annotations
 
 import hashlib
@@ -26,8 +26,8 @@ def sha(path):
 def _valid(task, data):
     if not isinstance(data, dict):
         return False
-    if task == 'prepare':
-        return data.get('status') == 'ready'
+    if task == 'prepare':  # the patient-context stream says "ready" once the chat context is stored
+        return data.get('meta_status') == 'ready'
     answered = isinstance(data.get('answer'), str) and bool(data['answer'].strip())
     return answered and (task != 'recommendation' or isinstance(data.get('assessment'), dict))
 
@@ -50,12 +50,12 @@ def stderr_progress(event):
           f"{event['status']:<16} {took:>7} | 경과 {_duration(elapsed)}{eta}", file=sys.stderr, flush=True)
 
 
-def run(base_url, split, output, *, label, repetitions=1, timeout=120, allow_holdout=False, transport=None, mode='json',
+def run(base_url, split, output, *, label, repetitions=1, timeout=120, allow_holdout=False, transport=None,
         suite='core', progress=None):
     """``progress``: optional callable receiving one event per finished task (the CLI prints them to stderr)."""
     if split not in {'development', 'validation', 'holdout'} or (split == 'holdout' and not allow_holdout):
         raise ValueError('holdout requires --allow-holdout')
-    if repetitions < 1 or timeout <= 0 or not label or mode not in {'json', 'sse'} or suite not in SUITES:
+    if repetitions < 1 or timeout <= 0 or not label or suite not in SUITES:
         raise ValueError('invalid run settings')
     input_file = DATA / SUITES[suite]
     # A strict allowlist, not the whole case object: reference answers and labels cannot reach the service.
@@ -82,35 +82,14 @@ def run(base_url, split, output, *, label, repetitions=1, timeout=120, allow_hol
                 'commit': commit, 'working_tree_dirty': dirty, 'model': 'unknown', 'provider': 'unknown',
                 'prompt_version': 'unknown', 'corpus_version': 'unknown', 'dur_version': 'unknown',
                 'expected_dur_snapshot': dataset.get('dur_snapshot'),
-                'concurrency': 1, 'timeout_seconds': timeout, 'retries': 0, 'mode': mode,
+                'concurrency': 1, 'timeout_seconds': timeout, 'retries': 0, 'mode': 'sse',
                 'token_metrics': 'unavailable', 'dataset_review_status': 'draft'}
     records = []
     with httpx.Client(base_url=base_url, timeout=timeout, transport=transport, trust_env=False) as client:
-        def post(path, body, task):
-            start = time.monotonic()
-            try:
-                response = client.post(path, json=body)
-                elapsed = (time.monotonic() - start) * 1000
-                if not response.is_success:
-                    return {'status': 'request_error', 'http_status': response.status_code, 'elapsed_ms': elapsed}
-                try:
-                    data = response.json()
-                except ValueError:
-                    return {'status': 'invalid_response', 'elapsed_ms': elapsed}
-                if not _valid(task, data):
-                    return {'status': 'invalid_response', 'elapsed_ms': elapsed}
-                return {'status': 'success', 'elapsed_ms': elapsed, 'response': data}
-            except httpx.TimeoutException:
-                return {'status': 'timeout', 'elapsed_ms': (time.monotonic() - start) * 1000}
-            except httpx.HTTPError:
-                return {'status': 'request_error', 'elapsed_ms': (time.monotonic() - start) * 1000}
-
         def call(path, body, task):
-            if mode == 'json':
-                return post(path, body, task)
             result = stream_post(client, f'{path}/stream', body)
-            # A stream that completes must still carry what the JSON contract requires (ready status, assessment).
-            if result['status'] == 'success' and not _valid(task, {**result['response'], 'status': result['response'].get('meta_status')}):
+            # A stream that completes must still carry what the task requires (ready status, assessment).
+            if result['status'] == 'success' and not _valid(task, result['response']):
                 result['status'] = 'invalid_response'
             return result
 
@@ -134,7 +113,7 @@ def run(base_url, split, output, *, label, repetitions=1, timeout=120, allow_hol
                 base = {'case_id': c['case_id'], 'split': split, 'category': c['category'], 'repetition': rep}
                 if suite == 'core':
                     record({**base, 'task': 'summary', **call('/internal/v1/emr-summary', body, 'summary')}, position)
-                # SSE mode measures the streaming preparation (first summary text) the screen shows first.
+                # The streaming preparation (first summary text) is what the screen shows first.
                 prep = call('/internal/v1/patient-context', body, 'prepare')
                 record({**base, 'task': 'prepare', **prep}, position)
                 if suite == 'core':

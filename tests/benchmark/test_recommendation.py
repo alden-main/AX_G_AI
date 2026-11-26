@@ -11,6 +11,7 @@ from benchmarks.recommendation import score
 from benchmarks.review import create
 from benchmarks.runner import run
 from benchmarks.schema import DATA, read_jsonl, validate_recommendations
+from tests.benchmark.conftest import sse
 
 SOURCE = {'id': dur_version()['source_id'], 'title': 'DUR'}
 
@@ -19,7 +20,7 @@ def expectations():
     return {g['case_id']: g['expected_medication_alerts'] for g in read_jsonl(DATA / 'recommendation_gold.jsonl')}
 
 
-def server(transform=lambda case_id, assessment: assessment, *, stream=False):
+def server(transform=lambda case_id, assessment: assessment):
     """A fake recommendation API that answers with the expected alerts in the service's own alert shape."""
     expected = expectations()
     patients = {}
@@ -27,10 +28,7 @@ def server(transform=lambda case_id, assessment: assessment, *, stream=False):
         body = json.loads(request.content)
         if request.url.path.startswith('/internal/v1/patient-context'):
             patients[body['patient_id']] = body
-            if stream:
-                return httpx.Response(200, headers={'content-type': 'text/event-stream'},
-                                      content=b'event: meta\ndata: {"status":"ready"}\n\nevent: delta\ndata: {"text":"s"}\n\nevent: done\ndata: {}\n\n')
-            return httpx.Response(200, json={'status': 'ready'})
+            return sse('s', status='ready')
         want = expected[body['patient_id']]
         alerts = [{'type': a['type'], 'status': a['status'], 'detail': a['detail'],
                    'products': [{'ingredient_name': name, **({'proposed': True} if a['proposed'] and i == 0 else {})}
@@ -41,12 +39,7 @@ def server(transform=lambda case_id, assessment: assessment, *, stream=False):
                       **({'finding_conflicts': {k: {'clinical_note': True, 'question': False} for k in want['finding_conflicts']}}
                          if want['finding_conflicts'] else {})}
         assessment = transform(body['patient_id'], assessment)
-        answer = '점검 결과 [출처: 심평원 DUR 목록]'
-        if stream:
-            meta = json.dumps({'assessment': assessment}, ensure_ascii=False).encode()
-            return httpx.Response(200, headers={'content-type': 'text/event-stream'},
-                                  content=b'event: meta\ndata: ' + meta + b'\n\nevent: delta\ndata: {"text":"' + answer.encode() + b'"}\n\nevent: done\ndata: {}\n\n')
-        return httpx.Response(200, json={'answer': answer, 'assessment': assessment})
+        return sse('점검 결과 [출처: 심평원 DUR 목록]', assessment=assessment)
     return httpx.MockTransport(handler)
 
 
@@ -60,10 +53,8 @@ def test_recommendation_dataset_matches_service_checks():
         validate_recommendations(cases, tampered)
 
 
-@pytest.mark.parametrize('mode', ['json', 'sse'])
-def test_matching_server_scores_exact(output_root, mode):
-    out = run('http://localhost', 'development', output_root, label='rec', suite='recommendation', mode=mode,
-              transport=server(stream=mode == 'sse'))
+def test_matching_server_scores_exact(output_root):
+    out = run('http://localhost', 'development', output_root, label='rec', suite='recommendation', transport=server())
     result = score(out)
     assert result['statuses'] == {'compared': 10}
     assert result['exact_cases'] == {'numerator': 10, 'denominator': 10, 'value': 1.0}

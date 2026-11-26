@@ -23,7 +23,7 @@ from ax_g_ai.services.clinical_chat import ClinicalChatService
     "Set AX_G_RUN_LIVE_EMR_CHAT=true to send the dummy fixture to the AI provider.",
 )
 class LiveEmrChatTest(unittest.IsolatedAsyncioTestCase):
-    """더미 EMR 문맥으로 Provider의 실제 구조화 요약과 스트리밍 답변을 출력한다."""
+    """더미 EMR 문맥으로 Provider의 실제 스트리밍 요약과 답변을 출력한다."""
 
     async def test_prints_summary_and_answer_for_the_fixture_question(self) -> None:
         fixture = Path(__file__).parents[2] / "emr_test.json"
@@ -33,12 +33,12 @@ class LiveEmrChatTest(unittest.IsolatedAsyncioTestCase):
         service = ClinicalChatService(build_provider_client(AISettings.from_environment()))
         question = os.getenv("AX_G_EMR_CHAT_QUESTION", "해당 환자의 최근 vital 정보를 요약해줘.")
 
-        summary = await service.summarize_prepared_snapshot(snapshot=context.data)
+        summary = "".join([delta async for delta in service.stream_summary_once(snapshot=context.data)])
         answer = "".join([
             delta async for delta in service.stream_prepared_snapshot(question=question, snapshot=context.data)
         ])
 
-        print(f"\n[준비 요약]\n{json.dumps(summary.as_dict(), ensure_ascii=False, indent=2)}")
+        print(f"\n[준비 요약]\n{summary}")
         print(f"\n[질문]\n{question}\n\n[AI 답변]\n{answer}\n")
         self.assertTrue(answer.strip())
 

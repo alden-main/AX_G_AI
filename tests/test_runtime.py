@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from ax_g_ai.errors import PatientContextNotReadyError
 from ax_g_ai.runtime import create_runtime_app
 from ax_g_ai.services.patient_context_store import PatientContextStore, PreparedRawEmrContext
+from tests.sse import post_stream
 
 
 def context() -> PreparedRawEmrContext:
@@ -52,7 +53,7 @@ class RuntimeAssemblyTest(TestCase):
             with self.subTest(environment=environment), patch.dict(os.environ, environment, clear=True):
                 with self.assertLogs("uvicorn.error", level="WARNING") as logs:
                     client = TestClient(create_runtime_app())
-                response = client.post(
+                response = post_stream(client,
                     "/internal/v1/patient-context",
                     json={"patient_id": "patient-1", "emr_payload": {"patient": {"patientId": "patient-1"}}},
                 )

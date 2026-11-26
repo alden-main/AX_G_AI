@@ -97,7 +97,7 @@ def test_sse_runner_and_report(output_root):
         meta = b'{"status":"ready"}' if request.url.path.endswith('/patient-context/stream') else b'{}'
         return httpx.Response(200, headers={'content-type': 'text/event-stream'},
                               content=b'event: meta\ndata: ' + meta + b'\n\nevent: delta\ndata: {"text":"a"}\n\nevent: done\ndata: {}\n\n')
-    out = run('http://localhost', 'validation', output_root, label='sse-test', mode='sse',
+    out = run('http://localhost', 'validation', output_root, label='sse-test',
               transport=httpx.MockTransport(handler))
     records = read_jsonl(out / 'responses.jsonl')
     assert len(records) == 75
@@ -118,7 +118,7 @@ def test_sse_preparation_without_ready_status_fails_the_chat(output_root):
     def handler(request):
         return httpx.Response(200, headers={'content-type': 'text/event-stream'},
                               content=b'event: meta\ndata: {}\n\nevent: delta\ndata: {"text":"a"}\n\nevent: done\ndata: {}\n\n')
-    out = run('http://localhost', 'validation', output_root, label='sse-test', mode='sse', transport=httpx.MockTransport(handler))
+    out = run('http://localhost', 'validation', output_root, label='sse-test', transport=httpx.MockTransport(handler))
     records = read_jsonl(out / 'responses.jsonl')
     assert {r['status'] for r in records if r['task'] == 'prepare'} == {'invalid_response'}
     assert {r['status'] for r in records if r['task'] == 'chat'} == {'prepare_error'}

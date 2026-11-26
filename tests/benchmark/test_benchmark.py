@@ -11,6 +11,7 @@ from benchmarks.metrics import percentile, report
 from benchmarks.review import create
 from benchmarks.runner import run
 from benchmarks.schema import DATA, contains_value, read_jsonl, validate
+from tests.benchmark.conftest import sse
 
 
 def load():
@@ -66,9 +67,9 @@ def test_no_gold_sent_and_failure_recorded(output_root):
     def handler(request):
         body = json.loads(request.content)
         bodies.append(body)
-        if request.url.path.endswith('/patient-context'):
+        if request.url.path.endswith('/patient-context/stream'):
             return httpx.Response(503, json={'code': 'failure'})
-        return httpx.Response(200, json={'answer': '답변', 'evidence': None})
+        return sse()
     out = run('http://localhost', 'validation', output_root, label='fake', transport=httpx.MockTransport(handler))
     records = read_jsonl(out / 'responses.jsonl')
     assert len(records) == 75
@@ -86,12 +87,12 @@ def test_chat_body_allowlist(output_root):
     bodies = []
     def handler(request):
         bodies.append((request.url.path, json.loads(request.content)))
-        if request.url.path.endswith('/patient-context'):
-            return httpx.Response(200, json={'status': 'ready'})
-        return httpx.Response(200, json={'answer': '답변'})
+        if request.url.path.endswith('/patient-context/stream'):
+            return sse(status='ready')
+        return sse()
     run('http://localhost', 'holdout', output_root, label='fake', allow_holdout=True,
         transport=httpx.MockTransport(handler))
-    assert all(set(body) == ({'patient_id', 'question'} if path.endswith('/clinical-chat') else {'patient_id', 'emr_payload'})
+    assert all(set(body) == ({'patient_id', 'question'} if path.endswith('/clinical-chat/stream') else {'patient_id', 'emr_payload'})
                for path, body in bodies)
     with pytest.raises(ValueError, match='holdout'):
         run('http://localhost', 'holdout', output_root, label='fake')
@@ -163,9 +164,9 @@ def test_progress_events_cover_every_task_and_count_finished_cases(output_root, 
     from benchmarks.runner import _duration, stderr_progress
     events = []
     def handler(request):
-        if request.url.path.endswith('/patient-context'):
-            return httpx.Response(200, json={'status': 'ready'})
-        return httpx.Response(200, json={'answer': '답변'})
+        if request.url.path.endswith('/patient-context/stream'):
+            return sse(status='ready')
+        return sse()
     run('http://localhost', 'validation', output_root, label='progress', repetitions=2, progress=events.append,
         transport=httpx.MockTransport(handler))
     assert len(events) == 25 * 2 * 3

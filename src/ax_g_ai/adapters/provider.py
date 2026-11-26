@@ -52,7 +52,10 @@ def build_provider_client(
         max_retries=settings.max_retries,
         http_client=http_client,
     )
-    return PydanticAIProviderClient(_model(settings, OpenAIProvider(openai_client=client)), instrumentation=instrumentation)
+    return PydanticAIProviderClient(
+        _model(settings, OpenAIProvider(openai_client=client)), instrumentation=instrumentation,
+        system_prompt_prefix=settings.system_prompt_prefix,
+    )
 
 
 def _model(settings: AISettings, provider: OpenAIProvider) -> Model:
@@ -80,7 +83,13 @@ def _model(settings: AISettings, provider: OpenAIProvider) -> Model:
         chat["max_tokens"] = settings.max_output_tokens
     if settings.temperature is not None:
         chat["temperature"] = settings.temperature
+    extra_body: dict[str, object] = {}
     if settings.disable_thinking:
         # Qwen3 계열 Chat 템플릿은 그렇게 지시하면 사고 단계를 건너뛴다.
-        chat["extra_body"] = {"chat_template_kwargs": {"enable_thinking": False}}
+        extra_body["chat_template_kwargs"] = {"enable_thinking": False}
+    if settings.repetition_penalty is not None:
+        # OpenAI 표준 파라미터가 아니므로 extra_body로 보낸다(SGLang·vLLM이 받는다). 그러지 않으면 조용히 빠진다.
+        extra_body["repetition_penalty"] = settings.repetition_penalty
+    if extra_body:
+        chat["extra_body"] = extra_body
     return OpenAIChatModel(settings.model, provider=provider, settings=chat)

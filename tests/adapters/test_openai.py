@@ -241,6 +241,19 @@ class OpenAICompatibleChatClientTest(unittest.IsolatedAsyncioTestCase):
             "json_schema": {"name": "Summary", "strict": True, "schema": SCHEMA},
         })
 
+    async def test_sends_model_card_prefix_and_repetition_penalty(self) -> None:
+        recorder = Recorder(json_response(chat_completion("답변")))
+        client = compatible_provider(
+            recorder, AI_DISABLE_THINKING="false", AI_REPETITION_PENALTY="1.05", AI_SYSTEM_PROMPT_PREFIX="You are Chain-of-Evidence.",
+        )
+
+        await client.respond(REQUEST)
+
+        sent = recorder.body()
+        self.assertEqual(sent["repetition_penalty"], 1.05)
+        self.assertNotIn("chat_template_kwargs", sent)
+        self.assertEqual(sent["messages"][0], {"role": "system", "content": "You are Chain-of-Evidence.\nfixed instructions"})
+
     async def test_rejects_failed_or_empty_responses(self) -> None:
         for response in (
             json_response({"error": {}}, 500),

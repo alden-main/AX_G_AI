@@ -3,24 +3,19 @@
 설계상 위치: 서비스 계층. ``ClinicalChatService``가 Provider 답변을 사용자에게 보내기 전에 이 모듈로 점검하고,
 채팅·추천 답변 끝에 규칙 평가의 DUR 점검 결과를 코드로 만든 문장으로 붙인다.
 
-역할: 작은 자체 모델에서 확인된 실패(질문을 그대로 되풀이, 내부 JSON 출력, 영문 내부 키 노출)를 찾는다. 질문 되풀이는
+역할: 작은 자체 모델에서 확인된 실패(질문을 그대로 되풀이, 내부 JSON 출력)를 스트림 앞부분에서 찾는다. 질문 되풀이는
 잘라 내고, 쓸 수 없는 답변(되풀이뿐이거나 JSON)은 호출자가 다시 요청하도록 알린다. DUR 경고는 모델이 빠뜨리거나
 약하게 쓰거나 뒤집는 일이 있어, 본문에서는 DUR을 판단하지 않게 하고(프롬프트) 이 블록으로만 표시한다.
 """
 
 from __future__ import annotations
 
-import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Literal
 
-Problem = Literal["echo_only", "raw_json", "internal_key"]
-# 답변을 그대로 쓸 수 없는 문제(다시 요청해야 함). internal_key는 다시 요청하되, 다시 나와도 답변은 쓴다.
-UNUSABLE: frozenset[Problem] = frozenset({"echo_only", "raw_json"})
-
-# 프롬프트 데이터의 영문 키(snake_case). 한국어 임상 답변에는 나오지 않는다. 한글이 \w라 \b 대신 ASCII 경계를 쓴다.
-_INTERNAL_KEY = re.compile(r"(?<![A-Za-z0-9_])[a-z][a-z0-9]*(?:_[a-z0-9]+)+(?![A-Za-z0-9_])")
+# 답변을 그대로 쓸 수 없는 문제(호출자가 다시 요청한다).
+Problem = Literal["echo_only", "raw_json"]
 _RAW_JSON_START = ("{", "[", "`")
 
 
@@ -61,15 +56,6 @@ def check_opening(text: str, question: str, *, final: bool = False) -> Opening:
     if body.startswith(_RAW_JSON_START):
         return Opening("bad", problem="raw_json")
     return Opening("ok", body if echoed else rest)
-
-
-def review_answer(answer: str, question: str) -> tuple[str, Problem | None]:
-    """완성된 답변을 점검한다: (질문 되풀이를 뺀 답변, 문제 또는 ``None``)."""
-    opening = check_opening(answer, question, final=True)
-    if opening.state == "bad":
-        return "", opening.problem
-    text = opening.text.strip()
-    return text, "internal_key" if _INTERNAL_KEY.search(text) else None
 
 
 # DUR 점검만 묻는 질문에 서버가 쓰는 본문(그 뒤에 DUR 점검 블록이 붙는다).

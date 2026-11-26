@@ -11,6 +11,7 @@ from benchmarks.judge import evaluate
 from benchmarks.review import create
 from benchmarks.runner import run
 from benchmarks.schema import DATA, read_jsonl
+from tests.benchmark.conftest import sse
 
 GOLD = {g['case_id']: g for g in read_jsonl(DATA / 'gold.jsonl')}
 
@@ -19,11 +20,11 @@ def prepared_run(output_root, *, fail_first_summary=False):
     calls = []
     def handler(request):
         calls.append(request.url.path)
-        if fail_first_summary and request.url.path.endswith('/emr-summary') and calls.count(request.url.path) == 1:
+        if fail_first_summary and request.url.path.endswith('/emr-summary/stream') and calls.count(request.url.path) == 1:
             return httpx.Response(503)
-        if request.url.path.endswith('patient-context'):
-            return httpx.Response(200, json={'status': 'ready'})
-        return httpx.Response(200, json={'answer': '환자 기록을 확인했습니다.'})
+        if request.url.path.endswith('patient-context/stream'):
+            return sse(status='ready')
+        return sse('환자 기록을 확인했습니다.')
     out = run('http://localhost', 'validation', output_root, label='judge-score', transport=httpx.MockTransport(handler))
     create(out)
     return out

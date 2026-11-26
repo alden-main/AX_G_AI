@@ -11,14 +11,15 @@ from benchmarks.metrics import compare_quality, report
 from benchmarks.review import create
 from benchmarks.runner import run
 from benchmarks.schema import read_jsonl
+from tests.benchmark.conftest import sse
 
 
 @pytest.fixture
 def prepared(output_root):
     def handler(request):
-        if request.url.path.endswith('patient-context'):
+        if request.url.path.endswith('patient-context/stream'):
             return httpx.Response(503)
-        return httpx.Response(200, json={'answer': '환자 기록을 확인했습니다.'})
+        return sse('환자 기록을 확인했습니다.')
     out = run('http://localhost', 'validation', output_root, label='judge-fake', transport=httpx.MockTransport(handler))
     create(out)
     return out

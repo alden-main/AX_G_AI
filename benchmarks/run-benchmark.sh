@@ -21,14 +21,13 @@ usage() {
 실행 범위
   --label <이름>           실행 이름. 이미지 태그·모델명 등 비밀이 아닌 값 (필수)
   --suite core|recommendation|all   (기본 all)
-  --mode json|sse|both     (기본 json)
   --split development|validation|holdout   (기본 development)
   --allow-holdout          holdout 실행 허용 (프롬프트 조정에 쓰지 말 것)
   --repetitions <n>        반복 횟수 (기본 1)
   --timeout <초>           요청 제한 시간 (기본 120)
   --quiet                  사례별 진행 표시를 끔 (기본: 업무마다 상태·소요 시간·남은 예상 시간 출력)
 
-judge 제안 (선택, 둘 다 지정하면 실행; core JSON 실행에만 적용)
+judge 제안 (선택, 둘 다 지정하면 실행; core 실행에만 적용)
   --judge-url <url>        OpenAI 호환 /v1/chat/completions 주소
   --judge-model <모델>     평가 대상과 다른 모델 권장
   인증이 필요하면 환경 변수 BENCHMARK_JUDGE_API_KEY에 키를 넣는다 (옵션으로 넘기지 않는다).
@@ -37,7 +36,7 @@ judge 제안 (선택, 둘 다 지정하면 실행; core JSON 실행에만 적용
   --skip-readiness         말뭉치 규칙이 없어도 recommendation 실행을 진행 (기본: 중단)
 
 비교 (선택)
-  --compare-with <run_dir> 기준이 되는 이전 core 실행 폴더. 이번 core JSON 실행과 compare(사람 판정)와
+  --compare-with <run_dir> 기준이 되는 이전 core 실행 폴더. 이번 core 실행과 compare(사람 판정)와
                            judge-compare(judge 제안, 양쪽 모두 같은 judge일 때)를 수행
 
 예시
@@ -46,7 +45,7 @@ judge 제안 (선택, 둘 다 지정하면 실행; core JSON 실행에만 적용
 EOF
 }
 
-server="" remote_port=8500 local_port=18100 base_url="" label="" suite=all mode=json split=development
+server="" remote_port=8500 local_port=18100 base_url="" label="" suite=all split=development
 allow_holdout="" repetitions=1 timeout=120 judge_url="" judge_model="" compare_with="" skip_readiness="" quiet=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -56,7 +55,6 @@ while [[ $# -gt 0 ]]; do
     --base-url) base_url=$2; shift 2 ;;
     --label) label=$2; shift 2 ;;
     --suite) suite=$2; shift 2 ;;
-    --mode) mode=$2; shift 2 ;;
     --split) split=$2; shift 2 ;;
     --allow-holdout) allow_holdout=--allow-holdout; shift ;;
     --repetitions) repetitions=$2; shift 2 ;;
@@ -80,7 +78,6 @@ fail() {
 [[ -n $label ]] || fail "--label이 필요합니다."
 [[ -x $py ]] || fail ".venv가 없습니다. 프로젝트 루트에서 'uv sync'를 먼저 실행하세요."
 case "$suite" in core) suites="core" ;; recommendation) suites="recommendation" ;; all) suites="core recommendation" ;; *) fail "--suite 값: $suite" ;; esac
-case "$mode" in json) modes="json" ;; sse) modes="sse" ;; both) modes="json sse" ;; *) fail "--mode 값: $mode" ;; esac
 [[ -n $server && -n $base_url ]] && fail "--server와 --base-url은 함께 쓸 수 없습니다."
 if [[ -n $judge_url || -n $judge_model ]] && [[ -z $judge_url || -z $judge_model ]]; then
   fail "--judge-url과 --judge-model은 함께 지정해야 합니다."
@@ -92,8 +89,8 @@ session="$root/benchmarks/output/session-$stamp-$label"
 mkdir -p "$session"
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" | tee -a "$session/session.log"; }
 
-if [[ -n $judge_url ]] && [[ " $modes " != *" json "* || " $suites " != *" core "* ]]; then
-  log "경고: judge는 core JSON 실행에만 적용됩니다. 이번 설정(--suite $suite --mode $mode)에서는 judge를 실행하지 않습니다."
+if [[ -n $judge_url ]] && [[ " $suites " != *" core "* ]]; then
+  log "경고: judge는 core 실행에만 적용됩니다. 이번 설정(--suite $suite)에서는 judge를 실행하지 않습니다."
 fi
 log "1/5 데이터 검증"
 "$py" -m benchmarks validate > "$session/validate.json"
@@ -157,45 +154,41 @@ if [[ $state != ok ]]; then
   log "경고: core 채팅의 DUR 사실은 누락으로 판정될 수 있습니다."
 fi
 
-core_json_run=""
+core_run=""
 runs=""
-log "4/5 벤치마크 실행 (split=$split, 반복=$repetitions)"
-for m in $modes; do
-  for s in $suites; do
-    run_label="$label-$s-$m"
-    log "  실행: $run_label"
-    run_dir=$("$py" -m benchmarks run --live --base-url "$base_url" --label "$run_label" --split "$split" $allow_holdout \
-      --suite "$s" --mode "$m" --repetitions "$repetitions" --timeout "$timeout" $quiet | tail -n 1)
-    [[ -f $run_dir/manifest.json ]] || fail "실행 결과 폴더를 찾지 못했습니다: $run_dir"
-    runs="$runs $run_dir"
-    echo "$s $m $run_dir" >> "$session/runs.txt"
-    if [[ $s == core ]]; then
-      "$py" -m benchmarks review "$run_dir" > /dev/null
-      if [[ $m == json ]]; then
-        core_json_run=$run_dir
-        if [[ -n $judge_url ]]; then
-          log "  judge 제안: $judge_model"
-          "$py" -m benchmarks judge "$run_dir" --live --url "$judge_url" --model "$judge_model" --timeout "$timeout" > /dev/null
-          "$py" -m benchmarks judge-report "$run_dir" > "$run_dir/judge-report.json"
-        fi
-      fi
+log "4/5 벤치마크 실행 (SSE, split=$split, 반복=$repetitions)"
+for s in $suites; do
+  run_label="$label-$s"
+  log "  실행: $run_label"
+  run_dir=$("$py" -m benchmarks run --live --base-url "$base_url" --label "$run_label" --split "$split" $allow_holdout \
+    --suite "$s" --repetitions "$repetitions" --timeout "$timeout" $quiet | tail -n 1)
+  [[ -f $run_dir/manifest.json ]] || fail "실행 결과 폴더를 찾지 못했습니다: $run_dir"
+  runs="$runs $run_dir"
+  echo "$s $run_dir" >> "$session/runs.txt"
+  if [[ $s == core ]]; then
+    core_run=$run_dir
+    "$py" -m benchmarks review "$run_dir" > /dev/null
+    if [[ -n $judge_url ]]; then
+      log "  judge 제안: $judge_model"
+      "$py" -m benchmarks judge "$run_dir" --live --url "$judge_url" --model "$judge_model" --timeout "$timeout" > /dev/null
+      "$py" -m benchmarks judge-report "$run_dir" > "$run_dir/judge-report.json"
     fi
-    "$py" -m benchmarks report "$run_dir" > "$run_dir/report.json"
-  done
+  fi
+  "$py" -m benchmarks report "$run_dir" > "$run_dir/report.json"
 done
 
 if [[ -n $compare_with ]]; then
-  if [[ -z $core_json_run ]]; then
-    log "비교 생략: 이번 세션에 core JSON 실행이 없습니다."
+  if [[ -z $core_run ]]; then
+    log "비교 생략: 이번 세션에 core 실행이 없습니다."
   else
-    log "비교: $compare_with ↔ $core_json_run"
-    "$py" -m benchmarks compare "$compare_with" "$core_json_run" > "$session/compare.json"
+    log "비교: $compare_with ↔ $core_run"
+    "$py" -m benchmarks compare "$compare_with" "$core_run" > "$session/compare.json"
     if ! ls "$compare_with"/judge-*.meta.json > /dev/null 2>&1; then
       log "judge 비교 생략: 기준 실행($compare_with)에 judge 결과가 없습니다."
-    elif ! ls "$core_json_run"/judge-*.meta.json > /dev/null 2>&1; then
+    elif ! ls "$core_run"/judge-*.meta.json > /dev/null 2>&1; then
       log "judge 비교 생략: 이번 실행에 judge 결과가 없습니다(--judge-url/--judge-model 미지정)."
     else
-      "$py" -m benchmarks judge-compare "$compare_with" "$core_json_run" > "$session/judge-compare.json"
+      "$py" -m benchmarks judge-compare "$compare_with" "$core_run" > "$session/judge-compare.json"
     fi
   fi
 fi

@@ -26,7 +26,7 @@ KEY_NAMES: Final[Mapping[str, str]] = {
     "calculation_context": "환자 기본 정보", "age_years": "나이(세)", "sex": "성별", "weight_kg": "체중(kg)", "height_cm": "키(cm)",
     "serum_creatinine_mg_dl": "혈청 크레아티닌(mg/dL)", "blood_pressure": "혈압", "blood_sugar": "혈당", "oxygen_saturation": "산소포화도",
     "measured_at": "측정 시각", "sbp": "수축기", "dbp": "이완기", "timing_type": "측정 시점", "lab_results": "검사 결과",
-    "exam_code": "검사 코드", "item_name": "검사명", "prescriptions": "처방", "med_code": "제품코드", "med_name": "약품명",
+    "exam_code": "검사 코드", "item_name": "검사명", "prescriptions": "처방", "undated_prescriptions": "처방(처방일 기록 없음)", "med_code": "제품코드", "med_name": "약품명",
     "dosage": "1회 용량", "frequency": "1일 횟수", "duration_days": "처방 일수", "durationDays": "처방 일수", "instructions": "용법",
     "prescriptionDate": "처방일", "prescription_date": "처방일", "diagnoses": "진단", "name_ko": "진단명", "code": "코드",
     "calculation_results": "계산값", "calculation_input_needed": "계산에 필요한 입력", "method": "계산 방법",
@@ -126,7 +126,7 @@ RULE_KEYS: Final[Mapping[str, str]] = {
     "신기능 구간": "renal", "구간": "band", "근거": "basis", "검사일": "test_date", "처방": "prescriptions", "기준 대조": "check",
     "기준 초과": "exceeds", "1일 용량(mg)": "daily_mg", "1일 용량 계산 근거": "daily_basis", "기준 1일 최대(mg)": "limit_daily_mg",
     "기준 근거": "limit_basis", "적용 안 함": "not_applied", "용량 조건": "rules", "경고 비고": "alert_note", "적응증": "indication",
-    "경고 단계": "alert", "금기": "contraindicated", "높음": "high", "처방일": "prescriptionDate",
+    "경고 단계": "alert", "금기": "contraindicated", "높음": "high", "처방(처방일 기록 없음)": "undated_prescriptions",
 }
 _RULE_MARKER = re.compile(r"⟪([^⟫]+)⟫")
 

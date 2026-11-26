@@ -16,6 +16,7 @@ from ax_g_ai.services.clinical_evidence import InMemoryEvidenceIndex
 from ax_g_ai.services.corpus_snapshot import CorpusSnapshot, StaticCorpus
 from ax_g_ai.services.patient_context_store import context_from_json, context_to_json
 from tests.services.test_clinical_recommendation import RULES, recommender, source
+from tests.sse import post_stream
 from tests.test_clinical_recommendation_api import ScriptedProvider, payload
 
 TEST_REDIS_URL = os.getenv("AX_G_TEST_REDIS_URL")
@@ -122,10 +123,10 @@ class RedisContextStoreTest(unittest.TestCase):
                                          self.make(), corpus=StaticCorpus(CorpusSnapshot(evidence, recommender()))))
 
         with app() as first, app() as second:
-            self.assertEqual(first.post("/internal/v1/patient-context", json=payload()).status_code, 200)
-            chat = second.post("/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "추천 검사 알려줘"})
-            on_first = first.post("/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"}).json()["assessment"]
-            on_second = second.post("/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"}).json()["assessment"]
+            self.assertEqual(post_stream(first,"/internal/v1/patient-context", json=payload()).status_code, 200)
+            chat = post_stream(second,"/internal/v1/clinical-chat", json={"patient_id": "pid-1", "question": "추천 검사 알려줘"})
+            on_first = post_stream(first,"/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"}).json()["assessment"]
+            on_second = post_stream(second,"/internal/v1/clinical-recommendations", json={"patient_id": "pid-1"}).json()["assessment"]
         self.assertEqual(chat.status_code, 200)
         self.assertEqual(on_second, on_first)  # rule facts re-derived from the stored source give the same result
 
