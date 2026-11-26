@@ -58,20 +58,20 @@ class ClinicalChatServiceTest(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("환자 이름", logs.output[0])
 
     async def test_stream_failure_after_the_first_delta_is_classified(self) -> None:
-        service = ClinicalChatService(RecordingProvider(fail_after=1))
+        service = ClinicalChatService(RecordingProvider(deltas=("부분 답변. ", "나머지"), fail_after=1))
         received: list[str] = []
 
         with self.assertLogs("uvicorn.error", level="WARNING"), self.assertRaises(ClinicalChatProviderUnavailableError):
             async for delta in service.stream_prepared_snapshot(question="질문", snapshot=SNAPSHOT):
                 received.append(delta)
 
-        self.assertEqual(received, ["부분 "])
+        self.assertEqual(received, ["부분 답변. "])  # the finished sentence went out before the failure
 
     async def test_one_shot_summary_streams_and_answers_with_fixed_instructions(self) -> None:
         provider = RecordingProvider()
         service = ClinicalChatService(provider)
 
-        self.assertEqual([delta async for delta in service.stream_summary_once(snapshot=SNAPSHOT)], ["부분 ", "답변"])
+        self.assertEqual([delta async for delta in service.stream_summary_once(snapshot=SNAPSHOT)], ["부분 답변"])
         self.assertTrue(all(request.instructions == CLINICAL_INSTRUCTIONS for request in provider.requests))
         prompt = provider.requests[0].input
         self.assertIn("추가 요약 4~5줄", prompt)
@@ -112,7 +112,7 @@ class PreparedSnapshotPromptTest(unittest.TestCase):
         first = compose_prepared_snapshot_question("최근 혈당은?", snapshot)
         second = compose_prepared_snapshot_question("현재 EMR을 SOAP로 요약해줘", snapshot, "S: 기침")
 
-        emr_end = first.index('"단위":"mg/dL"}]}') + len('"단위":"mg/dL"}]}')
+        emr_end = first.index('"측정 시점":"기록 없음"}]}') + len('"측정 시점":"기록 없음"}]}')
         self.assertEqual(first[:emr_end], second[:emr_end])
         self.assertLess(second.index('"혈당"'), second.index("[참고 기록"))
         self.assertLess(second.index("[참고 기록"), second.index("[응답 형식]"))

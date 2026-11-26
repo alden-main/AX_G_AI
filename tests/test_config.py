@@ -56,6 +56,7 @@ class AISettingsTest(unittest.TestCase):
             {**compatible, "AI_REPETITION_PENALTY": "0"},
             {"OPENAI_API_KEY": "secret", "AI_REPETITION_PENALTY": "1.05"},
             {"OPENAI_API_KEY": "secret", "AI_SYSTEM_PROMPT_PREFIX": prefix},
+            {"OPENAI_API_KEY": "secret", "AI_NO_THINKING_OPERATIONS": "one_shot_patient_summary_stream"},
         ):
             with self.subTest(environment=environment), self.assertRaises(ConfigurationError):
                 settings(**environment)
@@ -91,6 +92,15 @@ class RuntimeSettingsTest(unittest.TestCase):
         self.assertIsNone(result.reference_data_db_path)
         self.assertEqual(result.patient_context_ttl_seconds, 12 * 60 * 60)
         self.assertEqual(result.patient_context_max_entries, 1000)
+
+    def test_recommendation_input_limits_default_and_bounds(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            result = RuntimeSettings.from_environment()
+        self.assertEqual((result.recommendation_max_possible, result.recommendation_max_evidence), (12, 10))
+        with patch.dict(os.environ, {"AX_G_RECOMMENDATION_MAX_POSSIBLE": "6"}, clear=True):
+            self.assertEqual(RuntimeSettings.from_environment().recommendation_max_possible, 6)
+        with patch.dict(os.environ, {"AX_G_RECOMMENDATION_MAX_POSSIBLE": "0"}, clear=True), self.assertRaises(ConfigurationError):
+            RuntimeSettings.from_environment()
 
     def test_rejects_a_missing_reference_database_or_invalid_store_limits(self) -> None:
         for environment in (

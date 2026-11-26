@@ -1,0 +1,17 @@
+{
+  "_comment": "출시 게이트 기준(자동 근사 지표). block: 미달이면 불합격(배포 보류), warn: 경고만. 기준선: 2026-11-26 L1-30B-A5B capable 실행(요약 EMR 값 언급 93.6%, 채팅 98.3%, 성공률 98%).",
+  "checks": [
+    {"name": "summary_success_rate", "min": 0.95, "level": "block"},
+    {"name": "prepare_success_rate", "min": 0.95, "level": "block"},
+    {"name": "chat_success_rate", "min": 0.95, "level": "block"},
+    {"name": "summary_emr_value_mention", "min": 0.90, "level": "block"},
+    {"name": "chat_emr_value_mention", "min": 0.95, "level": "block"},
+    {"name": "residual_violation_answers", "max": 0, "level": "block"},
+    {"name": "fallback_answer_rate", "max": 0.05, "level": "block"},
+    {"name": "omission_note_rate", "max": 0.20, "level": "warn"},
+    {"name": "recommendation_exact_cases", "min": 1.0, "level": "block"},
+    {"name": "summary_first_text_p90_ms", "max": 15000, "level": "warn"},
+    {"name": "prepare_first_text_p90_ms", "max": 15000, "level": "warn"},
+    {"name": "chat_first_text_p90_ms", "max": 15000, "level": "warn"}
+  ]
+}

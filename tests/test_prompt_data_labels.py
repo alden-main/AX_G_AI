@@ -11,6 +11,7 @@ from ax_g_ai.prompts.clinical import (
     compose_prepared_snapshot_question,
     compose_recommendation_input,
     mark_undated_prescriptions,
+    mark_untimed_glucose,
     prompt_texts,
 )
 from ax_g_ai.prompts.data_labels import KEY_NAMES, RULE_KEYS, VALUE_NAMES, korean_view, prompt_data, render_rule
@@ -101,6 +102,24 @@ class UndatedPrescriptionTest(unittest.TestCase):
         only_undated = mark_undated_prescriptions({"prescriptions": [{"med_name": "B"}]})
         self.assertEqual(only_undated, {"undated_prescriptions": [{"med_name": "B"}]})
         self.assertEqual(mark_undated_prescriptions(SNAPSHOT), SNAPSHOT)
+
+
+class UntimedGlucoseTest(unittest.TestCase):
+    def test_glucose_without_timing_says_not_recorded_right_after_the_unit(self) -> None:
+        # The 30B model called untimed readings fasting or non-fasting.
+        summary = {"blood_sugar": [
+            {"measured_at": "t1", "value": 164, "unit": "mg/dL", "extra": 1},
+            {"measured_at": "t2", "value": 200, "unit": "mg/dL", "timing_type": "식후 2시간"},
+        ]}
+        marked = mark_untimed_glucose(summary)
+        self.assertEqual(list(marked["blood_sugar"][0]), ["measured_at", "value", "unit", "timing_type", "extra"])
+        self.assertEqual(marked["blood_sugar"][0]["timing_type"], "기록 없음")
+        self.assertEqual(marked["blood_sugar"][1], summary["blood_sugar"][1])
+        self.assertNotIn("timing_type", summary["blood_sugar"][0])  # input untouched
+        prompt = compose_prepared_snapshot_question("요약", summary, one_shot_summary=True)
+        self.assertIn('"측정 시점":"기록 없음"', prompt)
+        self.assertIn("공복·식후나 날짜를 추정해 붙이지 말고", prompt)
+        self.assertIn("'측정 시점 기록 없음'으로 쓰세요", compose_prepared_snapshot_question("혈당은?", summary))
 
 
 class ModelProfileTest(unittest.TestCase):

@@ -90,7 +90,7 @@ benchmarks/run-benchmark.sh --base-url http://127.0.0.1:8500 --label local-dev -
 - **사전 점검:** `/health` 다음에 `/internal/v1/clinical-recommendations/findings`로 말뭉치 규칙 적재 여부를 확인하고, 결과를 `readiness.txt`와 요약에 남깁니다.
   - 규칙이 없으면(503) recommendation 실행 전에 중단합니다. 그래도 진행하려면 `--skip-readiness`를 씁니다. core만 실행할 때는 경고만 냅니다.
   - DUR 사용 여부는 API가 직접 알려 주지 않습니다. 소견 목록의 `pregnancy` 유무로 추정만 합니다. 실제 확인은 실행 뒤 자동 대조 결과로 합니다. `dur_unavailable`이나 `dur_dataset_differs`가 나오면 요약에 경고가 표시됩니다.
-- **진행 표시:** 실행 중에는 업무마다 사례 번호, 상태, 소요 시간, 경과 시간, 남은 예상 시간을 stderr에 출력합니다. 남은 예상 시간은 끝난 사례의 평균 소요 시간으로 계산합니다. `--quiet`로 끌 수 있고, `python -m benchmarks run`에도 같은 옵션이 있습니다.
+- **진행 표시:** 실행 중에는 업무마다 사례 번호, 상태, 소요 시간, 경과 시간, 남은 예상 시간을 stderr에 출력합니다. 남은 예상 시간은 끝난 사례의 평균 소요 시간으로 계산합니다. `--quiet`로 끌 수 있고, `python -m benchmarks run`에도 같은 옵션이 있습니다. 결과는 업무가 끝날 때마다 `benchmarks/output/<run_id>/responses.jsonl`에 한 줄씩 추가되므로, 진행 표시를 끈 실행도 `wc -l`로 진행 정도를 볼 수 있습니다(`manifest.json`은 실행이 끝날 때 저장).
 - **judge 적용 범위 안내:** judge 옵션이 적용되지 않는 설정(recommendation만 실행)이면 경고를 남깁니다. 비교 대상 중 한쪽에 judge 결과가 없으면 judge 비교를 생략한다고 기록합니다.
 - **실패 기록:** 중간에 실패하면 세션 폴더의 `summary.txt`에 실패 사유가 남습니다. 예기치 않은 명령 오류나 Ctrl-C로 끝난 경우는 종료 코드가 남습니다.
 - **결과 위치:** 실행마다 `benchmarks/output/<run_id>/`에 `report.json`이 저장되고, judge를 지정했으면 `judge-report.json`도 저장됩니다. 세션 기록은 `benchmarks/output/session-<시각>-<label>/`에 남습니다(`runs.txt`, `summary.txt`, `compare.json`, `judge-compare.json`, `session.log`).
@@ -98,6 +98,21 @@ benchmarks/run-benchmark.sh --base-url http://127.0.0.1:8500 --label local-dev -
 - **SSH 터널:** `BatchMode`로 열기 때문에 비밀번호 입력을 기다리지 않습니다. SSH 키를 등록해 두세요.
 - **label:** 이미지 태그와 모델명처럼 비밀이 아닌 값을 넣으세요. 서버 구성(`.env`)은 API로 확인할 수 없으므로 따로 기록해 두세요.
 - **사람 검토 후:** 검토 시트를 판정하고 `commit-review`한 뒤 `report`를 다시 실행하면 확정 점수가 나옵니다.
+
+## 출시 게이트 (`gate`)
+
+`benchmarks/run-benchmark.sh`는 마지막에 `python -m benchmarks gate <core 실행> --recommendation-run <recommendation 실행>`으로 자동 지표가 `benchmarks/gates.json`의 하한선을 넘는지 판정해 요약과 세션의 `gate.json`에 남긴다. `block` 기준에 미달하면 **불합격**이고 스크립트 종료 코드가 3이다(CI에서 배포를 막는 용도). `warn`은 표시만 한다.
+
+| 지표 | 의미 |
+|---|---|
+| `<task>_success_rate` | 업무별 성공 비율 |
+| `summary_emr_value_mention`, `chat_emr_value_mention` | 중요(critical·important) EMR 사실 값이 답변에 나온 비율(문자열 대조 근사) |
+| `residual_violation_answers` | 서비스 문장 검증기를 통과해 나간 답변에 남은 위반(측정 시점 단정·처방일 차용·처방 지시) 건수. 검증기와 같은 코드(`ax_g_ai.services.answer_verification`) |
+| `fallback_answer_rate`, `omission_note_rate` | 고정 안내로 답한 비율, 문장을 빼고 생략 안내를 붙인 비율 |
+| `recommendation_exact_cases` | 추천 DUR·임신 자동 대조 완전 일치율 |
+| `<task>_first_text_p90_ms` | 첫 글자 시간의 90번째 백분위 |
+
+자동 근사 지표이므로 사람 판정(`review`·`report`)을 대신하지 않는다. 기준값은 `gates.json`에서 바꾼다(기준선 실행과 근거를 `_comment`에 남긴다).
 
 ## 실행
 

@@ -100,6 +100,9 @@ def run(base_url, split, output, *, label, repetitions=1, timeout=120, allow_hol
 
         def record(item, position):
             records.append(item)
+            # Appended as each task finishes, so a long run's progress can be read from responses.jsonl.
+            with (out / 'responses.jsonl').open('a', encoding='utf-8') as stream:
+                stream.write(json.dumps(item, ensure_ascii=False) + '\n')
             if progress is not None:
                 last = item['task'] == tasks[-1]
                 progress({'index': position, 'total_cases': len(cases), 'case_id': item['case_id'],
@@ -127,5 +130,4 @@ def run(base_url, split, output, *, label, repetitions=1, timeout=120, allow_hol
                 done_units += 1
     manifest['end_utc'] = datetime.now(UTC).isoformat()
     (out / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding='utf-8')
-    (out / 'responses.jsonl').write_text(''.join(json.dumps(x, ensure_ascii=False) + '\n' for x in records), encoding='utf-8')
     return out

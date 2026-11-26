@@ -10,12 +10,14 @@ Provider 실패를 분류해 로그로 남긴 뒤 ``ClinicalChatProviderUnavaila
 from __future__ import annotations
 
 import logging
+from collections import Counter
 from collections.abc import AsyncGenerator, AsyncIterator, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from typing import Any
 
 from ax_g_ai.errors import ClinicalChatProviderUnavailableError
 from ax_g_ai.prompts.clinical import (
+    DUR_COMMENTARY_REQUEST,
     FINDING_EXTRACTION_INSTRUCTIONS,
     ONE_SHOT_PATIENT_SUMMARY_REQUEST,
     PROMPT_VERSION,
@@ -28,7 +30,8 @@ from ax_g_ai.prompts.clinical import (
     prompt_texts,
 )
 from ax_g_ai.prompts.data_labels import PromptLabels
-from ax_g_ai.services.answer_review import DUR_ONLY_ANSWER, check_opening, dur_notice, fallback_answer
+from ax_g_ai.services.answer_review import DUR_ONLY_ANSWER, check_opening, dur_notice, fallback_answer, record_notice
+from ax_g_ai.services.answer_verification import OMISSION_NOTE, Facts, SentenceSplitter, build_facts, check_sentence
 from ax_g_ai.services.clinical_evidence import EvidenceChunk, EvidenceRetriever
 from ax_g_ai.services.clinical_recommendation import prompt_view
 from ax_g_ai.services.ports import OpenAIProviderError, OpenAIRequest, ProviderClient, ProviderOutputError, ReferenceLookup
@@ -79,8 +82,12 @@ class ClinicalChatService:
 
     @property
     def answers_dur_only_itself(self) -> bool:
-        """DUR만 묻는 질문을 모델 없이 DUR 점검 블록으로 답하는지(``compact`` 프로필). 그러면 근거 검색도 필요 없다."""
-        return self._profile == "compact"
+        """DUR만 묻는 질문을 서버의 DUR 점검 블록으로 먼저 답하는지(두 프로필 모두). 그러면 근거 검색이 필요 없다.
+
+        ``compact``는 블록으로 끝내고, ``capable``은 블록 뒤에 짧은 해설(``_dur_commentary``)을 잇는다. 모델이 DUR을 처음부터
+        풀어 쓰면 첫 글자까지 25초 안팎이 걸렸다(30B, 사고 포함).
+        """
+        return True
 
     def find_evidence(self, question: str, retriever: EvidenceRetriever | None) -> tuple[EvidenceChunk, ...]:
         """``question``에 인용할 근거를 ``retriever``(요청의 말뭉치 스냅샷)에서 찾는다.
@@ -115,10 +122,14 @@ class ClinicalChatService:
         notice = dur_notice(assessment, prescribed=bool(snapshot.get("prescriptions")))
         if self.answers_dur_only_itself and (answer := _server_answer("prepared_snapshot_chat_stream", question, notice)) is not None:
             yield answer
+            if self._profile == "capable":
+                async for delta in self._dur_commentary(snapshot, assessment):
+                    yield delta
             return
         request = self._chat_request("prepared_snapshot_chat_stream", question, snapshot, reference_record, evidence, assessment)
+        facts = build_facts(snapshot, assessment, evidence_payload(evidence), question, reference_record)
         with _provider_failure(request.operation):
-            async for delta in self._stream_checked(request, question, has_notice=notice is not None):
+            async for delta in self._stream_verified(request, question, facts, has_notice=notice is not None):
                 yield delta
         if notice:
             yield notice
@@ -156,8 +167,11 @@ class ClinicalChatService:
         """추천 답변을 Provider 텍스트가 도착하는 대로 조각 단위로 내보낸다."""
         notice = dur_notice(assessment, prescribed=bool(snapshot.get("prescriptions")))
         request = self._recommendation_request("clinical_recommendation_stream", snapshot, assessment, evidence, clinical_note, question)
+        facts = build_facts(snapshot, assessment, evidence_payload(evidence), clinical_note, question)
         with _provider_failure(request.operation):
-            async for delta in self._stream_checked(request, question or RECOMMENDATION_REQUEST, has_notice=notice is not None):
+            async for delta in self._stream_verified(
+                request, question or RECOMMENDATION_REQUEST, facts, has_notice=notice is not None,
+            ):
                 yield delta
         if notice:
             yield notice
@@ -177,13 +191,99 @@ class ClinicalChatService:
         """일회성 EMR 요약을 Provider 텍스트가 도착하는 대로 조각 단위로 내보낸다.
 
         JSON 스키마가 없으므로 전체 요약이 생성되기 전에 첫 문장을 보여 줄 수 있다(환자 문맥 준비 스트림도 이 요약을 쓴다).
+        기록된 진단·처방은 끝에 코드가 만든 기록 블록(``record_notice``)으로 붙인다.
         """
         request = self._summary_request("one_shot_patient_summary_stream", snapshot)
         with _provider_failure(request.operation):
-            async for delta in self._stream_checked(request, ONE_SHOT_PATIENT_SUMMARY_REQUEST):
+            async for delta in self._stream_verified(request, ONE_SHOT_PATIENT_SUMMARY_REQUEST, build_facts(snapshot)):
                 yield delta
+        if notice := record_notice(snapshot):
+            yield notice
 
-    async def _stream_checked(self, request: OpenAIRequest, question: str, *, has_notice: bool = False) -> AsyncIterator[str]:
+    async def _dur_commentary(self, snapshot: Mapping[str, Any], assessment: Mapping[str, Any] | None) -> AsyncIterator[str]:
+        """DUR 점검 블록 뒤에 붙이는 짧은 해설(``capable``). 블록은 이미 보냈으므로 해설이 실패하면 경고 로그만 남기고 끝낸다.
+
+        역할: 경고의 임상적 의미와 근거를 붙인 검토 선택지를 몇 문장으로 요청한다(``DUR_COMMENTARY_REQUEST``). 자체 모델
+            배포에서는 이 작업(``dur_commentary_stream``)의 사고를 꺼서(``AI_NO_THINKING_OPERATIONS``) 빨리 끝낸다.
+        """
+        request = self._chat_request("dur_commentary_stream", DUR_COMMENTARY_REQUEST, snapshot, None, (), assessment)
+        started = False
+        try:
+            with _provider_failure(request.operation):
+                async for delta in self._stream_verified(
+                    request, DUR_COMMENTARY_REQUEST, build_facts(snapshot, assessment), fallback=False,
+                ):
+                    if not started:
+                        started = True
+                        yield "\n\n[처방 점검 해설]\n"
+                    yield delta
+        except ClinicalChatProviderUnavailableError:
+            logger.warning("dur_commentary_skipped operation=%s started=%s", request.operation, started)
+
+    async def _stream_verified(
+        self, request: OpenAIRequest, question: str, facts: Facts, *, has_notice: bool = False, fallback: bool = True,
+    ) -> AsyncIterator[str]:
+        """``_stream_checked`` 스트림을 문장 단위로 검증해 통과한 문장만 내보낸다(``answer_verification``).
+
+        역할: 문장이 완성될 때마다 이 요청의 자료(``facts``)와 대조한다. 아직 아무것도 내보내지 않았을 때 걸리면 한 번 다시
+            요청하고, 내보내기 시작한 뒤(또는 다시 받은 답변에서) 걸리면 그 문장을 빼고 답변 끝에 생략 안내(``OMISSION_NOTE``)를
+            붙인다. 통과한 문장이 하나도 없으면 고정 안내 문장(``fallback``이 참일 때)을 보낸다. 끝나면 문장·제거·재요청 건수와
+            위반 종류만 로그로 남긴다(본문은 남기지 않음).
+        입력:
+            request: Provider 요청.
+            question: 질문 되풀이 비교에 쓸 질문.
+            facts: 검증 기준(``build_facts``).
+            has_notice: 답변 끝에 DUR 점검 블록이 붙는지(안내 문장을 고른다).
+            fallback: False면 통과한 문장이 없을 때 아무것도 내보내지 않는다(덧붙이는 해설용).
+        출력: 검증한 문장(조각) 비동기 반복자.
+        """
+        dropped: Counter[str] = Counter()  # 위반 종류별 건수(다시 요청한 첫 문장 포함, 로그용)
+        sent, omitted, regenerated = 0, 0, False
+        for attempt in (1, 2):
+            splitter, restart = SentenceSplitter(), False
+            deltas = self._stream_checked(request, question, has_notice=has_notice, fallback=fallback)
+            try:
+                async for delta in deltas:
+                    for sentence in splitter.feed(delta):
+                        if (problem := check_sentence(sentence, facts)) is None:
+                            sent += bool(sentence.strip())  # 빈 줄은 '이미 보낸 문장'으로 세지 않는다(첫 문장 재요청 판단)
+                            yield sentence
+                        elif sent == 0 and attempt == 1:
+                            restart = True
+                            dropped[problem] += 1
+                            break
+                        else:
+                            dropped[problem] += 1
+                            omitted += 1
+                    if restart:
+                        break
+                else:
+                    for sentence in splitter.flush():
+                        if (problem := check_sentence(sentence, facts)) is None:
+                            sent += bool(sentence.strip())
+                            yield sentence
+                        else:
+                            dropped[problem] += 1
+                            omitted += 1
+            finally:
+                if isinstance(deltas, AsyncGenerator):  # 버린 스트림의 연결을 닫는다
+                    await deltas.aclose()
+            if not restart:
+                break
+            regenerated = True
+            _log_rejected(request.operation, "unverified_opening", attempt)
+        if sent == 0 and fallback:
+            yield fallback_answer(has_notice=has_notice)
+        elif omitted and sent:
+            yield "\n\n" + OMISSION_NOTE
+        logger.info(
+            "answer_verified operation=%s sentences=%d dropped=%d regenerated=%s problems=%s",
+            request.operation, sent, sum(dropped.values()), regenerated, ",".join(sorted(dropped)) or "-",
+        )
+
+    async def _stream_checked(
+        self, request: OpenAIRequest, question: str, *, has_notice: bool = False, fallback: bool = True,
+    ) -> AsyncIterator[str]:
         """Provider 스트림 앞부분을 점검해 질문 되풀이를 잘라 내고, 쓸 수 없으면 한 번 다시 요청한다.
 
         역할: 앞부분이 질문과 갈라질 때까지만 모아 두고(되풀이가 아니면 첫 조각을 바로 내보낸다), 아직 아무것도 내보내지
@@ -193,6 +293,7 @@ class ClinicalChatService:
             request: Provider 요청.
             question: 되풀이 비교에 쓸 질문.
             has_notice: 답변 끝에 DUR 점검 블록이 붙는지(안내 문장을 고른다).
+            fallback: False면 두 번 모두 쓸 수 없을 때 안내 문장 없이 아무것도 내보내지 않는다(덧붙이는 해설용).
         출력: 텍스트 조각 비동기 반복자.
         """
         problem = None
@@ -224,8 +325,9 @@ class ClinicalChatService:
                 return
             problem = opening.problem
             _log_rejected(request.operation, problem, attempt)
-        _log_fallback(request.operation, problem)
-        yield fallback_answer(has_notice=has_notice)
+        if fallback:
+            _log_fallback(request.operation, problem)
+            yield fallback_answer(has_notice=has_notice)
 
     def _chat_request(
         self, operation: str, question: str, snapshot: Mapping[str, Any], reference_record: str | None,

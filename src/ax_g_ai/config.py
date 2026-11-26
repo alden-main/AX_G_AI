@@ -111,6 +111,9 @@ class AISettings(_EnvironmentSettings):
             L1-30B-A5B 모델 카드는 1.05를 권장한다(1.0이면 긴 임상 답변에서 같은 구절을 반복).
         system_prompt_prefix: 모든 지시문 앞에 두는 한 줄(``openai_compatible`` 전용)이다. 모델이 정렬 학습한 신원 문장을 넣는다
             (L1-30B-A5B: ``You are Chain-of-Evidence, a medical AI assistant developed by Lunit.``). ``None``이면 넣지 않는다.
+        no_thinking_operations: 사고를 끄고 보낼 작업 이름(쉼표로 구분, ``openai_compatible`` 전용)이다. 사고 토큰은 답변 첫 글자보다
+            먼저 생성되므로, 추론이 거의 필요 없는 작업(예: ``one_shot_patient_summary_stream`` 환자 요약)만 끄면 첫 글자가 빨라진다.
+            ``disable_thinking``이 참이면 이미 모든 작업에서 꺼져 있다. 비우면 모든 작업이 같은 설정을 쓴다.
         max_retries: 첫 토큰 전 연결 오류·429·5xx의 SDK 재시도 횟수다.
         trace_content: OpenTelemetry 추적(``OTEL_EXPORTER_OTLP_ENDPOINT`` 설정 시)에 프롬프트·지시문·응답 본문을
             담을지 여부다(기본 끔). 끄면 모델·토큰 수·소요 시간·종료 사유만 남는다. 비식별 EMR도 추적 저장소에
@@ -129,6 +132,7 @@ class AISettings(_EnvironmentSettings):
     temperature: Annotated[float, Field(ge=0, le=2)] | None = None
     repetition_penalty: Annotated[float, Field(gt=0, le=2)] | None = None
     system_prompt_prefix: Annotated[str, Field(max_length=500)] | None = None
+    no_thinking_operations: str = ""
     max_output_tokens: PositiveInt | None = None
     max_retries: NonNegativeInt = 2
     trace_content: bool = False
@@ -160,6 +164,11 @@ class AISettings(_EnvironmentSettings):
             values["reasoning_effort"] = values["reasoning_effort"].lower()
         return values
 
+    @property
+    def no_thinking_operation_names(self) -> frozenset[str]:
+        """``no_thinking_operations``를 작업 이름 집합으로 나눈다(공백·빈 항목 무시)."""
+        return frozenset(name.strip() for name in self.no_thinking_operations.split(",") if name.strip())
+
     @field_validator("base_url")
     @classmethod
     def _http_url(cls, value: str) -> str:
@@ -183,8 +192,8 @@ class AISettings(_EnvironmentSettings):
                 raise ValueError("AI_BASE_URL must use HTTPS for the openai provider")
             if self.api_key is None:
                 raise ValueError("AI_API_KEY or OPENAI_API_KEY is required")
-            for name in ("temperature", "repetition_penalty", "system_prompt_prefix"):
-                if getattr(self, name) is not None:
+            for name in ("temperature", "repetition_penalty", "system_prompt_prefix", "no_thinking_operations"):
+                if getattr(self, name) not in (None, ""):
                     raise ValueError(f"AI_{name.upper()} is only supported for the openai_compatible provider")
         return self
 
@@ -213,6 +222,8 @@ class RuntimeSettings(_EnvironmentSettings):
         site_code_map_path: 병원 검사·약품 코드 → 말뭉치 개념 매핑 JSON(``text_data/mappings/sites``)이다.
             없으면 LOINC 검사 코드와 처방명 속 성분명으로만 매핑한다.
         recommendation_max_evidence: 추천 의견 하나에 붙일 규칙 근거 문단 최대 개수다.
+        recommendation_max_possible: 추천 규칙 평가에 보일 ``possible``(조건부)·``reference``(참고) 항목 각각의 최대 개수다(기본 12).
+            줄이면 화면의 ``assessment``와 AI 입력이 함께 줄어 자체 모델의 사고 시간이 준다. 값은 벤치마크·게이트로 비교해 정한다.
         clinical_doses_enabled: 말뭉치 용량 규칙(3단계)을 현재 처방·의료진 지정 약에 적용해 체중·신기능 기준 참고 용량,
             용량 조건 규칙, 처방 1일 용량 대조를 낼지 여부다(기본 끔). 규칙은 2단계와 같은 게이트를 지나며 미검수 규칙은
             ``evidence_include_unreviewed`` 가 켜져 있을 때만 쓰고, 항목마다 출처·region(국외 기준 여부)이 붙는다.
@@ -253,6 +264,7 @@ class RuntimeSettings(_EnvironmentSettings):
     clinical_rules_enabled: bool = True
     site_code_map_path: FilePath | None = None
     recommendation_max_evidence: int = Field(default=10, ge=1, le=20)
+    recommendation_max_possible: int = Field(default=12, ge=1, le=50)
     attributed_sources_only: bool = True
     prompt_data_labels: PromptLabels = "korean"
     model_profile: ModelProfile = "compact"

@@ -52,7 +52,6 @@ Docker 구성에서는 `bridge-ai` 내부 네트워크가 Bridge와 AX-G AI를 �
 | 서비스 | `services/clinical_dosing.py` | 3단계 용량 계산: `dose_rules` 계산식 해석기(`eval` 없음), 신기능 구간, 처방 1일 용량 |
 | 서비스 | `services/question_facts.py` | 질문·메모에 명시된 사실(임신 여부 등)과 추천·검사 의도 판단. 결정적 정규식이며 LLM을 거치지 않음 |
 | 서비스 | `services/dur_check.py` | DUR 점검: 현재 처방은 제품코드로, 질문에 적힌 추가 약은 성분명으로 찾아 병용·연령·임부·노인 목록과 대조. 이름 매칭 규칙은 [dur_name_matching_review.md](dur_name_matching_review.md) |
-| 서비스 | `services/prepared_patient_summary.py` | 최초 요약의 Pydantic 계약: Structured Output 스키마, 응답 검증, API 본문 |
 | 어댑터 | `adapters/sqlite_reference_lookup.py` | 참조 SQLite 조회(`services/ports.py`의 `ReferenceLookup` 구현). 약품·상병명은 메모리 색인으로 질문 매칭 |
 | 서비스 | `services/deidentified_snapshot.py` | 식별자 키 제거 규칙(유일한 정의) |
 | 서비스 | `services/clinical_calculations.py` | BMI·체표면적·CrCl·CKD-EPI 2021 eGFR(GFR 범주 포함) 결정적 계산 보조값 |
@@ -112,7 +111,7 @@ advisory lock 안에서 실행하므로, 적재기 두 개가 동시에 시작�
 
 ## 데이터 파이프라인
 
-### A. 환자 준비: `POST /internal/v1/patient-context` (`/stream`)
+### A. 환자 준비: `POST /internal/v1/patient-context/stream`
 
 ```mermaid
 sequenceDiagram
@@ -134,18 +133,17 @@ sequenceDiagram
         M-->>A: PatientContextUnavailableError(failure 코드)
         A-->>B: 502 EMR_UNAVAILABLE
     else 변환 성공
-        A->>C: summarize_prepared_snapshot(context.data)
-        C->>P: 고정 지시 + 비식별 JSON, Structured Output
-        P-->>C: JSON text
-        C-->>A: PreparedPatientSummary
         A->>S: put(patient_id, context)
-        A-->>B: 200 ready + patient_summary
+        A->>C: stream_summary_once(context.data)
+        C->>P: 고정 지시 + 비식별 JSON
+        P-->>C: delta 스트림
+        A-->>B: SSE meta(ready) / delta / done
     end
 ```
 
-`/stream` 변형은 변환 직후 문맥을 저장하고 `meta` 이벤트를 보낸 다음 요약을 스트리밍한다.
-요약이 `done` 전에 실패하면 문맥을 삭제한다. `/internal/v1/emr-summary`(`/stream`)는 같은
-변환을 거치지만 문맥을 저장하지 않는다.
+변환 직후 문맥을 저장하고 `meta` 이벤트를 보낸 다음 요약을 스트리밍한다.
+요약이 `done` 전에 실패하면 문맥을 삭제한다. `/internal/v1/emr-summary/stream`은 같은
+변환을 거치지만 문맥을 저장하지 않는다. API는 SSE만 제공한다(JSON 응답 엔드포인트 없음).
 
 매퍼가 정규화하는 목록은 다음과 같다. 그 밖의 최상위 필드는 `additional_clinical_data`에
 보존하되 식별자 키를 재귀적으로 제거한다. 허용 필드 안에 중첩 객체가 있어도 같은 비식별
@@ -163,7 +161,7 @@ sequenceDiagram
 
 `emr_updated_at`은 허용된 측정·검사 시각 중 가장 늦은 시각이다. 그런 시각이 없으면 준비 시각(UTC)을 쓴다.
 
-### B. 채팅: `POST /internal/v1/clinical-chat` (`/stream`)
+### B. 채팅: `POST /internal/v1/clinical-chat/stream`
 
 ```mermaid
 sequenceDiagram
@@ -181,12 +179,12 @@ sequenceDiagram
         S-->>A: PatientContextNotReadyError
         A-->>B: 404 PATIENT_CONTEXT_NOT_READY
     else 문맥 존재
-        A->>C: answer_prepared_snapshot / stream_prepared_snapshot
+        A->>C: stream_prepared_snapshot
         C->>R: search_question(question)
         C->>P: 고정 지시 + 비식별 EMR + 참조 + 질문
-        P-->>C: 답변 (또는 delta 스트림)
-        C-->>A: answer
-        A-->>B: 200 answer 또는 SSE meta/delta/done
+        P-->>C: delta 스트림
+        C-->>A: delta (+ DUR 점검 블록)
+        A-->>B: SSE meta/delta/done
     end
 ```
 
@@ -206,7 +204,7 @@ sequenceDiagram
 | 근거 인용 | `AX_G_EVIDENCE_CORPUS_DIR`(없으면 끔), `AX_G_EVIDENCE_INCLUDE_UNREVIEWED`(기본 false), `AX_G_EVIDENCE_MAX_CHUNKS`(기본 3). 채팅 응답·SSE `meta`에 `evidence`(번호·근거 문단·검수 상태·출처·충돌)를 넣고, 근거가 없으면 필드를 생략 | 로그에는 근거 ID와 미검수 개수만 남기고 질문은 쓰지 않음. `AX_G_CORPUS_DATABASE_URL`이 있으면 PostgreSQL(pgvector) 하이브리드 검색(어휘 + KURE-v1 의미 검색), 연결 실패 시 파일 어휘 검색으로 대체. 구조는 [clinical_corpus_postgres.md](clinical_corpus_postgres.md) |
 | 출처 표시 가능 자료만 사용 | `AX_G_ATTRIBUTED_SOURCES_ONLY`(기본 true). 근거·규칙은 모든 출처에 라이선스(CC0·CC BY·퍼블릭 도메인)·제목이 있을 때만 인용하고 `sources[].license`·`citation`을 응답에 넣음. 출처 미확인 참조 DB(`AX_G_REFERENCE_DATA_DB_PATH`)는 설정돼 있어도 끔. 추천 의견은 말뭉치 근거가 있는 제안만 | 라이선스는 빌드 시 `registry.yaml`의 `license_basis`에서 뽑고, A등급인데 라이선스를 못 정하면 빌드 실패(`build_corpus.py`). 참조 DB는 이미지에 없으므로, 이 설정을 끄더라도 DB를 마운트하고 `AX_G_REFERENCE_DATA_DB_PATH`를 지정해야 쓰인다 |
 | DUR 처방 점검 | `AX_G_DUR_ENABLED`(기본 true). 말뭉치와 같은 PostgreSQL의 `dur` 스키마(데이터셋·제품·병용·연령·임부·노인주의 표)에서 활성 데이터셋을 시작 시 메모리로 읽음. 심평원 DUR CSV → `ax-g-ai-build-dur`(스냅샷 `data/dur`, 이미지 포함) → compose `dur-loader`(`ax-g-ai-load-dur`)가 적재·활성화. EMR 처방 제품코드로 병용금기·연령금기·임부금기·노인주의를 점검해 `assessment.medication_alerts`로 반환. 질문에 적힌 추가 약("○○ 추가해도 되나")은 성분명(영문 염 제외 이름·한글 제품 성분명)으로 단일 성분 제품코드를 찾아 `proposed: true`로 함께 점검. 이미 복용 중인 성분이면 건너뜀(복합제는 구성 성분 단위로 비교) | 현재 처방은 제품코드 일치만 사용(이름 추정 없음), 미일치는 `unmapped`. 질문의 약 이름은 단일 성분만 인식하고 복합제·여러 성분을 가리키는 단어는 인식하지 않음. 같은 성분으로 합친 표기·염 단어 목록은 약사 검토 대상([dur_name_matching_review.md](dur_name_matching_review.md) 7절). DB·활성 데이터셋이 없으면 경고 후 끔(파일 대체 없음). 새 데이터셋은 말뭉치 릴리스와 같은 주기로 자동 반영(스냅샷 교체), 롤백은 `--activate`. 용량주의·투여기간주의는 원본 파일 확보 후 추가. 공공누리 제1유형 — 출처 표시 |
-| 추천 진단·검사(2단계) | `AX_G_CLINICAL_RULES_ENABLED`(기본 true). 말뭉치 진단·검사·협진·추적 규칙을 근거와 같은 게이트로 불러오고(DB 활성 릴리스 → 파일), EMR 준비 시 `emr_mapping`으로 개념 사실(검사값·KCD·성분)을 만들어 문맥에 함께 보관. `/internal/v1/clinical-recommendations`에서 3값 논리로 평가해 `met`/`possible` 항목·근거 번호·출처·검수 표시를 반환하고 LLM이 의견을 작성. 병원 코드 매핑은 `AX_G_SITE_CODE_MAP_PATH` | 미검수 규칙은 `AX_G_EVIDENCE_INCLUDE_UNREVIEWED`일 때만. `clinical_note`는 매퍼를 거치지 않고 Provider로 감(소견 키 추출 + 의견 생성). 규칙은 근거와 같은 스냅샷으로 새 릴리스를 자동 반영. 로그에는 건수만 |
+| 추천 진단·검사(2단계) | `AX_G_CLINICAL_RULES_ENABLED`(기본 true). 말뭉치 진단·검사·협진·추적 규칙을 근거와 같은 게이트로 불러오고(DB 활성 릴리스 → 파일), EMR 준비 시 `emr_mapping`으로 개념 사실(검사값·KCD·성분)을 만들어 문맥에 함께 보관. `/internal/v1/clinical-recommendations/stream`에서 3값 논리로 평가해 `met`/`possible` 항목·근거 번호·출처·검수 표시를 반환하고 LLM이 의견을 작성. 병원 코드 매핑은 `AX_G_SITE_CODE_MAP_PATH` | 미검수 규칙은 `AX_G_EVIDENCE_INCLUDE_UNREVIEWED`일 때만. `clinical_note`는 매퍼를 거치지 않고 Provider로 감(소견 키 추출 + 의견 생성). 규칙은 근거와 같은 스냅샷으로 새 릴리스를 자동 반영. 로그에는 건수만 |
 | 약물 용량 참고(3단계) | `AX_G_CLINICAL_DOSES_ENABLED`(코드 기본 false). 말뭉치 `dose_rules`를 현재 처방 약(성분·약효군 일치)과 요청 `dose_drugs`에 적용: 체중 공식(`clinical_dosing`의 안전한 계산식 해석기, `eval` 없음), eGFR·CrCl 구간 용량, 용량 조건 규칙(3값), 처방 1일 용량(`dosage`×`frequency`, mg 단위·1일 간격만)과 구간 1일 최대 대조. `assessment.dose_assessments`로 반환하고 LLM은 `용량 참고`로 입력값과 함께 씀 | 2단계와 같은 게이트·검수 표시·출처. 18세 미만·나이 미상은 계산하지 않음. 입력이 없으면 추정하지 않고 `missing`. 출처가 국외이면 `notice`(국내 허가 미대조). 용량 근거 문단은 2단계 근거 상한과 별도로 최대 6개 더 붙임. 치료 선택(`treatment.jsonl`)과 요법만 있는 규칙(약 하나에 묶이지 않음)은 쓰지 않음 |
 | 오류 | 도메인 예외 타입을 예외 처리기에서 안전한 코드로 변환. 설정 오류는 필드명·사유만 로그 | Provider 원문 오류와 API Key를 응답·로그에 노출하지 않음 |
 
@@ -240,7 +238,7 @@ API 응답 본문은 Pydantic 모델(`ClinicalChatResponseBody`, `EmrSummaryResp
 
 - 진입점/API: `src/ax_g_ai/api.py`, `src/ax_g_ai/runtime.py`, `src/ax_g_ai/config.py`
 - 변환/비식별: `src/ax_g_ai/adapters/main_bridge.py`, `src/ax_g_ai/services/deidentified_snapshot.py`
-- 채팅/요약: `src/ax_g_ai/services/clinical_chat.py`, `src/ax_g_ai/services/clinical_grounding.py`, `src/ax_g_ai/services/prepared_patient_summary.py`
+- 채팅/요약: `src/ax_g_ai/services/clinical_chat.py`, `src/ax_g_ai/services/clinical_grounding.py`, `src/ax_g_ai/services/answer_review.py`
 - 추천 진단·검사: `src/ax_g_ai/services/clinical_recommendation/`, `docs/assessment_schema.md`, `src/ax_g_ai/services/emr_mapping.py`, `src/ax_g_ai/corpus_store/rules.py`
 - DUR: `src/ax_g_ai/services/dur_check.py`, `src/ax_g_ai/dur_store/`, `docs/dur_name_matching_review.md`
 - 저장소·스키마: `src/ax_g_ai/pg_release.py`, `src/ax_g_ai/*/migrations/`, `docs/clinical_corpus_postgres.md`

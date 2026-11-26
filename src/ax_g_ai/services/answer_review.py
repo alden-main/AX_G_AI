@@ -102,6 +102,50 @@ def dur_notice(assessment: Mapping[str, Any] | None, *, prescribed: bool = True)
     return "\n\n[처방 점검 — 심평원 DUR 목록]\n" + "\n".join(lines)
 
 
+_DATE_KEYS = ("prescriptionDate", "prescription_date", "startDate", "start_date", "orderDate", "order_date")
+
+
+def record_notice(snapshot: Mapping[str, Any]) -> str | None:
+    """요약 끝에 붙일 기록 블록: EMR의 진단·처방을 코드가 나열한다(R-F29, 둘 다 없으면 ``None``).
+
+    역할: 사고를 끈 요약이 진단 줄을 빠뜨리거나, 위반 문장을 빼면서 같은 문장의 진단이 함께 빠지는 일이 있었다. 반드시 들어가야
+        하는 기록 사실은 모델에 맡기지 않는다. 빈 목록으로 기록된 항목(``recorded_none``)은 '기록 없음', 전달되지 않은 항목은
+        줄을 쓰지 않는다. 앞에 빈 줄을 둔다.
+    """
+    recorded_none = set(snapshot.get("recorded_none") or ())
+    lines = []
+    diagnoses = [row for row in snapshot.get("diagnoses") or () if isinstance(row, Mapping)]
+    if diagnoses:
+        lines.append("• 진단: " + ", ".join(_diagnosis(row) for row in diagnoses))
+    elif "진단" in recorded_none:
+        lines.append("• 진단: 기록 없음")
+    prescriptions = [row for row in snapshot.get("prescriptions") or () if isinstance(row, Mapping)]
+    if prescriptions:
+        lines.append("• 처방: " + "; ".join(_prescription(row) for row in prescriptions))
+    elif "처방" in recorded_none:
+        lines.append("• 처방: 기록 없음")
+    return "\n\n[기록 — 진단·처방]\n" + "\n".join(lines) if lines else None
+
+
+def _diagnosis(row: Mapping[str, Any]) -> str:
+    name, code = row.get("name_ko"), row.get("code")
+    return f"{name}({code})" if name and code else str(name or code or "")
+
+
+def _prescription(row: Mapping[str, Any]) -> str:
+    parts = [str(row.get("med_name") or row.get("med_code") or "")]
+    if row.get("dosage") not in (None, ""):
+        parts.append(f"{_number(row['dosage'])}{row.get('unit') or ''}")
+    if row.get("frequency") not in (None, ""):
+        parts.append(f"1일 {_number(row['frequency'])}회")
+    date = next((row[key] for key in _DATE_KEYS if row.get(key) not in (None, "")), None)
+    return " ".join(part for part in parts if part) + (f"(처방일 {str(date)[:10]})" if date else "(처방일 기록 없음)")
+
+
+def _number(value: object) -> str:
+    return f"{value:g}" if isinstance(value, float) else str(value)
+
+
 def _name(item: Mapping[str, Any]) -> str:
     return str(item.get("med_name") or item.get("name") or item.get("ingredient_name") or item.get("med_code") or "")
 

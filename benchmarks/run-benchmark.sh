@@ -155,6 +155,7 @@ if [[ $state != ok ]]; then
 fi
 
 core_run=""
+recommendation_run=""
 runs=""
 log "4/5 벤치마크 실행 (SSE, split=$split, 반복=$repetitions)"
 for s in $suites; do
@@ -173,6 +174,8 @@ for s in $suites; do
       "$py" -m benchmarks judge "$run_dir" --live --url "$judge_url" --model "$judge_model" --timeout "$timeout" > /dev/null
       "$py" -m benchmarks judge-report "$run_dir" > "$run_dir/judge-report.json"
     fi
+  else
+    recommendation_run=$run_dir
   fi
   "$py" -m benchmarks report "$run_dir" > "$run_dir/report.json"
 done
@@ -255,3 +258,22 @@ if compare.exists():
             print(f"  {key:<34} {value(pair['left'])} → {value(pair['right'])}")
 print(f'\n결과 폴더: {session}')
 PY
+
+# 출시 게이트: 자동 지표가 benchmarks/gates.json의 하한선을 넘는지 판정한다(사람 판정을 대신하지 않음). 불합격이면 종료 코드 3.
+gate_status=0
+if [[ -n $core_run ]]; then
+  "$py" -m benchmarks gate "$core_run" ${recommendation_run:+--recommendation-run "$recommendation_run"} > "$session/gate.json" || gate_status=$?
+  "$py" - "$session/gate.json" <<'PY' | tee -a "$session/summary.txt"
+import json, sys
+result = json.load(open(sys.argv[1]))
+print(f"\n== 출시 게이트: {'합격' if result['passed'] else '불합격'} (자동 근사 지표)")
+for check in result['checks']:
+    bound = f"≥ {check['min']}" if 'min' in check else f"≤ {check['max']}"
+    value = '측정 안 됨' if check['value'] is None else (f"{check['value']:.3f}" if isinstance(check['value'], float) else check['value'])
+    mark = '-' if check['ok'] is None else ('통과' if check['ok'] else ('불합격' if check['level'] == 'block' else '경고'))
+    print(f"  {check['name']:<30} {value!s:>10}  기준 {bound:<8} {mark}")
+PY
+fi
+if [[ $gate_status -ne 0 ]]; then
+  exit 3
+fi

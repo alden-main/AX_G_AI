@@ -95,8 +95,9 @@ services:
       - .env
     environment:
       # 코드 기본값과 다르게 운영하는 애플리케이션 설정. 서버별로 바꾸려면 같은 이름을 .env에 적는다.
-      # 사고량(OpenAI만 해당): capable 프로필에서 추론을 활용하도록 medium. 첫 글자가 늦으면 low로 낮춘다.
-      AI_REASONING_EFFORT: ${AI_REASONING_EFFORT-medium}
+      # 사고량(OpenAI만 해당): 사고 토큰이 답변보다 먼저 생성되므로 첫 글자 시간을 좌우한다.
+      # medium으로 올렸을 때 첫 글자가 약 5초에서 약 20초로 늘어 low로 둔다. 비워 두면(AI_REASONING_EFFORT=) Provider 기본값(medium).
+      AI_REASONING_EFFORT: ${AI_REASONING_EFFORT-low}
       # 모델 프로필: capable(GPT 등 고성능, 이 파일 기본) 또는 compact(작은 자체 모델, compose.sglang.yaml·compose.vllm.yaml 기본).
       # compact는 본문의 DUR 판단을 막고 DUR만 묻는 질문을 서버가 답한다. capable은 본문에서 DUR 경고의 임상적 의미를 설명할 수 있다.
       AX_G_MODEL_PROFILE: ${AX_G_MODEL_PROFILE:-capable}
@@ -105,6 +106,10 @@ services:
       AX_G_CLINICAL_DOSES_ENABLED: ${AX_G_CLINICAL_DOSES_ENABLED:-true}
       # AI에 보내는 데이터의 항목 이름 표기: korean(한국어 이름, 기본) 또는 english(영문 키, 비교 실험용). 바꾼 뒤 ax-g-ai만 다시 시작하면 된다.
       AX_G_PROMPT_DATA_LABELS: ${AX_G_PROMPT_DATA_LABELS:-korean}
+      # 추천 규칙 평가의 조건부(possible)·참고 항목 수와 규칙 근거 문단 수 상한. 줄이면 화면 assessment와 AI 입력이 함께 줄어
+      # 자체 모델의 사고 시간이 준다(추천 입력 약 16K 토큰). 바꿀 때는 벤치마크·출시 게이트로 비교한다.
+      AX_G_RECOMMENDATION_MAX_POSSIBLE: ${AX_G_RECOMMENDATION_MAX_POSSIBLE:-12}
+      AX_G_RECOMMENDATION_MAX_EVIDENCE: ${AX_G_RECOMMENDATION_MAX_EVIDENCE:-10}
       AX_G_CORPUS_DATABASE_URL: postgresql://${CORPUS_DB_USER:-axg}:${CORPUS_DB_PASSWORD}@postgres:5432/${CORPUS_DB_NAME:-axg_corpus}
       AX_G_EMBEDDING_URL: http://embedding:80
       AX_G_EMBEDDING_MODEL: ${AX_G_EMBEDDING_MODEL:-kure-v1}

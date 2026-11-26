@@ -81,6 +81,8 @@ if [[ $mode != openai ]]; then
       is_set AI_TEMPERATURE || export AI_TEMPERATURE=0
       # 30B는 DUR 경고의 임상적 의미와 검토 선택지(근거 포함)를 쓸 수 있는 capable 프로필로 띄운다.
       is_set AX_G_MODEL_PROFILE || export AX_G_MODEL_PROFILE=capable
+      # 환자 요약(첫 화면)과 DUR 해설은 사고 없이 보낸다(요약 첫 글자 p50 8~10초, p90 약 20초였음).
+      is_set AI_NO_THINKING_OPERATIONS || export AI_NO_THINKING_OPERATIONS=one_shot_patient_summary_stream,dur_commentary_stream
       ;;
   esac
   args+=(-f "compose.$engine.yaml")
@@ -89,6 +91,8 @@ if [[ $mode != openai ]]; then
   penalty=$(env_value AI_REPETITION_PENALTY || true)
   prefix=$(env_value AI_SYSTEM_PROMPT_PREFIX || true)
   printf '샘플링: 온도 %s, 반복 억제 %s, 지시문 앞 문장 %s\n' "${temperature:-compose 기본값}" "${penalty:-보내지 않음}" "${prefix:-없음}"
+  no_thinking=$(env_value AI_NO_THINKING_OPERATIONS || true)
+  printf '사고 끄는 작업: %s\n' "${no_thinking:-없음(모든 작업 사고 사용)}"
 
   # compose.<엔진>.yaml의 `!override`는 Docker Compose 2.24.4 이상에서 동작한다.
   compose_version=$(docker compose version --short 2>/dev/null || true)
@@ -146,5 +150,11 @@ printf ' %q' "${args[@]}"
 printf ' logs --tail=100 ax-g-ai corpus-loader dur-loader%s\n' "${engine:+ $engine}"
 if [[ $observability == 1 ]]; then
   port=$(env_value PHOENIX_PORT || true)
+  trace_content=$(env_value AI_TRACE_CONTENT | tr '[:upper:]' '[:lower:]' || true)
+  if [[ $trace_content == true ]]; then
+    printf '추적 본문 기록: 켬(지시문·입력·응답 본문 기록 — 합성 데이터 평가에서만)\n'
+  else
+    printf '추적 본문 기록: 끔(토큰 수·시간만)\n'
+  fi
   printf '추적 화면: http://<서버>:%s (로그인 admin@localhost / .env의 PHOENIX_ADMIN_PASSWORD, 사내 PC에서 보려면 PHOENIX_BIND=0.0.0.0)\n' "${port:-6006}"
 fi

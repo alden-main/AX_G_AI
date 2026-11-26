@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 
 from ax_g_ai.errors import ClinicalChatProviderUnavailableError
-from ax_g_ai.services.answer_review import DUR_ONLY_ANSWER, Opening, check_opening, dur_notice, fallback_answer
+from ax_g_ai.services.answer_review import DUR_ONLY_ANSWER, Opening, check_opening, dur_notice, fallback_answer, record_notice
 from ax_g_ai.services.clinical_chat import ClinicalChatService
 from ax_g_ai.services.ports import OpenAIRequest, ProviderAnswer
 from ax_g_ai.services.question_facts import asks_only_for_dur
@@ -96,6 +96,33 @@ class DurNoticeTest(unittest.TestCase):
         self.assertNotIn("추가 예정 약", dur_notice({"medication_alerts": flagged}))
 
 
+class RecordNoticeTest(unittest.IsolatedAsyncioTestCase):
+    SNAPSHOT = {
+        "diagnoses": [{"code": "E119", "name_ko": "2형 당뇨병"}, {"code": "E039", "name_ko": "갑상선기능저하증"}],
+        "prescriptions": [
+            {"med_name": "시타그립정100밀리그램", "dosage": 100, "unit": "mg", "frequency": 1, "prescriptionDate": "2026-02-12"},
+            {"med_name": "레보티록신나트륨정 0.1mg", "dosage": 0.1, "unit": "mg", "frequency": 1},
+        ],
+    }
+
+    def test_recorded_diagnoses_and_prescriptions_are_listed_by_code(self) -> None:
+        self.assertEqual(record_notice(self.SNAPSHOT), (
+            "\n\n[기록 — 진단·처방]\n• 진단: 2형 당뇨병(E119), 갑상선기능저하증(E039)\n"
+            "• 처방: 시타그립정100밀리그램 100mg 1일 1회(처방일 2026-02-12); 레보티록신나트륨정 0.1mg 0.1mg 1일 1회(처방일 기록 없음)"
+        ))
+
+    def test_recorded_none_says_so_and_missing_lists_are_left_out(self) -> None:
+        self.assertEqual(record_notice({"recorded_none": ["처방"], "diagnoses": [{"code": "I10"}]}),
+                         "\n\n[기록 — 진단·처방]\n• 진단: I10\n• 처방: 기록 없음")
+        self.assertIsNone(record_notice({"blood_sugar": []}))
+
+    async def test_the_summary_ends_with_the_record_block_outside_verification(self) -> None:
+        provider = SequenceProvider(("당뇨 조절 중인 환자입니다.",))
+        deltas = [d async for d in ClinicalChatService(provider).stream_summary_once(snapshot=self.SNAPSHOT)]
+        self.assertEqual(deltas[-1], record_notice(self.SNAPSHOT))
+        self.assertIn("하나씩 나열하지 말고", provider.requests[0].input)
+
+
 class CheckedProviderCallTest(unittest.IsolatedAsyncioTestCase):
     async def test_unusable_answer_is_requested_again_once(self) -> None:
         provider = SequenceProvider(QUESTION, "최근 값은 0.92 mg/dL입니다.")
@@ -126,24 +153,24 @@ class CheckedProviderCallTest(unittest.IsolatedAsyncioTestCase):
 
         deltas = [delta async for delta in service.stream_prepared_snapshot(question=QUESTION, snapshot=SNAPSHOT, assessment=assessment)]
 
-        self.assertEqual(deltas, ["답", "변", "\n\n[처방 점검 — 심평원 DUR 목록]\n• 병용금기: A + B — 위험"])
+        self.assertEqual(deltas, ["답변", "\n\n[처방 점검 — 심평원 DUR 목록]\n• 병용금기: A + B — 위험"])  # text goes out by sentence
 
     async def test_stream_strips_an_echo_and_retries_a_json_dump_before_sending_anything(self) -> None:
         provider = SequenceProvider(("크레아티닌의 최근 값과 ", "이전 값을 날짜·단위와 함께 비교해 주세요. ", "최근 ", "0.92"))
         deltas = [delta async for delta in ClinicalChatService(provider).stream_prepared_snapshot(question=QUESTION, snapshot=SNAPSHOT)]
-        self.assertEqual(deltas, ["최근 ", "0.92"])
+        self.assertEqual(deltas, ["최근 0.92"])
 
         provider = SequenceProvider(("```json", '{"a": 1}'), ("최근 값", "입니다"))
         with self.assertLogs("uvicorn.error", level="WARNING") as logs:
             deltas = [delta async for delta in ClinicalChatService(provider).stream_prepared_snapshot(question=QUESTION, snapshot=SNAPSHOT)]
-        self.assertEqual(deltas, ["최근 값", "입니다"])
+        self.assertEqual(deltas, ["최근 값입니다"])
         self.assertEqual(provider.closed, 2)  # the rejected stream was closed
         self.assertIn("reason=raw_json attempt=1", logs.output[0])
 
         provider = SequenceProvider((QUESTION,), (QUESTION,))
         with self.assertLogs("uvicorn.error", level="WARNING"):
             deltas = [delta async for delta in ClinicalChatService(provider).stream_prepared_snapshot(question=QUESTION, snapshot=SNAPSHOT)]
-        self.assertEqual(deltas, [fallback_answer(has_notice=False)])
+        self.assertEqual("".join(deltas), fallback_answer(has_notice=False))
 
     async def test_provider_call_failure_still_fails(self) -> None:
         class Broken:
@@ -177,14 +204,26 @@ class DurOnlyQuestionTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(deltas, [expected])
         self.assertEqual(provider.requests, [])
 
-    async def test_capable_profile_lets_the_model_answer_and_keeps_the_block(self) -> None:
-        provider = SequenceProvider("근병증 위험이 있어 근육통·CK를 확인할 수 있습니다.")
+    async def test_capable_profile_sends_the_block_first_then_a_short_commentary(self) -> None:
+        # The block is sent at once (no thinking wait); the commentary follows from a separate, short request.
+        provider = SequenceProvider(("근병증 위험이 있어 ", "근육통·CK를 확인할 수 있습니다."))
         service = ClinicalChatService(provider, model_profile="capable")
-        answer = await collect(service.stream_prepared_snapshot(question="병용금기 있나요?", snapshot=self.PRESCRIBED, assessment=self.ASSESSMENT))
+        deltas = [delta async for delta in service.stream_prepared_snapshot(
+            question="병용금기 있나요?", snapshot=self.PRESCRIBED, assessment=self.ASSESSMENT)]
 
-        self.assertEqual(answer, "근병증 위험이 있어 근육통·CK를 확인할 수 있습니다.\n\n[처방 점검 — 심평원 DUR 목록]\n• 병용금기: A + B — 위험")
-        self.assertIn("임상적 의미", provider.requests[0].input)
-        self.assertFalse(service.answers_dur_only_itself)
+        block = DUR_ONLY_ANSWER + "\n\n[처방 점검 — 심평원 DUR 목록]\n• 병용금기: A + B — 위험"
+        self.assertEqual(deltas, [block, "\n\n[처방 점검 해설]\n", "근병증 위험이 있어 근육통·CK를 확인할 수 있습니다."])
+        self.assertEqual(provider.requests[0].operation, "dur_commentary_stream")
+        self.assertIn("다섯 문장 이내", provider.requests[0].input)
+        self.assertIn("임상적 의미", provider.requests[0].input)  # the capable DUR rule
+
+    async def test_a_failed_commentary_leaves_the_block_as_the_answer(self) -> None:
+        provider = SequenceProvider("{}", "{}")  # unusable twice: no fallback notice after the block
+        service = ClinicalChatService(provider, model_profile="capable")
+        with self.assertLogs("uvicorn.error", level="WARNING"):
+            deltas = [delta async for delta in service.stream_prepared_snapshot(
+                question="병용금기 있나요?", snapshot=self.PRESCRIBED, assessment=self.ASSESSMENT)]
+        self.assertEqual(deltas, [DUR_ONLY_ANSWER + "\n\n[처방 점검 — 심평원 DUR 목록]\n• 병용금기: A + B — 위험"])
 
     async def test_without_a_dur_result_the_model_answers(self) -> None:
         provider = SequenceProvider("처방 기록이 없습니다.")

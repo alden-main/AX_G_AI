@@ -2,8 +2,9 @@
 #   docker compose -f compose.yaml -f compose.observability.yaml up -d
 #   배포 스크립트: ./start-deployment.sh <모드> --observability
 # 화면: http://<서버>:6006 (기본은 서버 안에서만 열림, 아래 PHOENIX_BIND). 로그인 admin@localhost / PHOENIX_ADMIN_PASSWORD
-# .env: PHOENIX_SECRET, PHOENIX_ADMIN_SECRET, PHOENIX_ADMIN_PASSWORD(필수)
-#       PHOENIX_BIND(기본 127.0.0.1, 사내 PC에서 보려면 0.0.0.0), PHOENIX_RETENTION_DAYS(기본 30), AI_TRACE_CONTENT(기본 false)
+# .env(비밀값): PHOENIX_SECRET, PHOENIX_ADMIN_SECRET, PHOENIX_ADMIN_PASSWORD(필수)
+# 셸 값(비밀 아님): PHOENIX_BIND(기본 127.0.0.1, 사내 PC에서 보려면 0.0.0.0), PHOENIX_RETENTION_DAYS(기본 30),
+#                 AI_TRACE_CONTENT(기본 false, true면 지시문·입력·응답 본문까지 기록 — 합성 데이터 평가에서만)
 # 추적 데이터는 말뭉치 PostgreSQL의 phoenix 스키마에 저장합니다(DB 서버를 따로 두지 않습니다). GPU는 쓰지 않습니다.
 # Phoenix를 멈춰도(docker compose stop phoenix) API는 그대로 동작하며, 추적만 버려지고 경고 로그가 남습니다.
 services:
@@ -53,6 +54,9 @@ services:
       OTEL_EXPORTER_OTLP_TRACES_HEADERS: authorization=Bearer%20${PHOENIX_ADMIN_SECRET}
       # Phoenix 프로젝트 이름(화면 왼쪽 목록).
       OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=ax-g-ai
+      # 추적에 프롬프트·응답 본문을 담을지. 비식별 EMR도 추적 저장소에 쌓이므로 운영에서 켜려면 개인정보·보안 승인이 필요하다.
+      #   AI_TRACE_CONTENT=true ./start-deployment.sh local --observability
+      AI_TRACE_CONTENT: ${AI_TRACE_CONTENT:-false}
 
 networks:
   observability-ui: {}

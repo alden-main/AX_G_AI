@@ -19,6 +19,7 @@ from pydantic_ai.models.openai import (
     OpenAIResponsesModelSettings,
 )
 from pydantic_ai.providers.openai import OpenAIProvider
+from pydantic_ai.settings import ModelSettings
 
 from ax_g_ai.adapters.openai import ProviderClient, PydanticAIProviderClient
 from ax_g_ai.config import AI_PROVIDER_OPENAI, AISettings
@@ -52,10 +53,23 @@ def build_provider_client(
         max_retries=settings.max_retries,
         http_client=http_client,
     )
+    model = _model(settings, OpenAIProvider(openai_client=client))
     return PydanticAIProviderClient(
-        _model(settings, OpenAIProvider(openai_client=client)), instrumentation=instrumentation,
-        system_prompt_prefix=settings.system_prompt_prefix,
+        model, instrumentation=instrumentation, system_prompt_prefix=settings.system_prompt_prefix,
+        operation_settings=_no_thinking_settings(settings, model),
     )
+
+
+def _no_thinking_settings(settings: AISettings, model: Model) -> dict[str, ModelSettings]:
+    """``no_thinking_operations``의 작업마다 사고를 끄는 요청 설정(다른 ``extra_body`` 값은 그대로 둔다).
+
+    요청 설정은 모델 설정 위에 키 단위로 덮어쓰므로 ``extra_body`` 전체(반복 억제 등 포함)를 다시 담는다.
+    """
+    if settings.provider == AI_PROVIDER_OPENAI or settings.disable_thinking or not settings.no_thinking_operation_names:
+        return {}
+    base = dict((model.settings or {}).get("extra_body") or {})  # type: ignore[call-overload]
+    no_thinking = ModelSettings(extra_body={**base, "chat_template_kwargs": {"enable_thinking": False}})
+    return dict.fromkeys(settings.no_thinking_operation_names, no_thinking)
 
 
 def _model(settings: AISettings, provider: OpenAIProvider) -> Model:

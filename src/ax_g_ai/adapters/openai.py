@@ -14,7 +14,8 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Iterator
+import logging
+from collections.abc import AsyncIterator, Iterator, Mapping
 from contextlib import contextmanager
 from typing import Any
 
@@ -24,6 +25,7 @@ from pydantic_ai.capabilities import Instrumentation
 from pydantic_ai.exceptions import ModelAPIError, ModelHTTPError, UnexpectedModelBehavior
 from pydantic_ai.messages import ModelResponse
 from pydantic_ai.models import Model
+from pydantic_ai.settings import ModelSettings
 
 # 포트는 서비스 계층이 정의한다. Client를 만드는 호출자를 위해 여기서 다시 내보낸다.
 from ax_g_ai.services.ports import (
@@ -34,6 +36,8 @@ from ax_g_ai.services.ports import (
     ProviderClient,
     ProviderOutputError,
 )
+
+logger = logging.getLogger("uvicorn.error")
 
 __all__ = [
     "OpenAIProviderError", "OpenAIRequest", "ProviderAnswer", "ProviderClient", "ProviderOutputError", "PydanticAIProviderClient",
@@ -52,9 +56,12 @@ class PydanticAIProviderClient:
 
     def __init__(
         self, model: Model, *, instrumentation: InstrumentationSettings | None = None, system_prompt_prefix: str | None = None,
+        operation_settings: Mapping[str, ModelSettings] | None = None,
     ) -> None:
         self._model = model
         self._prefix = system_prompt_prefix
+        # 작업 이름별 요청 설정(예: 환자 요약은 사고 끄기). 모델 설정 위에 덮어쓴다.
+        self._operation_settings = dict(operation_settings or {})
         self._capabilities = [Instrumentation(settings=instrumentation)] if instrumentation is not None else []
         self._agents: dict[str, Agent[None, Any]] = {}
         self._label = type(model).__name__
@@ -89,6 +96,7 @@ class PydanticAIProviderClient:
                         yielded = True
                         yield delta
                 response = result.response
+                _log_usage(request.operation, result)
         _require_complete(response, self._label)
         if not yielded:
             raise ProviderOutputError(f"{self._label} returned an empty streaming answer")
@@ -96,6 +104,7 @@ class PydanticAIProviderClient:
     async def _run(self, request: OpenAIRequest, output_type: Any) -> Any:
         with _classified_errors(self._label):
             result = await self._agent(request).run(request.input, output_type=output_type, **self._run_options(request))
+            _log_usage(request.operation, result)
         _require_complete(result.response, self._label)
         return result.output
 
@@ -114,7 +123,26 @@ class PydanticAIProviderClient:
         if request.prompt_version:
             metadata["prompt_version"] = request.prompt_version
         instructions = f"{self._prefix}\n{request.instructions}" if self._prefix else request.instructions
-        return {"instructions": instructions, "metadata": metadata}
+        options: dict[str, Any] = {"instructions": instructions, "metadata": metadata}
+        if (settings := self._operation_settings.get(request.operation)) is not None:
+            options["model_settings"] = settings
+        return options
+
+
+def _log_usage(operation: str, result: Any) -> None:
+    """Provider가 알려 준 사용량을 작업 이름과 함께 남긴다(본문 없음). 사고 토큰은 Provider가 ``reasoning_tokens``를 줄 때만.
+
+    로그는 부가 기능이므로 사용량을 읽지 못해도 요청을 실패시키지 않는다(스트림 결과는 ``usage()`` 메서드, 일반 결과는 속성).
+    """
+    try:
+        usage = result.usage() if callable(result.usage) else result.usage
+        reasoning = (usage.details or {}).get("reasoning_tokens")
+        logger.info(
+            "provider_usage operation=%s input_tokens=%s output_tokens=%s reasoning_tokens=%s",
+            operation, usage.input_tokens, usage.output_tokens, "-" if reasoning is None else reasoning,
+        )
+    except Exception as error:  # 사용량 기록 실패가 답변을 막으면 안 된다
+        logger.debug("provider_usage_unavailable operation=%s error_type=%s", operation, type(error).__name__)
 
 
 def _require_complete(response: ModelResponse, label: str) -> None:

@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from benchmarks import judge_metrics
+from benchmarks import gate, judge_metrics
 from benchmarks.history import commit, effective
 from benchmarks.judge import evaluate
 from benchmarks.metrics import compare, compare_quality, report
@@ -49,12 +49,20 @@ def main():
     s = sub.add_parser('judge-report', help='provisional scores from judge proposals (not reviewer-confirmed)')
     s.add_argument('run_dir', type=Path)
     s.add_argument('--job', help='judge job ID (default: the latest)')
+    s = sub.add_parser('gate', help='pass/fail the run against the automatic quality floor (benchmarks/gates.json)')
+    s.add_argument('core_run', type=Path)
+    s.add_argument('--recommendation-run', type=Path)
+    s.add_argument('--gates', type=Path, default=gate.GATES)
     s = sub.add_parser('judge-compare', help='pair two runs by judge proposals (same judge model and prompt only)')
     s.add_argument('left', type=Path)
     s.add_argument('right', type=Path)
     s.add_argument('--left-job')
     s.add_argument('--right-job')
     args = parser.parse_args()
+    if args.command == 'gate':
+        result = gate.judge(gate.measure(args.core_run, args.recommendation_run), args.gates)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        raise SystemExit(0 if result['passed'] else 1)
     if args.command == 'validate':
         print(json.dumps({'core': validate(read_jsonl(DATA / 'inputs.jsonl'), read_jsonl(DATA / 'gold.jsonl')),
                           'recommendation': validate_recommendations(read_jsonl(DATA / 'recommendation_inputs.jsonl'),

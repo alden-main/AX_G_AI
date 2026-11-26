@@ -226,7 +226,8 @@ def _recommender(settings: RuntimeSettings, rules: RuleCorpus | None, dur, *, ba
         # 잘못된 병원 코드 매핑은 배포 오류다. 기동 시 실패시킨다(이후 릴리스에서 실패하면 현재 스냅샷을 유지한다).
         site_map = SiteCodeMap.load(Path(settings.site_code_map_path), rules.catalog)
     recommender = ClinicalRecommender(
-        rules, site_map, max_evidence=settings.recommendation_max_evidence, dur=dur, doses=settings.clinical_doses_enabled,
+        rules, site_map, max_evidence=settings.recommendation_max_evidence, max_possible=settings.recommendation_max_possible,
+        dur=dur, doses=settings.clinical_doses_enabled,
     )
     logger.info(
         "clinical_rules_loaded backend=%s rules=%d unreviewed=%d skipped=%d site_map=%s doses=%s dose_rules=%d dur=%s",

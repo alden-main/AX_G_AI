@@ -254,6 +254,36 @@ class OpenAICompatibleChatClientTest(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("chat_template_kwargs", sent)
         self.assertEqual(sent["messages"][0], {"role": "system", "content": "You are Chain-of-Evidence.\nfixed instructions"})
 
+    async def test_listed_operations_are_sent_without_thinking(self) -> None:
+        recorder = Recorder(json_response(chat_completion("요약")), json_response(chat_completion("답변")))
+        client = compatible_provider(
+            recorder, AI_DISABLE_THINKING="false", AI_REPETITION_PENALTY="1.05",
+            AI_NO_THINKING_OPERATIONS=" one_shot_patient_summary_stream , ",
+        )
+
+        await client.respond(OpenAIRequest("i", "x", operation="one_shot_patient_summary_stream"))
+        await client.respond(OpenAIRequest("i", "x", operation="prepared_snapshot_chat_stream"))
+
+        summary, chat = (json.loads(request.content) for request in recorder.requests)
+        self.assertEqual(summary["chat_template_kwargs"], {"enable_thinking": False})
+        self.assertEqual(summary["repetition_penalty"], 1.05)  # the other extra_body values stay
+        self.assertNotIn("chat_template_kwargs", chat)
+        self.assertEqual(chat["repetition_penalty"], 1.05)
+
+    async def test_usage_is_logged_per_operation_without_text(self) -> None:
+        body = {**chat_completion("답변 본문"), "usage": {
+            "prompt_tokens": 16110, "completion_tokens": 2870, "total_tokens": 18980,
+            "completion_tokens_details": {"reasoning_tokens": 2300},
+        }}
+        client = compatible_provider(Recorder(json_response(body)))
+
+        with self.assertLogs("uvicorn.error", level="INFO") as logs:
+            await client.respond(OpenAIRequest("i", "x", operation="clinical_recommendation_stream"))
+
+        line = next(line for line in logs.output if "provider_usage" in line)
+        self.assertIn("operation=clinical_recommendation_stream input_tokens=16110 output_tokens=2870", line)
+        self.assertNotIn("답변 본문", line)
+
     async def test_rejects_failed_or_empty_responses(self) -> None:
         for response in (
             json_response({"error": {}}, 500),

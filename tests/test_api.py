@@ -298,7 +298,7 @@ class ProviderStreamTaskTest(unittest.TestCase):
 
         client = TestClient(create_app(ClinicalChatService(ScopedProvider()), RawEmrPayloadMapper()))  # type: ignore[arg-type]
         prepared = post_stream(client, "/internal/v1/patient-context", json={"patient_id": "pid-4356", "emr_payload": emr_payload()})
-        self.assertEqual(prepared.events, ["meta", "delta", "delta", "done"])
+        self.assertEqual(prepared.events, ["meta", "delta", "done"])
         chat = post_stream(client, "/internal/v1/clinical-chat", json={"patient_id": "pid-4356", "question": "최근 혈당은?"})
         self.assertEqual((chat.status_code, chat.events[-1], chat.text), (200, "done", "요약 끝."))
 
